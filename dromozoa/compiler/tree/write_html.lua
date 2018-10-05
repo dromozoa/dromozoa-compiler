@@ -18,6 +18,8 @@
 local element = require "dromozoa.dom.element"
 local html5_document = require "dromozoa.dom.html5_document"
 local space_separated = require "dromozoa.dom.space_separated"
+local graph = require "dromozoa.graph"
+local matrix3 = require "dromozoa.vecmath.matrix3"
 
 local _ = element
 
@@ -27,6 +29,26 @@ local style = _"style" { [[
 body {
   font-family: 'Roboto Mono', monospace;
   white-space: pre;
+}
+
+text {
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+.u_paths {
+  fill: none;
+  stroke: #000;
+}
+
+.u_texts {
+  fill: #000;
+  stroke: none;
+}
+
+.e_paths {
+  fill: none;
+  stroke: #000;
 }
 ]]}
 
@@ -40,12 +62,11 @@ local head = _"head" {
   style;
 }
 
-return function (self, out)
-  local symbol_names = self.symbol_names
+local function source_to_html(self)
   local terminal_nodes = self.terminal_nodes
   local source = self.source
 
-  local source_html = _"div" { class = "source" }
+  local html = _"div" { class = "source" }
   for i = 1, #terminal_nodes do
     local node = terminal_nodes[i]
     local symbol = node[0]
@@ -72,7 +93,7 @@ return function (self, out)
       if #class == 0 then
         class = nil
       end
-      source_html[#source_html + 1] = _"span" {
+      html[#html + 1] = _"span" {
         class = class;
         source:sub(p, i - 1);
       }
@@ -87,17 +108,65 @@ return function (self, out)
       class[i] = "S" .. path[i]
     end
     class[#class + 1] = "S"
-    source_html[#source_html + 1] = _"span" {
+    html[#html + 1] = _"span" {
       id = id;
       class = class;
       source:sub(i, j);
     }
   end
 
+  return html
+end
+
+local function tree_to_html(self)
+  local symbol_names = self.symbol_names
+  local preorder_nodes = self.preorder_nodes
+
+  local that = graph()
+  local u_labels = {}
+
+  for i = 1, #preorder_nodes do
+    local node = preorder_nodes[i]
+    u_labels[that:add_vertex()] = symbol_names[node[0]]
+  end
+
+  for i = 1, #preorder_nodes do
+    local node = preorder_nodes[i]
+    local id = node.id
+    for j = 1, #node do
+      that:add_edge(id, node[j].id)
+    end
+  end
+
+  local root = that:render {
+    matrix = matrix3(0, 160, 80, 40, 0, 20, 0, 0, 1);
+    u_labels = u_labels;
+    u_max_text_length = 144;
+  }
+
+  local u_paths = root[1]
+  for i = 1, #u_paths do
+    local path = u_paths[i]
+    path.id = "T" .. path["data-uid"]
+  end
+
+  return _"div" {
+    class = "tree";
+    _"svg" {
+      version = "1.1";
+      width = root["data-width"];
+      height = root["data-height"];
+      root;
+    };
+  }
+end
+
+return function (self, out)
   local doc = html5_document(_"html" {
     head;
     _"body" {
-      source_html;
+      source_to_html(self);
+      tree_to_html(self);
     };
   })
 
