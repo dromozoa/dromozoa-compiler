@@ -59,7 +59,8 @@ local head = _"head" {
   _"title" {
     "tree";
   };
-  style;
+  _"link" { rel = "stylesheet"; href = "docs/sample.css" };
+  _"script" { src = "docs/sample.js" };
 }
 
 local function source_to_html(self)
@@ -154,8 +155,8 @@ local function tree_to_html(self)
     class = "tree";
     _"svg" {
       version = "1.1";
-      width = root["data-width"];
-      height = root["data-height"];
+      width = 640; -- root["data-width"];
+      height = 640; -- root["data-height"];
       root;
     };
   }
