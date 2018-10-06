@@ -1,0 +1,180 @@
+-- Copyright (C) 2018 Tomoyuki Fujimori <moyu@dromozoa.com>
+--
+-- This file is part of dromozoa-compiler.
+--
+-- dromozoa-compiler is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- dromozoa-compiler is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
+
+local element = require "dromozoa.dom.element"
+local html5_document = require "dromozoa.dom.html5_document"
+local space_separated = require "dromozoa.dom.space_separated"
+local graph = require "dromozoa.graph"
+local matrix3 = require "dromozoa.vecmath.matrix3"
+
+local _ = element
+
+local style = _"style" { [[
+@import url('https://fonts.googleapis.com/css?family=Roboto+Mono');
+
+body {
+  font-family: 'Roboto Mono', monospace;
+  white-space: pre;
+}
+
+text {
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+.u_paths {
+  fill: none;
+  stroke: #000;
+}
+
+.u_texts {
+  fill: #000;
+  stroke: none;
+}
+
+.e_paths {
+  fill: none;
+  stroke: #000;
+}
+]]}
+
+local head = _"head" {
+  _"meta" {
+    charset = "UTF-8";
+  };
+  _"title" {
+    "tree";
+  };
+  _"link" { rel = "stylesheet"; href = "docs/sample.css" };
+  _"script" { src = "https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" };
+  _"script" { src = "docs/sample.js" };
+}
+
+local function source_to_html(self)
+  local terminal_nodes = self.terminal_nodes
+  local source = self.source
+
+  local html = _"div" { class = "source" }
+  for i = 1, #terminal_nodes do
+    local node = terminal_nodes[i]
+    local symbol = node[0]
+    local p = node.p
+    local i = node.i
+    local j = node.j
+    local id = node.id
+    if id then
+      id = "S" .. id
+    end
+    local path = node.path
+
+    if p < i then
+      local prev_path = node.prev_path
+      local class = space_separated {}
+      for i = 1, #prev_path do
+        local id = prev_path[i]
+        if id == path[i] then
+          class[i] = "S" .. id
+        else
+          break
+        end
+      end
+      if #class == 0 then
+        class = nil
+      end
+      html[#html + 1] = _"span" {
+        class = class;
+        source:sub(p, i - 1);
+      }
+    end
+
+    if symbol == 1 then -- eof
+      break
+    end
+
+    local class = space_separated {}
+    for i = 1, #path do
+      class[i] = "S" .. path[i]
+    end
+    class[#class + 1] = "S"
+    html[#html + 1] = _"span" {
+      id = id;
+      class = class;
+      source:sub(i, j);
+    }
+  end
+
+  return html
+end
+
+local function tree_to_html(self)
+  local symbol_names = self.symbol_names
+  local preorder_nodes = self.preorder_nodes
+
+  local that = graph()
+  local u_labels = {}
+
+  for i = 1, #preorder_nodes do
+    local node = preorder_nodes[i]
+    u_labels[that:add_vertex()] = symbol_names[node[0]]
+  end
+
+  for i = 1, #preorder_nodes do
+    local node = preorder_nodes[i]
+    local id = node.id
+    for j = 1, #node do
+      that:add_edge(id, node[j].id)
+    end
+  end
+
+  local root = that:render {
+    matrix = matrix3(0, 160, 80, 40, 0, 20, 0, 0, 1);
+    u_labels = u_labels;
+    u_max_text_length = 144;
+  }
+
+  local u_paths = root[1]
+  for i = 1, #u_paths do
+    local path = u_paths[i]
+    path.id = "T" .. path["data-uid"]
+  end
+
+  return _"div" {
+    class = "tree";
+    _"svg" {
+      version = "1.1";
+      width = 640; -- root["data-width"];
+      height = 640; -- root["data-height"];
+      _"g" {
+        root;
+      }
+    };
+  }
+end
+
+return function (self, out)
+  local doc = html5_document(_"html" {
+    head;
+    _"body" {
+      source_to_html(self);
+      tree_to_html(self);
+    };
+  })
+
+  doc:serialize(out)
+  out:write "\n"
+  return out
+end
