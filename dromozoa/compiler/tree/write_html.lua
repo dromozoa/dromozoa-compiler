@@ -60,6 +60,7 @@ local head = _"head" {
     "tree";
   };
   _"link" { rel = "stylesheet"; href = "docs/sample.css" };
+  _"script" { src = "https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" };
   _"script" { src = "docs/sample.js" };
 }
 
@@ -157,7 +158,9 @@ local function tree_to_html(self)
       version = "1.1";
       width = 640; -- root["data-width"];
       height = 640; -- root["data-height"];
-      root;
+      _"g" {
+        root;
+      }
     };
   }
 end

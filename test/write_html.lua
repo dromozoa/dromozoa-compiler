@@ -39,6 +39,4 @@ if not accepted_node then
 end
 
 local t = tree(parser, source, terminal_nodes, accepted_node)
--- t:construct_path()
-
 t:write_html(result_file)
