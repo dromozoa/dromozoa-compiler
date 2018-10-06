@@ -30,16 +30,16 @@ function class.new(n)
   return self
 end
 
-function class:get(index)
-  return rawget(self, index)
-end
-
-function class:set(index, value)
-  return rawset(self, index, value)
+function class:get(i)
+  return rawget(self, i)
 end
 
 function class:size()
   return rawget(self, "n")
+end
+
+function class:set(i, v)
+  return rawset(self, i, v)
 end
 
 return class
