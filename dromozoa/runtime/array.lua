@@ -22,6 +22,14 @@
 
 local class = {}
 
+function class.new(n)
+  local self = { n = n }
+  for i = 0, n - 1 do
+    rawset(self, i, 0)
+  end
+  return self
+end
+
 function class:get(index)
   return rawget(self, index)
 end
@@ -34,10 +42,4 @@ function class:size()
   return rawget(self, "n")
 end
 
-function class.new(n, value)
-  local self = {}
-  for i = 0, n - 1 do
-    rawset(self, i, value)
-  end
-  return self
-end
+return class
