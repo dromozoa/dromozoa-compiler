@@ -20,16 +20,21 @@
 -- and a copy of the GCC Runtime Library Exception along with
 -- dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-local array = require "dromozoa.runtime.builtin.array"
-local byte_array = require "dromozoa.runtime.builtin.byte_array"
-
 local class = {}
 
-function class.new(n)
-  local self = array.new()
-  array.set(self, 0, 4) -- LUA_TSTRING
-  array.set(self, 1, byte_array.new(n))
-  return self
+local stdout = io.stdout
+local stderr = io.stderr
+
+function class.stdout()
+  return stdout
+end
+
+function class.stderr()
+  return stderr
+end
+
+function class.write(handle, ...)
+  handle:write(...)
 end
 
 return class
