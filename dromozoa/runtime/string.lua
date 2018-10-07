@@ -20,21 +20,16 @@
 -- and a copy of the GCC Runtime Library Exception along with
 -- dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
+local array = require "dromozoa.runtime.array"
+local byte_array = require "dromozoa.runtime.byte_array"
+
 local class = {}
 
-local rawget = rawget
-local rawset = rawset
-
-function class.new()
-  return {}
-end
-
-function class:set(k, v)
-  return rawset(self, k, v)
-end
-
-function class:get(k)
-  return rawget(self, k)
+function class.new(n)
+  local self = array.new()
+  array.set(self, 0, 4) -- LUA_TSTRING
+  array.set(self, 1, byte_array.new(n))
+  return self
 end
 
 return class
