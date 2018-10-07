@@ -26,11 +26,7 @@ local rawget = rawget
 local rawset = rawset
 
 function class.new(n)
-  local self = { n = n }
-  for i = 0, n - 1 do
-    rawset(self, i, 0)
-  end
-  return self
+  return { n = n }
 end
 
 function class:set(i, v)

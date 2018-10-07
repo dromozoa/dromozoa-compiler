@@ -25,24 +25,16 @@ local class = {}
 local rawget = rawget
 local rawset = rawset
 
-function class.new(n)
-  local self = { n = n }
-  for i = 0, n - 1 do
-    rawset(self, i, 0)
-  end
-  return self
+function class.new()
+  return {}
 end
 
-function class:set(i, v)
-  return rawset(self, i, v)
+function class:set(k, v)
+  return rawset(self, k, v)
 end
 
-function class:get(i)
-  return rawget(self, i)
-end
-
-function class:size()
-  return rawget(self, "n")
+function class:get(k)
+  return rawget(self, k)
 end
 
 return class
