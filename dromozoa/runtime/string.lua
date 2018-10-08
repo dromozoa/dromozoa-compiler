@@ -20,27 +20,34 @@
 -- and a copy of the GCC Runtime Library Exception along with
 -- dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-local array = require "dromozoa.runtime.builtin.array"
 local byte_array = require "dromozoa.runtime.builtin.byte_array"
 
 local class = {}
+local metatable = { __index = class }
 
 function class.construct(n)
-  local self = array.construct(2)
-  array.set(self, 0, 4) -- LUA_TSTRING
-  array.set(self, 1, byte_array.construct(n))
-  return self
+  local self = {}
+  self.type = 4 -- LUA_TSTRING
+  self.data = byte_array.construct(n)
+  return setmetatable(self, metatable)
 end
 
 function class:destruct()
-  local data = array.get(self, 1)
-  byte_array.destruct(data)
+  self.data:destruct()
+  self.data = nil
+  self.type = nil
+end
 
+function class:resize(m)
+  self.data:resize(m)
 end
 
 function class:set(i, v)
-  local data = array.get(self, 1)
-  byte_array.set(data, i, v)
+  self.data:set(i, v)
+end
+
+function class:get(i)
+  return self.data:get(i)
 end
 
 return class
