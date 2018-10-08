@@ -25,11 +25,22 @@ local byte_array = require "dromozoa.runtime.builtin.byte_array"
 
 local class = {}
 
-function class.new(n)
-  local self = array.new()
+function class.construct(n)
+  local self = array.construct(2)
   array.set(self, 0, 4) -- LUA_TSTRING
-  array.set(self, 1, byte_array.new(n))
+  array.set(self, 1, byte_array.construct(n))
   return self
+end
+
+function class:destruct()
+  local data = array.get(self, 1)
+  byte_array.destruct(data)
+
+end
+
+function class:set(i, v)
+  local data = array.get(self, 1)
+  byte_array.set(data, i, v)
 end
 
 return class

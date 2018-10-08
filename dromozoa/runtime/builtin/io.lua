@@ -33,8 +33,12 @@ function class.stderr()
   return stderr
 end
 
-function class.write(handle, ...)
-  handle:write(...)
+function class.write_byte(handle, byte)
+  io.write(handle, string.char(byte))
 end
+
+
+
+
 
 return class

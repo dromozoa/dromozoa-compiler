@@ -21,16 +21,22 @@
 -- dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
 local class = {}
+local metatable = { __index = class }
 
-local rawget = rawget
-local rawset = rawset
+function class.construct(n)
+  return setmetatable({ n = n }, metatable)
+end
 
-function class.new(n)
-  return { n = n }
+function class:destruct()
+  local n = self.n
+  for i = 0, n - 1 do
+    rawset(self, i, nil)
+  end
+  self.n = nil
 end
 
 function class:set(i, v)
-  return rawset(self, i, v)
+  rawset(self, i, v)
 end
 
 function class:get(i)
