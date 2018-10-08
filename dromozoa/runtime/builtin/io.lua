@@ -21,24 +21,30 @@
 -- dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
 local class = {}
-
-local stdout = io.stdout
-local stderr = io.stderr
+local metatable = { __index = class }
 
 function class.stdout()
-  return stdout
+  return class.construct(io.stdout)
 end
 
 function class.stderr()
-  return stderr
+  return class.construct(io.stderr)
 end
 
-function class.write_byte(handle, byte)
-  io.write(handle, string.char(byte))
+function class.construct(handle)
+  return setmetatable({ handle = handle }, metatable)
 end
 
+function class:destruct()
+  self.handle = nil
+end
 
-
-
+function class:write(data, i, j)
+  local handle = self.handle
+  for i = i, j do
+    handle:write(string.char(data[i]))
+  end
+  handle:flush()
+end
 
 return class

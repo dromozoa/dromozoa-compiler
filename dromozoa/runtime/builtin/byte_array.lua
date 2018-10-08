@@ -39,6 +39,20 @@ function class:destruct()
   self.n = nil
 end
 
+function class:resize(m)
+  local n = self.n
+  if m < n then
+    for i = m, n - 1 do
+      rawset(self, i, nil)
+    end
+  else
+    for i = n, m - 1 do
+      rawset(self, i, 0)
+    end
+  end
+  self.n = m
+end
+
 function class:set(i, v)
   rawset(self, i, v)
 end

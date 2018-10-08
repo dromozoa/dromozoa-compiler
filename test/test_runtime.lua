@@ -12,16 +12,17 @@
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 -- GNU General Public License for more details.
 --
--- Under Section 7 of GPL version 3, you are granted additional
--- permissions described in the GCC Runtime Library Exception, version
--- 3.1, as published by the Free Software Foundation.
---
 -- You should have received a copy of the GNU General Public License
--- and a copy of the GCC Runtime Library Exception along with
--- dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
+-- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-return {
-  array = require "dromozoa.runtime.builtin.array";
-  byte_array = require "dromozoa.runtime.builtin.byte_array";
-  io = require "dromozoa.runtime.builtin.io";
-}
+local builtin = require "dromozoa.runtime.builtin"
+
+local b = builtin.byte_array.construct(4)
+b:set(0, 0x66)
+b:set(1, 0x6F)
+b:set(2, 0x6F)
+b:set(3, 0x0A)
+local stdout = builtin.io.stdout()
+stdout:write(b, 0, 3)
+stdout:destruct()
+b:destruct()
