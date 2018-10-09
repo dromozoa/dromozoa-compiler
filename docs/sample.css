@@ -16,6 +16,7 @@ text {
 }
 
 .tree {
+  background-color: #CCC;
   position: fixed;
   right: 0;
   width: 640px;
@@ -24,6 +25,11 @@ text {
 
 .tree svg {
   display: block;
+}
+
+.background {
+  fill: transparent;
+  stroke: none;
 }
 
 .u_paths {

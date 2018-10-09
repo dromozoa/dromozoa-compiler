@@ -146,19 +146,24 @@ local function tree_to_html(self)
     u_max_text_length = 144;
   }
 
-  local u_paths = root[1]
-  for i = 1, #u_paths do
-    local path = u_paths[i]
-    path.id = "T" .. path["data-uid"]
-  end
+  local width = 640 -- root["data-width"];
+  local height = 640 -- root["data-height"];
 
   return _"div" {
     class = "tree";
     _"svg" {
       version = "1.1";
-      width = 640; -- root["data-width"];
-      height = 640; -- root["data-height"];
+      width = width;
+      height = height;
+      _"rect" {
+        class = "background";
+        width = width;
+        height = height;
+        fill = "transparent";
+        stroke = "none";
+      };
       _"g" {
+        class = "translate";
         root;
       }
     };
