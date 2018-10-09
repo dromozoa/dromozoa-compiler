@@ -1,7 +1,7 @@
 (function (root) {
-  let $ = root.jQuery;
   let parseFloat = root.parseFloat;
   let pow = root.Math.pow;
+  let $ = root.jQuery;
   let duration = 2000;
 
   let Transform = class {
@@ -64,7 +64,14 @@
       $view.attr("transform", transform.toString());
     });
 
-    $(".viewport").on("mousedown", function ($ev) {
+    $svg.on("wheel", function ($ev) {
+      $ev.preventDefault();
+      let ev = $ev.originalEvent;
+      transform.scale(ev.offsetX, ev.offsetY, -ev.deltaY);
+      $view.attr("transform", transform.toString());
+    });
+
+    $("rect.viewport").on("mousedown", function ($ev) {
       let ev = $ev.originalEvent;
       mouse.active = true;
       mouse.x = ev.offsetX;
@@ -84,12 +91,6 @@
       mouse.active = false;
       mouse.x = ev.offsetX;
       mouse.y = ev.offsetX;
-    });
-    $svg.on("wheel", function ($ev) {
-      $ev.preventDefault();
-      let ev = $ev.originalEvent;
-      transform.scale(ev.offsetX, ev.offsetY, -ev.deltaY);
-      $view.attr("transform", transform.toString());
     });
   });
 }(window));
