@@ -164,7 +164,10 @@ local function tree_to_html(self)
       };
       _"g" {
         class = "translate";
-        root;
+        _"g" {
+          class = "scale";
+          root;
+        };
       }
     };
   }

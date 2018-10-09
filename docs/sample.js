@@ -8,7 +8,11 @@
     let h = $svg.attr("height");
     let hw = w * 0.5;
     let hh = h * 0.5;
+
     let $translate = $("g.translate");
+    let $scale = $("g.scale");
+
+    let scale = 1;
     let tx = 0;
     let ty = 0;
     let mouse;
@@ -38,8 +42,13 @@
       // console.log("mousemove", ev);
     }).on("mouseup", function () {
       mouse = undefined;
+    }).on("wheel", function (ev) {
+      ev.preventDefault();
+      // console.log(ev.originalEvent);
+      // offsetX, offsetY
+      let delta = ev.originalEvent.deltaY;
+      scale = scale * Math.pow(1.005, delta)
+      $scale.attr("transform", "scale(" + scale + ")");
     });
-
-
   });
 }(window));
