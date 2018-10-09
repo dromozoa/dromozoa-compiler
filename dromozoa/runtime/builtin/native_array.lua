@@ -23,6 +23,10 @@
 local class = {}
 local metatable = { __index = class }
 
+local rawget = rawget
+local rawset = rawset
+local setmetatable = setmetatable
+
 function class.construct(n)
   return setmetatable({ n = n }, metatable)
 end
@@ -37,10 +41,8 @@ end
 
 function class:resize(m)
   local n = self.n
-  if m < n then
-    for i = m, n - 1 do
-      rawset(self, i, nil)
-    end
+  for i = m, n - 1 do
+    rawset(self, i, nil)
   end
   self.n = m
 end
