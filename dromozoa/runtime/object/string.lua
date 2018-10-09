@@ -20,9 +20,43 @@
 -- and a copy of the GCC Runtime Library Exception along with
 -- dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-return {
-  native_array = require "dromozoa.runtime.builtin.native_array";
-  native_byte_array = require "dromozoa.runtime.builtin.native_byte_array";
-  native_io = require "dromozoa.runtime.builtin.native_io";
-  native_object = require "dromozoa.runtime.builtin.native_object";
-}
+local native_byte_array = require "dromozoa.runtime.builtin.native_byte_array"
+local native_object = require "dromozoa.runtime.builtin.native_object"
+
+local class = {}
+local metatable = { __index = class }
+
+function class.construct(n)
+  local this = native_object.construct()
+  this:set("type", 4)
+  this:set("data", native_byte_array(n))
+  return setmetatable({ this = this }, metatable)
+end
+
+function class:destruct()
+  local this = self.this
+  this:get("data"):destruct()
+  this:set("data", nil)
+  this:set("type", nil)
+
+
+
+
+  self.data:destruct()
+  self.data = nil
+  self.type = nil
+end
+
+function class:resize(m)
+  self.data:resize(m)
+end
+
+function class:set(i, v)
+  self.data:set(i, v)
+end
+
+function class:get(i)
+  return self.data:get(i)
+end
+
+return class

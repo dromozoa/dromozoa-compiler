@@ -19,10 +19,23 @@ local builtin = require "dromozoa.runtime.builtin"
 
 local stdout = builtin.native_io.stdout
 
-local b = builtin.native_byte_array.construct(4)
+local b = builtin.native_byte_array.construct(3)
 b:set(0, 0x66)
 b:set(1, 0x6F)
 b:set(2, 0x6F)
+stdout:write(b)
+
+b:resize(2)
+stdout:write(b)
+
+b:resize(4)
+b:set(2, 0x6F)
 b:set(3, 0x0A)
 stdout:write(b)
+
+local o = builtin.native_object.construct()
+o:set("foo", b)
+stdout:write(o:get "foo")
+
+o:destruct()
 b:destruct()

@@ -45,11 +45,11 @@ end
 
 function class:resize(m)
   local n = self.n
-  for i = m, n - 1 do
-    rawset(self, i, nil)
-  end
   for i = n, m - 1 do
     rawset(self, i, 0)
+  end
+  for i = m, n - 1 do
+    rawset(self, i, nil)
   end
   self.n = m
 end
