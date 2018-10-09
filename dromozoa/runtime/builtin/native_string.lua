@@ -12,34 +12,27 @@
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 -- GNU General Public License for more details.
 --
+-- Under Section 7 of GPL version 3, you are granted additional
+-- permissions described in the GCC Runtime Library Exception, version
+-- 3.1, as published by the Free Software Foundation.
+--
 -- You should have received a copy of the GNU General Public License
--- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
+-- and a copy of the GCC Runtime Library Exception along with
+-- dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-local builtin = require "dromozoa.runtime.builtin"
+local class = {}
+local metatable = { __index = class }
 
-local stdout = builtin.native_io.stdout
+function class.construct(data)
+  return setmetatable({ data = data }, metatable)
+end
 
-local b = builtin.native_byte_array.construct(3)
-b:set(0, 0x66)
-b:set(1, 0x6F)
-b:set(2, 0x6F)
-stdout:write_byte_array(b)
+function class:destruct()
+  self.data = nil
+end
 
-b:resize(2)
-stdout:write_byte_array(b)
+function class:get()
+  return self.data
+end
 
-b:resize(4)
-b:set(2, 0x6F)
-b:set(3, 0x0A)
-stdout:write_byte_array(b)
-
-local o = builtin.native_object.construct()
-o:set("foo", b)
-stdout:write_byte_array(o:get "foo")
-
-local s = builtin.native_string.construct "bar\n"
-stdout:write_string(s)
-
-s:destruct()
-o:destruct()
-b:destruct()
+return class

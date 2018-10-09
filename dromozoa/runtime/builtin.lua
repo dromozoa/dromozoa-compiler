@@ -25,4 +25,5 @@ return {
   native_byte_array = require "dromozoa.runtime.builtin.native_byte_array";
   native_io = require "dromozoa.runtime.builtin.native_io";
   native_object = require "dromozoa.runtime.builtin.native_object";
+  native_string = require "dromozoa.runtime.builtin.native_string";
 }

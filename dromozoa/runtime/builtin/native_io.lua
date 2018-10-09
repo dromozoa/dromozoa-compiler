@@ -31,11 +31,17 @@ local metatable = { __index = class }
 class.stdout = setmetatable({ handle = stdout }, metatable)
 class.stderr = setmetatable({ handle = stderr }, metatable)
 
-function class:write(data)
+function class:write_byte_array(that)
   local handle = self.handle
-  for i = 0, data:size() - 1 do
-    handle:write(char(data:get(i)))
+  for i = 0, that:size() - 1 do
+    handle:write(char(that:get(i)))
   end
+  handle:flush()
+end
+
+function class:write_string(that)
+  local handle = self.handle
+  handle:write(that:get())
   handle:flush()
 end
 
