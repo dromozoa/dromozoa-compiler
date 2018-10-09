@@ -35,4 +35,8 @@ function class:get()
   return self.data
 end
 
+function class:size()
+  return #self.data
+end
+
 return class
