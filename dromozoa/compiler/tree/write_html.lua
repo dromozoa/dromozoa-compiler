@@ -75,10 +75,6 @@ local function source_to_html(self)
     local p = node.p
     local i = node.i
     local j = node.j
-    local id = node.id
-    if id then
-      id = "S" .. id
-    end
     local path = node.path
 
     if p < i then
@@ -113,6 +109,7 @@ local function source_to_html(self)
     html[#html + 1] = _"span" {
       id = id;
       class = class;
+      ["data-uid"] = node.id;
       source:sub(i, j);
     }
   end

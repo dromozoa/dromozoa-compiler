@@ -54,7 +54,7 @@
     };
 
     $(".S").click(function () {
-      let $text = $("g.u_texts > text[data-uid=" + $(this).attr("id").substr(1) + "]");
+      let $text = $("g.u_texts > text[data-uid=" + $(this).data("uid") + "]");
       let v = {
         x: parseFloat($text.attr("x")),
         y: parseFloat($text.attr("y")),
