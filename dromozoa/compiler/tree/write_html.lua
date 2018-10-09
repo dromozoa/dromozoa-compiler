@@ -156,18 +156,15 @@ local function tree_to_html(self)
       width = width;
       height = height;
       _"rect" {
-        class = "background";
+        class = "viewport";
         width = width;
         height = height;
         fill = "transparent";
         stroke = "none";
       };
       _"g" {
-        class = "translate";
-        _"g" {
-          class = "scale";
-          root;
-        };
+        class = "view";
+        root;
       }
     };
   }

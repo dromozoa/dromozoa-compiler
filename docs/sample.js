@@ -1,54 +1,95 @@
 (function (root) {
   let $ = root.jQuery;
   let parseFloat = root.parseFloat;
+  let pow = root.Math.pow;
+  let duration = 2000;
+
+  let Transform = class {
+    constructor() {
+      this.k = 1.002;
+      this.s = 1;
+      this.x = 0;
+      this.y = 0;
+    }
+
+    toString() {
+      return "translate(" + this.x + " " + this.y + ") scale(" + this.s + ")";
+    }
+
+    translate(x, y) {
+      this.x += x;
+      this.y += y;
+    }
+
+    translate_to(x, y) {
+      this.x = x;
+      this.y = y;
+    }
+
+    scale(x, y, d) {
+      let t = pow(this.k, d)
+      this.s *= t;
+      this.x = (this.x - x) * t + x;
+      this.y = (this.y - y) * t + y;
+    }
+
+    transform_vector(v) {
+      let s = this.s;
+      v.x *= s;
+      v.y *= s;
+    }
+  };
+
   $(function () {
-
     let $svg = $("svg");
-    let w = $svg.attr("width");
-    let h = $svg.attr("height");
-    let hw = w * 0.5;
-    let hh = h * 0.5;
+    let hw = parseFloat($svg.attr("width")) * 0.5;
+    let hh = parseFloat($svg.attr("height")) * 0.5;
+    let $view = $("g.view");
 
-    let $translate = $("g.translate");
-    let $scale = $("g.scale");
-
-    let scale = 1;
-    let tx = 0;
-    let ty = 0;
-    let mouse;
+    let transform = new Transform();
+    let mouse = {
+      active: false,
+      x: 0,
+      y: 0,
+    };
 
     $(".S").click(function () {
       let $text = $("g.u_texts > text[data-uid=" + $(this).attr("id").substr(1) + "]");
-      tx = hw - $text.attr("x");
-      ty = hh - $text.attr("y");
-      $translate.attr("transform", "translate(" + tx + " " + ty + ")");
+      let v = {
+        x: parseFloat($text.attr("x")),
+        y: parseFloat($text.attr("y")),
+      };
+      transform.transform_vector(v);
+      transform.translate_to(hw - v.x, hh - v.y);
+      $view.attr("transform", transform.toString());
     });
 
-    $(".background").on("mousedown", function (ev) {
-      mouse = {
-        x: ev.originalEvent.offsetX,
-        y: ev.originalEvent.offsetY,
-      };
-    }).on("mousemove", function (ev) {
-      if (mouse) {
-        let x = ev.originalEvent.offsetX;
-        let y = ev.originalEvent.offsetY;
-        tx += x - mouse.x;
-        ty += y - mouse.y;
-        $translate.attr("transform", "translate(" + tx + " " + ty + ")");
+    $(".viewport").on("mousedown", function ($ev) {
+      let ev = $ev.originalEvent;
+      mouse.active = true;
+      mouse.x = ev.offsetX;
+      mouse.y = ev.offsetY;
+    }).on("mousemove", function ($ev) {
+      if (mouse.active) {
+        let ev = $ev.originalEvent;
+        let x = ev.offsetX;
+        let y = ev.offsetY;
+        transform.translate(x - mouse.x, y - mouse.y);
         mouse.x = x;
         mouse.y = y;
+        $view.attr("transform", transform.toString());
       }
-      // console.log("mousemove", ev);
-    }).on("mouseup", function () {
-      mouse = undefined;
-    }).on("wheel", function (ev) {
-      ev.preventDefault();
-      // console.log(ev.originalEvent);
-      // offsetX, offsetY
-      let delta = ev.originalEvent.deltaY;
-      scale = scale * Math.pow(1.005, delta)
-      $scale.attr("transform", "scale(" + scale + ")");
+    }).on("mouseup", function ($ev) {
+      let ev = $ev.originalEvent;
+      mouse.active = false;
+      mouse.x = ev.offsetX;
+      mouse.y = ev.offsetX;
+    });
+    $svg.on("wheel", function ($ev) {
+      $ev.preventDefault();
+      let ev = $ev.originalEvent;
+      transform.scale(ev.offsetX, ev.offsetY, -ev.deltaY);
+      $view.attr("transform", transform.toString());
     });
   });
 }(window));

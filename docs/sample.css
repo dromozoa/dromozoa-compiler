@@ -27,11 +27,6 @@ text {
   display: block;
 }
 
-.background {
-  fill: transparent;
-  stroke: none;
-}
-
 .u_paths {
   fill: none;
   stroke: #000;
