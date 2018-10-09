@@ -17,12 +17,12 @@
 
 local builtin = require "dromozoa.runtime.builtin"
 
-local b = builtin.byte_array.construct(4)
+local stdout = builtin.native_io.stdout
+
+local b = builtin.native_byte_array.construct(4)
 b:set(0, 0x66)
 b:set(1, 0x6F)
 b:set(2, 0x6F)
 b:set(3, 0x0A)
-local stdout = builtin.io.stdout()
-stdout:write(b, 0, 3)
-stdout:destruct()
+stdout:write(b)
 b:destruct()

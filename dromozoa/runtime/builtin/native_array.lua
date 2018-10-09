@@ -20,12 +20,12 @@
 -- and a copy of the GCC Runtime Library Exception along with
 -- dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-local class = {}
-local metatable = { __index = class }
-
 local rawget = rawget
 local rawset = rawset
 local setmetatable = setmetatable
+
+local class = {}
+local metatable = { __index = class }
 
 function class.construct(n)
   return setmetatable({ n = n }, metatable)

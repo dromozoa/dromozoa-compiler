@@ -20,29 +20,21 @@
 -- and a copy of the GCC Runtime Library Exception along with
 -- dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
+local setmetatable = setmetatable
+local stdout = io.stdout
+local stderr = io.stderr
+local char = string.char
+
 local class = {}
 local metatable = { __index = class }
 
-function class.stdout()
-  return class.construct(io.stdout)
-end
+class.stdout = setmetatable({ handle = stdout }, metatable)
+class.stderr = setmetatable({ handle = stderr }, metatable)
 
-function class.stderr()
-  return class.construct(io.stderr)
-end
-
-function class.construct(handle)
-  return setmetatable({ handle = handle }, metatable)
-end
-
-function class:destruct()
-  self.handle = nil
-end
-
-function class:write(data, i, j)
+function class:write(data)
   local handle = self.handle
-  for i = i, j do
-    handle:write(string.char(data[i]))
+  for i = 0, data:size() - 1 do
+    handle:write(char(data:get(i)))
   end
   handle:flush()
 end

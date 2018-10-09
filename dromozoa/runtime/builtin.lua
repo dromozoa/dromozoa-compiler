@@ -21,7 +21,7 @@
 -- dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
 return {
-  array = require "dromozoa.runtime.builtin.array";
-  byte_array = require "dromozoa.runtime.builtin.byte_array";
-  io = require "dromozoa.runtime.builtin.io";
+  native_array = require "dromozoa.runtime.builtin.native_array";
+  native_byte_array = require "dromozoa.runtime.builtin.native_byte_array";
+  native_io = require "dromozoa.runtime.builtin.native_io";
 }
