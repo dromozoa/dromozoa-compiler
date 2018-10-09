@@ -20,26 +20,34 @@
 -- and a copy of the GCC Runtime Library Exception along with
 -- dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
+local next = next
+local rawget = rawget
+local rawset = rawset
+local setmetatable = setmetatable
+
 local class = {}
+local metatable = { __index = class }
 
-function class.new(n)
-  local self = { n = n }
-  for i = 0, n - 1 do
-    rawset(self, i, 0)
+function class.construct()
+  return setmetatable({ data = {} }, metatable)
+end
+
+function class:destruct()
+  local data = self.data
+  local k, v = next(data)
+  while k do
+    data[k] = nil
+    k, v = next(data, k)
   end
-  return self
+  self.data = nil
 end
 
-function class:get(index)
-  return rawget(self, index)
+function class:set(k, v)
+  rawset(self.data, k, v)
 end
 
-function class:set(index, value)
-  return rawset(self, index, value)
-end
-
-function class:size()
-  return rawget(self, "n")
+function class:get(k)
+  return rawget(self.data, k)
 end
 
 return class
