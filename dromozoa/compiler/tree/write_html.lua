@@ -75,10 +75,6 @@ local function source_to_html(self)
     local p = node.p
     local i = node.i
     local j = node.j
-    local id = node.id
-    if id then
-      id = "S" .. id
-    end
     local path = node.path
 
     if p < i then
@@ -113,6 +109,7 @@ local function source_to_html(self)
     html[#html + 1] = _"span" {
       id = id;
       class = class;
+      ["data-uid"] = node.id;
       source:sub(i, j);
     }
   end
@@ -146,19 +143,24 @@ local function tree_to_html(self)
     u_max_text_length = 144;
   }
 
-  local u_paths = root[1]
-  for i = 1, #u_paths do
-    local path = u_paths[i]
-    path.id = "T" .. path["data-uid"]
-  end
+  local width = 640 -- root["data-width"];
+  local height = 640 -- root["data-height"];
 
   return _"div" {
     class = "tree";
     _"svg" {
       version = "1.1";
-      width = 640; -- root["data-width"];
-      height = 640; -- root["data-height"];
+      width = width;
+      height = height;
+      _"rect" {
+        class = "viewport";
+        width = width;
+        height = height;
+        fill = "transparent";
+        stroke = "none";
+      };
       _"g" {
+        class = "view";
         root;
       }
     };

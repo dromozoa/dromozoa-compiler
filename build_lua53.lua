@@ -34,8 +34,8 @@ local function string_lexer(lexer)
     :_ [[\']] "\'" :push()
     :_ (RE[[\\z\s*]]) :skip()
     :_ (RE[[\\\d{1,3}]]) :sub(2) :int(10) :char() :push()
+    :_ (RE[[\\x[0-9A-Fa-f]{2}]]) :sub(3) :int(16) :char() :push()
     :_ (RE[[\\u\{[0-9A-Fa-f]+\}]]) :utf8(4, -2) :push()
-    :_ (RE[[[^\\"]+]]) :push()
 end
 
 _:lexer()
@@ -96,8 +96,6 @@ _:lexer()
   :_ ".."
   :_ "..."
   :_ (RE[[[A-Za-z_]\w*]]) :as "Name"
-  :_ (RE[["[^\\"]*"]]) :as "LiteralString" :sub(2, -2)
-  :_ (RE[['[^\\']*']]) :as "LiteralString" :sub(2, -2)
   :_ ("[[\n" * (RE[[.*]] - RE[[.*\]\].*]]) * "]]") :as "LiteralString" :sub(4, -3)
   :_ ("[[" * (RE[[.*]] - RE[[.*\]\].*]]) * "]]") :as "LiteralString" :sub(3, -3)
   :_ [["]] :skip() :call "dq_string" :mark()
@@ -113,9 +111,11 @@ _:lexer()
   :_ ("--" * (RE[[[^\n]*]] - RE[[\[=*\[.*]]) * "\n") : skip()
 
 string_lexer(_:lexer "dq_string")
+  :_ (RE[[[^\\"]+]]) :push()
   :_ [["]] :as "LiteralString" :concat() :ret()
 
 string_lexer(_:lexer "sq_string")
+  :_ (RE[[[^\\']+]]) :push()
   :_ [[']] :as "LiteralString" :concat() :ret()
 
 _:search_lexer "long_string"

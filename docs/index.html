@@ -86,6 +86,135 @@
 #define LUA_TTHREAD		8
 </pre>
 
+<h2>カメラの移動とズーム</h2>
+
+<h3></h3>
+
+<p>
+モデル座標系の\((c_x, c_y)\)をビュー\((w, h)\)の中心にするような移動を考える。
+\[\begin{aligned}
+  \bm{M}
+  &amp;=
+  \begin{pmatrix}
+    s &amp; 0 &amp; x \\
+    0 &amp; s &amp; y \\
+    0 &amp; 0 &amp; 1 \\
+  \end{pmatrix} \\
+
+  \begin{pmatrix}
+    w/2 \\
+    h/2 \\
+    1 \\
+  \end{pmatrix}
+  &amp;=
+  \bm{M}
+  \begin{pmatrix}
+    c_x \\
+    c_y \\
+    1 \\
+  \end{pmatrix} \\
+
+  x &amp;= w/2 - s c_x \\
+  y &amp;= h/2 - s c_y \\
+\end{aligned}\]
+</p>
+
+<h3>ズーム</h3>
+
+<p>
+現在の変換行列が\(\bm{M}_1\)で与えられているとき、
+ビュー座標系の\((v_x, v_y)\)を中心にしたズームを考える。
+\[\begin{aligned}
+  \bm{M}_1
+  &amp;=
+  \begin{pmatrix}
+    s_1 &amp; 0   &amp; x_1 \\
+    0   &amp; s_1 &amp; y_1 \\
+    0   &amp; 0   &amp; 1 \\
+  \end{pmatrix} \\
+
+  \bm{M}_1^{-1}
+  &amp;=
+  \frac{1}{s_1}
+  \begin{pmatrix}
+    1 &amp; 0 &amp; -x_1 \\
+    0 &amp; 1 &amp; -y_1 \\
+    0 &amp; 0 &amp;  s_1 \\
+  \end{pmatrix} \\
+
+  \begin{pmatrix}
+    m_x \\
+    m_y \\
+    1 \\
+  \end{pmatrix}
+  &amp;=
+  \bm{M}_1^{-1}
+  \begin{pmatrix}
+    v_x \\
+    v_y \\
+    1 \\
+  \end{pmatrix} \\
+  &amp;=
+  \frac{1}{s_1}
+  \begin{pmatrix}
+    v_x - x_1 \\
+    v_y - y_1 \\
+    s_1 \\
+  \end{pmatrix} \\
+\end{aligned}\]
+モデル座標系で\((x, y)\)をズームの中心に移動する変換行列\(\bm{V}\)、
+ズームを行う変換行列\(\bm{U}\)、
+元の場所に移動する変換行列\(\bm{T}\)を用いて
+\[\begin{aligned}
+  \bm{V}
+  &amp;=
+  \begin{pmatrix}
+    1 &amp; 0 &amp; -m_x \\
+    0 &amp; 1 &amp; -m_y \\
+    0 &amp; 0 &amp;  1 \\
+  \end{pmatrix} \\
+
+  \bm{U}
+  &amp;=
+  \begin{pmatrix}
+    s_2 &amp; 0   &amp; 0 \\
+    0   &amp; s_2 &amp; 0 \\
+    0   &amp; 0   &amp;  1 \\
+  \end{pmatrix} \\
+
+  \bm{T}
+  &amp;=
+  \begin{pmatrix}
+    1 &amp; 0 &amp; v_x \\
+    0 &amp; 1 &amp; v_y \\
+    0 &amp; 0 &amp; 1 \\
+  \end{pmatrix} \\
+
+  \bm{M}_2
+  &amp;= \bm{T} \bm{U} \bm{V} \\
+  &amp;=
+  \begin{pmatrix}
+    s_2 &amp; 0   &amp; v_x - m_x s_2 \\
+    0   &amp; s_2 &amp; v_y - m_y s_2 \\
+    0   &amp; 0   &amp; 1 \\
+  \end{pmatrix} \\
+  &amp;=
+  \begin{pmatrix}
+    s_2 &amp; 0   &amp; x_2 \\
+    0   &amp; s_2 &amp; y_2 \\
+    0   &amp; 0   &amp; 1 \\
+  \end{pmatrix} \\
+
+  x_2
+  &amp;= v_x - s_2 m_x \\
+  &amp;= v_x + \frac{s_2}{s_1}(x_1 - v_x) \\
+
+  y_2
+  &amp;= v_y - s_2 m_y \\
+  &amp;= v_y + \frac{s_2}{s_1}(y_1 - v_y) \\
+\end{aligned}\]
+</p>
+
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.9.0/katex.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.9.0/contrib/auto-render.min.js"></script>
