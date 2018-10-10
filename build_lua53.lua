@@ -33,13 +33,16 @@ local function string_lexer(lexer)
     :_ [[\"]] "\"" :push()
     :_ [[\']] "\'" :push()
     :_ (RE[[\\z\s*]]) :skip()
-    :_ (RE[[\\\d{1,3}]]) :sub(2) :int(10) :char() :push()
+    :_ (RE[[\\(\r|\n|\r\n|\n\r)]]) "\n" :push()
     :_ (RE[[\\x[0-9A-Fa-f]{2}]]) :sub(3) :int(16) :char() :push()
+    :_ (RE[[\\\d{1,3}]]) :sub(2) :int(10) :char() :push()
     :_ (RE[[\\u\{[0-9A-Fa-f]+\}]]) :utf8(4, -2) :push()
 end
 
+-- https://www.lua.org/manual/5.3/manual.html#3.1
 _:lexer()
   :_ (RE[[\s+]]) :skip()
+  :_ (RE[[[A-Za-z_]\w*]]) :as "Name"
   :_ "and"
   :_ "break"
   :_ "do"
@@ -95,22 +98,21 @@ _:lexer()
   :_ "."
   :_ ".."
   :_ "..."
-  :_ (RE[[[A-Za-z_]\w*]]) :as "Name"
-  :_ [["]] :skip() :call "dq_string" :mark()
-  :_ [[']] :skip() :call "sq_string" :mark()
+  :_ [["]] :skip() :call "double_quoted_string" :mark()
+  :_ [[']] :skip() :call "single_quoted_string" :mark()
   :_ (RE[[\[=*\[]]) :sub(2, -2) :join("]", "]") :hold() :skip() :call "long_string" :mark()
   :_ (RE[[\d+]]) :as "IntegerConstant"
   :_ (RE[[0[xX][0-9A-Fa-f]+]]) :as "IntegerConstant"
   :_ (RE[[(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?]]) :as "FloatConstant"
   :_ (RE[[0[xX]([0-9A-Fa-f]+(\.[0-9A-Fa-f]*)?|\.[0-9A-Fa-f]+)([pP][+-]?\d+)?]]) :as "FloatConstant"
-  :_ (RE[[--\[=*\[]]) :sub(4, -2) :join("]", "]") :hold() :skip() :call "long_comment"
   :_ ("--" * (RE[[[^\n\r]*]] - RE[[\[=*\[.*]]) * RE[[[\n\r]?]]) :skip()
+  :_ (RE[[--\[=*\[]]) :sub(4, -2) :join("]", "]") :hold() :skip() :call "long_comment"
 
-string_lexer(_:lexer "dq_string")
+string_lexer(_:lexer "double_quoted_string")
   :_ (RE[[[^\\"]+]]) :push()
   :_ [["]] :as "LiteralString" :concat() :ret()
 
-string_lexer(_:lexer "sq_string")
+string_lexer(_:lexer "single_quoted_string")
   :_ (RE[[[^\\']+]]) :push()
   :_ [[']] :as "LiteralString" :concat() :ret()
 
