@@ -1,5 +1,5 @@
 io.write [[
-CRLF
+ABC
 ]]
 io.write [====[
 ]==]
@@ -7,7 +7,7 @@ io.write [====[
 
 ]==]
 ]====]
-io.write [[ABC
+io.write [[DEF
 
 
-DEF]]
+GHI]]

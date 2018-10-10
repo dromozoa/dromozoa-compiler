@@ -1,1 +1,1 @@
-io.write [[CR]]
+io.write [[ABC]]io.write [====[]==]]==]]====]io.write [[DEFGHI]]
