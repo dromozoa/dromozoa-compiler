@@ -19,6 +19,7 @@ local element = require "dromozoa.dom.element"
 local html5_document = require "dromozoa.dom.html5_document"
 local space_separated = require "dromozoa.dom.space_separated"
 local graph = require "dromozoa.graph"
+local symbol_value = require "dromozoa.parser.symbol_value"
 local matrix3 = require "dromozoa.vecmath.matrix3"
 
 local _ = element
@@ -123,10 +124,13 @@ local function tree_to_html(self, tree_width, tree_height)
 
   local that = graph()
   local u_labels = {}
+  local u_values = {}
 
   for i = 1, #preorder_nodes do
     local node = preorder_nodes[i]
-    u_labels[that:add_vertex()] = symbol_names[node[0]]
+    local uid = that:add_vertex()
+    u_labels[uid] = symbol_names[node[0]]
+    u_values[uid] = symbol_value(node)
   end
 
   for i = 1, #preorder_nodes do
@@ -142,6 +146,12 @@ local function tree_to_html(self, tree_width, tree_height)
     u_labels = u_labels;
     u_max_text_length = 144;
   }
+
+  local u_paths = root[1]
+  for i = 1, #u_paths do
+    local path = u_paths[i]
+    path["data-value"] = u_values[path["data-uid"]]
+  end
 
   return _"div" {
     class = "tree";

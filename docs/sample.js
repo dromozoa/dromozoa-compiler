@@ -57,6 +57,14 @@
     }
   };
 
+  let click = function (uid) {
+    $(".active").removeClass("active");
+    $(".S" + uid).addClass("active");
+    let $path = $("g.u_paths > path[data-uid=" + uid + "]");
+    $path.addClass("active");
+    console.log(uid, $path.data("value"));
+  };
+
   $(function () {
     let $svg = $("svg");
     let hw = parseFloat($svg.attr("width")) * 0.5;
@@ -108,16 +116,11 @@
       b.translate_to(hw - v.x, hh - v.y);
       animation.t = false;
       requestAnimationFrame(animation_step);
-      $(".active").removeClass("active");
-      $(".S" + uid).addClass("active");
-      $("g.u_paths > path[data-uid=" + uid + "]").addClass("active");
+      click(uid);
     });
 
     $("g.u_texts > text").on("click", function () {
-      let uid = $(this).data("uid");
-      $(".active").removeClass("active");
-      $(".S" + uid).addClass("active");
-      $("g.u_paths > path[data-uid=" + uid + "]").addClass("active");
+      click($(this).data("uid"));
     });
 
     $svg.on("wheel", function ($ev) {
