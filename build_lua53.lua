@@ -142,9 +142,9 @@ _"chunk"
 
 _"block"
   :_ () {"statlist"}
-  :_ "retstat" {"statlist",1}
+  :_ "retstat" {["statlist"]={1}}
   :_ "statlist"
-  :_ "statlist" "retstat" {1,2}
+  :_ "statlist" "retstat" {[1]={2}}
 
 _"statlist"
   :_ "stat"
@@ -152,11 +152,11 @@ _"statlist"
 
 _"stat"
   :_ ";"
-  :_ "varlist" "=" "explist" {2,3,1}
+  :_ "varlist" "=" "explist"
   :_ "functioncall"
   :_ "label"
   :_ "break"
-  :_ "goto" "Name" :attr(2, "label")
+  :_ "goto" "Name"
   :_ "do" "block" "end" :attr "scope" {1,2}
   :_ "while" "exp" "do" "block" "end" :attr "scope" :attr "loop" {1,2,4}
   :_ "repeat" "block" "until" "exp" :attr "scope" :attr "loop" {1,2,4}
@@ -166,17 +166,17 @@ _"stat"
   :_ "for" "namelist" "in" "explist" "do" "block" "end" :attr "scope" :attr "loop" {1,4,2,6}
   :_ "function" "funcname" "funcbody" {2,3}
   :_ "local" "function" "Name" "funcbody" :attr(3, "decl") {1,3,4}
-  :_ "local" "namelist"  {1,"explist",2}
+  :_ "local" "namelist"
   :_ "local" "namelist" "=" "explist" {1,4,2}
 
 _"retstat"
-  :_ "return" {}
-  :_ "return" ";" {}
-  :_ "return" "explist" {2}
-  :_ "return" "explist" ";" {2}
+  :_ "return" {["stat"]={1}}
+  :_ "return" ";" {["stat"]={1}}
+  :_ "return" "explist" {["stat"]={1,2}}
+  :_ "return" "explist" ";" {["stat"]={1,2}}
 
 _"label"
-  :_ "::" "Name" "::" :attr(2, "label") {2}
+  :_ "::" "Name" "::" {1,2}
 
 _"if_clauses"
   :_"if_clause"
