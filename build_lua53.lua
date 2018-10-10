@@ -228,13 +228,15 @@ _"exp"
   :_ "nil"
   :_ "false"
   :_ "true"
-  :_ "Numeral" -- IntegerConstant, FloatConstant
+  -- Numeral
+  :_ "IntegerConstant"
+  :_ "FloatConstant"
   :_ "LiteralString"
   :_ "..."
   :_ "functiondef"
   :_ "prefixexp"
   :_ "functioncall"
-  :_ "tableconstructor" -- fieldlist
+  :_ "tableconstructor"
   -- binop
   :_ "exp" "+" "exp" {2,1,3} :attr("binop", "ADD")
   :_ "exp" "-" "exp" {2,1,3} :attr("binop", "SUB")
@@ -284,7 +286,7 @@ _"functiondef"
   :_ "function" "funcbody" {2}
 
 _"funcbody"
-  :_ "(" "parlist" ")" "block" "end" :attr "proto" :attr "scope" :attr(5, "funcbody_end") {2,4}
+  :_ "(" "parlist" ")" "block" "end" :attr "proto" :attr "scope" {2,4}
 
 _"parlist"
   :_ () {"namelist"}
@@ -302,17 +304,13 @@ _"fieldlist"
   :_ "fieldlist" "fieldsep" "field" {[1]={3}}
 
 _"field"
-  :_ "[" "exp" "]" "=" "exp" {5,2}
-  :_ "Name" "=" "exp" {3,1}
+  :_ "[" "exp" "]" "=" "exp" {2,5}
+  :_ "Name" "=" "exp" {1,3}
   :_ "exp"
 
 _"fieldsep"
   :_ ","
   :_ ";"
-
-_"Numeral"
-  :_ "IntegerConstant" {[1]={}}
-  :_ "FloatConstant" {[1]={}}
 
 local lexer, grammar = _:build()
 local parser, conflicts = grammar:lr1_construct_table(grammar:lalr1_items())
