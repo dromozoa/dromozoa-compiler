@@ -103,20 +103,22 @@
 
     $(".S").on("click", function () {
       let uid = $(this).data("uid");
-      let $text = $("g.u_texts > text[data-uid=" + uid + "]");
-      let v = {
-        x: parseFloat($text.attr("x")),
-        y: parseFloat($text.attr("y")),
-      };
-      let a = animation.a;
-      let b = animation.b;
-      a.set(transform);
-      b.set(transform);
-      b.transform_vector(v);
-      b.translate_to(hw - v.x, hh - v.y);
-      animation.t = false;
-      requestAnimationFrame(animation_step);
-      click(uid);
+      if (uid) {
+        let $text = $("g.u_texts > text[data-uid=" + uid + "]");
+        let v = {
+          x: parseFloat($text.attr("x")),
+          y: parseFloat($text.attr("y")),
+        };
+        let a = animation.a;
+        let b = animation.b;
+        a.set(transform);
+        b.set(transform);
+        b.transform_vector(v);
+        b.translate_to(hw - v.x, hh - v.y);
+        animation.t = false;
+        requestAnimationFrame(animation_step);
+        click(uid);
+      }
     });
 
     $("g.u_texts > text").on("click", function () {

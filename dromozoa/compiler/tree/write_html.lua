@@ -174,7 +174,7 @@ return function (self, out)
     head;
     _"body" {
       source_to_html(self);
-      tree_to_html(self, 640, 640);
+      tree_to_html(self, 800, 640);
     };
   })
 
