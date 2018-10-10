@@ -96,18 +96,22 @@ _:lexer()
   :_ ".."
   :_ "..."
   :_ (RE[[[A-Za-z_]\w*]]) :as "Name"
-  :_ ("[[\n" * (RE[[.*]] - RE[[.*\]\].*]]) * "]]") :as "LiteralString" :sub(4, -3)
-  :_ ("[[" * (RE[[.*]] - RE[[.*\]\].*]]) * "]]") :as "LiteralString" :sub(3, -3)
+  :_ ("[[" * (RE[[.*]] - RE[[.*\]\].*]]) * "]]") :as "LiteralString" :sub(3, -3) :normalize_eol()
+
   :_ [["]] :skip() :call "dq_string" :mark()
   :_ [[']] :skip() :call "sq_string" :mark()
-  :_ (RE[[\[=*\[\n]]) :sub(2, -3) :join("]", "]") :hold() :skip() :call "long_string" :mark()
+
   :_ (RE[[\[=*\[]]) :sub(2, -2) :join("]", "]") :hold() :skip() :call "long_string" :mark()
+
   :_ (RE[[\d+]]) :as "IntegerConstant"
   :_ (RE[[0[xX][0-9A-Fa-f]+]]) :as "IntegerConstant"
+
   :_ (RE[[(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?]]) :as "FloatConstant"
   :_ (RE[[0[xX]([0-9A-Fa-f]+(\.[0-9A-Fa-f]*)?|\.[0-9A-Fa-f]+)([pP][+-]?\d+)?]]) :as "FloatConstant"
+
   :_ ("--[[" * (RE[[.*]] - RE[[.*\]\].*]]) * "]]") :skip()
   :_ (RE[[--\[=+\[]]) :sub(4, -2) :join("]", "]") :hold() :skip() :call "long_comment"
+
   :_ ("--" * (RE[[[^\n]*]] - RE[[\[=*\[.*]]) * "\n") : skip()
 
 string_lexer(_:lexer "dq_string")
@@ -120,7 +124,7 @@ string_lexer(_:lexer "sq_string")
 
 _:search_lexer "long_string"
   :when() :as "LiteralString" :concat() :ret()
-  :otherwise() :push()
+  :otherwise() :normalize_eol() :push()
 
 _:search_lexer "long_comment"
   :when() :skip() :ret()

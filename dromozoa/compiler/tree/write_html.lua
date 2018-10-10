@@ -124,13 +124,9 @@ local function tree_to_html(self, tree_width, tree_height)
 
   local that = graph()
   local u_labels = {}
-  local u_values = {}
 
   for i = 1, #preorder_nodes do
-    local node = preorder_nodes[i]
-    local uid = that:add_vertex()
-    u_labels[uid] = symbol_names[node[0]]
-    u_values[uid] = symbol_value(node)
+    u_labels[that:add_vertex()] = symbol_names[preorder_nodes[i][0]]
   end
 
   for i = 1, #preorder_nodes do
@@ -149,8 +145,7 @@ local function tree_to_html(self, tree_width, tree_height)
 
   local u_paths = root[1]
   for i = 1, #u_paths do
-    local path = u_paths[i]
-    path["data-value"] = u_values[path["data-uid"]]
+    u_paths[i]["data-value"] = symbol_value(preorder_nodes[i])
   end
 
   return _"div" {
