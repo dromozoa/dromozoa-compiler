@@ -93,8 +93,9 @@
       y: 0,
     };
 
-    $(".S").click(function () {
-      let $text = $("g.u_texts > text[data-uid=" + $(this).data("uid") + "]");
+    $(".S").on("click", function () {
+      let uid = $(this).data("uid");
+      let $text = $("g.u_texts > text[data-uid=" + uid + "]");
       let v = {
         x: parseFloat($text.attr("x")),
         y: parseFloat($text.attr("y")),
@@ -107,6 +108,16 @@
       b.translate_to(hw - v.x, hh - v.y);
       animation.t = false;
       requestAnimationFrame(animation_step);
+      $(".active").removeClass("active");
+      $(".S" + uid).addClass("active");
+      $("g.u_paths > path[data-uid=" + uid + "]").addClass("active");
+    });
+
+    $("g.u_texts > text").on("click", function () {
+      let uid = $(this).data("uid");
+      $(".active").removeClass("active");
+      $(".S" + uid).addClass("active");
+      $("g.u_paths > path[data-uid=" + uid + "]").addClass("active");
     });
 
     $svg.on("wheel", function ($ev) {
