@@ -42,7 +42,6 @@ end
 -- https://www.lua.org/manual/5.3/manual.html#3.1
 _:lexer()
   :_ (RE[[\s+]]) :skip()
-  :_ (RE[[[A-Za-z_]\w*]]) :as "Name"
   :_ "and"
   :_ "break"
   :_ "do"
@@ -98,6 +97,7 @@ _:lexer()
   :_ "."
   :_ ".."
   :_ "..."
+  :_ (RE[[[A-Za-z_]\w*]]) :as "Name"
   :_ [["]] :skip() :call "double_quoted_string" :mark()
   :_ [[']] :skip() :call "single_quoted_string" :mark()
   :_ (RE[[\[=*\[]]) :sub(2, -2) :join("]", "]") :hold() :skip() :call "long_string" :mark()
