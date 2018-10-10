@@ -117,7 +117,7 @@ local function source_to_html(self)
   return html
 end
 
-local function tree_to_html(self)
+local function tree_to_html(self, tree_width, tree_height)
   local symbol_names = self.symbol_names
   local preorder_nodes = self.preorder_nodes
 
@@ -143,19 +143,16 @@ local function tree_to_html(self)
     u_max_text_length = 144;
   }
 
-  local width = 640 -- root["data-width"];
-  local height = 640 -- root["data-height"];
-
   return _"div" {
     class = "tree";
     _"svg" {
       version = "1.1";
-      width = width;
-      height = height;
+      width = tree_width;
+      height = tree_height;
       _"rect" {
         class = "viewport";
-        width = width;
-        height = height;
+        width = tree_width;
+        height = tree_height;
         fill = "transparent";
         stroke = "none";
       };
@@ -172,7 +169,7 @@ return function (self, out)
     head;
     _"body" {
       source_to_html(self);
-      tree_to_html(self);
+      tree_to_html(self, 640, 640);
     };
   })
 
