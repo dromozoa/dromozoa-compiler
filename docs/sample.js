@@ -1,8 +1,9 @@
 (function (root) {
   let parseFloat = root.parseFloat;
+  let requestAnimationFrame = root.requestAnimationFrame;
   let pow = root.Math.pow;
   let $ = root.jQuery;
-  let duration = 2000;
+  let duration = 400;
 
   let Transform = class {
     constructor() {
@@ -14,6 +15,22 @@
 
     toString() {
       return "translate(" + this.x + " " + this.y + ") scale(" + this.s + ")";
+    }
+
+    set(that) {
+      this.k = that.k;
+      this.s = that.s;
+      this.x = that.x;
+      this.y = that.y;
+    }
+
+    interpolate(a, b, t) {
+      let alpha = t;
+      let beta = 1 - t;
+      this.k = a.k * beta + b.k * alpha;
+      this.s = a.s * beta + b.s * alpha;
+      this.x = a.x * beta + b.x * alpha;
+      this.y = a.y * beta + b.y * alpha;
     }
 
     translate(x, y) {
@@ -47,6 +64,29 @@
     let $view = $("g.view");
 
     let transform = new Transform();
+
+    let animation = {
+      t: false,
+      a: new Transform(),
+      b: new Transform(),
+    };
+
+    let animation_step = function (t) {
+      if (!animation.t) {
+        animation.t = t;
+      }
+      let d = t - animation.t;
+      if (d < duration) {
+        transform.interpolate(animation.a, animation.b, d / duration);
+        $view.attr("transform", transform.toString());
+        requestAnimationFrame(animation_step);
+      } else {
+        animation.t = false;
+        transform.set(animation.b);
+        $view.attr("transform", transform.toString());
+      }
+    };
+
     let mouse = {
       active: false,
       x: 0,
@@ -59,9 +99,14 @@
         x: parseFloat($text.attr("x")),
         y: parseFloat($text.attr("y")),
       };
-      transform.transform_vector(v);
-      transform.translate_to(hw - v.x, hh - v.y);
-      $view.attr("transform", transform.toString());
+      let a = animation.a;
+      let b = animation.b;
+      a.set(transform);
+      b.set(transform);
+      b.transform_vector(v);
+      b.translate_to(hw - v.x, hh - v.y);
+      animation.t = false;
+      requestAnimationFrame(animation_step);
     });
 
     $svg.on("wheel", function ($ev) {
