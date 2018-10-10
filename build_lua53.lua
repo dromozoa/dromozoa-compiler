@@ -141,15 +141,14 @@ _"chunk"
   :_ "block"
 
 _"block"
-  :_ () {"stats"}
-  :_ "retstat" {"stats",1}
-  :_ "stats"
-  :_ "stats" "retstat" {1,2}
+  :_ () {"statlist"}
+  :_ "retstat" {"statlist",1}
+  :_ "statlist"
+  :_ "statlist" "retstat" {1,2}
 
--- [TODO] statlist?
-_"stats"
+_"statlist"
   :_ "stat"
-  :_ "stats" "stat" {[1]={2}}
+  :_ "statlist" "stat" {[1]={2}}
 
 _"stat"
   :_ ";"
