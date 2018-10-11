@@ -28,8 +28,12 @@ for i in test/syntax/*.lua
 do
   j=`expr "X$i" : 'X.*/\([^/]*\)\.lua'`
   case X$# in
-    X0) lua test/write_html.lua "$i" "result/syntax/$j.html";;
-    *) "$@" test/write_html.lua "$i" "result/syntax/$j.html";;
+    X0)
+      lua "$i"
+      lua test/write_html.lua "$i" "result/syntax/$j.html";;
+    *)
+      "$@" "$i"
+      "$@" test/write_html.lua "$i" "result/syntax/$j.html";;
   esac
   printf '<li><a href="%s.html">%s</a></li>\n' "$j" "$j" >>result/syntax/index.html
 done
