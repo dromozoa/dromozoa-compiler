@@ -197,8 +197,8 @@ _"else_clause"
   :_ "else" "block"
 
 _"funcname"
-  :_ "funcnames"
-  :_ "funcnames" ":" "Name"
+  :_ "funcnames" {["funcnames"]={1}}
+  :_ "funcnames" ":" "Name" {["funcnames"]={1,2,3}}
 
 _"funcnames"
   :_ "Name"
