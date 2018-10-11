@@ -39,7 +39,6 @@ local function string_lexer(lexer)
     :_ (RE[[\\u\{[0-9A-Fa-f]+\}]]) :utf8(4, -2) :push()
 end
 
--- https://www.lua.org/manual/5.3/manual.html#3.1
 _:lexer()
   :_ (RE[[\s+]]) :skip()
   :_ "and"
@@ -218,11 +217,11 @@ _"var"
 
 _"namelist"
   :_ "Name"
-  :_ "namelist" "," "Name"
+  :_ "namelist" "," "Name" {[1]={3}}
 
 _"explist"
   :_ "exp"
-  :_ "explist" "," "exp"
+  :_ "explist" "," "exp" {[1]={3}}
 
 _"exp"
   :_ "nil"
@@ -277,35 +276,35 @@ _"functioncall"
   :_ "functioncall" ":" "Name" "args"
 
 _"args"
-  :_ "(" ")"
-  :_ "(" "explist" ")"
+  :_ "(" ")" {"explist"}
+  :_ "(" "explist" ")" {2}
   :_ "tableconstructor"
   :_ "LiteralString"
 
 _"functiondef"
-  :_ "function" "funcbody"
+  :_ "function" "funcbody" {2}
 
 _"funcbody"
-  :_ "(" "parlist" ")" "block" "end"
+  :_ "(" ")" "block" "end" {"parlist",3}
+  :_ "(" "parlist" ")" "block" "end" {2,4}
 
 _"parlist"
-  :_ ()
   :_ "namelist"
-  :_ "namelist" "," "..."
+  :_ "namelist" "," "..." {1,3}
   :_ "..."
 
 _"tableconstructor"
-  :_ "{" "}"
-  :_ "{" "fieldlist" "}"
-  :_ "{" "fieldlist" "fieldsep" "}"
+  :_ "{" "}" {}
+  :_ "{" "fieldlist" "}" {2}
+  :_ "{" "fieldlist" "fieldsep" "}" {2}
 
 _"fieldlist"
   :_ "field"
-  :_ "fieldlist" "fieldsep" "field"
+  :_ "fieldlist" "fieldsep" "field" {[1]={3}}
 
 _"field"
-  :_ "[" "exp" "]" "=" "exp"
-  :_ "Name" "=" "exp"
+  :_ "[" "exp" "]" "=" "exp" {2,5}
+  :_ "Name" "=" "exp" {1,3}
   :_ "exp"
 
 _"fieldsep"
