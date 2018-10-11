@@ -24,45 +24,16 @@ local matrix3 = require "dromozoa.vecmath.matrix3"
 
 local _ = element
 
-local style = _"style" { [[
-@import url('https://fonts.googleapis.com/css?family=Roboto+Mono');
-
-body {
-  font-family: 'Roboto Mono', monospace;
-  white-space: pre;
-}
-
-text {
-  text-anchor: middle;
-  dominant-baseline: central;
-}
-
-.u_paths {
-  fill: none;
-  stroke: #000;
-}
-
-.u_texts {
-  fill: #000;
-  stroke: none;
-}
-
-.e_paths {
-  fill: none;
-  stroke: #000;
-}
-]]}
-
 local head = _"head" {
   _"meta" {
     charset = "UTF-8";
   };
   _"title" {
-    "tree";
+    "dromozoa-compiler";
   };
-  _"link" { rel = "stylesheet"; href = "docs/sample.css" };
+  _"link" { rel = "stylesheet"; href = "dromozoa-compiler.css" };
   _"script" { src = "https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" };
-  _"script" { src = "docs/sample.js" };
+  _"script" { src = "dromozoa-compiler.js" };
 }
 
 local function source_to_html(self)
