@@ -170,9 +170,9 @@ _"stat"
 
 _"retstat"
   :_ "return"
-  :_ "return" ";"
-  :_ "return" "explist"
-  :_ "return" "explist" ";"
+  :_ "return" ";" {1}
+  :_ "return" "explist" {1,2}
+  :_ "return" "explist" ";" {1,2}
 
 _"label"
   :_ "::" "Name" "::"
