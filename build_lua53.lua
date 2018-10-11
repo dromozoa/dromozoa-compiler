@@ -270,10 +270,10 @@ _"prefixexp"
   :_ "(" "exp" ")"
 
 _"functioncall"
-  :_ "prefixexp" "args"
-  :_ "prefixexp" ":" "Name" "args"
-  :_ "functioncall" "args"
-  :_ "functioncall" ":" "Name" "args"
+  :_ "prefixexp" "args" {1,2}
+  :_ "prefixexp" ":" "Name" "args" {1,3,4}
+  :_ "functioncall" "args" {1,2}
+  :_ "functioncall" ":" "Name" "args" {1,3,4}
 
 _"args"
   :_ "(" ")" {"explist"}
@@ -291,10 +291,10 @@ _"funcbody"
 _"parlist"
   :_ "namelist"
   :_ "namelist" "," "..." {1,3}
-  :_ "..."
+  :_ "..." {"namelist",1}
 
 _"tableconstructor"
-  :_ "{" "}" {}
+  :_ "{" "}" {"fieldlist"}
   :_ "{" "fieldlist" "}" {2}
   :_ "{" "fieldlist" "fieldsep" "}" {2}
 
