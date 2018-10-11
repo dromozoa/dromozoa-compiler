@@ -147,7 +147,7 @@ _"block"
 
 _"statlist"
   :_ "stat"
-  :_ "statlist" "stat"
+  :_ "statlist" "stat" {[1]={2}}
 
 _"stat"
   :_ ";"
