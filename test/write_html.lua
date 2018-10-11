@@ -35,6 +35,10 @@ if not terminal_nodes then
 end
 local accepted_node, message, i = parser(terminal_nodes)
 if not accepted_node then
+  for i = 1, #terminal_nodes do
+    local node = terminal_nodes[i]
+    print(parser.symbol_names[node[0]], node.p, node.i, node.j)
+  end
   error(error_message(message, source, i, source_file))
 end
 

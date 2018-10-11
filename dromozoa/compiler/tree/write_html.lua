@@ -19,6 +19,7 @@ local element = require "dromozoa.dom.element"
 local html5_document = require "dromozoa.dom.html5_document"
 local space_separated = require "dromozoa.dom.space_separated"
 local graph = require "dromozoa.graph"
+local symbol_value = require "dromozoa.parser.symbol_value"
 local matrix3 = require "dromozoa.vecmath.matrix3"
 
 local _ = element
@@ -117,7 +118,7 @@ local function source_to_html(self)
   return html
 end
 
-local function tree_to_html(self)
+local function tree_to_html(self, tree_width, tree_height)
   local symbol_names = self.symbol_names
   local preorder_nodes = self.preorder_nodes
 
@@ -125,8 +126,7 @@ local function tree_to_html(self)
   local u_labels = {}
 
   for i = 1, #preorder_nodes do
-    local node = preorder_nodes[i]
-    u_labels[that:add_vertex()] = symbol_names[node[0]]
+    u_labels[that:add_vertex()] = symbol_names[preorder_nodes[i][0]]
   end
 
   for i = 1, #preorder_nodes do
@@ -143,19 +143,21 @@ local function tree_to_html(self)
     u_max_text_length = 144;
   }
 
-  local width = 640 -- root["data-width"];
-  local height = 640 -- root["data-height"];
+  local u_paths = root[1]
+  for i = 1, #u_paths do
+    u_paths[i]["data-value"] = symbol_value(preorder_nodes[i])
+  end
 
   return _"div" {
     class = "tree";
     _"svg" {
       version = "1.1";
-      width = width;
-      height = height;
+      width = tree_width;
+      height = tree_height;
       _"rect" {
         class = "viewport";
-        width = width;
-        height = height;
+        width = tree_width;
+        height = tree_height;
         fill = "transparent";
         stroke = "none";
       };
@@ -172,7 +174,7 @@ return function (self, out)
     head;
     _"body" {
       source_to_html(self);
-      tree_to_html(self);
+      tree_to_html(self, 800, 640);
     };
   })
 

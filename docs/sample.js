@@ -57,6 +57,14 @@
     }
   };
 
+  let click = function (uid) {
+    $(".active").removeClass("active");
+    $(".S" + uid).addClass("active");
+    let $path = $("g.u_paths > path[data-uid=" + uid + "]");
+    $path.addClass("active");
+    console.log(uid, $path.data("value"));
+  };
+
   $(function () {
     let $svg = $("svg");
     let hw = parseFloat($svg.attr("width")) * 0.5;
@@ -95,29 +103,26 @@
 
     $(".S").on("click", function () {
       let uid = $(this).data("uid");
-      let $text = $("g.u_texts > text[data-uid=" + uid + "]");
-      let v = {
-        x: parseFloat($text.attr("x")),
-        y: parseFloat($text.attr("y")),
-      };
-      let a = animation.a;
-      let b = animation.b;
-      a.set(transform);
-      b.set(transform);
-      b.transform_vector(v);
-      b.translate_to(hw - v.x, hh - v.y);
-      animation.t = false;
-      requestAnimationFrame(animation_step);
-      $(".active").removeClass("active");
-      $(".S" + uid).addClass("active");
-      $("g.u_paths > path[data-uid=" + uid + "]").addClass("active");
+      if (uid) {
+        let $text = $("g.u_texts > text[data-uid=" + uid + "]");
+        let v = {
+          x: parseFloat($text.attr("x")),
+          y: parseFloat($text.attr("y")),
+        };
+        let a = animation.a;
+        let b = animation.b;
+        a.set(transform);
+        b.set(transform);
+        b.transform_vector(v);
+        b.translate_to(hw - v.x, hh - v.y);
+        animation.t = false;
+        requestAnimationFrame(animation_step);
+        click(uid);
+      }
     });
 
     $("g.u_texts > text").on("click", function () {
-      let uid = $(this).data("uid");
-      $(".active").removeClass("active");
-      $(".S" + uid).addClass("active");
-      $("g.u_paths > path[data-uid=" + uid + "]").addClass("active");
+      click($(this).data("uid"));
     });
 
     $svg.on("wheel", function ($ev) {
