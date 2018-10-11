@@ -15,17 +15,40 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-function f() end
-local a = { f = f, b = { f = f } }
-function f1() return f end
-function f2() return a end
+function f(...)
+  local v = {
+    nil;
+    false;
+    true;
+    ...;
+  }
 
-v = {
-  Name;
-  (42);
-  f();
-  a:f();
-  a.b:f();
-  f1()();
-  f2():f();
-}
+  local v = {
+    3;
+    345;
+    0xff;
+    0xBEBADA;
+  }
+
+  local v = {
+    3.0;
+    3.1416;
+    314.16e-2;
+    0.31416E1;
+    34e1;
+    0x0.1E;
+    0xA23p-4;
+    0X1.921FB54442D18P+1;
+  }
+
+  local v = {
+    "";
+    '';
+    [[]];
+    "test\n";
+    "\x41\x42\x43";
+    "abc\z
+     def";
+    "\xE3\x81\x82\227\129\132\u{3046}";
+  }
+end
