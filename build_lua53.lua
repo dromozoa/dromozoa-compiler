@@ -163,7 +163,7 @@ _"stat"
   :_ "for" "Name" "=" "exp" "," "exp" "do" "block" "end"
   :_ "for" "Name" "=" "exp" "," "exp" "," "exp" "do" "block" "end"
   :_ "for" "namelist" "in" "explist" "do" "block" "end"
-  :_ "function" "funcname" "funcbody"
+  :_ "function" "funcname_" "funcbody"
   :_ "local" "function" "Name" "funcbody"
   :_ "local" "namelist"
   :_ "local" "namelist" "=" "explist"
@@ -196,13 +196,13 @@ _"elseif_clause"
 _"else_clause"
   :_ "else" "block"
 
-_"funcname"
-  :_ "funcnames" {["funcnames"]={1}}
-  :_ "funcnames" ":" "Name" {["funcnames"]={1,2,3}}
+_"funcname_"
+  :_ "funcname" {[1]={}}
+  :_ "funcname" ":" "Name" {["funcname"]={1,2,3}}
 
-_"funcnames"
+_"funcname"
   :_ "Name"
-  :_ "funcnames" "." "Name"
+  :_ "funcname" "." "Name"
 
 _"varlist"
   :_ "var"
