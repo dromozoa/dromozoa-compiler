@@ -210,10 +210,10 @@ _"varlist"
 
 _"var"
   :_ "Name"
-  :_ "prefixexp" "[" "exp" "]" {1,3}
-  :_ "prefixexp" "." "Name" {1,3}
-  :_ "functioncall" "[" "exp" "]" {1,3}
-  :_ "functioncall" "." "Name" {1,3}
+  :_ "prefixexp" "[" "exp" "]"
+  :_ "prefixexp" "." "Name"
+  :_ "functioncall" "[" "exp" "]"
+  :_ "functioncall" "." "Name"
 
 _"namelist"
   :_ "Name"
@@ -267,14 +267,15 @@ _"exp"
 -- prefixexp without functioncall
 _"prefixexp"
   :_ "var"
-  :_ "(" "exp" ")" {2}
+  :_ "(" "exp" ")"
 
 _"functioncall"
-  :_ "prefixexp" "args" {1,2}
-  :_ "prefixexp" ":" "Name" "args" {1,3,4}
-  :_ "functioncall" "args" {1,2}
-  :_ "functioncall" ":" "Name" "args" {1,3,4}
+  :_ "prefixexp" "args"
+  :_ "prefixexp" ":" "Name" "args"
+  :_ "functioncall" "args"
+  :_ "functioncall" ":" "Name" "args"
 
+-- TODO ???
 _"args"
   :_ "(" ")" {"explist"}
   :_ "(" "explist" ")" {2}
@@ -284,6 +285,7 @@ _"args"
 _"functiondef"
   :_ "function" "funcbody" {2}
 
+-- TODO ???
 _"funcbody"
   :_ "(" ")" "block" "end" {"parlist",3}
   :_ "(" "parlist" ")" "block" "end" {2,4}
@@ -302,9 +304,10 @@ _"fieldlist"
   :_ "field"
   :_ "fieldlist" "fieldsep" "field" {[1]={3}}
 
+-- TODO ???
 _"field"
-  :_ "[" "exp" "]" "=" "exp" {2,5}
-  :_ "Name" "=" "exp" {1,3}
+  :_ "[" "exp" "]" "=" "exp"
+  :_ "Name" "=" "exp"
   :_ "exp"
 
 _"fieldsep"
