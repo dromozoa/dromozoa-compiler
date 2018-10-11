@@ -140,8 +140,8 @@ _"chunk"
   :_ "block"
 
 _"block"
-  :_ ()
-  :_ "retstat"
+  :_ () {"statlist"}
+  :_ "retstat" {"statlist",1}
   :_ "statlist"
   :_ "statlist" "retstat"
 
@@ -163,7 +163,7 @@ _"stat"
   :_ "for" "Name" "=" "exp" "," "exp" "do" "block" "end"
   :_ "for" "Name" "=" "exp" "," "exp" "," "exp" "do" "block" "end"
   :_ "for" "namelist" "in" "explist" "do" "block" "end"
-  :_ "function" "funcname_" "funcbody"
+  :_ "function" "funcname_impl" "funcbody"
   :_ "local" "function" "Name" "funcbody"
   :_ "local" "namelist"
   :_ "local" "namelist" "=" "explist"
@@ -196,7 +196,7 @@ _"elseif_clause"
 _"else_clause"
   :_ "else" "block"
 
-_"funcname_"
+_"funcname_impl"
   :_ "funcname" {[1]={}}
   :_ "funcname" ":" "Name" {["funcname"]={1,2,3}}
 
@@ -287,8 +287,8 @@ _"functiondef"
 
 -- TODO ???
 _"funcbody"
-  :_ "(" ")" "block" "end" {"parlist",3}
-  :_ "(" "parlist" ")" "block" "end" {2,4}
+  :_ "(" ")" "block" "end" {1,"parlist",2,3,4}
+  :_ "(" "parlist" ")" "block" "end"
 
 _"parlist"
   :_ "namelist"
