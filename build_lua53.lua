@@ -285,15 +285,14 @@ _"args"
 _"functiondef"
   :_ "function" "funcbody" {2}
 
--- TODO ???
 _"funcbody"
-  :_ "(" ")" "block" "end" {1,"parlist",2,3,4}
-  :_ "(" "parlist" ")" "block" "end"
+  :_ "(" ")" "block" "end" {"parlist",3}
+  :_ "(" "parlist" ")" "block" "end" {2,4}
 
 _"parlist"
   :_ "namelist"
-  :_ "namelist" "," "..." :attr "vararg" {1,3}
-  :_ "..." :attr "vararg" {"namelist",1}
+  :_ "namelist" "," "..." :attr "vararg" {1}
+  :_ "..." :attr "vararg" {}
 
 _"tableconstructor"
   :_ "{" "}" {"fieldlist"}
