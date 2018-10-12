@@ -275,7 +275,6 @@ _"functioncall"
   :_ "functioncall" "args"
   :_ "functioncall" ":" "Name" "args"
 
--- TODO ???
 _"args"
   :_ "(" ")" {"explist"}
   :_ "(" "explist" ")" {2}
