@@ -62,7 +62,14 @@
     $(".S" + uid).addClass("active");
     let $path = $("g.u_paths > path[data-uid=" + uid + "]");
     $path.addClass("active");
-    console.log(uid, $path.data("value"));
+    let data = [];
+    $.each($path.get(0).attributes, function (_, attr) {
+      let name = attr.name;
+      if (name.startsWith("data-")) {
+        data.push([ name.substr(5), attr.value ]);
+      }
+    });
+    console.log(data);
   };
 
   $(function () {
@@ -102,7 +109,7 @@
     };
 
     $(".S").on("click", function () {
-      let uid = $(this).data("uid");
+      let uid = $(this).attr("data-uid");
       if (uid) {
         let $text = $("g.u_texts > text[data-uid=" + uid + "]");
         let v = {
@@ -122,7 +129,7 @@
     });
 
     $("g.u_texts > text").on("click", function () {
-      click($(this).data("uid"));
+      click($(this).attr("data-uid"));
     });
 
     $svg.on("wheel", function ($ev) {

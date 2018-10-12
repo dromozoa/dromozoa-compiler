@@ -304,10 +304,9 @@ _"fieldlist"
   :_ "field"
   :_ "fieldlist" "fieldsep" "field" {[1]={3}}
 
--- TODO ???
 _"field"
-  :_ "[" "exp" "]" "=" "exp"
-  :_ "Name" "=" "exp"
+  :_ "[" "exp" "]" "=" "exp" {2,5}
+  :_ "Name" "=" "exp" {1,3}
   :_ "exp"
 
 _"fieldsep"
