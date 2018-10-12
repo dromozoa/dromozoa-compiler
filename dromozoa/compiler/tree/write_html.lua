@@ -24,6 +24,12 @@ local matrix3 = require "dromozoa.vecmath.matrix3"
 
 local _ = element
 
+local keys = {
+  "binop";
+  "unop";
+  "vararg";
+}
+
 local head = _"head" {
   _"meta" {
     charset = "UTF-8";
@@ -116,7 +122,13 @@ local function tree_to_html(self, tree_width, tree_height)
 
   local u_paths = root[1]
   for i = 1, #u_paths do
-    u_paths[i]["data-value"] = symbol_value(preorder_nodes[i])
+    local node = preorder_nodes[i]
+    local path = u_paths[i]
+    path["data-value"] = symbol_value(node)
+    for j = 1, #keys do
+      local key = keys[j]
+      path["data-" .. key] = node[key]
+    end
   end
 
   return _"div" {
