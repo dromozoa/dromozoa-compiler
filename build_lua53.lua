@@ -175,7 +175,7 @@ _"retstat"
   :_ "return" "explist" ";" {1,2}
 
 _"label"
-  :_ "::" "Name" "::"
+  :_ "::" "Name" "::" {2}
 
 _"if_clauses"
   :_"if_clause"
