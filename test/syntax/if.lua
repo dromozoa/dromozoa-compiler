@@ -60,3 +60,19 @@ elseif c3 then
 else
   v = 0
 end
+
+if c1 then
+  v = 1
+  if c2 then
+    v = 2
+    if c3 then
+      v = 3
+    else
+      v = 0
+    end
+  else
+    v = 0
+  end
+else
+  v = 0
+end
