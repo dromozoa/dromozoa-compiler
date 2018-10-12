@@ -28,6 +28,7 @@ local keys = {
   "binop";
   "unop";
   "vararg";
+  "self";
 }
 
 local head = _"head" {

@@ -23,6 +23,6 @@ function a.b.f() end
 function a.b.c.f() end
 
 function f() end
-function a.g() end
+function a:g() end
 function a.b:g() end
 function a.b.c:g() end
