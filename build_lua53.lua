@@ -208,13 +208,12 @@ _"varlist"
   :_ "var"
   :_ "varlist" "," "var" {[1]={3}}
 
--- TODO ???
 _"var"
   :_ "Name"
-  :_ "prefixexp" "[" "exp" "]"
-  :_ "prefixexp" "." "Name"
-  :_ "functioncall" "[" "exp" "]"
-  :_ "functioncall" "." "Name"
+  :_ "prefixexp" "[" "exp" "]" {1,3}
+  :_ "prefixexp" "." "Name" {1,3}
+  :_ "functioncall" "[" "exp" "]" {1,3}
+  :_ "functioncall" "." "Name" {1,3}
 
 _"namelist"
   :_ "Name"
@@ -270,12 +269,11 @@ _"prefixexp"
   :_ "var"
   :_ "(" "exp" ")" {2}
 
--- TODO ???
 _"functioncall"
   :_ "prefixexp" "args"
-  :_ "prefixexp" ":" "Name" "args"
+  :_ "prefixexp" ":" "Name" "args" {1,3,4}
   :_ "functioncall" "args"
-  :_ "functioncall" ":" "Name" "args"
+  :_ "functioncall" ":" "Name" "args" {1,3,4}
 
 _"args"
   :_ "(" ")" {"explist"}
