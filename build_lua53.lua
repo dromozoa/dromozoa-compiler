@@ -159,11 +159,11 @@ _"stat"
   :_ "do" "block" "end"
   :_ "while" "exp" "do" "block" "end"
   :_ "repeat" "block" "until" "exp"
-  :_ "if_clauses" "end"
+  :_ "conditional" "end"
   :_ "for" "Name" "=" "exp" "," "exp" "do" "block" "end"
   :_ "for" "Name" "=" "exp" "," "exp" "," "exp" "do" "block" "end"
   :_ "for" "namelist" "in" "explist" "do" "block" "end"
-  :_ "function" "funcname_impl" "funcbody"
+  :_ "function" "funcname_" "funcbody"
   :_ "local" "function" "Name" "funcbody"
   :_ "local" "namelist"
   :_ "local" "namelist" "=" "explist"
@@ -177,26 +177,26 @@ _"retstat"
 _"label"
   :_ "::" "Name" "::" {2}
 
-_"if_clauses"
-  :_"if_clause"
-  :_"if_clause" "else_clause"
-  :_"if_clause" "elseif_clauses"
+_"conditional"
+  :_"if_"
+  :_"if_" "else_"
+  :_"if_" "conditional_"
 
-_"elseif_clauses"
-  :_ "elseif_clause"
-  :_ "elseif_clause" "else_clause"
-  :_ "elseif_clause" "elseif_clauses"
+_"conditional_"
+  :_ "elseif_" {["conditional"]={1}}
+  :_ "elseif_" "else_" {["conditional"]={1,2}}
+  :_ "elseif_" "conditional_" {["conditional"]={1,2}}
 
-_"if_clause"
-  :_ "if" "exp" "then" "block"
+_"if_"
+  :_ "if" "exp" "then" "block" {[1]={2,4}}
 
-_"elseif_clause"
-  :_ "elseif" "exp" "then" "block"
+_"elseif_"
+  :_ "elseif" "exp" "then" "block" {["if"]={2,4}}
 
-_"else_clause"
-  :_ "else" "block"
+_"else_"
+  :_ "else" "block" {[1]={2}}
 
-_"funcname_impl"
+_"funcname_"
   :_ "funcname" {[1]={}}
   :_ "funcname" ":" "Name" :attr "self" {["funcname"]={1,3}}
 
