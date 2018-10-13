@@ -237,32 +237,32 @@ _"exp"
   :_ "functioncall"
   :_ "tableconstructor"
 -- binop
-  :_ "exp" "+"   "exp" {1,3} :attr("binop", "ADD")
-  :_ "exp" "-"   "exp" {1,3} :attr("binop", "SUB")
-  :_ "exp" "*"   "exp" {1,3} :attr("binop", "MUL")
-  :_ "exp" "/"   "exp" {1,3} :attr("binop", "DIV")
-  :_ "exp" "//"  "exp" {1,3} :attr("binop", "IDIV")
-  :_ "exp" "^"   "exp" {1,3} :attr("binop", "POW")
-  :_ "exp" "%"   "exp" {1,3} :attr("binop", "MOD")
-  :_ "exp" "&"   "exp" {1,3} :attr("binop", "BAND")
-  :_ "exp" "~"   "exp" {1,3} :attr("binop", "BXOR")
-  :_ "exp" "|"   "exp" {1,3} :attr("binop", "BOR")
-  :_ "exp" ">>"  "exp" {1,3} :attr("binop", "SHR")
-  :_ "exp" "<<"  "exp" {1,3} :attr("binop", "SHL")
-  :_ "exp" ".."  "exp" {1,3} :attr("binop", "CONCAT")
-  :_ "exp" "<"   "exp" {1,3} :attr("binop", "LT")
-  :_ "exp" "<="  "exp" {1,3} :attr("binop", "LE")
-  :_ "exp" ">"   "exp" {1,3} :attr("binop", "GT")
-  :_ "exp" ">="  "exp" {1,3} :attr("binop", "GE")
-  :_ "exp" "=="  "exp" {1,3} :attr("binop", "EQ")
-  :_ "exp" "~="  "exp" {1,3} :attr("binop", "NE")
-  :_ "exp" "and" "exp" {1,3} :attr("binop", "AND")
-  :_ "exp" "or"  "exp" {1,3} :attr("binop", "OR")
+  :_ "exp" "+"   "exp" {[2]={1,3}}
+  :_ "exp" "-"   "exp" {[2]={1,3}}
+  :_ "exp" "*"   "exp" {[2]={1,3}}
+  :_ "exp" "/"   "exp" {[2]={1,3}}
+  :_ "exp" "//"  "exp" {[2]={1,3}}
+  :_ "exp" "^"   "exp" {[2]={1,3}}
+  :_ "exp" "%"   "exp" {[2]={1,3}}
+  :_ "exp" "&"   "exp" {[2]={1,3}}
+  :_ "exp" "~"   "exp" {[2]={1,3}}
+  :_ "exp" "|"   "exp" {[2]={1,3}}
+  :_ "exp" ">>"  "exp" {[2]={1,3}}
+  :_ "exp" "<<"  "exp" {[2]={1,3}}
+  :_ "exp" ".."  "exp" {[2]={1,3}}
+  :_ "exp" "<"   "exp" {[2]={1,3}}
+  :_ "exp" "<="  "exp" {[2]={1,3}}
+  :_ "exp" ">"   "exp" {[2]={1,3}}
+  :_ "exp" ">="  "exp" {[2]={1,3}}
+  :_ "exp" "=="  "exp" {[2]={1,3}}
+  :_ "exp" "~="  "exp" {[2]={1,3}}
+  :_ "exp" "and" "exp" {[2]={1,3}}
+  :_ "exp" "or"  "exp" {[2]={1,3}}
 -- unop
-  :_ "-"   "exp" :prec "UNM"  {2} :attr("unop", "UNM")
-  :_ "not" "exp"              {2} :attr("unop", "NOT")
-  :_ "#"   "exp"              {2} :attr("unop", "LEN")
-  :_ "~"   "exp" :prec "BNOT" {2} :attr("unop", "BNOT")
+  :_ "-"   "exp" :prec "UNM"  {[1]={2}}
+  :_ "not" "exp"              {[1]={2}}
+  :_ "#"   "exp"              {[1]={2}}
+  :_ "~"   "exp" :prec "BNOT" {[1]={2}}
 
 -- prefixexp without functioncall
 _"prefixexp"
