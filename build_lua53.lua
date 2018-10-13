@@ -150,23 +150,23 @@ _"statlist"
   :_ "statlist" "stat" {[1]={2}}
 
 _"stat"
-  :_ ";"
-  :_ "varlist" "=" "explist"
-  :_ "functioncall"
+  :_ ";" {[1]={}}
+  :_ "varlist" "=" "explist" {[2]={1,3}}
+  :_ "functioncall" {[1]={}}
   :_ "label"
   :_ "break"
   :_ "goto" "Name"
   :_ "do" "block" "end"
   :_ "while" "exp" "do" "block" "end"
   :_ "repeat" "block" "until" "exp"
-  :_ "conditional" "end"
+  :_ "conditional" "end" {[1]={}}
   :_ "for" "Name" "=" "exp" "," "exp" "do" "block" "end"
   :_ "for" "Name" "=" "exp" "," "exp" "," "exp" "do" "block" "end"
   :_ "for" "namelist" "in" "explist" "do" "block" "end"
   :_ "function" "funcname_" "funcbody"
-  :_ "local" "function" "Name" "funcbody"
-  :_ "local" "namelist"
-  :_ "local" "namelist" "=" "explist"
+  :_ "local" "function" "Name" "funcbody" -- TODO ???
+  :_ "local" "namelist" {[1]={2}}
+  :_ "local" "namelist" "=" "explist" {[1]={2,4}}
 
 _"retstat"
   :_ "return"
