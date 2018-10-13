@@ -24,45 +24,23 @@ local matrix3 = require "dromozoa.vecmath.matrix3"
 
 local _ = element
 
-local style = _"style" { [[
-@import url('https://fonts.googleapis.com/css?family=Roboto+Mono');
-
-body {
-  font-family: 'Roboto Mono', monospace;
-  white-space: pre;
+local keys = {
+  "binop";
+  "unop";
+  "vararg";
+  "self";
 }
-
-text {
-  text-anchor: middle;
-  dominant-baseline: central;
-}
-
-.u_paths {
-  fill: none;
-  stroke: #000;
-}
-
-.u_texts {
-  fill: #000;
-  stroke: none;
-}
-
-.e_paths {
-  fill: none;
-  stroke: #000;
-}
-]]}
 
 local head = _"head" {
   _"meta" {
     charset = "UTF-8";
   };
   _"title" {
-    "tree";
+    "dromozoa-compiler";
   };
-  _"link" { rel = "stylesheet"; href = "docs/sample.css" };
+  _"link" { rel = "stylesheet"; href = "dromozoa-compiler.css" };
   _"script" { src = "https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" };
-  _"script" { src = "docs/sample.js" };
+  _"script" { src = "dromozoa-compiler.js" };
 }
 
 local function source_to_html(self)
@@ -145,7 +123,13 @@ local function tree_to_html(self, tree_width, tree_height)
 
   local u_paths = root[1]
   for i = 1, #u_paths do
-    u_paths[i]["data-value"] = symbol_value(preorder_nodes[i])
+    local node = preorder_nodes[i]
+    local path = u_paths[i]
+    path["data-value"] = symbol_value(node)
+    for j = 1, #keys do
+      local key = keys[j]
+      path["data-" .. key] = node[key]
+    end
   end
 
   return _"div" {

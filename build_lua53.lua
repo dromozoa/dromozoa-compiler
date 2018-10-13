@@ -140,8 +140,8 @@ _"chunk"
   :_ "block"
 
 _"block"
-  :_ ()
-  :_ "retstat"
+  :_ () {"statlist"}
+  :_ "retstat" {"statlist",1}
   :_ "statlist"
   :_ "statlist" "retstat"
 
@@ -159,50 +159,50 @@ _"stat"
   :_ "do" "block" "end"
   :_ "while" "exp" "do" "block" "end"
   :_ "repeat" "block" "until" "exp"
-  :_ "if_clauses" "end"
+  :_ "conditional" "end"
   :_ "for" "Name" "=" "exp" "," "exp" "do" "block" "end"
   :_ "for" "Name" "=" "exp" "," "exp" "," "exp" "do" "block" "end"
   :_ "for" "namelist" "in" "explist" "do" "block" "end"
-  :_ "function" "funcname" "funcbody"
+  :_ "function" "funcname_" "funcbody"
   :_ "local" "function" "Name" "funcbody"
   :_ "local" "namelist"
   :_ "local" "namelist" "=" "explist"
 
 _"retstat"
   :_ "return"
-  :_ "return" ";"
-  :_ "return" "explist"
-  :_ "return" "explist" ";"
+  :_ "return" ";" {1}
+  :_ "return" "explist" {1,2}
+  :_ "return" "explist" ";" {1,2}
 
 _"label"
-  :_ "::" "Name" "::"
+  :_ "::" "Name" "::" {2}
 
-_"if_clauses"
-  :_"if_clause"
-  :_"if_clause" "else_clause"
-  :_"if_clause" "elseif_clauses"
+_"conditional"
+  :_"if_"
+  :_"if_" "else_"
+  :_"if_" "conditional_"
 
-_"elseif_clauses"
-  :_ "elseif_clause"
-  :_ "elseif_clause" "else_clause"
-  :_ "elseif_clause" "elseif_clauses"
+_"conditional_"
+  :_ "elseif_" {["conditional"]={1}}
+  :_ "elseif_" "else_" {["conditional"]={1,2}}
+  :_ "elseif_" "conditional_" {["conditional"]={1,2}}
 
-_"if_clause"
-  :_ "if" "exp" "then" "block"
+_"if_"
+  :_ "if" "exp" "then" "block" {[1]={2,4}}
 
-_"elseif_clause"
-  :_ "elseif" "exp" "then" "block"
+_"elseif_"
+  :_ "elseif" "exp" "then" "block" {["if"]={2,4}}
 
-_"else_clause"
-  :_ "else" "block"
+_"else_"
+  :_ "else" "block" {[1]={2}}
+
+_"funcname_"
+  :_ "funcname" {[1]={}}
+  :_ "funcname" ":" "Name" :attr "self" {["funcname"]={1,3}}
 
 _"funcname"
-  :_ "funcnames"
-  :_ "funcnames" ":" "Name"
-
-_"funcnames"
   :_ "Name"
-  :_ "funcnames" "." "Name"
+  :_ "funcname" "." "Name" {1,3}
 
 _"varlist"
   :_ "var"
@@ -210,10 +210,10 @@ _"varlist"
 
 _"var"
   :_ "Name"
-  :_ "prefixexp" "[" "exp" "]"
-  :_ "prefixexp" "." "Name"
-  :_ "functioncall" "[" "exp" "]"
-  :_ "functioncall" "." "Name"
+  :_ "prefixexp" "[" "exp" "]" {1,3}
+  :_ "prefixexp" "." "Name" {1,3}
+  :_ "functioncall" "[" "exp" "]" {1,3}
+  :_ "functioncall" "." "Name" {1,3}
 
 _"namelist"
   :_ "Name"
@@ -227,7 +227,7 @@ _"exp"
   :_ "nil"
   :_ "false"
   :_ "true"
-  -- Numeral
+-- Numeral
   :_ "IntegerConstant"
   :_ "FloatConstant"
   :_ "LiteralString"
@@ -236,46 +236,45 @@ _"exp"
   :_ "prefixexp"
   :_ "functioncall"
   :_ "tableconstructor"
-  -- binop
-  :_ "exp" "+" "exp" :attr("binop", "ADD")
-  :_ "exp" "-" "exp" :attr("binop", "SUB")
-  :_ "exp" "*" "exp" :attr("binop", "MUL")
-  :_ "exp" "/" "exp" :attr("binop", "DIV")
-  :_ "exp" "//" "exp" :attr("binop", "IDIV")
-  :_ "exp" "^" "exp" :attr("binop", "POW")
-  :_ "exp" "%" "exp" :attr("binop", "MOD")
-  :_ "exp" "&" "exp" :attr("binop", "BAND")
-  :_ "exp" "~" "exp" :attr("binop", "BXOR")
-  :_ "exp" "|" "exp" :attr("binop", "BOR")
-  :_ "exp" ">>" "exp" :attr("binop", "SHR")
-  :_ "exp" "<<" "exp" :attr("binop", "SHL")
-  :_ "exp" ".." "exp" :attr("binop", "CONCAT")
-  :_ "exp" "<" "exp" :attr("binop", "LT")
-  :_ "exp" "<=" "exp" :attr("binop", "LE")
-  :_ "exp" ">" "exp" :attr("binop", "GT")
-  :_ "exp" ">=" "exp" :attr("binop", "GE")
-  :_ "exp" "==" "exp" :attr("binop", "EQ")
-  :_ "exp" "~=" "exp" :attr("binop", "NE")
-  :_ "exp" "and" "exp" :attr("binop", "AND")
-  :_ "exp" "or" "exp" :attr("binop", "OR")
-  -- unop
-  :_ "-" "exp" :prec "UNM" :attr("unop", "UNM")
-  :_ "not" "exp" :attr("unop", "NOT")
-  :_ "#" "exp" :attr("unop", "LEN")
-  :_ "~" "exp" :prec "BNOT" :attr("unop", "BNOT")
+-- binop
+  :_ "exp" "+"   "exp" {[2]={1,3}}
+  :_ "exp" "-"   "exp" {[2]={1,3}}
+  :_ "exp" "*"   "exp" {[2]={1,3}}
+  :_ "exp" "/"   "exp" {[2]={1,3}}
+  :_ "exp" "//"  "exp" {[2]={1,3}}
+  :_ "exp" "^"   "exp" {[2]={1,3}}
+  :_ "exp" "%"   "exp" {[2]={1,3}}
+  :_ "exp" "&"   "exp" {[2]={1,3}}
+  :_ "exp" "~"   "exp" {[2]={1,3}}
+  :_ "exp" "|"   "exp" {[2]={1,3}}
+  :_ "exp" ">>"  "exp" {[2]={1,3}}
+  :_ "exp" "<<"  "exp" {[2]={1,3}}
+  :_ "exp" ".."  "exp" {[2]={1,3}}
+  :_ "exp" "<"   "exp" {[2]={1,3}}
+  :_ "exp" "<="  "exp" {[2]={1,3}}
+  :_ "exp" ">"   "exp" {[2]={1,3}}
+  :_ "exp" ">="  "exp" {[2]={1,3}}
+  :_ "exp" "=="  "exp" {[2]={1,3}}
+  :_ "exp" "~="  "exp" {[2]={1,3}}
+  :_ "exp" "and" "exp" {[2]={1,3}}
+  :_ "exp" "or"  "exp" {[2]={1,3}}
+-- unop
+  :_ "-"   "exp" :prec "UNM"  {[1]={2}}
+  :_ "not" "exp"              {[1]={2}}
+  :_ "#"   "exp"              {[1]={2}}
+  :_ "~"   "exp" :prec "BNOT" {[1]={2}}
 
 -- prefixexp without functioncall
 _"prefixexp"
   :_ "var"
-  :_ "(" "exp" ")"
+  :_ "(" "exp" ")" {2}
 
 _"functioncall"
   :_ "prefixexp" "args"
-  :_ "prefixexp" ":" "Name" "args"
+  :_ "prefixexp" ":" "Name" "args" {1,3,4}
   :_ "functioncall" "args"
-  :_ "functioncall" ":" "Name" "args"
+  :_ "functioncall" ":" "Name" "args" {1,3,4}
 
--- TODO ???
 _"args"
   :_ "(" ")" {"explist"}
   :_ "(" "explist" ")" {2}
@@ -285,15 +284,14 @@ _"args"
 _"functiondef"
   :_ "function" "funcbody" {2}
 
--- TODO ???
 _"funcbody"
   :_ "(" ")" "block" "end" {"parlist",3}
   :_ "(" "parlist" ")" "block" "end" {2,4}
 
 _"parlist"
   :_ "namelist"
-  :_ "namelist" "," "..." {1,3}
-  :_ "..." {"namelist",1}
+  :_ "namelist" "," "..." {1} :attr "vararg" {1}
+  :_ "..." {} :attr "vararg"
 
 _"tableconstructor"
   :_ "{" "}" {"fieldlist"}
@@ -304,10 +302,9 @@ _"fieldlist"
   :_ "field"
   :_ "fieldlist" "fieldsep" "field" {[1]={3}}
 
--- TODO ???
 _"field"
-  :_ "[" "exp" "]" "=" "exp"
-  :_ "Name" "=" "exp"
+  :_ "[" "exp" "]" "=" "exp" {2,5}
+  :_ "Name" "=" "exp" {1,3}
   :_ "exp"
 
 _"fieldsep"
