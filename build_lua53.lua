@@ -153,9 +153,9 @@ _"stat"
   :_ ";" {[1]={}}
   :_ "varlist" "=" "explist" {[2]={1,3}}
   :_ "functioncall" {[1]={}}
-  :_ "label"
+  :_ "label" {[1]={}}
   :_ "break"
-  :_ "goto" "Name"
+  :_ "goto" "Name" {[1]={2}}
   :_ "do" "block" "end"
   :_ "while" "exp" "do" "block" "end"
   :_ "repeat" "block" "until" "exp"
@@ -175,7 +175,7 @@ _"retstat"
   :_ "return" "explist" ";" {1,2}
 
 _"label"
-  :_ "::" "Name" "::" {2}
+  :_ "::" "Name" "::" {[1]={2}}
 
 _"conditional"
   :_"if_"
