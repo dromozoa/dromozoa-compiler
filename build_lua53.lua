@@ -156,15 +156,15 @@ _"stat"
   :_ "label" {[1]={}}
   :_ "break"
   :_ "goto" "Name" {[1]={2}}
-  :_ "do" "block" "end"
-  :_ "while" "exp" "do" "block" "end"
-  :_ "repeat" "block" "until" "exp"
+  :_ "do" "block" "end" {[1]={2}}
+  :_ "while" "exp" "do" "block" "end" {[1]={2,4}}
+  :_ "repeat" "block" "until" "exp" {[1]={2,4}}
   :_ "conditional" "end" {[1]={}}
-  :_ "for" "Name" "=" "exp" "," "exp" "do" "block" "end"
-  :_ "for" "Name" "=" "exp" "," "exp" "," "exp" "do" "block" "end"
-  :_ "for" "namelist" "in" "explist" "do" "block" "end"
-  :_ "function" "funcname_" "funcbody"
-  :_ "local" "function" "Name" "funcbody" -- TODO ???
+  :_ "for" "Name" "=" "exp" "," "exp" "do" "block" "end" {[1]={2,4,6,8}}
+  :_ "for" "Name" "=" "exp" "," "exp" "," "exp" "do" "block" "end" {[1]={2,4,6,8,10}}
+  :_ "for" "namelist" "in" "explist" "do" "block" "end" {[1]={2,4,6}}
+  :_ "function" "funcname_" "funcbody" {[1]={2,3}}
+  :_ "local" "function" "Name" "funcbody" {[2]={3,4}}
   :_ "local" "namelist" {[1]={2}}
   :_ "local" "namelist" "=" "explist" {[1]={2,4}}
 
@@ -266,8 +266,8 @@ _"exp"
 
 -- prefixexp without functioncall
 _"prefixexp"
-  :_ "var"
-  :_ "(" "exp" ")" {2}
+  :_ "var" {[1]={}}
+  :_ "(" "exp" ")" {[2]={}}
 
 _"functioncall"
   :_ "prefixexp" "args"
@@ -285,18 +285,18 @@ _"functiondef"
   :_ "function" "funcbody" {2}
 
 _"funcbody"
-  :_ "(" ")" "block" "end" {"parlist",3}
+  :_ "(" ")" "block" "end" {"namelist",3}
   :_ "(" "parlist" ")" "block" "end" {2,4}
 
 _"parlist"
-  :_ "namelist"
-  :_ "namelist" "," "..." {1} :attr "vararg" {1}
-  :_ "..." {} :attr "vararg"
+  :_ "namelist" {[1]={}}
+  :_ "namelist" "," "..." {[1]={}} :attr "vararg"
+  :_ "..." {["namelist"]={}} :attr "vararg"
 
 _"tableconstructor"
-  :_ "{" "}" {"fieldlist"}
-  :_ "{" "fieldlist" "}" {2}
-  :_ "{" "fieldlist" "fieldsep" "}" {2}
+  :_ "{" "}" {["fieldlist"]={}}
+  :_ "{" "fieldlist" "}" {[2]={}}
+  :_ "{" "fieldlist" "fieldsep" "}" {[2]={}}
 
 _"fieldlist"
   :_ "field"
