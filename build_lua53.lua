@@ -285,13 +285,13 @@ _"functiondef"
   :_ "function" "funcbody" {2}
 
 _"funcbody"
-  :_ "(" ")" "block" "end" {"parlist",3}
+  :_ "(" ")" "block" "end" {"namelist",3}
   :_ "(" "parlist" ")" "block" "end" {2,4}
 
 _"parlist"
-  :_ "namelist"
-  :_ "namelist" "," "..." {1} :attr "vararg" {1}
-  :_ "..." {} :attr "vararg"
+  :_ "namelist" {[1]={}}
+  :_ "namelist" "," "..." {[1]={}} :attr "vararg"
+  :_ "..." {["namelist"]={}} :attr "vararg"
 
 _"tableconstructor"
   :_ "{" "}" {["fieldlist"]={}}
