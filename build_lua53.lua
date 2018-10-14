@@ -169,10 +169,10 @@ _"stat"
   :_ "local" "namelist" "=" "explist" {[1]={2,4}}
 
 _"retstat"
-  :_ "return"
-  :_ "return" ";" {1}
-  :_ "return" "explist" {1,2}
-  :_ "return" "explist" ";" {1,2}
+  :_ "return" {[1]={}}
+  :_ "return" ";" {[1]={}}
+  :_ "return" "explist" {[1]={2}}
+  :_ "return" "explist" ";" {[1]={2}}
 
 _"label"
   :_ "::" "Name" "::" {[1]={2}}
