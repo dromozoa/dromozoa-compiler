@@ -224,18 +224,18 @@ _"explist"
   :_ "explist" "," "exp" {[1]={3}}
 
 _"exp"
-  :_ "nil"
-  :_ "false"
-  :_ "true"
+  :_ "nil"   {[1]={}}
+  :_ "false" {[1]={}}
+  :_ "true"  {[1]={}}
 -- Numeral
-  :_ "IntegerConstant"
-  :_ "FloatConstant"
-  :_ "LiteralString"
-  :_ "..."
-  :_ "functiondef"
-  :_ "prefixexp"
-  :_ "functioncall"
-  :_ "tableconstructor"
+  :_ "IntegerConstant"  {[1]={}}
+  :_ "FloatConstant"    {[1]={}}
+  :_ "LiteralString"    {[1]={}}
+  :_ "..."              {[1]={}}
+  :_ "functiondef"      {[1]={}}
+  :_ "prefixexp"        {[1]={}}
+  :_ "functioncall"     {[1]={}}
+  :_ "tableconstructor" {[1]={}}
 -- binop
   :_ "exp" "+"   "exp" {[2]={1,3}}
   :_ "exp" "-"   "exp" {[2]={1,3}}
