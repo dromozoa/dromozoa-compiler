@@ -294,9 +294,9 @@ _"parlist"
   :_ "..." {} :attr "vararg"
 
 _"tableconstructor"
-  :_ "{" "}" {"fieldlist"}
-  :_ "{" "fieldlist" "}" {2}
-  :_ "{" "fieldlist" "fieldsep" "}" {2}
+  :_ "{" "}" {["fieldlist"]={}}
+  :_ "{" "fieldlist" "}" {[2]={}}
+  :_ "{" "fieldlist" "fieldsep" "}" {[2]={}}
 
 _"fieldlist"
   :_ "field"
