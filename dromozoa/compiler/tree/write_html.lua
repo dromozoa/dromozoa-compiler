@@ -25,8 +25,7 @@ local matrix3 = require "dromozoa.vecmath.matrix3"
 local _ = element
 
 local keys = {
-  "binop";
-  "unop";
+  "local";
   "vararg";
   "self";
 }

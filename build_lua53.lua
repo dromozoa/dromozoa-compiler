@@ -164,7 +164,7 @@ _"stat"
   :_ "for" "Name" "=" "exp" "," "exp" "," "exp" "do" "block" "end" {[1]={2,4,6,8,10}}
   :_ "for" "namelist" "in" "explist" "do" "block" "end" {[1]={2,4,6}}
   :_ "function" "funcname_" "funcbody" {[1]={2,3}}
-  :_ "local" "function" "Name" "funcbody" {[2]={3,4}}
+  :_ "local" "function" "Name" "funcbody" {[2]={3,4}} :attr "local"
   :_ "local" "namelist" {[1]={2}}
   :_ "local" "namelist" "=" "explist" {[1]={2,4}}
 
