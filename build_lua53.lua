@@ -151,7 +151,7 @@ _"statlist"
 
 _"stat"
   :_ ";" {[1]={}}
-  :_ "varlist" "=" "explist" {[2]={1,3}}
+  :_ "varlist" "=" "explist" {[2]={3,1}}
   :_ "functioncall" {[1]={}}
   :_ "label" {[1]={}}
   :_ "break"
@@ -160,9 +160,9 @@ _"stat"
   :_ "while" "exp" "do" "block" "end" {[1]={2,4}}
   :_ "repeat" "block" "until" "exp" {[1]={2,4}}
   :_ "conditional" "end" {[1]={}}
-  :_ "for" "Name" "=" "exp" "," "exp" "do" "block" "end" {[1]={2,4,6,8}}
-  :_ "for" "Name" "=" "exp" "," "exp" "," "exp" "do" "block" "end" {[1]={2,4,6,8,10}}
-  :_ "for" "namelist" "in" "explist" "do" "block" "end" {[1]={2,4,6}}
+  :_ "for" "Name" "=" "exp" "," "exp" "do" "block" "end" {[1]={4,6,2,8}}
+  :_ "for" "Name" "=" "exp" "," "exp" "," "exp" "do" "block" "end" {[1]={4,6,8,2,10}}
+  :_ "for" "namelist" "in" "explist" "do" "block" "end" {[1]={4,2,6}}
   :_ "function" "funcname_" "funcbody" {[1]={2,3}}
   :_ "local" "function" "Name" "funcbody" {[2]={3,4}} :attr "local"
   :_ "local" "namelist" {[1]={2}}
@@ -198,7 +198,7 @@ _"else_"
 
 _"funcname_"
   :_ "funcname" {[1]={}}
-  :_ "funcname" ":" "Name" :attr "self" {["funcname"]={1,3}}
+  :_ "funcname" ":" "Name" {["funcname"]={1,3}} :attr "self"
 
 _"funcname"
   :_ "Name"
@@ -303,8 +303,8 @@ _"fieldlist"
   :_ "fieldlist" "fieldsep" "field" {[1]={3}}
 
 _"field"
-  :_ "[" "exp" "]" "=" "exp" {2,5}
-  :_ "Name" "=" "exp" {1,3}
+  :_ "[" "exp" "]" "=" "exp" {5,2}
+  :_ "Name" "=" "exp" {3,1}
   :_ "exp"
 
 _"fieldsep"
