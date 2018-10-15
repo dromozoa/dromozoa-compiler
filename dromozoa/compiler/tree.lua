@@ -16,6 +16,7 @@
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
 local construct = require "dromozoa.compiler.tree.construct"
+local resolve = require "dromozoa.compiler.tree.resolve"
 local write_html = require "dromozoa.compiler.tree.write_html"
 
 local class = {}
@@ -27,6 +28,10 @@ function class:write_html(out)
   else
     return write_html(self, out)
   end
+end
+
+function class:resolve()
+  return resolve(self)
 end
 
 return setmetatable(class, {

@@ -156,13 +156,13 @@ _"stat"
   :_ "label" {[1]={}}
   :_ "break"
   :_ "goto" "Name" {[1]={2}}
-  :_ "do" "block" "end" {[1]={2}}
-  :_ "while" "exp" "do" "block" "end" {[1]={2,4}}
-  :_ "repeat" "block" "until" "exp" {[1]={2,4}}
+  :_ "do" "block" "end" {[1]={2}} :attr "scope"
+  :_ "while" "exp" "do" "block" "end" {[1]={2,4}} :attr "scope"
+  :_ "repeat" "block" "until" "exp" {[1]={2,4}} :attr "scope"
   :_ "conditional" "end" {[1]={}}
-  :_ "for" "Name" "=" "exp" "," "exp" "do" "block" "end" {[1]={4,6,2,8}}
-  :_ "for" "Name" "=" "exp" "," "exp" "," "exp" "do" "block" "end" {[1]={4,6,8,2,10}}
-  :_ "for" "namelist" "in" "explist" "do" "block" "end" {[1]={4,2,6}}
+  :_ "for" "Name" "=" "exp" "," "exp" "do" "block" "end" {[1]={4,6,2,8}} :attr "scope"
+  :_ "for" "Name" "=" "exp" "," "exp" "," "exp" "do" "block" "end" {[1]={4,6,8,2,10}} :attr "scope"
+  :_ "for" "namelist" "in" "explist" "do" "block" "end" {[1]={4,2,6}} :attr "scope"
   :_ "function" "funcname_" "funcbody" {[1]={2,3}}
   :_ "local" "function" "Name" "funcbody" {[2]={3,4}} :attr "local"
   :_ "local" "namelist" {[1]={2}}
@@ -188,13 +188,13 @@ _"conditional_"
   :_ "elseif_" "conditional_" {["conditional"]={1,2}}
 
 _"if_"
-  :_ "if" "exp" "then" "block" {[1]={2,4}}
+  :_ "if" "exp" "then" "block" {[1]={2,4}} :attr "scope"
 
 _"elseif_"
-  :_ "elseif" "exp" "then" "block" {["if"]={2,4}}
+  :_ "elseif" "exp" "then" "block" {["if"]={2,4}} :attr "scope"
 
 _"else_"
-  :_ "else" "block" {[1]={2}}
+  :_ "else" "block" {[1]={2}} :attr "scope"
 
 _"funcname_"
   :_ "funcname" {[1]={}}
@@ -285,8 +285,8 @@ _"functiondef"
   :_ "function" "funcbody" {2}
 
 _"funcbody"
-  :_ "(" ")" "block" "end" {"namelist",3}
-  :_ "(" "parlist" ")" "block" "end" {2,4}
+  :_ "(" ")" "block" "end" {"namelist",3} :attr "scope"
+  :_ "(" "parlist" ")" "block" "end" {2,4} :attr "scope"
 
 _"parlist"
   :_ "namelist" {[1]={}}

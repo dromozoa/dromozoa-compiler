@@ -43,4 +43,5 @@ if not accepted_node then
 end
 
 local t = tree(parser, source, terminal_nodes, accepted_node)
+t:resolve()
 t:write_html(result_file)
