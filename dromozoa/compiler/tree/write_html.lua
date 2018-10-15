@@ -42,33 +42,7 @@ local head = _"head" {
   _"script" { src = "dromozoa-compiler.js" };
 }
 
-local function visit(node, preorder_nodes, postorder_nodes, parent_path)
-  local id = #preorder_nodes + 1
-  local path = {}
-  local n = #parent_path
-  for i = 1, n do
-    path[i] = parent_path[i]
-  end
-  path[n + 1] = id
-
-  node.id = id
-  node.path = path
-
-  preorder_nodes[id] = node
-  for i = 1, #node do
-    visit(node[i], preorder_nodes, postorder_nodes, path)
-  end
-  postorder_nodes[#postorder_nodes + 1] = node
-end
-
 local function prepare(self)
-  local accepted_node = self.accepted_node
-  local preorder_nodes = {}
-  local postorder_nodes = {}
-  visit(accepted_node, preorder_nodes, postorder_nodes, {})
-  self.preorder_nodes = preorder_nodes
-  self.postorder_nodes = postorder_nodes
-
   local terminal_nodes = self.terminal_nodes
   local n = #terminal_nodes
   local next_path = {}
