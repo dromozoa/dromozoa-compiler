@@ -52,7 +52,6 @@ local function def_label(node)
 
   scope_labels[n + 1] = label
   proto_labels[index] = label
-
   return label
 end
 
@@ -75,6 +74,33 @@ local function ref_label(node)
   until not scope or scope.proto ~= proto
 
   return nil, ("no visible label %q for <goto>"):format(source), node.i
+end
+
+local function ref_constant(type, node)
+  local source = symbol_value(node)
+  local proto = attr(node, "proto")
+
+  local constants = proto.constants
+  local n = #constants
+  for i = n, 1, -1 do
+    local constant = constants[i]
+    if constant.type == type and constant.source == source then
+      local refs = constant.refs
+      refs[#refs + 1] = node.id
+      return constant
+    end
+  end
+
+  local index = n + 1
+  local constant = {
+    type = type;
+    source = source;
+    refs = { node.id };
+    "K" .. index;
+  }
+
+  constants[index] = constant
+  return constant
 end
 
 local function prepare(self)
@@ -167,7 +193,7 @@ local function prepare(self)
   return self
 end
 
-local function process_labels(self)
+local function resolve_labels(self)
   local symbol_table = self.symbol_table
   local preorder_nodes = self.preorder_nodes
   local n = #preorder_nodes
@@ -199,27 +225,55 @@ local function process_labels(self)
   return self
 end
 
-local function process2(self)
+local function resolve(self)
   local symbol_table = self.symbol_table
   local preorder_nodes = self.preorder_nodes
   local n = #preorder_nodes
 
+  for i = 1, n do
+    local node = preorder_nodes[i]
+    local symbol = node[0]
+    if symbol == symbol_table.funcname and node.self then
+      node.parent[2].proto.self = true
+    elseif symbol == symbol_table.namelist and node.vararg then
+      node.parent.proto.vararg = true
+    end
+  end
 
-
-
-
-
+  for i = 1, n do
+    local node = preorder_nodes[i]
+    local symbol = node[0]
+    if symbol == symbol_table["nil"] then
+      node.v = "NIL"
+    elseif symbol == symbol_table["false"] then
+      node.v = "FALSE"
+    elseif symbol == symbol_table["true"] then
+      node.v = "TRUE"
+    elseif symbol == symbol_table.IntegerConstant then
+      node.v = assert(ref_constant("integer", node)[1])
+    elseif symbol == symbol_table.FloatConstant then
+      node.v = ref_constant("float", node)[1]
+    elseif symbol == symbol_table.LiteralString then
+      node.v = ref_constant("string", node)[1]
+    elseif symbol == symbol_table["..."] then
+      local proto = attr(node, "proto")
+      if not proto.vararg then
+        return nil, "cannot use '...' outside a vararg function", node.i
+      end
+      node.v = "V"
+    end
+  end
 
   return self
 end
 
 return function (self)
   prepare(self)
-  local result, message, i = process_labels(self)
+  local result, message, i = resolve_labels(self)
   if not result then
     return nil, message, i
   end
-  local result, message, i = process2(self)
+  local result, message, i = resolve(self)
   if not result then
     return nil, message, i
   end
