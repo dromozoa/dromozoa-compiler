@@ -197,7 +197,7 @@ _"else_"
   :_ "else" "block" {[1]={2}} :attr "scope"
 
 _"funcname_"
-  :_ "funcname" {[1]={}}
+  :_ "funcname" {[1]={}} :attr(1, "def")
   :_ "funcname" ":" "Name" {["funcname"]={1,3}} :attr "self" :attr(3, "key")
 
 _"funcname"
@@ -205,8 +205,8 @@ _"funcname"
   :_ "funcname" "." "Name" {1,3} :attr(3, "key")
 
 _"varlist"
-  :_ "var"
-  :_ "varlist" "," "var" {[1]={3}}
+  :_ "var" :attr(1, "def")
+  :_ "varlist" "," "var" {[1]={3}} :attr(3, "def")
 
 _"var"
   :_ "Name"
