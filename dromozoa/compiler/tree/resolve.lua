@@ -76,7 +76,7 @@ local function ref_label(node)
   return nil, ("no visible label %q for <goto>"):format(source), node.i
 end
 
-local function ref_constant(type, node)
+local function ref_constant(node, type)
   local source = symbol_value(node)
   local proto = attr(node, "proto")
 
@@ -103,6 +103,53 @@ local function ref_constant(type, node)
   return constant
 end
 
+local function def_name(node, key, source)
+  if not source then
+    source = symbol_value(node)
+  end
+  local scope = attr(node, "scope")
+  local proto = scope.proto
+
+  local index = proto[key] + 1
+  proto[key] = index
+
+  local name = {
+    source = source;
+    defs = { node.id };
+    refs = {};
+    upvalue_defs = {};
+    upvalue_refs = {};
+    key .. index;
+  }
+
+  local scope_names = scope.names
+  scope_names[#scope_names + 1] = name
+  local proto_names = proto.names
+  proto_names[#proto_names + 1] = name
+
+  return name
+end
+
+local function resolve_name(node, source)
+  if not source then
+    source = symbol_value(node)
+  end
+  local scope = attr(node, "scope")
+  local proto = scope.proto
+
+  repeat
+    local names = scope.names
+    for i = #names, 1, -1 do
+      local name = names[i]
+      if name.source == source then
+
+
+      end
+    end
+    scope = scope.parent
+  until not scope
+end
+
 local function prepare(self)
   local symbol_table = self.symbol_table
   local preorder_nodes = self.preorder_nodes
@@ -113,16 +160,18 @@ local function prepare(self)
     local symbol = node[0]
 
     if symbol == symbol_table.chunk then
-      local env = {
+      local env_name = {
         source = "_ENV";
         defs = {};
         refs = {};
+        updefs = {};
+        uprefs = {};
         "B1";
       }
 
       local external_proto = {
         constants = {};
-        names = { env };
+        names = { env_name };
         labels = {};
         upvalues = {};
         A = 0;
@@ -131,7 +180,7 @@ local function prepare(self)
 
       local external_scope = {
         proto = external_proto;
-        names = { env };
+        names = { env_name };
         labels = {};
       }
 
@@ -142,7 +191,7 @@ local function prepare(self)
         labels = {};
         upvalues = {
           {
-            name = env;
+            name = env_name;
             "U1";
             "B1";
           };
@@ -243,18 +292,28 @@ local function resolve(self)
   for i = 1, n do
     local node = preorder_nodes[i]
     local symbol = node[0]
-    if symbol == symbol_table["nil"] then
+    if symbol == symbol_table.funcbody then
+      local proto = node.proto
+      if proto.self then
+        def_name(node, "A", "self")
+      end
+      local namelist = node[1]
+      for j = 1, #namelist do
+        local name = namelist[j]
+        name.v = def_name(name, "A")[1]
+      end
+    elseif symbol == symbol_table["nil"] then
       node.v = "NIL"
     elseif symbol == symbol_table["false"] then
       node.v = "FALSE"
     elseif symbol == symbol_table["true"] then
       node.v = "TRUE"
     elseif symbol == symbol_table.IntegerConstant then
-      node.v = assert(ref_constant("integer", node)[1])
+      node.v = assert(ref_constant(node, "integer")[1])
     elseif symbol == symbol_table.FloatConstant then
-      node.v = ref_constant("float", node)[1]
+      node.v = ref_constant(node, "float")[1]
     elseif symbol == symbol_table.LiteralString then
-      node.v = ref_constant("string", node)[1]
+      node.v = ref_constant(node, "string")[1]
     elseif symbol == symbol_table["..."] then
       local proto = attr(node, "proto")
       if not proto.vararg then

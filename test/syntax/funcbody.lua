@@ -21,3 +21,11 @@ local f = function (a, b) end
 local f = function (...) end
 local f = function (a, ...) end
 local f = function (a, b, ...) end
+
+local t = {}
+function t:f() end
+function t:f(a) end
+function t:f(a, b) end
+function t:f(...) end
+function t:f(a, ...) end
+function t:f(a, b, ...) end
