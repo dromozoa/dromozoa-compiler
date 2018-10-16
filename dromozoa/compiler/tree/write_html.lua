@@ -25,10 +25,18 @@ local matrix3 = require "dromozoa.vecmath.matrix3"
 local _ = element
 
 local keys = {
-  "binop";
-  "unop";
-  "vararg";
   "self";
+
+  "parlist";
+  "vararg";
+
+  "param";
+  "declare";
+  "key";
+  "def";
+  "ref";
+
+  "v";
 }
 
 local head = _"head" {
@@ -42,6 +50,41 @@ local head = _"head" {
   _"script" { src = "https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" };
   _"script" { src = "dromozoa-compiler.js" };
 }
+
+local function prepare(self)
+  local terminal_nodes = self.terminal_nodes
+  local n = #terminal_nodes
+  local next_path = {}
+  for i = n, 1, -1 do
+    local node = terminal_nodes[i]
+    node.next_path = next_path
+    local path = node.path
+    if path then
+      next_path = path
+    end
+  end
+  local prev_path = {}
+  for i = 1, n do
+    local node = terminal_nodes[i]
+    node.prev_path = prev_path
+    local path = node.path
+    if path then
+      prev_path = path
+    else
+      local next_path = node.next_path
+      local path = {}
+      for i = 1, #prev_path do
+        local id = prev_path[i]
+        if id == next_path[i] then
+          path[i] = id
+        else
+          break
+        end
+      end
+      node.path = path
+    end
+  end
+end
 
 local function source_to_html(self)
   local terminal_nodes = self.terminal_nodes
@@ -154,6 +197,8 @@ local function tree_to_html(self, tree_width, tree_height)
 end
 
 return function (self, out)
+  prepare(self)
+
   local doc = html5_document(_"html" {
     head;
     _"body" {

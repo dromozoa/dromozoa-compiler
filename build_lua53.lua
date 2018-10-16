@@ -151,22 +151,22 @@ _"statlist"
 
 _"stat"
   :_ ";" {[1]={}}
-  :_ "varlist" "=" "explist" {[2]={1,3}}
+  :_ "varlist" "=" "explist" {[2]={3,1}}
   :_ "functioncall" {[1]={}}
   :_ "label" {[1]={}}
   :_ "break"
   :_ "goto" "Name" {[1]={2}}
-  :_ "do" "block" "end" {[1]={2}}
-  :_ "while" "exp" "do" "block" "end" {[1]={2,4}}
-  :_ "repeat" "block" "until" "exp" {[1]={2,4}}
+  :_ "do" "block" "end" {[1]={2}} :attr "scope"
+  :_ "while" "exp" "do" "block" "end" {[1]={2,4}} :attr "scope"
+  :_ "repeat" "block" "until" "exp" {[1]={2,4}} :attr "scope"
   :_ "conditional" "end" {[1]={}}
-  :_ "for" "Name" "=" "exp" "," "exp" "do" "block" "end" {[1]={2,4,6,8}}
-  :_ "for" "Name" "=" "exp" "," "exp" "," "exp" "do" "block" "end" {[1]={2,4,6,8,10}}
-  :_ "for" "namelist" "in" "explist" "do" "block" "end" {[1]={2,4,6}}
+  :_ "for" "Name" "=" "exp" "," "exp" "do" "block" "end" {[1]={4,6,2,8}} :attr "scope" :attr(2, "declare")
+  :_ "for" "Name" "=" "exp" "," "exp" "," "exp" "do" "block" "end" {[1]={4,6,8,2,10}} :attr "scope" :attr(2, "declare")
+  :_ "for" "namelist" "in" "explist" "do" "block" "end" {[1]={4,2,6}} :attr "scope"
   :_ "function" "funcname_" "funcbody" {[1]={2,3}}
-  :_ "local" "function" "Name" "funcbody" {[2]={3,4}}
+  :_ "local" "function" "Name" "funcbody" {[2]={3,4}} :attr(3, "declare")
   :_ "local" "namelist" {[1]={2}}
-  :_ "local" "namelist" "=" "explist" {[1]={2,4}}
+  :_ "local" "namelist" "=" "explist" {[1]={4,2}}
 
 _"retstat"
   :_ "return" {[1]={}}
@@ -188,32 +188,32 @@ _"conditional_"
   :_ "elseif_" "conditional_" {["conditional"]={1,2}}
 
 _"if_"
-  :_ "if" "exp" "then" "block" {[1]={2,4}}
+  :_ "if" "exp" "then" "block" {[1]={2,4}} :attr "scope"
 
 _"elseif_"
-  :_ "elseif" "exp" "then" "block" {["if"]={2,4}}
+  :_ "elseif" "exp" "then" "block" {["if"]={2,4}} :attr "scope"
 
 _"else_"
-  :_ "else" "block" {[1]={2}}
+  :_ "else" "block" {[1]={2}} :attr "scope"
 
 _"funcname_"
-  :_ "funcname" {[1]={}}
-  :_ "funcname" ":" "Name" :attr "self" {["funcname"]={1,3}}
+  :_ "funcname" {[1]={}} :attr(1, "def")
+  :_ "funcname" ":" "Name" {["funcname"]={1,3}} :attr "self" :attr(3, "key")
 
 _"funcname"
   :_ "Name"
-  :_ "funcname" "." "Name" {1,3}
+  :_ "funcname" "." "Name" {1,3} :attr(3, "key")
 
 _"varlist"
-  :_ "var"
-  :_ "varlist" "," "var" {[1]={3}}
+  :_ "var" :attr(1, "def")
+  :_ "varlist" "," "var" {[1]={3}} :attr(3, "def")
 
 _"var"
   :_ "Name"
   :_ "prefixexp" "[" "exp" "]" {1,3}
-  :_ "prefixexp" "." "Name" {1,3}
+  :_ "prefixexp" "." "Name" {1,3} :attr(3, "key")
   :_ "functioncall" "[" "exp" "]" {1,3}
-  :_ "functioncall" "." "Name" {1,3}
+  :_ "functioncall" "." "Name" {1,3} :attr(3, "key")
 
 _"namelist"
   :_ "Name"
@@ -271,9 +271,9 @@ _"prefixexp"
 
 _"functioncall"
   :_ "prefixexp" "args"
-  :_ "prefixexp" ":" "Name" "args" {1,3,4}
+  :_ "prefixexp" ":" "Name" "args" {1,3,4} :attr(3, "key")
   :_ "functioncall" "args"
-  :_ "functioncall" ":" "Name" "args" {1,3,4}
+  :_ "functioncall" ":" "Name" "args" {1,3,4} :attr(3, "key")
 
 _"args"
   :_ "(" ")" {"explist"}
@@ -285,8 +285,8 @@ _"functiondef"
   :_ "function" "funcbody" {2}
 
 _"funcbody"
-  :_ "(" ")" "block" "end" {"namelist",3}
-  :_ "(" "parlist" ")" "block" "end" {2,4}
+  :_ "(" ")" "block" "end" {"namelist",3} :attr "scope"
+  :_ "(" "parlist" ")" "block" "end" {2,4} :attr "scope"
 
 _"parlist"
   :_ "namelist" {[1]={}}
@@ -303,8 +303,8 @@ _"fieldlist"
   :_ "fieldlist" "fieldsep" "field" {[1]={3}}
 
 _"field"
-  :_ "[" "exp" "]" "=" "exp" {2,5}
-  :_ "Name" "=" "exp" {1,3}
+  :_ "[" "exp" "]" "=" "exp" {5,2}
+  :_ "Name" "=" "exp" {3,1} :attr(1, "key")
   :_ "exp"
 
 _"fieldsep"
