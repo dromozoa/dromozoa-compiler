@@ -404,6 +404,9 @@ local function resolve(self)
         -- TODO
       elseif node.ref then
         -- TODO
+      else
+        -- DEBUG
+        assert(node.v :find "^L%d+$")
       end
     end
   end

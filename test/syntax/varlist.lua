@@ -25,6 +25,10 @@ a, b, c = c, a, b
 
 x, y, z = nil
 
+_ENV.X = {}
+_ENV.X.Y = {}
+_ENV.X.Y.Z = {}
+
 a = {}
 a[1] = {}
 a[1][2] = {}
