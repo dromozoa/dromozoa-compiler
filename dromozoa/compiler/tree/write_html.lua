@@ -25,7 +25,6 @@ local matrix3 = require "dromozoa.vecmath.matrix3"
 local _ = element
 
 local keys = {
-  "local";
   "self";
 
   "parlist";
@@ -33,6 +32,7 @@ local keys = {
 
   "param";
   "declare";
+  "key";
   "def";
   "ref";
 

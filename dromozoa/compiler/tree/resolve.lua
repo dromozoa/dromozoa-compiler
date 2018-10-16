@@ -333,6 +333,25 @@ local function resolve(self)
       if node.self then
         node.parent[2].proto.self = true
       end
+      if #node == 1 then
+        if node.parent[0] == symbol_table["function"] then
+          node[1].def = true
+        else
+          node[1].ref = true
+        end
+      end
+    elseif symbol == symbol_table.varlist then
+      for j = 1, #node do
+        node[j].def = true
+      end
+    elseif symbol == symbol_table.var then
+      if #node == 1 then
+        if node.def then
+          node[1].def = true
+        else
+          node[1].ref = true
+        end
+      end
     elseif symbol == symbol_table.namelist then
       if node.vararg then
         node.parent.proto.vararg = true
@@ -383,6 +402,8 @@ local function resolve(self)
         node.v = declare_name(node, "A")[1]
       elseif node.declare then
         node.v = declare_name(node, "B")[1]
+      elseif node.key then
+        node.v = ref_constant(node, "string")[1]
       end
     end
   end

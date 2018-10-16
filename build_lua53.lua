@@ -164,7 +164,7 @@ _"stat"
   :_ "for" "Name" "=" "exp" "," "exp" "," "exp" "do" "block" "end" {[1]={4,6,8,2,10}} :attr "scope" :attr(2, "declare")
   :_ "for" "namelist" "in" "explist" "do" "block" "end" {[1]={4,2,6}} :attr "scope"
   :_ "function" "funcname_" "funcbody" {[1]={2,3}}
-  :_ "local" "function" "Name" "funcbody" {[2]={3,4}} :attr "local" :attr(3, "declare")
+  :_ "local" "function" "Name" "funcbody" {[2]={3,4}} :attr(3, "declare")
   :_ "local" "namelist" {[1]={2}}
   :_ "local" "namelist" "=" "explist" {[1]={4,2}}
 
@@ -198,11 +198,11 @@ _"else_"
 
 _"funcname_"
   :_ "funcname" {[1]={}}
-  :_ "funcname" ":" "Name" {["funcname"]={1,3}} :attr "self"
+  :_ "funcname" ":" "Name" {["funcname"]={1,3}} :attr "self" :attr(3, "key")
 
 _"funcname"
   :_ "Name"
-  :_ "funcname" "." "Name" {1,3}
+  :_ "funcname" "." "Name" {1,3} :attr(3, "key")
 
 _"varlist"
   :_ "var"
@@ -211,9 +211,9 @@ _"varlist"
 _"var"
   :_ "Name"
   :_ "prefixexp" "[" "exp" "]" {1,3}
-  :_ "prefixexp" "." "Name" {1,3}
+  :_ "prefixexp" "." "Name" {1,3} :attr(3, "key")
   :_ "functioncall" "[" "exp" "]" {1,3}
-  :_ "functioncall" "." "Name" {1,3}
+  :_ "functioncall" "." "Name" {1,3} :attr(3, "key")
 
 _"namelist"
   :_ "Name"
@@ -271,9 +271,9 @@ _"prefixexp"
 
 _"functioncall"
   :_ "prefixexp" "args"
-  :_ "prefixexp" ":" "Name" "args" {1,3,4}
+  :_ "prefixexp" ":" "Name" "args" {1,3,4} :attr(3, "key")
   :_ "functioncall" "args"
-  :_ "functioncall" ":" "Name" "args" {1,3,4}
+  :_ "functioncall" ":" "Name" "args" {1,3,4} :attr(3, "key")
 
 _"args"
   :_ "(" ")" {"explist"}
@@ -304,7 +304,7 @@ _"fieldlist"
 
 _"field"
   :_ "[" "exp" "]" "=" "exp" {5,2}
-  :_ "Name" "=" "exp" {3,1}
+  :_ "Name" "=" "exp" {3,1} :attr(1, "key")
   :_ "exp"
 
 _"fieldsep"

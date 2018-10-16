@@ -30,3 +30,18 @@ a[1] = {}
 a[1][2] = {}
 a.b = {}
 a.b.c = {}
+a.b = a.b
+a.b.c = a.b.c
+
+local function f1()
+  return a
+end
+
+local function f2()
+  return f1
+end
+
+f1().x = {}
+f1().x.y = {}
+f2()().x = {}
+f2()().x.y = {}
