@@ -160,11 +160,11 @@ _"stat"
   :_ "while" "exp" "do" "block" "end" {[1]={2,4}} :attr "scope"
   :_ "repeat" "block" "until" "exp" {[1]={2,4}} :attr "scope"
   :_ "conditional" "end" {[1]={}}
-  :_ "for" "Name" "=" "exp" "," "exp" "do" "block" "end" {[1]={4,6,2,8}} :attr "scope"
-  :_ "for" "Name" "=" "exp" "," "exp" "," "exp" "do" "block" "end" {[1]={4,6,8,2,10}} :attr "scope"
+  :_ "for" "Name" "=" "exp" "," "exp" "do" "block" "end" {[1]={4,6,2,8}} :attr "scope" :attr(2, "declare")
+  :_ "for" "Name" "=" "exp" "," "exp" "," "exp" "do" "block" "end" {[1]={4,6,8,2,10}} :attr "scope" :attr(2, "declare")
   :_ "for" "namelist" "in" "explist" "do" "block" "end" {[1]={4,2,6}} :attr "scope"
   :_ "function" "funcname_" "funcbody" {[1]={2,3}}
-  :_ "local" "function" "Name" "funcbody" {[2]={3,4}} :attr "local"
+  :_ "local" "function" "Name" "funcbody" {[2]={3,4}} :attr "local" :attr(3, "declare")
   :_ "local" "namelist" {[1]={2}}
   :_ "local" "namelist" "=" "explist" {[1]={4,2}}
 
@@ -289,9 +289,9 @@ _"funcbody"
   :_ "(" "parlist" ")" "block" "end" {2,4} :attr "scope"
 
 _"parlist"
-  :_ "namelist" {[1]={}} :attr "param"
-  :_ "namelist" "," "..." {[1]={}} :attr "param" :attr "vararg"
-  :_ "..." {["namelist"]={}} :attr "param" :attr "vararg"
+  :_ "namelist" {[1]={}}
+  :_ "namelist" "," "..." {[1]={}} :attr "vararg"
+  :_ "..." {["namelist"]={}} :attr "vararg"
 
 _"tableconstructor"
   :_ "{" "}" {["fieldlist"]={}}

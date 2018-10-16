@@ -103,7 +103,7 @@ local function ref_constant(node, type)
   return constant
 end
 
-local function def_name(node, key, source)
+local function declare_name(node, key, source)
   if not source then
     source = symbol_value(node)
   end
@@ -329,10 +329,25 @@ local function resolve(self)
   for i = 1, n do
     local node = preorder_nodes[i]
     local symbol = node[0]
-    if symbol == symbol_table.funcname and node.self then
-      node.parent[2].proto.self = true
-    elseif symbol == symbol_table.namelist and node.vararg then
-      node.parent.proto.vararg = true
+    if symbol == symbol_table.funcname then
+      if node.self then
+        node.parent[2].proto.self = true
+      end
+    elseif symbol == symbol_table.namelist then
+      if node.parlist then
+        for j = 1, #node do
+          node[j].param = true
+        end
+      else
+        for j = 1, #node do
+          node[j].declare = true
+        end
+      end
+      if node.vararg then
+        node.parent.proto.vararg = true
+      end
+    elseif symbol == symbol_table.funcbody then
+      node[1].parlist = true
     end
   end
 
@@ -340,19 +355,9 @@ local function resolve(self)
     local node = preorder_nodes[i]
     local symbol = node[0]
     if symbol == symbol_table.namelist then
-      if node.param then
-        local proto = attr(node, "proto")
-        if proto.self then
-          def_name(node, "A", "self")
-        end
-        for j = 1, #node do
-          local name = node[j]
-          name.v = def_name(name, "A")[1]
-        end
-      else
-        for j = 1, #node do
-          local name = node[j]
-          name.v = def_name(name, "B")[1]
+      if node.parlist then
+        if attr(node, "proto").self then
+          declare_name(node, "A", "self")
         end
       end
     elseif symbol == symbol_table["nil"] then
@@ -362,7 +367,7 @@ local function resolve(self)
     elseif symbol == symbol_table["true"] then
       node.v = "TRUE"
     elseif symbol == symbol_table.IntegerConstant then
-      node.v = assert(ref_constant(node, "integer")[1])
+      node.v = ref_constant(node, "integer")[1]
     elseif symbol == symbol_table.FloatConstant then
       node.v = ref_constant(node, "float")[1]
     elseif symbol == symbol_table.LiteralString then
@@ -373,6 +378,12 @@ local function resolve(self)
         return nil, "cannot use '...' outside a vararg function", node.i
       end
       node.v = "V"
+    elseif symbol == symbol_table.Name then
+      if node.param then
+        node.v = declare_name(node, "A")[1]
+      elseif node.declare then
+        node.v = declare_name(node, "B")[1]
+      end
     end
   end
 

@@ -26,9 +26,14 @@ local _ = element
 
 local keys = {
   "local";
-  "param";
-  "vararg";
   "self";
+
+  "parlist";
+  "vararg";
+
+  "param";
+  "declare";
+
   "v";
 }
 
