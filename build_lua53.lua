@@ -166,7 +166,7 @@ _"stat"
   :_ "function" "funcname_" "funcbody" {[1]={2,3}}
   :_ "local" "function" "Name" "funcbody" {[2]={3,4}} :attr "local"
   :_ "local" "namelist" {[1]={2}}
-  :_ "local" "namelist" "=" "explist" {[1]={2,4}}
+  :_ "local" "namelist" "=" "explist" {[1]={4,2}}
 
 _"retstat"
   :_ "return" {[1]={}}

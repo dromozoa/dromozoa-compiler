@@ -130,7 +130,33 @@ local function def_name(node, key, source)
   return name
 end
 
-local function resolve_name(node, source)
+-- TODO recursive function
+local function resolve_upvalue(proto, name, parent_upvalue)
+  local upvalues = proto.upvalues
+  local n = #upvalues
+  for i = n, 1, -1 do
+    local upvalue = upvalues[i]
+    if upvalue.name == name then
+      return upvalue
+    end
+  end
+
+  local index = n + 1
+  local upvalue = {
+    name = name;
+    "U" .. index;
+  }
+  if parent_upvalue then
+    upvalue[1] = parent_upvalue[1]
+  else
+    upvalue[1] = name[1]
+  end
+
+  upvalues[index] = upvalue
+  return upvalue
+end
+
+local function resolve_name(node, key, upkey, source)
   if not source then
     source = symbol_value(node)
   end
@@ -142,8 +168,29 @@ local function resolve_name(node, source)
     for i = #names, 1, -1 do
       local name = names[i]
       if name.source == source then
+        local resolved_proto = scope.proto
+        if resolved_proto == proto then
+          local refs = name[key]
+          refs[#refs + 1] = node.id
+          return name
+        else
+          local uprefs = name[upkey]
+          uprefs[#uprefs + 1] = node.id
 
+          local protos = {}
+          local n = 0
+          repeat
+            n = n + 1
+            protos[n] = proto
+            proto = proto.parent
+          until resolved_proto == proto
 
+          local upvalue
+          for j = n, 1, -1 do
+            upvalue = resolve_upvalue(proto, name, upvalue)
+          end
+          return upvalue
+        end
       end
     end
     scope = scope.parent
