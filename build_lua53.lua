@@ -289,9 +289,9 @@ _"funcbody"
   :_ "(" "parlist" ")" "block" "end" {2,4} :attr "scope"
 
 _"parlist"
-  :_ "namelist" {[1]={}}
-  :_ "namelist" "," "..." {[1]={}} :attr "vararg"
-  :_ "..." {["namelist"]={}} :attr "vararg"
+  :_ "namelist" {[1]={}} :attr "param"
+  :_ "namelist" "," "..." {[1]={}} :attr "param" :attr "vararg"
+  :_ "..." {["namelist"]={}} :attr "param" :attr "vararg"
 
 _"tableconstructor"
   :_ "{" "}" {["fieldlist"]={}}

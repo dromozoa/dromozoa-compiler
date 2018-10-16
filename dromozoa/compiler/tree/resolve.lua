@@ -339,15 +339,21 @@ local function resolve(self)
   for i = 1, n do
     local node = preorder_nodes[i]
     local symbol = node[0]
-    if symbol == symbol_table.funcbody then
-      local proto = node.proto
-      if proto.self then
-        def_name(node, "A", "self")
-      end
-      local namelist = node[1]
-      for j = 1, #namelist do
-        local name = namelist[j]
-        name.v = def_name(name, "A")[1]
+    if symbol == symbol_table.namelist then
+      if node.param then
+        local proto = attr(node, "proto")
+        if proto.self then
+          def_name(node, "A", "self")
+        end
+        for j = 1, #node do
+          local name = node[j]
+          name.v = def_name(name, "A")[1]
+        end
+      else
+        for j = 1, #node do
+          local name = node[j]
+          name.v = def_name(name, "B")[1]
+        end
       end
     elseif symbol == symbol_table["nil"] then
       node.v = "NIL"
