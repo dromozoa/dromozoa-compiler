@@ -43,5 +43,8 @@ if not accepted_node then
 end
 
 local t = tree(parser, source, terminal_nodes, accepted_node)
-t:resolve()
+local result, message, i = t:resolve()
+if not result then
+  error(error_message(message, source, i, source_file))
+end
 t:write_html(result_file)

@@ -28,6 +28,7 @@ local keys = {
   "local";
   "vararg";
   "self";
+  "v";
 }
 
 local head = _"head" {
