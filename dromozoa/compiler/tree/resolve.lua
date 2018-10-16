@@ -334,6 +334,9 @@ local function resolve(self)
         node.parent[2].proto.self = true
       end
     elseif symbol == symbol_table.namelist then
+      if node.vararg then
+        node.parent.proto.vararg = true
+      end
       if node.parlist then
         for j = 1, #node do
           node[j].param = true
@@ -342,9 +345,6 @@ local function resolve(self)
         for j = 1, #node do
           node[j].declare = true
         end
-      end
-      if node.vararg then
-        node.parent.proto.vararg = true
       end
     elseif symbol == symbol_table.funcbody then
       node[1].parlist = true

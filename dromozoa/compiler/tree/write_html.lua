@@ -33,6 +33,8 @@ local keys = {
 
   "param";
   "declare";
+  "def";
+  "ref";
 
   "v";
 }
