@@ -117,8 +117,8 @@ local function declare_name(node, key, source)
     source = source;
     defs = { node.id };
     refs = {};
-    upvalue_defs = {};
-    upvalue_refs = {};
+    updefs = {};
+    uprefs = {};
     key .. index;
   }
 
@@ -147,9 +147,9 @@ local function resolve_upvalue(proto, name, parent_upvalue)
     "U" .. index;
   }
   if parent_upvalue then
-    upvalue[1] = parent_upvalue[1]
+    upvalue[2] = parent_upvalue[1]
   else
-    upvalue[1] = name[1]
+    upvalue[2] = name[1]
   end
 
   upvalues[index] = upvalue
@@ -195,6 +195,10 @@ local function resolve_name(node, key, upkey, source)
     end
     scope = scope.parent
   until not scope
+end
+
+local function ref_name(node)
+  return resolve_name(node, "refs", "uprefs")
 end
 
 local function prepare(self)
@@ -257,31 +261,31 @@ local function prepare(self)
         names = {};
         labels = {};
       }
-    elseif symbol == symbol_table.funcbody then
-      local index = #protos + 1
-      local proto = {
-        parent = attr(node.parent, "proto");
-        constants = {};
-        names = {};
-        labels = {};
-        upvalues = {};
-        self = false;
-        vararg = false;
-        A = 0;
-        B = 0;
-        "P" .. index;
-      }
-      node.proto = proto
-      protos[index] = proto
-    end
+    else
+      if symbol == symbol_table.funcbody then
+        local index = #protos + 1
+        local proto = {
+          parent = attr(node.parent, "proto");
+          constants = {};
+          names = {};
+          labels = {};
+          upvalues = {};
+          A = 0;
+          B = 0;
+          "P" .. index;
+        }
+        node.proto = proto
+        protos[index] = proto
+      end
 
-    if node.scope then
-      node.scope = {
-        proto = attr(node, "proto");
-        parent = attr(node.parent, "scope");
-        names = {};
-        labels = {};
-      }
+      if node.scope then
+        node.scope = {
+          proto = attr(node, "proto");
+          parent = attr(node.parent, "scope");
+          names = {};
+          labels = {};
+        }
+      end
     end
   end
 
@@ -403,6 +407,12 @@ local function resolve(self)
       elseif node.def then
         -- TODO
       elseif node.ref then
+        local name = ref_name(node)
+        if name then
+          node.v = name[1]
+        else
+          print("_ENV." .. symbol_value(node))
+        end
         -- TODO
       else
         -- DEBUG
