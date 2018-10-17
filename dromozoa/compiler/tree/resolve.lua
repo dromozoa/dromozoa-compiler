@@ -439,8 +439,8 @@ local function resolve_names(node, symbol_table)
 end
 
 return function (self)
-  local accepted_node = self.accepted_node
   local symbol_table = self.symbol_table
+  local accepted_node = self.accepted_node
 
   local protos = {}
   prepare_protos(accepted_node, symbol_table, protos)
