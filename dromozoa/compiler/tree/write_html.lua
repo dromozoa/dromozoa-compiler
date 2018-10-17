@@ -51,8 +51,28 @@ local head = _"head" {
   _"script" { src = "dromozoa-compiler.js" };
 }
 
+
+local function prepare_paths(node, parent_path)
+  local path = {}
+  local n = #parent_path
+  for i = 1, n do
+    path[i] = parent_path[i]
+  end
+  path[n + 1] = node.id
+
+  node.path = path
+
+  for i = 1, #node do
+    prepare_paths(node[i], path)
+  end
+end
+
 local function prepare(self)
   local terminal_nodes = self.terminal_nodes
+  local accepted_node = self.accepted_node
+
+  prepare_paths(accepted_node, {})
+
   local n = #terminal_nodes
   local next_path = {}
   for i = n, 1, -1 do
