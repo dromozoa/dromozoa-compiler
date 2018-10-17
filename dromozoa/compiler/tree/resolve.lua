@@ -205,96 +205,89 @@ local function ref_name(node)
   return resolve_name(node, "refs", "uprefs")
 end
 
-local function prepare(self)
-  local symbol_table = self.symbol_table
-  local preorder_nodes = self.preorder_nodes
+local function prepare(node, symbol_table, protos)
+  local symbol = node[0]
+  if symbol == symbol_table.chunk then
+    local env_name = {
+      source = "_ENV";
+      defs = {};
+      refs = {};
+      updefs = {};
+      uprefs = {};
+      "B1";
+    }
 
-  local protos = {}
-  for i = 1, #preorder_nodes do
-    local node = preorder_nodes[i]
-    local symbol = node[0]
+    local external_proto = {
+      constants = {};
+      names = { env_name };
+      labels = {};
+      upvalues = {};
+      A = 0;
+      B = 1;
+    }
 
-    if symbol == symbol_table.chunk then
-      local env_name = {
-        source = "_ENV";
-        defs = {};
-        refs = {};
-        updefs = {};
-        uprefs = {};
-        "B1";
-      }
+    local external_scope = {
+      proto = external_proto;
+      names = { env_name };
+      labels = {};
+    }
 
-      local external_proto = {
+    local proto = {
+      parent = external_proto;
+      constants = {};
+      names = {};
+      labels = {};
+      upvalues = {
+        {
+          name = env_name;
+          "U1";
+          "B1";
+        };
+      };
+      vararg = true;
+      A = 0;
+      B = 0;
+      "P1";
+    }
+    node.proto = proto
+    protos[1] = proto
+
+    node.scope = {
+      proto = proto;
+      parent = external_scope;
+      names = {};
+      labels = {};
+    }
+  else
+    if symbol == symbol_table.funcbody then
+      local index = #protos + 1
+      local proto = {
+        parent = attr(node.parent, "proto");
         constants = {};
-        names = { env_name };
+        names = {};
         labels = {};
         upvalues = {};
         A = 0;
-        B = 1;
-      }
-
-      local external_scope = {
-        proto = external_proto;
-        names = { env_name };
-        labels = {};
-      }
-
-      local proto = {
-        parent = external_proto;
-        constants = {};
-        names = {};
-        labels = {};
-        upvalues = {
-          {
-            name = env_name;
-            "U1";
-            "B1";
-          };
-        };
-        vararg = true;
-        A = 0;
         B = 0;
-        "P1";
+        "P" .. index;
       }
       node.proto = proto
-      protos[1] = proto
+      protos[index] = proto
+    end
 
+    if node.scope then
       node.scope = {
-        proto = proto;
-        parent = external_scope;
+        proto = attr(node, "proto");
+        parent = attr(node.parent, "scope");
         names = {};
         labels = {};
       }
-    else
-      if symbol == symbol_table.funcbody then
-        local index = #protos + 1
-        local proto = {
-          parent = attr(node.parent, "proto");
-          constants = {};
-          names = {};
-          labels = {};
-          upvalues = {};
-          A = 0;
-          B = 0;
-          "P" .. index;
-        }
-        node.proto = proto
-        protos[index] = proto
-      end
-
-      if node.scope then
-        node.scope = {
-          proto = attr(node, "proto");
-          parent = attr(node.parent, "scope");
-          names = {};
-          labels = {};
-        }
-      end
     end
   end
 
-  self.protos = protos
-  return self
+  for i = 1, #node do
+    prepare(node[i], symbol_table, protos)
+  end
 end
 
 local function resolve_labels(self)
@@ -435,7 +428,13 @@ local function resolve(self)
 end
 
 return function (self)
-  prepare(self)
+  local accepted_node = self.accepted_node
+  local symbol_table = self.symbol_table
+
+  local protos = {}
+  prepare(accepted_node, symbol_table, protos)
+  self.protos = protos
+
   local result, message, i = resolve_labels(self)
   if not result then
     return nil, message, i
