@@ -197,6 +197,10 @@ local function resolve_name(node, key, upkey, source)
   until not scope
 end
 
+local function def_name(node)
+  return resolve_name(node, "defs", "updefs")
+end
+
 local function ref_name(node)
   return resolve_name(node, "refs", "uprefs")
 end
@@ -405,15 +409,21 @@ local function resolve(self)
       elseif node.key then
         node.v = ref_constant(node, "string")[1]
       elseif node.def then
-        -- TODO
+        local name = def_name(node)
+        if name then
+          node.v = name[1]
+        else
+          -- TODO
+          -- print("_ENV." .. symbol_value(node))
+        end
       elseif node.ref then
         local name = ref_name(node)
         if name then
           node.v = name[1]
         else
-          print("_ENV." .. symbol_value(node))
+          -- TODO
+          -- print("_ENV." .. symbol_value(node))
         end
-        -- TODO
       else
         -- DEBUG
         assert(node.v :find "^L%d+$")
