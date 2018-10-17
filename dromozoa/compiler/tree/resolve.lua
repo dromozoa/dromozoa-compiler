@@ -205,7 +205,7 @@ local function ref_name(node)
   return resolve_name(node, "refs", "uprefs")
 end
 
-local function prepare(node, symbol_table, protos)
+local function prepare_protos(node, symbol_table, protos)
   local symbol = node[0]
   if symbol == symbol_table.chunk then
     local env_name = {
@@ -286,145 +286,156 @@ local function prepare(node, symbol_table, protos)
   end
 
   for i = 1, #node do
-    prepare(node[i], symbol_table, protos)
+    prepare_protos(node[i], symbol_table, protos)
   end
 end
 
-local function resolve_labels(self)
-  local symbol_table = self.symbol_table
-  local preorder_nodes = self.preorder_nodes
-  local n = #preorder_nodes
+local function def_labels(node, symbol_table)
+  if node[0] == symbol_table["::"] then
+    local that = node[1]
+    local result, message, i = def_label(that)
+    if not result then
+      return nil, message, i
+    end
+    that.v = result[1]
+  end
 
-  for i = 1, n do
-    local node = preorder_nodes[i]
-    if node[0] == symbol_table["::"] then
-      local that = node[1]
-      local result, message, i = def_label(that)
-      if not result then
-        return nil, message, i
-      end
-      that.v = result[1]
+  for i = 1, #node do
+    local result, message, i = def_labels(node[i], symbol_table)
+    if not result then
+      return nil, message, i
     end
   end
 
-  for i = 1, n do
-    local node = preorder_nodes[i]
-    if node[0] == symbol_table["goto"] then
-      local that = node[1]
-      local result, message, i = ref_label(that)
-      if not result then
-        return nil, message, i
-      end
-      that.v = result[1]
-    end
-  end
-
-  return self
+  return node
 end
 
-local function resolve(self)
-  local symbol_table = self.symbol_table
-  local preorder_nodes = self.preorder_nodes
-  local n = #preorder_nodes
+local function ref_labels(node, symbol_table)
+  if node[0] == symbol_table["goto"] then
+    local that = node[1]
+    local result, message, i = ref_label(that)
+    if not result then
+      return nil, message, i
+    end
+    that.v = result[1]
+  end
 
-  for i = 1, n do
-    local node = preorder_nodes[i]
-    local symbol = node[0]
-    if symbol == symbol_table.funcname then
-      if node.self then
-        node.parent[2].proto.self = true
-      end
-      if #node == 1 then
-        if node.def then
-          node[1].def = true
-        else
-          node[1].ref = true
-        end
-      end
-    elseif symbol == symbol_table.var then
-      if #node == 1 then
-        if node.def then
-          node[1].def = true
-        else
-          node[1].ref = true
-        end
-      end
-    elseif symbol == symbol_table.namelist then
-      if node.vararg then
-        node.parent.proto.vararg = true
-      end
-      if node.parlist then
-        for j = 1, #node do
-          node[j].param = true
-        end
+  for i = 1, #node do
+    local result, message, i = ref_labels(node[i], symbol_table)
+    if not result then
+      return nil, message, i
+    end
+  end
+
+  return node
+end
+
+local function prepare_attrs(node, symbol_table)
+  local symbol = node[0]
+  if symbol == symbol_table.funcname then
+    if node.self then
+      node.parent[2].proto.self = true
+    end
+    if #node == 1 then
+      if node.def then
+        node[1].def = true
       else
-        for j = 1, #node do
-          node[j].declare = true
-        end
+        node[1].ref = true
       end
-    elseif symbol == symbol_table.funcbody then
-      node[1].parlist = true
     end
+  elseif symbol == symbol_table.var then
+    if #node == 1 then
+      if node.def then
+        node[1].def = true
+      else
+        node[1].ref = true
+      end
+    end
+  elseif symbol == symbol_table.namelist then
+    if node.vararg then
+      node.parent.proto.vararg = true
+    end
+    if node.parlist then
+      for j = 1, #node do
+        node[j].param = true
+      end
+    else
+      for j = 1, #node do
+        node[j].declare = true
+      end
+    end
+  elseif symbol == symbol_table.funcbody then
+    node[1].parlist = true
   end
 
-  for i = 1, n do
-    local node = preorder_nodes[i]
-    local symbol = node[0]
-    if symbol == symbol_table.namelist then
-      if node.parlist then
-        if attr(node, "proto").self then
-          declare_name(node, "A", "self")
-        end
+  for i = 1, #node do
+    prepare_attrs(node[i], symbol_table)
+  end
+end
+
+local function resolve_names(node, symbol_table)
+  local symbol = node[0]
+  if symbol == symbol_table.namelist then
+    if node.parlist then
+      if attr(node, "proto").self then
+        declare_name(node, "A", "self")
       end
-    elseif symbol == symbol_table["nil"] then
-      node.v = "NIL"
-    elseif symbol == symbol_table["false"] then
-      node.v = "FALSE"
-    elseif symbol == symbol_table["true"] then
-      node.v = "TRUE"
-    elseif symbol == symbol_table.IntegerConstant then
-      node.v = ref_constant(node, "integer")[1]
-    elseif symbol == symbol_table.FloatConstant then
-      node.v = ref_constant(node, "float")[1]
-    elseif symbol == symbol_table.LiteralString then
+    end
+  elseif symbol == symbol_table["nil"] then
+    node.v = "NIL"
+  elseif symbol == symbol_table["false"] then
+    node.v = "FALSE"
+  elseif symbol == symbol_table["true"] then
+    node.v = "TRUE"
+  elseif symbol == symbol_table.IntegerConstant then
+    node.v = ref_constant(node, "integer")[1]
+  elseif symbol == symbol_table.FloatConstant then
+    node.v = ref_constant(node, "float")[1]
+  elseif symbol == symbol_table.LiteralString then
+    node.v = ref_constant(node, "string")[1]
+  elseif symbol == symbol_table["..."] then
+    local proto = attr(node, "proto")
+    if not proto.vararg then
+      return nil, "cannot use '...' outside a vararg function", node.i
+    end
+    node.v = "V"
+  elseif symbol == symbol_table.Name then
+    if node.param then
+      node.v = declare_name(node, "A")[1]
+    elseif node.declare then
+      node.v = declare_name(node, "B")[1]
+    elseif node.key then
       node.v = ref_constant(node, "string")[1]
-    elseif symbol == symbol_table["..."] then
-      local proto = attr(node, "proto")
-      if not proto.vararg then
-        return nil, "cannot use '...' outside a vararg function", node.i
-      end
-      node.v = "V"
-    elseif symbol == symbol_table.Name then
-      if node.param then
-        node.v = declare_name(node, "A")[1]
-      elseif node.declare then
-        node.v = declare_name(node, "B")[1]
-      elseif node.key then
-        node.v = ref_constant(node, "string")[1]
-      elseif node.def then
-        local name = def_name(node)
-        if name then
-          node.v = name[1]
-        else
-          -- TODO
-          -- print("_ENV." .. symbol_value(node))
-        end
-      elseif node.ref then
-        local name = ref_name(node)
-        if name then
-          node.v = name[1]
-        else
-          -- TODO
-          -- print("_ENV." .. symbol_value(node))
-        end
+    elseif node.def then
+      local name = def_name(node)
+      if name then
+        node.v = name[1]
       else
-        -- DEBUG
-        assert(node.v :find "^L%d+$")
+        -- TODO
+        -- print("_ENV." .. symbol_value(node))
       end
+    elseif node.ref then
+      local name = ref_name(node)
+      if name then
+        node.v = name[1]
+      else
+        -- TODO
+        -- print("_ENV." .. symbol_value(node))
+      end
+    else
+      -- DEBUG
+      assert(node.v :find "^L%d+$")
     end
   end
 
-  return self
+  for i = 1, #node do
+    local result, message, i = resolve_names(node[i], symbol_table)
+    if not result then
+      return nil, message, i
+    end
+  end
+
+  return node
 end
 
 return function (self)
@@ -432,16 +443,25 @@ return function (self)
   local symbol_table = self.symbol_table
 
   local protos = {}
-  prepare(accepted_node, symbol_table, protos)
+  prepare_protos(accepted_node, symbol_table, protos)
   self.protos = protos
 
-  local result, message, i = resolve_labels(self)
+  local result, message, i = def_labels(accepted_node, symbol_table)
   if not result then
     return nil, message, i
   end
-  local result, message, i = resolve(self)
+
+  local result, message, i = ref_labels(accepted_node, symbol_table)
   if not result then
     return nil, message, i
   end
+
+  prepare_attrs(accepted_node, symbol_table)
+
+  local result, message, i = resolve_names(accepted_node, symbol_table)
+  if not result then
+    return nil, message, i
+  end
+
   return self
 end
