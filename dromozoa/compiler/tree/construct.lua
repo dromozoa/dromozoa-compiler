@@ -42,7 +42,7 @@ return function (self)
   local preorder_nodes = {}
   local postorder_nodes = {}
   visit(accepted_node, preorder_nodes, postorder_nodes, {})
-  self.preorder_nodes = preorder_nodes
-  self.postorder_nodes = postorder_nodes
+  -- self.preorder_nodes = preorder_nodes
+  -- self.postorder_nodes = postorder_nodes
   return self
 end
