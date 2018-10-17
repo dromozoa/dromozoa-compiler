@@ -36,7 +36,7 @@ end
 
 return setmetatable(class, {
   __call = function (_, parser, source, terminal_nodes, accepted_node)
-    return setmetatable(construct {
+    local self = {
       id = 0;
       symbol_names = parser.symbol_names;
       symbol_table = parser.symbol_table;
@@ -44,6 +44,8 @@ return setmetatable(class, {
       source = source;
       terminal_nodes = terminal_nodes;
       accepted_node = accepted_node;
-    }, metatable)
+    }
+    construct(self)
+    return setmetatable(self, metatable)
   end;
 })
