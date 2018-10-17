@@ -15,8 +15,9 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-local function visit(node, preorder_nodes, postorder_nodes, parent_path)
-  local id = #preorder_nodes + 1
+local function visit(self, node, parent_path)
+  local id = self.id + 1
+  self.id = id
 
   local path = {}
   local n = #parent_path
@@ -28,21 +29,15 @@ local function visit(node, preorder_nodes, postorder_nodes, parent_path)
   node.id = id
   node.path = path
 
-  preorder_nodes[id] = node
   for i = 1, #node do
     local that = node[i]
     that.parent = node
-    visit(that, preorder_nodes, postorder_nodes, path)
+    visit(self, that, path)
   end
-  postorder_nodes[#postorder_nodes + 1] = node
 end
 
 return function (self)
   local accepted_node = self.accepted_node
-  local preorder_nodes = {}
-  local postorder_nodes = {}
-  visit(accepted_node, preorder_nodes, postorder_nodes, {})
-  -- self.preorder_nodes = preorder_nodes
-  -- self.postorder_nodes = postorder_nodes
+  visit(self, accepted_node, {})
   return self
 end

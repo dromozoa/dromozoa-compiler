@@ -37,6 +37,7 @@ end
 return setmetatable(class, {
   __call = function (_, parser, source, terminal_nodes, accepted_node)
     return setmetatable(construct {
+      id = 0;
       symbol_names = parser.symbol_names;
       symbol_table = parser.symbol_table;
       max_terminal_symbol = max_terminal_symbol;
