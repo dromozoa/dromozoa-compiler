@@ -187,7 +187,7 @@ local function resolve_name(node, key, upkey, source)
 
           local upvalue
           for j = n, 1, -1 do
-            upvalue = resolve_upvalue(proto, name, upvalue)
+            upvalue = resolve_upvalue(protos[j], name, upvalue)
           end
           return upvalue
         end
