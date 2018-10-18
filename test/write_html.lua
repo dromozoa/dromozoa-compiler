@@ -70,7 +70,7 @@ for i = 1, #protos do
     for j = 1, #proto.constants do
       local constant = proto.constants[j]
       out:write(("    %s %q %s\n"):format(constant[1], constant.source, constant.type))
-      if constant.uses[1] then out:write("      uses ", table.concat(constant.uses, " "), "\n") end
+      if constant.use[1] then out:write("      use ", table.concat(constant.use, " "), "\n") end
     end
   end
 
@@ -79,10 +79,10 @@ for i = 1, #protos do
     for j = 1, #proto.names do
       local name = proto.names[j]
       out:write(("    %s %q\n"):format(name[1], name.source))
-      if name.defs[1] then out:write("      defs ", table.concat(name.defs, " "), "\n") end
-      if name.uses[1] then out:write("      uses ", table.concat(name.uses, " "), "\n") end
-      if name.updefs[1] then out:write("      updefs ", table.concat(name.updefs, " "), "\n") end
-      if name.upuses[1] then out:write("      upuses ", table.concat(name.upuses, " "), "\n") end
+      if name.def[1] then out:write("      def ", table.concat(name.def, " "), "\n") end
+      if name.use[1] then out:write("      use ", table.concat(name.use, " "), "\n") end
+      if name.updef[1] then out:write("      updef ", table.concat(name.updef, " "), "\n") end
+      if name.upuse[1] then out:write("      upuse ", table.concat(name.upuse, " "), "\n") end
     end
   end
 
@@ -91,8 +91,8 @@ for i = 1, #protos do
     for j = 1, #proto.labels do
       local label = proto.labels[j]
       out:write(("    %s %q\n"):format(label[1], label.source))
-      if label.defs[1] then out:write("      defs ", table.concat(label.defs, " "), "\n") end
-      if label.uses[1] then out:write("      uses ", table.concat(label.uses, " "), "\n") end
+      if label.def[1] then out:write("      def ", table.concat(label.def, " "), "\n") end
+      if label.use[1] then out:write("      use ", table.concat(label.use, " "), "\n") end
     end
   end
 

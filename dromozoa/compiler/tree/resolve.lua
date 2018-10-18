@@ -45,8 +45,8 @@ local function def_label(node)
   local index = #proto_labels + 1
   local label = {
     source = source;
-    defs = { node.id };
-    uses = {};
+    def = { node.id };
+    use = {};
     "L" .. index;
   }
 
@@ -65,8 +65,8 @@ local function ref_label(node)
     for i = #scope_labels, 1, -1 do
       local label = scope_labels[i]
       if label.source == source then
-        local uses = label.uses
-        uses[#uses + 1] = node.id
+        local use = label.use
+        use[#use + 1] = node.id
         return label
       end
     end
@@ -85,8 +85,8 @@ local function ref_constant(node, type)
   for i = n, 1, -1 do
     local constant = constants[i]
     if constant.type == type and constant.source == source then
-      local uses = constant.uses
-      uses[#uses + 1] = node.id
+      local use = constant.use
+      use[#use + 1] = node.id
       return constant
     end
   end
@@ -95,7 +95,7 @@ local function ref_constant(node, type)
   local constant = {
     type = type;
     source = source;
-    uses = { node.id };
+    use = { node.id };
     "K" .. index;
   }
 
@@ -115,10 +115,10 @@ local function declare_name(node, key, source)
 
   local name = {
     source = source;
-    defs = { node.id };
-    uses = {};
-    updefs = {};
-    upuses = {};
+    def = { node.id };
+    use = {};
+    updef = {};
+    upuse = {};
     key .. index;
   }
 
@@ -169,12 +169,12 @@ local function resolve_name(node, key, upkey, source)
       if name.source == source then
         local resolved_proto = scope.proto
         if resolved_proto == proto then
-          local uses = name[key]
-          uses[#uses + 1] = node.id
+          local use = name[key]
+          use[#use + 1] = node.id
           return name
         else
-          local upuses = name[upkey]
-          upuses[#upuses + 1] = node.id
+          local upuse = name[upkey]
+          upuse[#upuse + 1] = node.id
 
           local protos = {}
           local n = 0
@@ -197,11 +197,11 @@ local function resolve_name(node, key, upkey, source)
 end
 
 local function def_name(node)
-  return resolve_name(node, "defs", "updefs")
+  return resolve_name(node, "def", "updef")
 end
 
 local function ref_name(node)
-  return resolve_name(node, "uses", "upuses")
+  return resolve_name(node, "use", "upuse")
 end
 
 local function env_name(self, node, symbol_table)
@@ -245,10 +245,10 @@ local function prepare_protos(node, symbol_table, protos)
   if symbol == symbol_table.chunk then
     local env_name = {
       source = "_ENV";
-      defs = {};
-      uses = {};
-      updefs = {};
-      upuses = {};
+      def = {};
+      use = {};
+      updef = {};
+      upuse = {};
       "B1";
     }
 
