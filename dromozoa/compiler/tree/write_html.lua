@@ -35,7 +35,8 @@ local keys = {
   "def";
   "ref";
 
-  "v";
+  "label";
+  "var";
 }
 
 local head = _"head" {
@@ -205,7 +206,7 @@ local function tree_to_html(self, tree_width, tree_height)
     local node = uid_to_node[path["data-uid"]]
     local node_id = node.id
     path["data-node-id"] = node_id
-    path["data-value"] = symbol_value(node)
+    path["data-source"] = symbol_value(node)
     for j = 1, #keys do
       local key = keys[j]
       path["data-" .. key] = node[key]

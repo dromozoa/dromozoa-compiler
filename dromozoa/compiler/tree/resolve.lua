@@ -236,8 +236,8 @@ local function env_name(self, node, symbol_table)
   that[1] = var_node;
   that[2] = node;
 
-  env_node.v = ref_name(env_node)[1]
-  node.v = ref_constant(node, "string")[1]
+  env_node.var = ref_name(env_node)[1]
+  node.var = ref_constant(node, "string")[1]
 end
 
 local function prepare_protos(node, symbol_table, protos)
@@ -332,7 +332,7 @@ local function def_labels(node, symbol_table)
     if not result then
       return nil, message, i
     end
-    that.v = result[1]
+    that.label = result[1]
   end
 
   for i = 1, #node do
@@ -352,7 +352,7 @@ local function ref_labels(node, symbol_table)
     if not result then
       return nil, message, i
     end
-    that.v = result[1]
+    that.label = result[1]
   end
 
   for i = 1, #node do
@@ -417,47 +417,47 @@ local function resolve_names(self, node, symbol_table)
       end
     end
   elseif symbol == symbol_table["nil"] then
-    node.v = "NIL"
+    node.var = "NIL"
   elseif symbol == symbol_table["false"] then
-    node.v = "FALSE"
+    node.var = "FALSE"
   elseif symbol == symbol_table["true"] then
-    node.v = "TRUE"
+    node.var = "TRUE"
   elseif symbol == symbol_table.IntegerConstant then
-    node.v = ref_constant(node, "integer")[1]
+    node.var = ref_constant(node, "integer")[1]
   elseif symbol == symbol_table.FloatConstant then
-    node.v = ref_constant(node, "float")[1]
+    node.var = ref_constant(node, "float")[1]
   elseif symbol == symbol_table.LiteralString then
-    node.v = ref_constant(node, "string")[1]
+    node.var = ref_constant(node, "string")[1]
   elseif symbol == symbol_table["..."] then
     local proto = attr(node, "proto")
     if not proto.vararg then
       return nil, "cannot use '...' outside a vararg function", node.i
     end
-    node.v = "V"
+    node.var = "V"
   elseif symbol == symbol_table.Name then
     if node.param then
-      node.v = declare_name(node, "A")[1]
+      node.var = declare_name(node, "A")[1]
     elseif node.declare then
-      node.v = declare_name(node, "B")[1]
+      node.var = declare_name(node, "B")[1]
     elseif node.key then
-      node.v = ref_constant(node, "string")[1]
+      node.var = ref_constant(node, "string")[1]
     elseif node.def then
       local name = def_name(node)
       if name then
-        node.v = name[1]
+        node.var = name[1]
       else
         env_name(self, node, symbol_table)
       end
     elseif node.ref then
       local name = ref_name(node)
       if name then
-        node.v = name[1]
+        node.var = name[1]
       else
         env_name(self, node, symbol_table)
       end
     else
       -- DEBUG
-      assert(node.v :find "^L%d+$")
+      assert(node.label :find "^L%d+$")
     end
   end
 
