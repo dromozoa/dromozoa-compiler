@@ -33,7 +33,7 @@ local keys = {
   "declare";
   "key";
   "def";
-  "ref";
+  "use";
 
   "label";
   "var";
