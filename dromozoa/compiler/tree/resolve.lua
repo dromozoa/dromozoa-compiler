@@ -206,40 +206,38 @@ local function ref_name(node)
 end
 
 local function env_name(self, node, symbol_table)
-  local parent_node = node.parent
+  local that = node.parent
 
-  local id = self.id + 1
+  local var_id = self.id + 1
+  local env_id = var_id + 1
+  self.id = env_id
 
-  local name_node = {
+  local env_node = {
     [0] = symbol_table.Name;
     rs = "_ENV";
     ri = 1;
     rj = 4;
-    id = id;
+    id = env_id;
     ref = true;
   }
 
-  id = id + 1
-
   local var_node = {
     [0] = symbol_table.var;
-    id = id;
-    name_node;
+    parent = that;
+    id = var_id;
+    env_node;
   }
 
-  self.id = id
+  env_node.parent = var_node
 
   node.def = nil
   node.ref = nil
   node.key = true
 
-  parent_node[1] = var_node;
-  parent_node[2] = node;
+  that[1] = var_node;
+  that[2] = node;
 
-  name_node.parent = var_node
-  var_node.parent = parent_node
-
-  name_node.v = ref_name(name_node)[1]
+  env_node.v = ref_name(env_node)[1]
   node.v = ref_constant(node, "string")[1]
 end
 
@@ -450,8 +448,6 @@ local function resolve_names(self, node, symbol_table)
         node.v = name[1]
       else
         env_name(self, node, symbol_table)
-        -- TODO
-        -- print("_ENV." .. symbol_value(node))
       end
     elseif node.ref then
       local name = ref_name(node)
@@ -459,9 +455,6 @@ local function resolve_names(self, node, symbol_table)
         node.v = name[1]
       else
         env_name(self, node, symbol_table)
-
-        -- TODO
-        -- print("_ENV." .. symbol_value(node))
       end
     else
       -- DEBUG
