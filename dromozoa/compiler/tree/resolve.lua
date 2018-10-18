@@ -130,7 +130,6 @@ local function declare_name(node, key, source)
   return name
 end
 
--- TODO recursive function
 local function resolve_upvalue(proto, name, parent_upvalue)
   local upvalues = proto.upvalues
   local n = #upvalues
