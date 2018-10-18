@@ -26,7 +26,6 @@ local _ = element
 
 local keys = {
   "self";
-
   "parlist";
   "vararg";
 
@@ -34,9 +33,10 @@ local keys = {
   "declare";
   "key";
   "def";
-  "ref";
+  "use";
 
-  "v";
+  "label";
+  "var";
 }
 
 local head = _"head" {
@@ -51,8 +51,28 @@ local head = _"head" {
   _"script" { src = "dromozoa-compiler.js" };
 }
 
+
+local function prepare_paths(node, parent_path)
+  local path = {}
+  local n = #parent_path
+  for i = 1, n do
+    path[i] = parent_path[i]
+  end
+  path[n + 1] = node.id
+
+  node.path = path
+
+  for i = 1, #node do
+    prepare_paths(node[i], path)
+  end
+end
+
 local function prepare(self)
   local terminal_nodes = self.terminal_nodes
+  local accepted_node = self.accepted_node
+
+  prepare_paths(accepted_node, {})
+
   local n = #terminal_nodes
   local next_path = {}
   for i = n, 1, -1 do
@@ -131,7 +151,7 @@ local function source_to_html(self)
     html[#html + 1] = _"span" {
       id = id;
       class = class;
-      ["data-uid"] = node.id;
+      ["data-node-id"] = node.id;
       source:sub(i, j);
     }
   end
@@ -139,40 +159,59 @@ local function source_to_html(self)
   return html
 end
 
+local function add_vertices(node, symbol_names, that, labels, nid_to_uid, uid_to_node)
+  local nid = node.id
+  local uid = that:add_vertex()
+  labels[uid] = symbol_names[node[0]]
+  nid_to_uid[nid] = uid
+  uid_to_node[uid] = node
+
+  for i = 1, #node do
+    add_vertices(node[i], symbol_names, that, labels, nid_to_uid, uid_to_node)
+  end
+end
+
+local function add_edges(node, that, nid_to_uid)
+  for i = 1, #node do
+    that:add_edge(nid_to_uid[node.id], nid_to_uid[node[i].id])
+  end
+  for i = 1, #node do
+    add_edges(node[i], that, nid_to_uid)
+  end
+end
+
 local function tree_to_html(self, tree_width, tree_height)
   local symbol_names = self.symbol_names
-  local preorder_nodes = self.preorder_nodes
+  local accepted_node = self.accepted_node
 
   local that = graph()
-  local u_labels = {}
+  local labels = {}
+  local nid_to_uid = {}
+  local uid_to_node = {}
 
-  for i = 1, #preorder_nodes do
-    u_labels[that:add_vertex()] = symbol_names[preorder_nodes[i][0]]
-  end
-
-  for i = 1, #preorder_nodes do
-    local node = preorder_nodes[i]
-    local id = node.id
-    for j = 1, #node do
-      that:add_edge(id, node[j].id)
-    end
-  end
+  add_vertices(accepted_node, symbol_names, that, labels, nid_to_uid, uid_to_node)
+  add_edges(accepted_node, that, nid_to_uid)
 
   local root = that:render {
     matrix = matrix3(0, 160, 80, 40, 0, 20, 0, 0, 1);
-    u_labels = u_labels;
+    u_labels = labels;
     u_max_text_length = 144;
   }
 
   local u_paths = root[1]
+  local u_texts = root[2]
   for i = 1, #u_paths do
-    local node = preorder_nodes[i]
     local path = u_paths[i]
-    path["data-value"] = symbol_value(node)
+    local text = u_texts[i]
+    local node = uid_to_node[path["data-uid"]]
+    local node_id = node.id
+    path["data-node-id"] = node_id
+    path["data-source"] = symbol_value(node)
     for j = 1, #keys do
       local key = keys[j]
       path["data-" .. key] = node[key]
     end
+    text["data-node-id"] = node_id
   end
 
   return _"div" {

@@ -15,9 +15,19 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-local construct = require "dromozoa.compiler.tree.construct"
 local resolve = require "dromozoa.compiler.tree.resolve"
 local write_html = require "dromozoa.compiler.tree.write_html"
+
+local function construct(self, node)
+  local id = self.id + 1
+  self.id = id
+  node.id = id
+  for i = 1, #node do
+    local that = node[i]
+    that.parent = node
+    construct(self, that)
+  end
+end
 
 local class = {}
 local metatable = { __index = class }
@@ -36,13 +46,16 @@ end
 
 return setmetatable(class, {
   __call = function (_, parser, source, terminal_nodes, accepted_node)
-    return setmetatable(construct {
+    local self = {
+      id = 0;
       symbol_names = parser.symbol_names;
       symbol_table = parser.symbol_table;
       max_terminal_symbol = max_terminal_symbol;
       source = source;
       terminal_nodes = terminal_nodes;
       accepted_node = accepted_node;
-    }, metatable)
+    }
+    construct(self, accepted_node)
+    return setmetatable(self, metatable)
   end;
 })

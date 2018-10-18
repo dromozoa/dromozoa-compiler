@@ -57,10 +57,10 @@
     }
   };
 
-  let click = function (uid) {
+  let click = function (node_id) {
     $(".active").removeClass("active");
-    $(".S" + uid).addClass("active");
-    let $path = $("g.u_paths > path[data-uid=" + uid + "]");
+    $(".S" + node_id).addClass("active");
+    let $path = $("g.u_paths > path[data-node-id=" + node_id + "]");
     $path.addClass("active");
     let data = [];
     $.each($path.get(0).attributes, function (_, attr) {
@@ -109,9 +109,9 @@
     };
 
     $(".S").on("click", function () {
-      let uid = $(this).attr("data-uid");
-      if (uid) {
-        let $text = $("g.u_texts > text[data-uid=" + uid + "]");
+      let node_id = $(this).attr("data-node-id");
+      if (node_id) {
+        let $text = $("g.u_texts > text[data-node-id=" + node_id + "]");
         let v = {
           x: parseFloat($text.attr("x")),
           y: parseFloat($text.attr("y")),
@@ -124,12 +124,12 @@
         b.translate_to(hw - v.x, hh - v.y);
         animation.t = false;
         requestAnimationFrame(animation_step);
-        click(uid);
+        click(node_id);
       }
     });
 
     $("g.u_texts > text").on("click", function () {
-      click($(this).attr("data-uid"));
+      click($(this).attr("data-node-id"));
     });
 
     $svg.on("wheel", function ($ev) {

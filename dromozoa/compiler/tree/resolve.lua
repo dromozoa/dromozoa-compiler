@@ -45,8 +45,8 @@ local function def_label(node)
   local index = #proto_labels + 1
   local label = {
     source = source;
-    defs = { node.id };
-    refs = {};
+    def = { node.id };
+    use = {};
     "L" .. index;
   }
 
@@ -65,8 +65,8 @@ local function ref_label(node)
     for i = #scope_labels, 1, -1 do
       local label = scope_labels[i]
       if label.source == source then
-        local refs = label.refs
-        refs[#refs + 1] = node.id
+        local use = label.use
+        use[#use + 1] = node.id
         return label
       end
     end
@@ -85,8 +85,8 @@ local function ref_constant(node, type)
   for i = n, 1, -1 do
     local constant = constants[i]
     if constant.type == type and constant.source == source then
-      local refs = constant.refs
-      refs[#refs + 1] = node.id
+      local use = constant.use
+      use[#use + 1] = node.id
       return constant
     end
   end
@@ -95,7 +95,7 @@ local function ref_constant(node, type)
   local constant = {
     type = type;
     source = source;
-    refs = { node.id };
+    use = { node.id };
     "K" .. index;
   }
 
@@ -115,10 +115,10 @@ local function declare_name(node, key, source)
 
   local name = {
     source = source;
-    defs = { node.id };
-    refs = {};
-    upvalue_defs = {};
-    upvalue_refs = {};
+    def = { node.id };
+    use = {};
+    updef = {};
+    upuse = {};
     key .. index;
   }
 
@@ -130,7 +130,6 @@ local function declare_name(node, key, source)
   return name
 end
 
--- TODO recursive function
 local function resolve_upvalue(proto, name, parent_upvalue)
   local upvalues = proto.upvalues
   local n = #upvalues
@@ -147,9 +146,9 @@ local function resolve_upvalue(proto, name, parent_upvalue)
     "U" .. index;
   }
   if parent_upvalue then
-    upvalue[1] = parent_upvalue[1]
+    upvalue[2] = parent_upvalue[1]
   else
-    upvalue[1] = name[1]
+    upvalue[2] = name[1]
   end
 
   upvalues[index] = upvalue
@@ -170,12 +169,12 @@ local function resolve_name(node, key, upkey, source)
       if name.source == source then
         local resolved_proto = scope.proto
         if resolved_proto == proto then
-          local refs = name[key]
-          refs[#refs + 1] = node.id
+          local use = name[key]
+          use[#use + 1] = node.id
           return name
         else
-          local uprefs = name[upkey]
-          uprefs[#uprefs + 1] = node.id
+          local upuse = name[upkey]
+          upuse[#upuse + 1] = node.id
 
           local protos = {}
           local n = 0
@@ -187,7 +186,7 @@ local function resolve_name(node, key, upkey, source)
 
           local upvalue
           for j = n, 1, -1 do
-            upvalue = resolve_upvalue(proto, name, upvalue)
+            upvalue = resolve_upvalue(protos[j], name, upvalue)
           end
           return upvalue
         end
@@ -197,67 +196,105 @@ local function resolve_name(node, key, upkey, source)
   until not scope
 end
 
-local function prepare(self)
-  local symbol_table = self.symbol_table
-  local preorder_nodes = self.preorder_nodes
+local function def_name(node)
+  return resolve_name(node, "def", "updef")
+end
 
-  local protos = {}
-  for i = 1, #preorder_nodes do
-    local node = preorder_nodes[i]
-    local symbol = node[0]
+local function ref_name(node)
+  return resolve_name(node, "use", "upuse")
+end
 
-    if symbol == symbol_table.chunk then
-      local env_name = {
-        source = "_ENV";
-        defs = {};
-        refs = {};
-        updefs = {};
-        uprefs = {};
-        "B1";
-      }
+local function env_name(self, node, symbol_table)
+  local that = node.parent
 
-      local external_proto = {
-        constants = {};
-        names = { env_name };
-        labels = {};
-        upvalues = {};
-        A = 0;
-        B = 1;
-      }
+  local var_id = self.id + 1
+  local env_id = var_id + 1
+  self.id = env_id
 
-      local external_scope = {
-        proto = external_proto;
-        names = { env_name };
-        labels = {};
-      }
+  local env_node = {
+    [0] = symbol_table.Name;
+    rs = "_ENV";
+    ri = 1;
+    rj = 4;
+    id = env_id;
+    use = true;
+  }
 
-      local proto = {
-        parent = external_proto;
-        constants = {};
-        names = {};
-        labels = {};
-        upvalues = {
-          {
-            name = env_name;
-            "U1";
-            "B1";
-          };
+  local var_node = {
+    [0] = symbol_table.var;
+    parent = that;
+    id = var_id;
+    env_node;
+  }
+
+  env_node.parent = var_node
+
+  node.def = nil
+  node.use = nil
+  node.key = true
+
+  that[1] = var_node;
+  that[2] = node;
+
+  env_node.var = ref_name(env_node)[1]
+  node.var = ref_constant(node, "string")[1]
+end
+
+local function prepare_protos(node, symbol_table, protos)
+  local symbol = node[0]
+  if symbol == symbol_table.chunk then
+    local env_name = {
+      source = "_ENV";
+      def = {};
+      use = {};
+      updef = {};
+      upuse = {};
+      "B1";
+    }
+
+    local external_proto = {
+      constants = {};
+      names = { env_name };
+      labels = {};
+      upvalues = {};
+      A = 0;
+      B = 1;
+    }
+
+    local external_scope = {
+      proto = external_proto;
+      names = { env_name };
+      labels = {};
+    }
+
+    local proto = {
+      parent = external_proto;
+      constants = {};
+      names = {};
+      labels = {};
+      upvalues = {
+        {
+          name = env_name;
+          "U1";
+          "B1";
         };
-        vararg = true;
-        A = 0;
-        B = 0;
-        "P1";
-      }
-      node.proto = proto
-      protos[1] = proto
+      };
+      vararg = true;
+      A = 0;
+      B = 0;
+      "P1";
+    }
+    node.proto = proto
+    protos[1] = proto
 
-      node.scope = {
-        proto = proto;
-        parent = external_scope;
-        names = {};
-        labels = {};
-      }
-    elseif symbol == symbol_table.funcbody then
+    node.scope = {
+      proto = proto;
+      parent = external_scope;
+      names = {};
+      labels = {};
+    }
+  else
+    if symbol == symbol_table.funcbody then
       local index = #protos + 1
       local proto = {
         parent = attr(node.parent, "proto");
@@ -265,8 +302,6 @@ local function prepare(self)
         names = {};
         labels = {};
         upvalues = {};
-        self = false;
-        vararg = false;
         A = 0;
         B = 0;
         "P" .. index;
@@ -285,144 +320,178 @@ local function prepare(self)
     end
   end
 
-  self.protos = protos
-  return self
+  for i = 1, #node do
+    prepare_protos(node[i], symbol_table, protos)
+  end
 end
 
-local function resolve_labels(self)
-  local symbol_table = self.symbol_table
-  local preorder_nodes = self.preorder_nodes
-  local n = #preorder_nodes
+local function def_labels(node, symbol_table)
+  if node[0] == symbol_table["::"] then
+    local that = node[1]
+    local result, message, i = def_label(that)
+    if not result then
+      return nil, message, i
+    end
+    that.label = result[1]
+  end
 
-  for i = 1, n do
-    local node = preorder_nodes[i]
-    if node[0] == symbol_table["::"] then
-      local that = node[1]
-      local result, message, i = def_label(that)
-      if not result then
-        return nil, message, i
-      end
-      that.v = result[1]
+  for i = 1, #node do
+    local result, message, i = def_labels(node[i], symbol_table)
+    if not result then
+      return nil, message, i
     end
   end
 
-  for i = 1, n do
-    local node = preorder_nodes[i]
-    if node[0] == symbol_table["goto"] then
-      local that = node[1]
-      local result, message, i = ref_label(that)
-      if not result then
-        return nil, message, i
-      end
-      that.v = result[1]
-    end
-  end
-
-  return self
+  return node
 end
 
-local function resolve(self)
-  local symbol_table = self.symbol_table
-  local preorder_nodes = self.preorder_nodes
-  local n = #preorder_nodes
+local function ref_labels(node, symbol_table)
+  if node[0] == symbol_table["goto"] then
+    local that = node[1]
+    local result, message, i = ref_label(that)
+    if not result then
+      return nil, message, i
+    end
+    that.label = result[1]
+  end
 
-  for i = 1, n do
-    local node = preorder_nodes[i]
-    local symbol = node[0]
-    if symbol == symbol_table.funcname then
-      if node.self then
-        node.parent[2].proto.self = true
-      end
-      if #node == 1 then
-        if node.def then
-          node[1].def = true
-        else
-          node[1].ref = true
-        end
-      end
-    elseif symbol == symbol_table.var then
-      if #node == 1 then
-        if node.def then
-          node[1].def = true
-        else
-          node[1].ref = true
-        end
-      end
-    elseif symbol == symbol_table.namelist then
-      if node.vararg then
-        node.parent.proto.vararg = true
-      end
-      if node.parlist then
-        for j = 1, #node do
-          node[j].param = true
-        end
-      else
-        for j = 1, #node do
-          node[j].declare = true
-        end
-      end
-    elseif symbol == symbol_table.funcbody then
-      node[1].parlist = true
+  for i = 1, #node do
+    local result, message, i = ref_labels(node[i], symbol_table)
+    if not result then
+      return nil, message, i
     end
   end
 
-  for i = 1, n do
-    local node = preorder_nodes[i]
-    local symbol = node[0]
-    if symbol == symbol_table.namelist then
-      if node.parlist then
-        if attr(node, "proto").self then
-          declare_name(node, "A", "self")
-        end
-      end
-    elseif symbol == symbol_table["nil"] then
-      node.v = "NIL"
-    elseif symbol == symbol_table["false"] then
-      node.v = "FALSE"
-    elseif symbol == symbol_table["true"] then
-      node.v = "TRUE"
-    elseif symbol == symbol_table.IntegerConstant then
-      node.v = ref_constant(node, "integer")[1]
-    elseif symbol == symbol_table.FloatConstant then
-      node.v = ref_constant(node, "float")[1]
-    elseif symbol == symbol_table.LiteralString then
-      node.v = ref_constant(node, "string")[1]
-    elseif symbol == symbol_table["..."] then
-      local proto = attr(node, "proto")
-      if not proto.vararg then
-        return nil, "cannot use '...' outside a vararg function", node.i
-      end
-      node.v = "V"
-    elseif symbol == symbol_table.Name then
-      if node.param then
-        node.v = declare_name(node, "A")[1]
-      elseif node.declare then
-        node.v = declare_name(node, "B")[1]
-      elseif node.key then
-        node.v = ref_constant(node, "string")[1]
-      elseif node.def then
-        -- TODO
-      elseif node.ref then
-        -- TODO
+  return node
+end
+
+local function prepare_attrs(node, symbol_table)
+  local symbol = node[0]
+  if symbol == symbol_table.funcname then
+    if node.self then
+      node.parent[2].proto.self = true
+    end
+    if #node == 1 then
+      if node.def then
+        node[1].def = true
       else
-        -- DEBUG
-        assert(node.v :find "^L%d+$")
+        node[1].use = true
+      end
+    end
+  elseif symbol == symbol_table.var then
+    if #node == 1 then
+      if node.def then
+        node[1].def = true
+      else
+        node[1].use = true
+      end
+    end
+  elseif symbol == symbol_table.namelist then
+    if node.vararg then
+      node.parent.proto.vararg = true
+    end
+    if node.parlist then
+      for j = 1, #node do
+        node[j].param = true
+      end
+    else
+      for j = 1, #node do
+        node[j].declare = true
+      end
+    end
+  elseif symbol == symbol_table.funcbody then
+    node[1].parlist = true
+  end
+
+  for i = 1, #node do
+    prepare_attrs(node[i], symbol_table)
+  end
+end
+
+local function resolve_names(self, node, symbol_table)
+  local symbol = node[0]
+  if symbol == symbol_table.namelist then
+    if node.parlist then
+      if attr(node, "proto").self then
+        declare_name(node, "A", "self")
+      end
+    end
+  elseif symbol == symbol_table["nil"] then
+    node.var = "NIL"
+  elseif symbol == symbol_table["false"] then
+    node.var = "FALSE"
+  elseif symbol == symbol_table["true"] then
+    node.var = "TRUE"
+  elseif symbol == symbol_table.IntegerConstant then
+    node.var = ref_constant(node, "integer")[1]
+  elseif symbol == symbol_table.FloatConstant then
+    node.var = ref_constant(node, "float")[1]
+  elseif symbol == symbol_table.LiteralString then
+    node.var = ref_constant(node, "string")[1]
+  elseif symbol == symbol_table["..."] then
+    local proto = attr(node, "proto")
+    if not proto.vararg then
+      return nil, "cannot use '...' outside a vararg function", node.i
+    end
+    node.var = "V"
+  elseif symbol == symbol_table.Name then
+    if node.param then
+      node.var = declare_name(node, "A")[1]
+    elseif node.declare then
+      node.var = declare_name(node, "B")[1]
+    elseif node.key then
+      node.var = ref_constant(node, "string")[1]
+    elseif node.def then
+      local name = def_name(node)
+      if name then
+        node.var = name[1]
+      else
+        env_name(self, node, symbol_table)
+      end
+    elseif node.use then
+      local name = ref_name(node)
+      if name then
+        node.var = name[1]
+      else
+        env_name(self, node, symbol_table)
       end
     end
   end
 
-  return self
+  for i = 1, #node do
+    local result, message, i = resolve_names(self, node[i], symbol_table)
+    if not result then
+      return nil, message, i
+    end
+  end
+
+  return node
 end
 
 return function (self)
-  prepare(self)
-  local result, message, i = resolve_labels(self)
+  local symbol_table = self.symbol_table
+  local accepted_node = self.accepted_node
+
+  local protos = {}
+  prepare_protos(accepted_node, symbol_table, protos)
+  self.protos = protos
+
+  local result, message, i = def_labels(accepted_node, symbol_table)
   if not result then
     return nil, message, i
   end
-  local result, message, i = resolve(self)
+
+  local result, message, i = ref_labels(accepted_node, symbol_table)
   if not result then
     return nil, message, i
   end
+
+  prepare_attrs(accepted_node, symbol_table)
+
+  local result, message, i = resolve_names(self, accepted_node, symbol_table)
+  if not result then
+    return nil, message, i
+  end
+
   return self
 end

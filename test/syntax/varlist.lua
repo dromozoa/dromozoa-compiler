@@ -15,9 +15,9 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-a = 1
-a, b = 1, 2
-a, b, c = 1, 2, 3
+local a = 1
+local a, b = 1, 2
+local a, b, c = 1, 2, 3
 
 a = a
 a, b = b, a
@@ -43,6 +43,10 @@ end
 
 local function f2()
   return f1
+end
+
+function f3()
+  return f3
 end
 
 f1().x = {}

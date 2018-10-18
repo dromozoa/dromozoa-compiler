@@ -60,16 +60,6 @@
     <td>upvalue</td>
   </tr>
   <tr>
-    <td><code>S</code>, <code>Si</code></td>
-    <td></td>
-    <td>stack</td>
-  </tr>
-  <tr>
-    <td><code>T</code>, <code>Ti</code></td>
-    <td>read only</td>
-    <td>stack for result</td>
-  </tr>
-  <tr>
     <td><code>Pi</code></td>
     <td>read only</td>
     <td>proto</td>
@@ -96,7 +86,51 @@
   </tr>
 </table>
 
-<h2>Translatable Lua</h2>
+<h3>現在は未使用の名前</h3>
+
+<table>
+  <tr>
+    <td><code>S</code>, <code>Si</code></td>
+    <td></td>
+    <td>stack</td>
+  </tr>
+  <tr>
+    <td><code>T</code>, <code>Ti</code></td>
+    <td>read only</td>
+    <td>stack for result</td>
+  </tr>
+</table>
+
+<h2>Transpilable Lua</h2>
+
+<h3>関数</h3>
+
+<h4>可変長引数</h4>
+
+<p>
+C++ではvariadic templatesで実現できる。
+ECMAScriptではrest parameterで実現できる。
+</p>
+
+<h4>可変長返値</h4>
+
+<p>
+C++では<code>std::tuple</code>で値を返し、<code>std::tie</code>で代入できる。
+ECMAScriptでは配列で値を返し、Destructuring Assignmentで代入できる。
+</p>
+
+<h4>上位値</h4>
+
+<p>
+C++もECMAScriptもクロージャを用いて実現できる。
+上位値の扱いは効率的な実装が可能かどうかに影響する。
+</p>
+
+<ol>
+  <li>関数が上位値を持たない場合</li>
+  <li>関数が上位値の参照だけを行い、上位値に代入しない場合</li>
+  <li>関数が上位値に代入を行う場合</li>
+</ol>
 
 <h3>Native Components</h3>
 
