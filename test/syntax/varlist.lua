@@ -45,6 +45,10 @@ local function f2()
   return f1
 end
 
+function f3()
+  return f3
+end
+
 f1().x = {}
 f1().x.y = {}
 f2()().x = {}

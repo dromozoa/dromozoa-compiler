@@ -238,6 +238,9 @@ local function env_name(self, node, symbol_table)
 
   name_node.parent = var_node
   var_node.parent = parent_node
+
+  name_node.v = ref_name(name_node)[1]
+  node.v = ref_constant(node, "string")[1]
 end
 
 local function prepare_protos(node, symbol_table, protos)
