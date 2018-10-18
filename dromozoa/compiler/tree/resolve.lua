@@ -455,9 +455,6 @@ local function resolve_names(self, node, symbol_table)
       else
         env_name(self, node, symbol_table)
       end
-    else
-      -- DEBUG
-      assert(node.label :find "^L%d+$")
     end
   end
 
