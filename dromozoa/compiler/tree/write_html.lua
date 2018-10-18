@@ -26,7 +26,6 @@ local _ = element
 
 local keys = {
   "self";
-
   "parlist";
   "vararg";
 
@@ -151,7 +150,7 @@ local function source_to_html(self)
     html[#html + 1] = _"span" {
       id = id;
       class = class;
-      ["data-uid"] = node.id;
+      ["data-node-id"] = node.id;
       source:sub(i, j);
     }
   end
@@ -199,14 +198,19 @@ local function tree_to_html(self, tree_width, tree_height)
   }
 
   local u_paths = root[1]
+  local u_texts = root[2]
   for i = 1, #u_paths do
     local path = u_paths[i]
+    local text = u_texts[i]
     local node = uid_to_node[path["data-uid"]]
+    local node_id = node.id
+    path["data-node-id"] = node_id
     path["data-value"] = symbol_value(node)
     for j = 1, #keys do
       local key = keys[j]
       path["data-" .. key] = node[key]
     end
+    text["data-node-id"] = node_id
   end
 
   return _"div" {

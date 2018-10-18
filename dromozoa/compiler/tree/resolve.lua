@@ -205,6 +205,41 @@ local function ref_name(node)
   return resolve_name(node, "refs", "uprefs")
 end
 
+local function env_name(self, node, symbol_table)
+  local parent_node = node.parent
+
+  local id = self.id + 1
+
+  local name_node = {
+    [0] = symbol_table.Name;
+    rs = "_ENV";
+    ri = 1;
+    rj = 4;
+    id = id;
+    ref = true;
+  }
+
+  id = id + 1
+
+  local var_node = {
+    [0] = symbol_table.var;
+    id = id;
+    name_node;
+  }
+
+  self.id = id
+
+  node.def = nil
+  node.ref = nil
+  node.key = true
+
+  parent_node[1] = var_node;
+  parent_node[2] = node;
+
+  name_node.parent = var_node
+  var_node.parent = parent_node
+end
+
 local function prepare_protos(node, symbol_table, protos)
   local symbol = node[0]
   if symbol == symbol_table.chunk then
@@ -373,7 +408,7 @@ local function prepare_attrs(node, symbol_table)
   end
 end
 
-local function resolve_names(node, symbol_table)
+local function resolve_names(self, node, symbol_table)
   local symbol = node[0]
   if symbol == symbol_table.namelist then
     if node.parlist then
@@ -411,6 +446,7 @@ local function resolve_names(node, symbol_table)
       if name then
         node.v = name[1]
       else
+        env_name(self, node, symbol_table)
         -- TODO
         -- print("_ENV." .. symbol_value(node))
       end
@@ -419,6 +455,8 @@ local function resolve_names(node, symbol_table)
       if name then
         node.v = name[1]
       else
+        env_name(self, node, symbol_table)
+
         -- TODO
         -- print("_ENV." .. symbol_value(node))
       end
@@ -429,7 +467,7 @@ local function resolve_names(node, symbol_table)
   end
 
   for i = 1, #node do
-    local result, message, i = resolve_names(node[i], symbol_table)
+    local result, message, i = resolve_names(self, node[i], symbol_table)
     if not result then
       return nil, message, i
     end
@@ -458,7 +496,7 @@ return function (self)
 
   prepare_attrs(accepted_node, symbol_table)
 
-  local result, message, i = resolve_names(accepted_node, symbol_table)
+  local result, message, i = resolve_names(self, accepted_node, symbol_table)
   if not result then
     return nil, message, i
   end
