@@ -41,6 +41,7 @@ local keys = {
   "var";
 
   "C";
+  "adjust";
 }
 
 local head = _"head" {

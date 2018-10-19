@@ -374,7 +374,7 @@ local function ref_labels(node, symbol_table)
   return node
 end
 
-local function prepare_attrs(node, symbol_table)
+local function prepare(node, symbol_table)
   local symbol = node[0]
   if symbol == symbol_table.funcname then
     if node.self then
@@ -413,11 +413,11 @@ local function prepare_attrs(node, symbol_table)
   end
 
   for i = 1, #node do
-    prepare_attrs(node[i], symbol_table)
+    prepare(node[i], symbol_table)
   end
 end
 
-local function resolve_names(self, node, symbol_table)
+local function resolve(self, node, symbol_table)
   local symbol = node[0]
   if symbol == symbol_table.namelist then
     if node.parlist then
@@ -491,7 +491,7 @@ local function resolve_names(self, node, symbol_table)
   end
 
   for i = 1, #node do
-    local result, message, i = resolve_names(self, node[i], symbol_table)
+    local result, message, i = resolve(self, node[i], symbol_table)
     if not result then
       return nil, message, i
     end
@@ -500,25 +500,15 @@ local function resolve_names(self, node, symbol_table)
   return node
 end
 
-local function adjust_var(var)
-  if var == "T" or var == "V" then
-    return var .. 1
-  else
-    return var
-  end
-end
-
 local function assign_registers(self, node, symbol_table)
   for i = 1, #node do
     assign_registers(self, node[i], symbol_table)
   end
 
-  -- postorder
-
   local symbol = node[0]
+  -- functiondef
   if symbol == symbol_table.functiondef then
     node.var = assign_register(node, "C")
-
   -- prefixexp
   elseif symbol == symbol_table.var then
     if #node == 1 then
@@ -527,22 +517,35 @@ local function assign_registers(self, node, symbol_table)
       node.var = assign_register(node, "C")
     end
   elseif symbol == symbol_table["("] then
-    local var = node[1].var
-    if #var == 1 then
+    local that = node[1]
+    local var = that.var
+    if var == "T" then
+      local var = assign_register(node, "C")
+      that.adjust = 1
+      that.var = var
+      node.var = var
+    elseif var == "V" then
       node.var = var .. "0"
     else
       node.var = var
     end
+  -- functioncall
   elseif symbol == symbol_table.functioncall then
     node.var = "T"
   -- tableconstructor
   elseif symbol == symbol_table.fieldlist then
     node.var = assign_register(node, "C")
+  -- binop
   elseif node.binop then
     node.var = assign_register(node, "C")
+  -- unop
   elseif node.unop then
     node.var = assign_register(node, "C")
   end
+
+  -- TODO adjust explist fieldlist, (void)call
+
+
 end
 
 return function (self)
@@ -563,9 +566,9 @@ return function (self)
     return nil, message, i
   end
 
-  prepare_attrs(accepted_node, symbol_table)
+  prepare(accepted_node, symbol_table)
 
-  local result, message, i = resolve_names(self, accepted_node, symbol_table)
+  local result, message, i = resolve(self, accepted_node, symbol_table)
   if not result then
     return nil, message, i
   end
