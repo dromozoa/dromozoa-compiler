@@ -198,7 +198,7 @@ _"else_"
 
 _"funcname_"
   :_ "funcname" {[1]={}} :attr(1, "def")
-  :_ "funcname" ":" "Name" {["funcname"]={1,3}} :attr "self" :attr(3, "key")
+  :_ "funcname" ":" "Name" {["funcname"]={1,3}} :attr "self" :attr "def" :attr(3, "key")
 
 _"funcname"
   :_ "Name"
