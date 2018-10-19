@@ -141,13 +141,13 @@ _"chunk"
 
 _"block"
   :_ () {"statlist"}
-  :_ "retstat" {"statlist",1}
+  :_ "retstat" {"statlist",1} :attr(1, "C", 0)
   :_ "statlist"
-  :_ "statlist" "retstat"
+  :_ "statlist" "retstat" :attr(2, "C", 0)
 
 _"statlist"
-  :_ "stat"
-  :_ "statlist" "stat" {[1]={2}}
+  :_ "stat" :attr(1, "C", 0)
+  :_ "statlist" "stat" {[1]={2}} :attr(1, "C", 0)
 
 _"stat"
   :_ ";" {[1]={}}

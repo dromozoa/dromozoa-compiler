@@ -238,6 +238,17 @@ local function env_name(self, node, symbol_table)
   node.var = ref_constant(node, "string")[1]
 end
 
+local function assign_register(node, key)
+  while node do
+    local value = node[key]
+    if value then
+      node[key] = value + 1
+      return key .. value
+    end
+    node = node.parent
+  end
+end
+
 local function prepare_protos(node, symbol_table, protos)
   local symbol = node[0]
   if symbol == symbol_table.chunk then
@@ -466,6 +477,21 @@ local function resolve_names(self, node, symbol_table)
   return node
 end
 
+local function resolve_expressions(self, node, symbol_table)
+  local symbol = node[0]
+  if symbol == symbol_table.functiondef then
+    node.var = assign_register(node, "C")
+--  elseif symbol == symbol_table.var then
+--    node.var = assign_register(node, "C")
+--  elseif symbol == symbol_table["("] then
+--    node.var = assign_register(node, "C")
+  end
+
+  for i = 1, #node do
+    resolve_expressions(self, node[i], symbol_table)
+  end
+end
+
 return function (self)
   local symbol_table = self.symbol_table
   local accepted_node = self.accepted_node
@@ -490,6 +516,8 @@ return function (self)
   if not result then
     return nil, message, i
   end
+
+  resolve_expressions(self, accepted_node, symbol_table)
 
   return self
 end

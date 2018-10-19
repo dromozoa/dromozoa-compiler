@@ -37,6 +37,8 @@ local keys = {
 
   "label";
   "var";
+
+  "C";
 }
 
 local head = _"head" {
