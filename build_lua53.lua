@@ -271,9 +271,9 @@ _"prefixexp"
 
 _"functioncall"
   :_ "prefixexp" "args"
-  :_ "prefixexp" ":" "Name" "args" {1,3,4} :attr(3, "key")
+  :_ "prefixexp" ":" "Name" "args" {1,3,4} :attr "self" :attr(3, "key")
   :_ "functioncall" "args"
-  :_ "functioncall" ":" "Name" "args" {1,3,4} :attr(3, "key")
+  :_ "functioncall" ":" "Name" "args" {1,3,4} :attr "self" :attr(3, "key")
 
 _"args"
   :_ "(" ")" {"explist"}

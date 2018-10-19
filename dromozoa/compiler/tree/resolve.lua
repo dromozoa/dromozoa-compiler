@@ -425,6 +425,29 @@ local function resolve_names(self, node, symbol_table)
         declare_name(node, "A", "self")
       end
     end
+  elseif symbol == symbol_table.functioncall then
+    if node.self then
+      local id = self.id + 1
+      self.id = id
+
+      local var_node = node[1]
+      local key_node = node[2]
+
+      local that = {
+        [0] = symbol_table.var;
+        parent = node;
+        id = id;
+        var_node;
+        key_node;
+      }
+
+      var_node.parent = that
+      key_node.parent = that
+
+      node[1] = that
+      node[2] = node[3]
+      node[3] = nil
+    end
   elseif symbol == symbol_table["nil"] then
     node.var = "NIL"
   elseif symbol == symbol_table["false"] then
@@ -511,7 +534,6 @@ local function assign_registers(self, node, symbol_table)
       node.var = var
     end
   elseif symbol == symbol_table.functioncall then
-    -- TODO self
     node.var = "T"
   -- tableconstructor
   elseif symbol == symbol_table.fieldlist then
