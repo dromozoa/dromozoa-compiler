@@ -23,7 +23,9 @@ function f2() return a end
 v = {
   Name;
   (42);
+  (...);
   f();
+  (f());
   a:f();
   a.b:f();
   f1()();
