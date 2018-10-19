@@ -531,7 +531,9 @@ local function assign_registers(self, node, symbol_table)
     end
   -- functioncall
   elseif symbol == symbol_table.functioncall then
-    node.var = "T"
+    if node.adjust ~= 0 then
+      node.var = "T"
+    end
   -- tableconstructor
   elseif symbol == symbol_table.fieldlist then
     node.var = assign_register(node, "C")
@@ -542,6 +544,10 @@ local function assign_registers(self, node, symbol_table)
   elseif node.unop then
     node.var = assign_register(node, "C")
   end
+
+
+
+
 
   -- TODO adjust explist fieldlist, (void)call
 

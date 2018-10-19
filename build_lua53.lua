@@ -152,7 +152,7 @@ _"statlist"
 _"stat"
   :_ ";" {[1]={}}
   :_ "varlist" "=" "explist" {[2]={3,1}}
-  :_ "functioncall" {[1]={}}
+  :_ "functioncall" {[1]={}} :attr(1, "adjust", 0)
   :_ "label" {[1]={}}
   :_ "break"
   :_ "goto" "Name" {[1]={2}}
