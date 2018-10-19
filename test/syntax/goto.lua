@@ -26,4 +26,6 @@ end
 i = i + 1
 goto BEGIN
 
+::NOT_USED::
+
 ::END::

@@ -33,8 +33,8 @@ local function def_label(node)
   local proto = scope.proto
 
   local scope_labels = scope.labels
-  local n = #scope_labels
-  for i = n, 1, -1 do
+  local m = #scope_labels
+  for i = m, 1, -1 do
     local label = scope_labels[i]
     if label.source == source then
       return nil, ("label %q already defined"):format(source), node.i
@@ -42,16 +42,16 @@ local function def_label(node)
   end
 
   local proto_labels = proto.labels
-  local index = #proto_labels + 1
+  local n = #proto_labels
   local label = {
     source = source;
     def = { node.id };
     use = {};
-    "L" .. index;
+    "L" .. n;
   }
 
-  scope_labels[n + 1] = label
-  proto_labels[index] = label
+  scope_labels[m + 1] = label
+  proto_labels[n + 1] = label
   return label
 end
 
@@ -91,15 +91,14 @@ local function ref_constant(node, type)
     end
   end
 
-  local index = n + 1
   local constant = {
     type = type;
     source = source;
     use = { node.id };
-    "K" .. index;
+    "K" .. n;
   }
 
-  constants[index] = constant
+  constants[n + 1] = constant
   return constant
 end
 
@@ -110,8 +109,8 @@ local function declare_name(node, key, source)
   local scope = attr(node, "scope")
   local proto = scope.proto
 
-  local index = proto[key] + 1
-  proto[key] = index
+  local n = proto[key]
+  proto[key] = n + 1
 
   local name = {
     source = source;
@@ -119,7 +118,7 @@ local function declare_name(node, key, source)
     use = {};
     updef = {};
     upuse = {};
-    key .. index;
+    key .. n;
   }
 
   local scope_names = scope.names
@@ -140,10 +139,9 @@ local function resolve_upvalue(proto, name, parent_upvalue)
     end
   end
 
-  local index = n + 1
   local upvalue = {
     name = name;
-    "U" .. index;
+    "U" .. n;
   }
   if parent_upvalue then
     upvalue[2] = parent_upvalue[1]
@@ -151,7 +149,7 @@ local function resolve_upvalue(proto, name, parent_upvalue)
     upvalue[2] = name[1]
   end
 
-  upvalues[index] = upvalue
+  upvalues[n + 1] = upvalue
   return upvalue
 end
 
@@ -249,7 +247,7 @@ local function prepare_protos(node, symbol_table, protos)
       use = {};
       updef = {};
       upuse = {};
-      "B1";
+      "B0";
     }
 
     local external_proto = {
@@ -275,14 +273,14 @@ local function prepare_protos(node, symbol_table, protos)
       upvalues = {
         {
           name = env_name;
-          "U1";
-          "B1";
+          "U0";
+          "B0";
         };
       };
       vararg = true;
       A = 0;
       B = 0;
-      "P1";
+      "P0";
     }
     node.proto = proto
     protos[1] = proto
@@ -295,7 +293,7 @@ local function prepare_protos(node, symbol_table, protos)
     }
   else
     if symbol == symbol_table.funcbody then
-      local index = #protos + 1
+      local n = #protos
       local proto = {
         parent = attr(node.parent, "proto");
         constants = {};
@@ -304,10 +302,10 @@ local function prepare_protos(node, symbol_table, protos)
         upvalues = {};
         A = 0;
         B = 0;
-        "P" .. index;
+        "P" .. n;
       }
       node.proto = proto
-      protos[index] = proto
+      protos[n + 1] = proto
     end
 
     if node.scope then
