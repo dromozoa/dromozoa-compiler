@@ -28,6 +28,8 @@ local keys = {
   "self";
   "parlist";
   "vararg";
+  "binop";
+  "unop";
 
   "param";
   "declare";

@@ -477,6 +477,14 @@ local function resolve_names(self, node, symbol_table)
   return node
 end
 
+local function adjust_var(var)
+  if var == "T" or var == "V" then
+    return var .. 1
+  else
+    return var
+  end
+end
+
 local function assign_registers(self, node, symbol_table)
   for i = 1, #node do
     assign_registers(self, node[i], symbol_table)
@@ -487,15 +495,31 @@ local function assign_registers(self, node, symbol_table)
   local symbol = node[0]
   if symbol == symbol_table.functiondef then
     node.var = assign_register(node, "C")
+
+  -- prefixexp
   elseif symbol == symbol_table.var then
     if #node == 1 then
       node.var = node[1].var
     elseif not node.def then
       node.var = assign_register(node, "C")
     end
---  node.var = assign_register(node, "C")
---  elseif symbol == symbol_table["("] then
---    node.var = assign_register(node, "C")
+  elseif symbol == symbol_table["("] then
+    local var = node[1].var
+    if #var == 1 then
+      node.var = var .. "0"
+    else
+      node.var = var
+    end
+  elseif symbol == symbol_table.functioncall then
+    -- TODO self
+    node.var = "T"
+  -- tableconstructor
+  elseif symbol == symbol_table.fieldlist then
+    node.var = assign_register(node, "C")
+  elseif node.binop then
+    node.var = assign_register(node, "C")
+  elseif node.unop then
+    node.var = assign_register(node, "C")
   end
 end
 
