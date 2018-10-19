@@ -477,18 +477,25 @@ local function resolve_names(self, node, symbol_table)
   return node
 end
 
-local function resolve_expressions(self, node, symbol_table)
+local function assign_registers(self, node, symbol_table)
+  for i = 1, #node do
+    assign_registers(self, node[i], symbol_table)
+  end
+
+  -- postorder
+
   local symbol = node[0]
   if symbol == symbol_table.functiondef then
     node.var = assign_register(node, "C")
---  elseif symbol == symbol_table.var then
---    node.var = assign_register(node, "C")
+  elseif symbol == symbol_table.var then
+    if #node == 1 then
+      node.var = node[1].var
+    elseif not node.def then
+      node.var = assign_register(node, "C")
+    end
+--  node.var = assign_register(node, "C")
 --  elseif symbol == symbol_table["("] then
 --    node.var = assign_register(node, "C")
-  end
-
-  for i = 1, #node do
-    resolve_expressions(self, node[i], symbol_table)
   end
 end
 
@@ -517,7 +524,7 @@ return function (self)
     return nil, message, i
   end
 
-  resolve_expressions(self, accepted_node, symbol_table)
+  assign_registers(self, accepted_node, symbol_table)
 
   return self
 end

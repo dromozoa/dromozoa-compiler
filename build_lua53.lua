@@ -147,7 +147,7 @@ _"block"
 
 _"statlist"
   :_ "stat" :attr(1, "C", 0)
-  :_ "statlist" "stat" {[1]={2}} :attr(1, "C", 0)
+  :_ "statlist" "stat" {[1]={2}} :attr(2, "C", 0)
 
 _"stat"
   :_ ";" {[1]={}}
