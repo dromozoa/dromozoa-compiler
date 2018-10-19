@@ -133,7 +133,8 @@ ECMAScriptではrest parameterで実現できる。
 
 <p>
 C++では<code>std::tuple</code>で値を返し、<code>std::tie</code>で代入できる。
-コンパイル時に返り値の長さが決まらない場合、<code>std::vector</code>を使ったほうが良いかもしれない。
+コンパイル時に呼び出し側が要求する返り値の長さが決まる場合、これをテンプレート引数として与えることにする。
+返り値の長さが決まらない場合、<code>std::vector</code>を使うことにする。
 ECMAScriptでは配列で値を返し、Destructuring Assignmentで代入できる。
 </p>
 
