@@ -336,7 +336,11 @@ end
 
 local function prepare_attrs(node, symbol_table)
   local symbol = node[0]
-  if symbol == symbol_table.funcname then
+  if symbol == symbol_table["="] then
+    node[1].adjust = #node[2]
+  elseif symbol == symbol_table["local"] then
+    node[1].adjust = #node[2]
+  elseif symbol == symbol_table.funcname then
     if node.self then
       node.parent[2].proto.self = true
     end

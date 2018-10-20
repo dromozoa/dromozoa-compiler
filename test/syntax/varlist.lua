@@ -58,3 +58,9 @@ x, y, z = f1()
 x, y, z = f1(), 42
 x, y, z = 42, f1()
 x, y, z = 42, f1(), 42
+
+local a, b, c
+local a, b, c = f1()
+local a, b, c = f1(), 42
+local a, b, c = 42, f1()
+local a, b, c = 42, f1(), 42
