@@ -519,10 +519,14 @@ local function resolve_vars(self, node, symbol_table)
   end
 
   local symbol = node[0]
-  -- functiondef
-  if symbol == symbol_table.functiondef then
+  if symbol == symbol_table["..."] then
+    if node.adjust == -1 then
+      node.var = "V"
+    else
+      node.var = "V0"
+    end
+  elseif symbol == symbol_table.functiondef then
     node.var = assign_register(node, "C")
-  -- prefixexp
   elseif symbol == symbol_table.var then
     if #node == 1 then
       node.var = node[1].var
@@ -530,39 +534,25 @@ local function resolve_vars(self, node, symbol_table)
       node.var = assign_register(node, "C")
     end
   elseif symbol == symbol_table["("] then
---    local that = node[1]
---    local var = that.var
---    if var == "T" then
---      local var = assign_register(node, "C")
---      that.adjust = 1
---      that.var = var
---      node.var = var
---    elseif var == "V" then
---      node.var = var .. "0"
---    else
---      node.var = var
---    end
-  -- functioncall
+    node.var = node[1].var
   elseif symbol == symbol_table.functioncall then
-    if node.adjust ~= 0 then
-      node.var = "T"
+    local adjust = node.adjust
+    if adjust then
+      if adjust == -1 then
+        node.var = "T"
+      end
+    else
+      node.var = assign_register(node, "C")
     end
-  -- tableconstructor
   elseif symbol == symbol_table.fieldlist then
     node.var = assign_register(node, "C")
-  -- binop
   elseif node.binop then
     node.var = assign_register(node, "C")
-  -- unop
   elseif node.unop then
     node.var = assign_register(node, "C")
   end
 
-
-
-
-
-  -- TODO adjust explist fieldlist, (void)call
+  -- TODO adjust varlist
 
 
 end
