@@ -33,8 +33,8 @@ local function def_label(node)
   local proto = scope.proto
 
   local scope_labels = scope.labels
-  local n = #scope_labels
-  for i = n, 1, -1 do
+  local m = #scope_labels
+  for i = m, 1, -1 do
     local label = scope_labels[i]
     if label.source == source then
       return nil, ("label %q already defined"):format(source), node.i
@@ -42,16 +42,16 @@ local function def_label(node)
   end
 
   local proto_labels = proto.labels
-  local index = #proto_labels + 1
+  local n = #proto_labels
   local label = {
     source = source;
     def = { node.id };
     use = {};
-    "L" .. index;
+    "L" .. n;
   }
 
-  scope_labels[n + 1] = label
-  proto_labels[index] = label
+  scope_labels[m + 1] = label
+  proto_labels[n + 1] = label
   return label
 end
 
@@ -91,15 +91,14 @@ local function ref_constant(node, type)
     end
   end
 
-  local index = n + 1
   local constant = {
     type = type;
     source = source;
     use = { node.id };
-    "K" .. index;
+    "K" .. n;
   }
 
-  constants[index] = constant
+  constants[n + 1] = constant
   return constant
 end
 
@@ -110,8 +109,8 @@ local function declare_name(node, key, source)
   local scope = attr(node, "scope")
   local proto = scope.proto
 
-  local index = proto[key] + 1
-  proto[key] = index
+  local n = proto[key]
+  proto[key] = n + 1
 
   local name = {
     source = source;
@@ -119,7 +118,7 @@ local function declare_name(node, key, source)
     use = {};
     updef = {};
     upuse = {};
-    key .. index;
+    key .. n;
   }
 
   local scope_names = scope.names
@@ -140,10 +139,9 @@ local function resolve_upvalue(proto, name, parent_upvalue)
     end
   end
 
-  local index = n + 1
   local upvalue = {
     name = name;
-    "U" .. index;
+    "U" .. n;
   }
   if parent_upvalue then
     upvalue[2] = parent_upvalue[1]
@@ -151,7 +149,7 @@ local function resolve_upvalue(proto, name, parent_upvalue)
     upvalue[2] = name[1]
   end
 
-  upvalues[index] = upvalue
+  upvalues[n + 1] = upvalue
   return upvalue
 end
 
@@ -240,6 +238,17 @@ local function env_name(self, node, symbol_table)
   node.var = ref_constant(node, "string")[1]
 end
 
+local function assign_var(node, key)
+  while node do
+    local value = node[key]
+    if value then
+      node[key] = value + 1
+      return key .. value
+    end
+    node = node.parent
+  end
+end
+
 local function prepare_protos(node, symbol_table, protos)
   local symbol = node[0]
   if symbol == symbol_table.chunk then
@@ -249,7 +258,7 @@ local function prepare_protos(node, symbol_table, protos)
       use = {};
       updef = {};
       upuse = {};
-      "B1";
+      "B0";
     }
 
     local external_proto = {
@@ -275,14 +284,14 @@ local function prepare_protos(node, symbol_table, protos)
       upvalues = {
         {
           name = env_name;
-          "U1";
-          "B1";
+          "U0";
+          "B0";
         };
       };
       vararg = true;
       A = 0;
       B = 0;
-      "P1";
+      "P0";
     }
     node.proto = proto
     protos[1] = proto
@@ -295,7 +304,7 @@ local function prepare_protos(node, symbol_table, protos)
     }
   else
     if symbol == symbol_table.funcbody then
-      local index = #protos + 1
+      local n = #protos
       local proto = {
         parent = attr(node.parent, "proto");
         constants = {};
@@ -304,10 +313,10 @@ local function prepare_protos(node, symbol_table, protos)
         upvalues = {};
         A = 0;
         B = 0;
-        "P" .. index;
+        "P" .. n;
       }
       node.proto = proto
-      protos[index] = proto
+      protos[n + 1] = proto
     end
 
     if node.scope then
@@ -322,6 +331,62 @@ local function prepare_protos(node, symbol_table, protos)
 
   for i = 1, #node do
     prepare_protos(node[i], symbol_table, protos)
+  end
+end
+
+local function prepare_attrs(node, symbol_table)
+  local symbol = node[0]
+  if symbol == symbol_table.funcname then
+    if node.self then
+      node.parent[2].proto.self = true
+    end
+    if #node == 1 then
+      if node.def then
+        node[1].def = true
+      else
+        node[1].use = true
+      end
+    end
+  elseif symbol == symbol_table.var then
+    if #node == 1 then
+      if node.def then
+        node[1].def = true
+      else
+        node[1].use = true
+      end
+    end
+  elseif symbol == symbol_table.namelist then
+    if node.vararg then
+      node.parent.proto.vararg = true
+    end
+    if node.parlist then
+      for j = 1, #node do
+        node[j].param = true
+      end
+    else
+      for j = 1, #node do
+        node[j].declare = true
+      end
+    end
+  elseif symbol == symbol_table.explist then
+    local n = #node
+    if n > 0 then
+      node[n].adjust = -1
+    end
+  elseif symbol == symbol_table.funcbody then
+    node[1].parlist = true
+  elseif symbol == symbol_table.fieldlist then
+    local n = #node
+    if n > 0 then
+      local that = node[n]
+      if #that == 1 then
+        that[1].adjust = -1
+      end
+    end
+  end
+
+  for i = 1, #node do
+    prepare_attrs(node[i], symbol_table)
   end
 end
 
@@ -365,49 +430,6 @@ local function ref_labels(node, symbol_table)
   return node
 end
 
-local function prepare_attrs(node, symbol_table)
-  local symbol = node[0]
-  if symbol == symbol_table.funcname then
-    if node.self then
-      node.parent[2].proto.self = true
-    end
-    if #node == 1 then
-      if node.def then
-        node[1].def = true
-      else
-        node[1].use = true
-      end
-    end
-  elseif symbol == symbol_table.var then
-    if #node == 1 then
-      if node.def then
-        node[1].def = true
-      else
-        node[1].use = true
-      end
-    end
-  elseif symbol == symbol_table.namelist then
-    if node.vararg then
-      node.parent.proto.vararg = true
-    end
-    if node.parlist then
-      for j = 1, #node do
-        node[j].param = true
-      end
-    else
-      for j = 1, #node do
-        node[j].declare = true
-      end
-    end
-  elseif symbol == symbol_table.funcbody then
-    node[1].parlist = true
-  end
-
-  for i = 1, #node do
-    prepare_attrs(node[i], symbol_table)
-  end
-end
-
 local function resolve_names(self, node, symbol_table)
   local symbol = node[0]
   if symbol == symbol_table.namelist then
@@ -415,6 +437,29 @@ local function resolve_names(self, node, symbol_table)
       if attr(node, "proto").self then
         declare_name(node, "A", "self")
       end
+    end
+  elseif symbol == symbol_table.functioncall then
+    if node.self then
+      local id = self.id + 1
+      self.id = id
+
+      local var_node = node[1]
+      local key_node = node[2]
+
+      local that = {
+        [0] = symbol_table.var;
+        parent = node;
+        id = id;
+        var_node;
+        key_node;
+      }
+
+      var_node.parent = that
+      key_node.parent = that
+
+      node[1] = that
+      node[2] = node[3]
+      node[3] = nil
     end
   elseif symbol == symbol_table["nil"] then
     node.var = "NIL"
@@ -433,7 +478,11 @@ local function resolve_names(self, node, symbol_table)
     if not proto.vararg then
       return nil, "cannot use '...' outside a vararg function", node.i
     end
-    node.var = "V"
+    if node.adjust == -1 then
+      node.var = "V"
+    else
+      node.var = "V0"
+    end
   elseif symbol == symbol_table.Name then
     if node.param then
       node.var = declare_name(node, "A")[1]
@@ -468,6 +517,40 @@ local function resolve_names(self, node, symbol_table)
   return node
 end
 
+local function resolve_vars(self, node, symbol_table)
+  for i = 1, #node do
+    resolve_vars(self, node[i], symbol_table)
+  end
+
+  local symbol = node[0]
+  if symbol == symbol_table.functiondef then
+    node.var = assign_var(node, "C")
+  elseif symbol == symbol_table.var then
+    if #node == 1 then
+      node.var = node[1].var
+    elseif not node.def then
+      node.var = assign_var(node, "C")
+    end
+  elseif symbol == symbol_table["("] then
+    node.var = node[1].var
+  elseif symbol == symbol_table.functioncall then
+    local adjust = node.adjust
+    if adjust then
+      if adjust == -1 then
+        node.var = "T"
+      end
+    else
+      node.var = assign_var(node, "C")
+    end
+  elseif symbol == symbol_table.fieldlist then
+    node.var = assign_var(node, "C")
+  elseif node.binop then
+    node.var = assign_var(node, "C")
+  elseif node.unop then
+    node.var = assign_var(node, "C")
+  end
+end
+
 return function (self)
   local symbol_table = self.symbol_table
   local accepted_node = self.accepted_node
@@ -475,6 +558,8 @@ return function (self)
   local protos = {}
   prepare_protos(accepted_node, symbol_table, protos)
   self.protos = protos
+
+  prepare_attrs(accepted_node, symbol_table)
 
   local result, message, i = def_labels(accepted_node, symbol_table)
   if not result then
@@ -486,12 +571,12 @@ return function (self)
     return nil, message, i
   end
 
-  prepare_attrs(accepted_node, symbol_table)
-
   local result, message, i = resolve_names(self, accepted_node, symbol_table)
   if not result then
     return nil, message, i
   end
+
+  resolve_vars(self, accepted_node, symbol_table)
 
   return self
 end

@@ -38,7 +38,7 @@ a.b = a.b
 a.b.c = a.b.c
 
 local function f1()
-  return a
+  return a, b, c
 end
 
 local function f2()
@@ -53,3 +53,8 @@ f1().x = {}
 f1().x.y = {}
 f2()().x = {}
 f2()().x.y = {}
+
+x, y, z = f1()
+x, y, z = f1(), 42
+x, y, z = 42, f1()
+x, y, z = 42, f1(), 42

@@ -28,6 +28,8 @@ local keys = {
   "self";
   "parlist";
   "vararg";
+  "binop";
+  "unop";
 
   "param";
   "declare";
@@ -37,6 +39,9 @@ local keys = {
 
   "label";
   "var";
+
+  "C";
+  "adjust";
 }
 
 local head = _"head" {

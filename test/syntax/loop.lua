@@ -23,6 +23,15 @@ while i <= 10 do
   i = i + 1
 end
 
+local function f(x)
+  return x, x, x
+end
+
+while f(f(i) <= 10) do
+  d[i] = i * i
+  i = i + 1
+end
+
 local i = 1
 repeat
   d[i] = i * i

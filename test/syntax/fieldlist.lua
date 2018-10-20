@@ -32,3 +32,17 @@ v = {
   bar = "bar";
   "baz";
 }
+
+local function f()
+  return 1, 2, 3, 4
+end
+
+v = {
+  [f()] = f();
+  [f(f(), f())] = f(f(), f());
+  f = f();
+  f = f(f(), f());
+  f();
+  f(f(), f());
+}
+

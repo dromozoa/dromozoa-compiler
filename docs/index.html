@@ -42,17 +42,12 @@
   <tr>
     <td><code>Bi</code></td>
     <td></td>
-    <td>register</td>
+    <td>named register</td>
   </tr>
   <tr>
-    <td><code>Li</code></td>
-    <td>read only</td>
-    <td>label</td>
-  </tr>
-  <tr>
-    <td><code>Ki</code></td>
-    <td>read only</td>
-    <td>constant</td>
+    <td><code>Ci</code></td>
+    <td></td>
+    <td>unnamed register</td>
   </tr>
   <tr>
     <td><code>Ui</code></td>
@@ -60,14 +55,29 @@
     <td>upvalue</td>
   </tr>
   <tr>
+    <td><code>V</code>, <code>Vi</code></td>
+    <td>read only</td>
+    <td>vararg</td>
+  </tr>
+  <tr>
+    <td><code>T</code>, <code>Ti</code></td>
+    <td>read only</td>
+    <td>results</td>
+  </tr>
+  <tr>
     <td><code>Pi</code></td>
     <td>read only</td>
     <td>proto</td>
   </tr>
   <tr>
-    <td><code>V</code>, <code>Vi</code></td>
+    <td><code>Ki</code></td>
     <td>read only</td>
-    <td>vararg</td>
+    <td>constant</td>
+  </tr>
+  <tr>
+    <td><code>Li</code></td>
+    <td>read only</td>
+    <td>label</td>
   </tr>
   <tr>
     <td><code>NIL</code></td>
@@ -86,22 +96,19 @@
   </tr>
 </table>
 
-<h3>現在は未使用の名前</h3>
-
-<table>
-  <tr>
-    <td><code>S</code>, <code>Si</code></td>
-    <td></td>
-    <td>stack</td>
-  </tr>
-  <tr>
-    <td><code>T</code>, <code>Ti</code></td>
-    <td>read only</td>
-    <td>stack for result</td>
-  </tr>
-</table>
-
 <h2>Transpilable Lua</h2>
+
+<h3>チャンク</h3>
+
+<blockquote cite="https://www.lua.org/manual/5.3/manual.html#3.3.2">
+<p>Lua handles a chunk as the body of an anonymous function with a variable number of arguments.</p>
+</blockquote>
+
+<p>
+ホスト言語のために、チャンクになんらかの識別子を与える。
+C++では<code>DROMOZOA_EXPORT</code>マクロで識別子を与える。
+ECMAScriptでは<code>DROMOZOA_EXPORT</code>グローバル変数で識別子を与える。
+</p>
 
 <h3>関数</h3>
 
@@ -112,10 +119,12 @@ C++ではvariadic templatesで実現できる。
 ECMAScriptではrest parameterで実現できる。
 </p>
 
-<h4>可変長返値</h4>
+<h4>可変長返り値</h4>
 
 <p>
 C++では<code>std::tuple</code>で値を返し、<code>std::tie</code>で代入できる。
+コンパイル時に呼び出し側が要求する返り値の長さが決まる場合、これをテンプレート引数として与えることにする。
+返り値の長さが決まらない場合、<code>std::vector</code>を使うことにする。
 ECMAScriptでは配列で値を返し、Destructuring Assignmentで代入できる。
 </p>
 
