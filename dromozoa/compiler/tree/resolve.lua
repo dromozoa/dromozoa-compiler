@@ -238,7 +238,7 @@ local function env_name(self, node, symbol_table)
   node.var = ref_constant(node, "string")[1]
 end
 
-local function assign_register(node, key)
+local function assign_var(node, key)
   while node do
     local value = node[key]
     if value then
@@ -524,12 +524,12 @@ local function resolve_vars(self, node, symbol_table)
 
   local symbol = node[0]
   if symbol == symbol_table.functiondef then
-    node.var = assign_register(node, "C")
+    node.var = assign_var(node, "C")
   elseif symbol == symbol_table.var then
     if #node == 1 then
       node.var = node[1].var
     elseif not node.def then
-      node.var = assign_register(node, "C")
+      node.var = assign_var(node, "C")
     end
   elseif symbol == symbol_table["("] then
     node.var = node[1].var
@@ -540,14 +540,14 @@ local function resolve_vars(self, node, symbol_table)
         node.var = "T"
       end
     else
-      node.var = assign_register(node, "C")
+      node.var = assign_var(node, "C")
     end
   elseif symbol == symbol_table.fieldlist then
-    node.var = assign_register(node, "C")
+    node.var = assign_var(node, "C")
   elseif node.binop then
-    node.var = assign_register(node, "C")
+    node.var = assign_var(node, "C")
   elseif node.unop then
-    node.var = assign_register(node, "C")
+    node.var = assign_var(node, "C")
   end
 
   -- TODO adjust varlist
