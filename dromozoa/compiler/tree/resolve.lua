@@ -478,7 +478,11 @@ local function resolve_names(self, node, symbol_table)
     if not proto.vararg then
       return nil, "cannot use '...' outside a vararg function", node.i
     end
-    node.var = "V"
+    if node.adjust == -1 then
+      node.var = "V"
+    else
+      node.var = "V0"
+    end
   elseif symbol == symbol_table.Name then
     if node.param then
       node.var = declare_name(node, "A")[1]
@@ -519,13 +523,7 @@ local function resolve_vars(self, node, symbol_table)
   end
 
   local symbol = node[0]
-  if symbol == symbol_table["..."] then
-    if node.adjust == -1 then
-      node.var = "V"
-    else
-      node.var = "V0"
-    end
-  elseif symbol == symbol_table.functiondef then
+  if symbol == symbol_table.functiondef then
     node.var = assign_register(node, "C")
   elseif symbol == symbol_table.var then
     if #node == 1 then
