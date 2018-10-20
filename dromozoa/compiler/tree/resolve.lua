@@ -549,10 +549,6 @@ local function resolve_vars(self, node, symbol_table)
   elseif node.unop then
     node.var = assign_var(node, "C")
   end
-
-  -- TODO adjust varlist
-
-
 end
 
 return function (self)
