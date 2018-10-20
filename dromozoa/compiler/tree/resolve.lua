@@ -368,8 +368,21 @@ local function prepare_attrs(node, symbol_table)
         node[j].declare = true
       end
     end
+  elseif symbol == symbol_table.explist then
+    local n = #node
+    if n > 0 then
+      node[n].adjust = -1
+    end
   elseif symbol == symbol_table.funcbody then
     node[1].parlist = true
+  elseif symbol == symbol_table.fieldlist then
+    local n = #node
+    if n > 0 then
+      local that = node[n]
+      if #that == 1 then
+        that[1].adjust = -1
+      end
+    end
   end
 
   for i = 1, #node do
