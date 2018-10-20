@@ -334,6 +334,49 @@ local function prepare_protos(node, symbol_table, protos)
   end
 end
 
+local function prepare_attrs(node, symbol_table)
+  local symbol = node[0]
+  if symbol == symbol_table.funcname then
+    if node.self then
+      node.parent[2].proto.self = true
+    end
+    if #node == 1 then
+      if node.def then
+        node[1].def = true
+      else
+        node[1].use = true
+      end
+    end
+  elseif symbol == symbol_table.var then
+    if #node == 1 then
+      if node.def then
+        node[1].def = true
+      else
+        node[1].use = true
+      end
+    end
+  elseif symbol == symbol_table.namelist then
+    if node.vararg then
+      node.parent.proto.vararg = true
+    end
+    if node.parlist then
+      for j = 1, #node do
+        node[j].param = true
+      end
+    else
+      for j = 1, #node do
+        node[j].declare = true
+      end
+    end
+  elseif symbol == symbol_table.funcbody then
+    node[1].parlist = true
+  end
+
+  for i = 1, #node do
+    prepare_attrs(node[i], symbol_table)
+  end
+end
+
 local function def_labels(node, symbol_table)
   if node[0] == symbol_table["::"] then
     local that = node[1]
@@ -374,50 +417,7 @@ local function ref_labels(node, symbol_table)
   return node
 end
 
-local function prepare(node, symbol_table)
-  local symbol = node[0]
-  if symbol == symbol_table.funcname then
-    if node.self then
-      node.parent[2].proto.self = true
-    end
-    if #node == 1 then
-      if node.def then
-        node[1].def = true
-      else
-        node[1].use = true
-      end
-    end
-  elseif symbol == symbol_table.var then
-    if #node == 1 then
-      if node.def then
-        node[1].def = true
-      else
-        node[1].use = true
-      end
-    end
-  elseif symbol == symbol_table.namelist then
-    if node.vararg then
-      node.parent.proto.vararg = true
-    end
-    if node.parlist then
-      for j = 1, #node do
-        node[j].param = true
-      end
-    else
-      for j = 1, #node do
-        node[j].declare = true
-      end
-    end
-  elseif symbol == symbol_table.funcbody then
-    node[1].parlist = true
-  end
-
-  for i = 1, #node do
-    prepare(node[i], symbol_table)
-  end
-end
-
-local function resolve(self, node, symbol_table)
+local function resolve_names(self, node, symbol_table)
   local symbol = node[0]
   if symbol == symbol_table.namelist then
     if node.parlist then
@@ -491,7 +491,7 @@ local function resolve(self, node, symbol_table)
   end
 
   for i = 1, #node do
-    local result, message, i = resolve(self, node[i], symbol_table)
+    local result, message, i = resolve_names(self, node[i], symbol_table)
     if not result then
       return nil, message, i
     end
@@ -500,9 +500,9 @@ local function resolve(self, node, symbol_table)
   return node
 end
 
-local function assign_registers(self, node, symbol_table)
+local function resolve_vars(self, node, symbol_table)
   for i = 1, #node do
-    assign_registers(self, node[i], symbol_table)
+    resolve_vars(self, node[i], symbol_table)
   end
 
   local symbol = node[0]
@@ -562,6 +562,8 @@ return function (self)
   prepare_protos(accepted_node, symbol_table, protos)
   self.protos = protos
 
+  prepare_attrs(accepted_node, symbol_table)
+
   local result, message, i = def_labels(accepted_node, symbol_table)
   if not result then
     return nil, message, i
@@ -572,14 +574,12 @@ return function (self)
     return nil, message, i
   end
 
-  prepare(accepted_node, symbol_table)
-
-  local result, message, i = resolve(self, accepted_node, symbol_table)
+  local result, message, i = resolve_names(self, accepted_node, symbol_table)
   if not result then
     return nil, message, i
   end
 
-  assign_registers(self, accepted_node, symbol_table)
+  resolve_vars(self, accepted_node, symbol_table)
 
   return self
 end
