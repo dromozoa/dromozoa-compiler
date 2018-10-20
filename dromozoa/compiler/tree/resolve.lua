@@ -517,18 +517,18 @@ local function assign_registers(self, node, symbol_table)
       node.var = assign_register(node, "C")
     end
   elseif symbol == symbol_table["("] then
-    local that = node[1]
-    local var = that.var
-    if var == "T" then
-      local var = assign_register(node, "C")
-      that.adjust = 1
-      that.var = var
-      node.var = var
-    elseif var == "V" then
-      node.var = var .. "0"
-    else
-      node.var = var
-    end
+--    local that = node[1]
+--    local var = that.var
+--    if var == "T" then
+--      local var = assign_register(node, "C")
+--      that.adjust = 1
+--      that.var = var
+--      node.var = var
+--    elseif var == "V" then
+--      node.var = var .. "0"
+--    else
+--      node.var = var
+--    end
   -- functioncall
   elseif symbol == symbol_table.functioncall then
     if node.adjust ~= 0 then
