@@ -16,51 +16,17 @@
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
 local a = 1
-local a, b = 1, 2
-local a, b, c = 1, 2, 3
+local b = 2
+local c = 3
 
 a = a
+
+a, b = a, b
 a, b = b, a
+
+a, b, c = a, b, c
+a, b, c = a, c, b
+a, b, c = b, a, c
+a, b, c = b, c, a
 a, b, c = c, a, b
-
-x, y, z = nil
-
-_ENV.X = {}
-_ENV.X.Y = {}
-_ENV.X.Y.Z = {}
-
-a = {}
-a[1] = {}
-a[1][2] = {}
-a.b = {}
-a.b.c = {}
-a.b = a.b
-a.b.c = a.b.c
-
-local function f1()
-  return a, b, c
-end
-
-local function f2()
-  return f1
-end
-
-function f3()
-  return f3
-end
-
-f1().x = {}
-f1().x.y = {}
-f2()().x = {}
-f2()().x.y = {}
-
-x, y, z = f1()
-x, y, z = f1(), 42
-x, y, z = 42, f1()
-x, y, z = 42, f1(), 42
-
-local a, b, c
-local a, b, c = f1()
-local a, b, c = f1(), 42
-local a, b, c = 42, f1()
-local a, b, c = 42, f1(), 42
+a, b, c = c, b, a

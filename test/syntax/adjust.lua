@@ -15,52 +15,24 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-local a = 1
-local a, b = 1, 2
-local a, b, c = 1, 2, 3
-
-a = a
-a, b = b, a
-a, b, c = c, a, b
-
-x, y, z = nil
-
-_ENV.X = {}
-_ENV.X.Y = {}
-_ENV.X.Y.Z = {}
-
-a = {}
-a[1] = {}
-a[1][2] = {}
-a.b = {}
-a.b.c = {}
-a.b = a.b
-a.b.c = a.b.c
-
-local function f1()
-  return a, b, c
+local function f()
+  return 1, 2, 3, 4, 5
 end
 
-local function f2()
-  return f1
+local a                = f(), f(), f(), f()
+local a, b             = f(), f(), f(), f()
+local a, b, c          = f(), f(), f(), f()
+local a, b, c, d       = f(), f(), f(), f()
+local a, b, c, d, e    = f(), f(), f(), f()
+local a, b, c, d, e, f = f(), f(), f(), f()
+
+local function g(...)
+  local a                = ..., ..., ..., ...
+  local a, b             = ..., ..., ..., ...
+  local a, b, c          = ..., ..., ..., ...
+  local a, b, c, d       = ..., ..., ..., ...
+  local a, b, c, d, e    = ..., ..., ..., ...
+  local a, b, c, d, e, f = ..., ..., ..., ...
 end
 
-function f3()
-  return f3
-end
-
-f1().x = {}
-f1().x.y = {}
-f2()().x = {}
-f2()().x.y = {}
-
-x, y, z = f1()
-x, y, z = f1(), 42
-x, y, z = 42, f1()
-x, y, z = 42, f1(), 42
-
-local a, b, c
-local a, b, c = f1()
-local a, b, c = f1(), 42
-local a, b, c = 42, f1()
-local a, b, c = 42, f1(), 42
+g(1, 2, 3, 4, 5)

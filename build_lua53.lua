@@ -165,7 +165,7 @@ _"stat"
   :_ "for" "namelist" "in" "explist" "do" "block" "end" {[1]={4,2,6}} :attr "scope"
   :_ "function" "funcname_" "funcbody" {[1]={2,3}}
   :_ "local" "function" "Name" "funcbody" {[2]={3,4}} :attr(3, "declare")
-  :_ "local" "namelist" {[1]={2}}
+  :_ "local" "namelist" {[1]={"explist",2}}
   :_ "local" "namelist" "=" "explist" {[1]={4,2}}
 
 _"retstat"

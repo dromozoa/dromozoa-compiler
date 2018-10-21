@@ -336,7 +336,11 @@ end
 
 local function prepare_attrs(node, symbol_table)
   local symbol = node[0]
-  if symbol == symbol_table.funcname then
+  if symbol == symbol_table["="] then
+    node[1].adjust = #node[2]
+  elseif symbol == symbol_table["local"] then
+    node[1].adjust = #node[2]
+  elseif symbol == symbol_table.funcname then
     if node.self then
       node.parent[2].proto.self = true
     end
@@ -371,7 +375,18 @@ local function prepare_attrs(node, symbol_table)
   elseif symbol == symbol_table.explist then
     local n = #node
     if n > 0 then
-      node[n].adjust = -1
+      local adjust = node.adjust
+      if adjust then
+        if n > adjust then
+          for i = adjust + 1, n do
+            node[i].adjust = 0
+          end
+        elseif n < adjust then
+          node[n].adjust = adjust - n + 1
+        end
+      else
+        node[n].adjust = -1
+      end
     end
   elseif symbol == symbol_table.funcbody then
     node[1].parlist = true
@@ -478,9 +493,13 @@ local function resolve_names(self, node, symbol_table)
     if not proto.vararg then
       return nil, "cannot use '...' outside a vararg function", node.i
     end
-    if node.adjust == -1 then
-      node.var = "V"
+    local adjust = node.adjust
+    if adjust then
+      if adjust ~= 0 then
+        node.var = "V"
+      end
     else
+      node.adjust = 1
       node.var = "V0"
     end
   elseif symbol == symbol_table.Name then
@@ -536,10 +555,11 @@ local function resolve_vars(self, node, symbol_table)
   elseif symbol == symbol_table.functioncall then
     local adjust = node.adjust
     if adjust then
-      if adjust == -1 then
+      if adjust ~= 0 then
         node.var = "T"
       end
     else
+      node.adjust = 1
       node.var = assign_var(node, "C")
     end
   elseif symbol == symbol_table.fieldlist then
