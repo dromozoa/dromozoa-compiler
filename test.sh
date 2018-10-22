@@ -33,7 +33,13 @@ do
   j=`expr "X$i" : 'X.*/\([^/]*\)\.lua'`
   n=compile/$j
   lua test/compile.lua "$i" "result/$n"
-  printf '<li>%s: <a href="%s.js">es</a> <a href="%s.html">tree</a>, <a href="%s.txt">protos</a></li>\n' "$j" "$n" "$n" "$n" >>result/index.html
+  cat <<EOH >>result/index.html
+<li>$j:
+  <a href="$n.js">es</a>
+  <a href="$n.html">tree</a>
+  <a href="$n.txt">protos</a>
+</li>
+EOH
 done
 echo "</ul>" >>result/index.html
 
@@ -44,9 +50,36 @@ do
   j=`expr "X$i" : 'X.*/\([^/]*\)\.lua'`
   n=execute/$j
   lua test/compile.lua "$i" "result/$n"
-  echo "executing $i..."
+
+  printf 'executing %s... ' "$i"
   lua "$i" >"result/$n-lua.txt"
   node "result/$n.js" >"result/$n-es.txt"
-  printf '<li>%s: <a href="%s.js">es</a> <a href="%s.html">tree</a>, <a href="%s.txt">protos</a></li>\n' "$j" "$n" "$n" "$n" >>result/index.html
+  if diff "result/$n-lua.txt" "result/$n-es.txt" >/dev/null 2>&1
+  then
+    if test -t 2
+    then
+      printf '\33[96m[OK]\33[0m\n'
+    else
+      echo "[OK]"
+    fi
+    result=OK
+  else
+    if test -t 2
+    then
+      printf '\33[91m[NG]\33[0m\n'
+    else
+      echo "[NG]"
+    fi
+    result=NG
+  fi
+  cat <<EOH >>result/index.html
+<li>[$result] $j:
+  <a href="$n.js">es</a>
+  <a href="$n.html">tree</a>
+  <a href="$n.txt">protos</a>
+  <a href="$n-lua.txt">lua</a>
+  <a href="$n-es.txt">es</a>
+</li>
+EOH
 done
 echo "</ul>" >>result/index.html
