@@ -15,6 +15,7 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
+local dump_protos = require "dromozoa.compiler.tree.dump_protos"
 local dump_tree = require "dromozoa.compiler.tree.dump_tree"
 local resolve = require "dromozoa.compiler.tree.resolve"
 local transpile_es = require "dromozoa.compiler.tree.transpile_es"
@@ -35,6 +36,14 @@ local metatable = { __index = class }
 
 function class:resolve()
   return resolve(self)
+end
+
+function class:dump_protos(out)
+  if type(out) == "string" then
+    return dump_protos(self, assert(io.open(out, "w"))):close()
+  else
+    return dump_protos(self, out)
+  end
 end
 
 function class:dump_tree(out)
