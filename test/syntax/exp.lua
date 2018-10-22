@@ -51,4 +51,10 @@ function f(...)
      def";
     "\xE3\x81\x82\227\129\132\u{3046}";
   }
+
+  local v = {
+    HYPHENATION_POINT = "\u{2027}";
+    LINE_SEPARATOR = "\u{2028}";
+    PARAGAPH_SEPARATOR = "\u{2029}";
+  }
 end

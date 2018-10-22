@@ -30,11 +30,11 @@ do
   case X$# in
     X0)
       lua "$i"
-      lua test/write_html.lua "$i" "result/syntax/$j.html" "result/syntax/$j.txt";;
+      lua test/write_html.lua "$i" "result/syntax/$j.html" "result/syntax/$j.txt" "result/syntax/$j.js";;
     *)
       "$@" "$i"
-      "$@" test/write_html.lua "$i" "result/syntax/$j.html" "result/syntax/$j.txt";;
+      "$@" test/write_html.lua "$i" "result/syntax/$j.html" "result/syntax/$j.txt" "result/syntax/$j.js";;
   esac
-  printf '<li>%s: <a href="%s.html">html</a>, <a href="%s.txt">text</a></li>\n' "$j" "$j" "$j" >>result/syntax/index.html
+  printf '<li>%s: <a href="%s.html">html</a>, <a href="%s.txt">text</a>, <a href="%s.js">js</a></li>\n' "$j" "$j" "$j" "$j" >>result/syntax/index.html
 done
 echo "</ul>" >>result/syntax/index.html
