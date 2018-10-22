@@ -212,44 +212,19 @@ local function write(self, out, node, symbol_table)
       out:write(encode_var(node.var), "=", encode_var(node[1].var), ".get(", encode_var(node[2].var), ");\n")
     end
   elseif symbol == symbol_table["local"] then
-    local explist_node = node[1]
-    local namelist_node = node[2]
-
-    local vars = {}
-    for i = 1, #explist_node do
-      local exp_node = explist_node[i]
-      local adjust = exp_node.adjust
-      if adjust and adjust > 1 then
-        local var = exp_node.var
-        if var == "V" or var == "T" then
-          for j = 0, adjust - 1 do
-            vars[i + j] = var .. j
-          end
-        else
-          vars[i] = var
-          for j = 1, adjust - 1 do
-            vars[i + j] = "NIL"
-          end
-        end
-        assert(i == #explist_node)
-      else
-        vars[i] = exp_node.var
-      end
-    end
-
-    for i = 1, #namelist_node do
-      local name_node = namelist_node[i]
-      out:write(encode_var(name_node.var), "=", encode_var(vars[i]), ";\n")
+    local vars = node[1].vars
+    local that = node[2]
+    for i = 1, #that do
+      out:write(encode_var(that[i].var), "=", encode_var(vars[i]), ";\n")
     end
   elseif symbol == symbol_table["return"] then
-    local explist_node = node[1]
+    local that = node[1]
     out:write "return ["
-    for i = 1, #explist_node do
-      local exp_node = explist_node[i]
+    for i = 1, #that do
       if i > 1 then
         out:write ", "
       end
-      out:write(encode_var(exp_node.var))
+      out:write(encode_var(that[i].var))
     end
     out:write "];\n"
   elseif symbol == symbol_table.functioncall then
