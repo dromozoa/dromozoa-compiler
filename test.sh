@@ -26,15 +26,16 @@ cp docs/dromozoa-compiler.* result/syntax
 echo "<!DOCTYPE html><title>dromozoa-compiler</title><ul>" >result/syntax/index.html
 for i in test/syntax/*.lua
 do
+  echo "compiling $i..."
   j=`expr "X$i" : 'X.*/\([^/]*\)\.lua'`
   case X$# in
     X0)
       lua "$i"
-      lua test/write_html.lua "$i" "result/syntax/$j.html" "result/syntax/$j.txt" "result/syntax/$j.js";;
+      lua test/compile.lua "$i" "result/syntax/$j";;
     *)
       "$@" "$i"
-      "$@" test/write_html.lua "$i" "result/syntax/$j.html" "result/syntax/$j.txt" "result/syntax/$j.js";;
+      "$@" test/compile.lua "$i" "result/syntax/$j";;
   esac
-  printf '<li>%s: <a href="%s.html">html</a>, <a href="%s.txt">text</a>, <a href="%s.js">js</a></li>\n' "$j" "$j" "$j" "$j" >>result/syntax/index.html
+  printf '<li>%s: <a href="%s.js">es</a> <a href="%s.html">tree</a>, <a href="%s.txt">protos</a></li>\n' "$j" "$j" "$j" "$j" >>result/syntax/index.html
 done
 echo "</ul>" >>result/syntax/index.html
