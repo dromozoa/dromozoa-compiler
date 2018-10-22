@@ -38,6 +38,9 @@ return function (self, out)
     if proto.vararg then
       out:write "  vararg\n"
     end
+    out:write(("  A %d\n"):format(proto.A))
+    out:write(("  B %d\n"):format(proto.B))
+    out:write(("  C %d\n"):format(proto.C))
 
     local labels = proto.labels
     if labels[1] then

@@ -237,12 +237,20 @@ local function env_name(self, node, symbol_table)
   return ref_constant(node, "string")
 end
 
-local function assign_var(node)
+local function assign_var(node, key)
+  if not key then
+    key = "C"
+  end
   while node do
-    local value = node.C
+    local value = node[key]
     if value then
-      node.C = value + 1
-      return "C" .. value
+      local n = value + 1
+      node[key] = n
+      local proto = attr(node, "proto")
+      if proto[key] < n then
+        proto[key] = n
+      end
+      return key .. value
     end
     node = node.parent
   end
