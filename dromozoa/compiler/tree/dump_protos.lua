@@ -15,14 +15,22 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
+local function dump_use(out, item, key)
+  local use = item[key]
+  if use[1] then
+    out:write(("      %s %s\n"):format(key, table.concat(use, " ")))
+  end
+end
+
 return function (self, out)
   local protos = self.protos
   for i = 1, #protos do
     local proto = protos[i]
     out:write(proto[1], "\n")
 
-    if proto.parent[1] then
-      out:write("  parent ", tostring(proto.parent[1]), "\n")
+    local parent = proto.parent[1]
+    if parent then
+      out:write("  parent ", parent, "\n")
     end
     if proto.self then
       out:write "  self\n"
@@ -31,41 +39,45 @@ return function (self, out)
       out:write "  vararg\n"
     end
 
-    if proto.constants[1] then
+    local constants = proto.constants
+    if constants[1] then
       out:write "  constants\n"
-      for j = 1, #proto.constants do
-        local constant = proto.constants[j]
+      for j = 1, #constants do
+        local constant = constants[j]
         out:write(("    %s %q %s\n"):format(constant[1], constant.source, constant.type))
-        if constant.use[1] then out:write("      use ", table.concat(constant.use, " "), "\n") end
+        dump_use(out, constant, "use")
       end
     end
 
-    if proto.names[1] then
+    local names = proto.names
+    if names[1] then
       out:write "  names\n"
-      for j = 1, #proto.names do
-        local name = proto.names[j]
+      for j = 1, #names do
+        local name = names[j]
         out:write(("    %s %q\n"):format(name[1], name.source))
-        if name.def[1] then out:write("      def ", table.concat(name.def, " "), "\n") end
-        if name.use[1] then out:write("      use ", table.concat(name.use, " "), "\n") end
-        if name.updef[1] then out:write("      updef ", table.concat(name.updef, " "), "\n") end
-        if name.upuse[1] then out:write("      upuse ", table.concat(name.upuse, " "), "\n") end
+        dump_use(out, name, "def")
+        dump_use(out, name, "use")
+        dump_use(out, name, "updef")
+        dump_use(out, name, "upuse")
       end
     end
 
-    if proto.labels[1] then
+    local labels = proto.labels
+    if labels[1] then
       out:write "  labels\n"
-      for j = 1, #proto.labels do
-        local label = proto.labels[j]
+      for j = 1, #labels do
+        local label = labels[j]
         out:write(("    %s %q\n"):format(label[1], label.source))
-        if label.def[1] then out:write("      def ", table.concat(label.def, " "), "\n") end
-        if label.use[1] then out:write("      use ", table.concat(label.use, " "), "\n") end
+        dump_use(out, label, "def")
+        dump_use(out, label, "use")
       end
     end
 
-    if proto.upvalues[1] then
+    local upvalues = proto.upvalues
+    if upvalues[1] then
       out:write "  upvalues\n"
-      for j = 1, #proto.upvalues do
-        local upvalue = proto.upvalues[j]
+      for j = 1, #upvalues do
+        local upvalue = upvalues[j]
         out:write(("    %s %s (%s %q)\n"):format(upvalue[1], upvalue[2], upvalue.name[1], upvalue.name.source))
       end
     end
