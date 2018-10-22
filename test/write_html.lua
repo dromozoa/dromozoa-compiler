@@ -49,9 +49,9 @@ local result, message, i = t:resolve()
 if not result then
   error(error_message(message, source, i, source_file))
 end
-t:write_html(html_file)
+t:dump(html_file)
 
-t:write_es(es_file, "DROMOZOA_EXPORT")
+t:transpile_es(es_file, "DROMOZOA_EXPORT")
 
 local out = assert(io.open(text_file, "w"))
 local protos = t.protos
