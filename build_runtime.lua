@@ -53,4 +53,4 @@ local function build(source, result)
   out:close()
 end
 
-build("runtime/compile_es.js", "dromozoa/compiler/runtime/compile_es.lua")
+build("runtime/runtime_es.js", "dromozoa/compiler/runtime/runtime_es.lua")

@@ -16,8 +16,7 @@
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
 local symbol_value = require "dromozoa.parser.symbol_value"
-
-local runtime= require "dromozoa.compiler.runtime.compile_es"
+local runtime_es = require "dromozoa.compiler.runtime.runtime_es"
 
 local char_table = {
   ["\n"] = [[\n]];
@@ -225,12 +224,8 @@ end
 
 return function (self, out, name)
   out:write(name, " = function (env) {\n")
-  out:write(runtime);
-  out:write [[
-if (env === undefined) {
-  env = runtime_env();
-}
-]]
+  out:write(runtime_es);
+  out:write "if (env === undefined) { env = runtime_env(); }\n"
   out:write "let B = [env];\n"
   write(self, out, self.accepted_node, self.symbol_table)
   out:write "P0();\n"
