@@ -16,3 +16,18 @@
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
 print(42)
+print("foo", "bar", "baz")
+
+local p = print
+p("test")
+
+local f = function ()
+  return 1, 2, 3, 4
+end
+
+local a, b, c = f()
+print(a, b, c)
+local a, b, c = f(), 42
+print(a, b, c)
+local a, b, c = 42, f()
+print(a, b, c)

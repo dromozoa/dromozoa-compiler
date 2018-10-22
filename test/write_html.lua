@@ -29,6 +29,8 @@ local handle = assert(io.open(source_file))
 local source = handle:read "*a"
 handle:close()
 
+print(source_file)
+
 local terminal_nodes, message, i = lexer(source)
 if not terminal_nodes then
   error(error_message(message, source, i, source_file))

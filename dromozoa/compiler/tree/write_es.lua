@@ -42,20 +42,17 @@ let runtime_env = function () {
     }
     return "userdata";
   };
-
   let env = new Map();
-
   env.set("print", function (...vararg) {
-    const n = vararg.length - 1;
-    for (let i = 0; i < n; ++i) {
-      process.stdout.write(env_tostring(vararg[i]));
-      process.stdout.write("\t");
+    for (let i = 0; i < vararg.length; ++i) {
+      if (i > 0) {
+        process.stdout.write("\t");
+      }
+      process.stdout.write(tostring(vararg[i]));
     }
-    process.stdout.write(env_tostring(vararg[n]));
     process.stdout.write("\n");
     return [];
   });
-
   env.set("assert", function (...vararg) {
     let v = vararg[0];
     if (v === undefined || v === false) {
@@ -67,10 +64,8 @@ let runtime_env = function () {
     }
     return vararg;
   });
-
   return env;
 };
-
 if (env === undefined) {
   env = runtime_env();
 }
@@ -95,6 +90,30 @@ end
 
 local function encode_string(s)
   return "\"" .. s:gsub("[%z\1-\31\127]", char_table):gsub("\226\128[\168\169]", char_table) .. "\""
+end
+
+local function encode_var(var)
+  if not var then
+    return "?"
+  end
+
+  if var == "V" then
+    return "V"
+  elseif var == "T" then
+    return "T"
+  elseif var == "NIL" then
+    return "undefined"
+  else
+    local k = var:sub(1, 1)
+    if k == "U" then
+      local i = var:sub(2)
+      return "U[" .. i .. "][0][U[" .. i .. "][1]]"
+    elseif k == "P" then
+      return var
+    else
+      return k .. "[" .. var:sub(2) .. "]"
+    end
+  end
 end
 
 local function write_constants(self, out, proto)
@@ -131,7 +150,7 @@ local function write_proto(self, out, node, proto)
   out:write "};\n";
 end
 
-local function write(self, out, node)
+local function write(self, out, node, symbol_table)
   local proto = node.proto
   if proto then
     local A = proto.A
@@ -171,6 +190,7 @@ local function write(self, out, node)
     end
     out:write "];\n"
 
+    out:write "{\n"
     out:write "let A = [\n"
     for i = 0, A - 1 do
       out:write("A", i, ",\n")
@@ -179,13 +199,82 @@ local function write(self, out, node)
 
     out:write "let B = [];\n"
     out:write "let C = [];\n"
+    out:write "let T;\n"
   end
 
   for i = 1, #node do
-    write(self, out, node[i])
+    write(self, out, node[i], symbol_table)
+  end
+
+  local symbol = node[0]
+  if symbol == symbol_table.var then
+    if #node == 2 then
+      out:write(encode_var(node.var), "=", encode_var(node[1].var), ".get(", encode_var(node[2].var), ");\n")
+    end
+  elseif symbol == symbol_table.functioncall then
+    -- TODO check adjust
+    local adjust = node.adjust
+    if adjust > 0 then
+      out:write(encode_var(node.var), "=")
+    end
+    out:write(encode_var(node[1].var), "(")
+    local that = node[2]
+    for i = 1, #that do
+      if i > 1 then
+        out:write ", "
+      end
+      out:write(encode_var(that[i].var))
+    end
+    out:write ")"
+    if adjust == 1 then
+      out:write "[0]"
+    end
+    out:write ";\n"
+  elseif symbol == symbol_table["local"] then
+    local explist_node = node[1]
+    local namelist_node = node[2]
+
+    local vars = {}
+    for i = 1, #explist_node do
+      local exp_node = explist_node[i]
+      local adjust = exp_node.adjust
+      if adjust and adjust > 1 then
+        local var = exp_node.var
+        if var == "V" or var == "T" then
+          for j = 0, adjust - 1 do
+            vars[i + j] = var .. j
+          end
+        else
+          vars[i] = var
+          for j = 1, adjust - 1 do
+            vars[i + j] = "NIL"
+          end
+        end
+        assert(i == #explist_node)
+      else
+        vars[i] = exp_node.var
+      end
+    end
+
+    for i = 1, #namelist_node do
+      local name_node = namelist_node[i]
+      out:write(encode_var(name_node.var), "=", encode_var(vars[i]), ";\n")
+    end
+  elseif symbol == symbol_table["return"] then
+    local explist_node = node[1]
+    out:write "return ["
+    for i = 1, #explist_node do
+      local exp_node = explist_node[i]
+      if i > 1 then
+        out:write ", "
+      end
+      out:write(encode_var(exp_node.var))
+    end
+    out:write "];\n"
   end
 
   if proto then
+    out:write "}\n"
     out:write(("/* %s */ };\n"):format(proto[1]))
   end
 end
@@ -194,7 +283,8 @@ return function (self, out, name)
   out:write(name, " = function (env) {\n")
   out:write(runtime);
   out:write "let B = [env];\n"
-  write(self, out, self.accepted_node)
+  write(self, out, self.accepted_node, self.symbol_table)
+  out:write "P0();\n"
   out:write "};\n"
   out:write(name, "();\n");
   return out

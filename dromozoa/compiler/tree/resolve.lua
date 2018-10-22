@@ -294,6 +294,7 @@ local function prepare_protos(node, symbol_table, protos)
       "P0";
     }
     node.proto = proto
+    node.var = "P0"
     protos[1] = proto
 
     node.scope = {
@@ -305,6 +306,7 @@ local function prepare_protos(node, symbol_table, protos)
   else
     if symbol == symbol_table.funcbody then
       local n = #protos
+      local var = "P" .. n
       local proto = {
         parent = attr(node.parent, "proto");
         constants = {};
@@ -313,9 +315,10 @@ local function prepare_protos(node, symbol_table, protos)
         upvalues = {};
         A = 0;
         B = 0;
-        "P" .. n;
+        var;
       }
       node.proto = proto
+      node.var = var
       protos[n + 1] = proto
     end
 
@@ -542,9 +545,7 @@ local function resolve_vars(self, node, symbol_table)
   end
 
   local symbol = node[0]
-  if symbol == symbol_table.functiondef then
-    node.var = assign_var(node, "C")
-  elseif symbol == symbol_table.var then
+  if symbol == symbol_table.var then
     if #node == 1 then
       node.var = node[1].var
     elseif not node.def then
