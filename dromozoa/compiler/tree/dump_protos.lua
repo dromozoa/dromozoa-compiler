@@ -39,6 +39,17 @@ return function (self, out)
       out:write "  vararg\n"
     end
 
+    local labels = proto.labels
+    if labels[1] then
+      out:write "  labels\n"
+      for j = 1, #labels do
+        local label = labels[j]
+        out:write(("    %s %q\n"):format(label[1], label.source))
+        dump_use(out, label, "def")
+        dump_use(out, label, "use")
+      end
+    end
+
     local constants = proto.constants
     if constants[1] then
       out:write "  constants\n"
@@ -46,6 +57,15 @@ return function (self, out)
         local constant = constants[j]
         out:write(("    %s %q %s\n"):format(constant[1], constant.source, constant.type))
         dump_use(out, constant, "use")
+      end
+    end
+
+    local upvalues = proto.upvalues
+    if upvalues[1] then
+      out:write "  upvalues\n"
+      for j = 1, #upvalues do
+        local upvalue = upvalues[j]
+        out:write(("    %s %s (%s %q)\n"):format(upvalue[1], upvalue[2], upvalue.name[1], upvalue.name.source))
       end
     end
 
@@ -59,26 +79,6 @@ return function (self, out)
         dump_use(out, name, "use")
         dump_use(out, name, "updef")
         dump_use(out, name, "upuse")
-      end
-    end
-
-    local labels = proto.labels
-    if labels[1] then
-      out:write "  labels\n"
-      for j = 1, #labels do
-        local label = labels[j]
-        out:write(("    %s %q\n"):format(label[1], label.source))
-        dump_use(out, label, "def")
-        dump_use(out, label, "use")
-      end
-    end
-
-    local upvalues = proto.upvalues
-    if upvalues[1] then
-      out:write "  upvalues\n"
-      for j = 1, #upvalues do
-        local upvalue = upvalues[j]
-        out:write(("    %s %s (%s %q)\n"):format(upvalue[1], upvalue[2], upvalue.name[1], upvalue.name.source))
       end
     end
 
