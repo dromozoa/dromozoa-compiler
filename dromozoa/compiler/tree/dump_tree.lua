@@ -215,7 +215,12 @@ local function tree_to_html(self, tree_width, tree_height)
     path["data-source"] = symbol_value(node)
     for j = 1, #keys do
       local key = keys[j]
-      path["data-" .. key] = node[key]
+      local value = node[key]
+      if type(value) == "table" then
+        path["data-" .. key] = space_separated(value)
+      else
+        path["data-" .. key] = value
+      end
     end
     text["data-node-id"] = node_id
   end
