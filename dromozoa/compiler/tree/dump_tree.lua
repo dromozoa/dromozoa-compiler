@@ -25,11 +25,11 @@ local matrix3 = require "dromozoa.vecmath.matrix3"
 local _ = element
 
 local keys = {
-  "self";
-  "parlist";
-  "vararg";
   "binop";
   "unop";
+  "self";
+  "vararg";
+  "parlist";
 
   "param";
   "declare";
@@ -37,12 +37,11 @@ local keys = {
   "def";
   "use";
 
+  "C";
+  "adjust";
   "label";
   "var";
   "vars";
-
-  "C";
-  "adjust";
 }
 
 local head = _"head" {
@@ -215,7 +214,12 @@ local function tree_to_html(self, tree_width, tree_height)
     path["data-source"] = symbol_value(node)
     for j = 1, #keys do
       local key = keys[j]
-      path["data-" .. key] = node[key]
+      local value = node[key]
+      if type(value) == "table" then
+        path["data-" .. key] = space_separated(value)
+      else
+        path["data-" .. key] = value
+      end
     end
     text["data-node-id"] = node_id
   end

@@ -15,9 +15,10 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
+local compile_es = require "dromozoa.compiler.tree.compile_es"
+local dump_protos = require "dromozoa.compiler.tree.dump_protos"
+local dump_tree = require "dromozoa.compiler.tree.dump_tree"
 local resolve = require "dromozoa.compiler.tree.resolve"
-local write_es = require "dromozoa.compiler.tree.write_es"
-local write_html = require "dromozoa.compiler.tree.write_html"
 
 local function construct(self, node)
   local id = self.id + 1
@@ -37,19 +38,27 @@ function class:resolve()
   return resolve(self)
 end
 
-function class:write_html(out)
+function class:dump_protos(out)
   if type(out) == "string" then
-    return write_html(self, assert(io.open(out, "w"))):close()
+    return dump_protos(self, assert(io.open(out, "w"))):close()
   else
-    return write_html(self, out)
+    return dump_protos(self, out)
   end
 end
 
-function class:write_es(out, name)
+function class:dump_tree(out)
   if type(out) == "string" then
-    return write_es(self, assert(io.open(out, "w")), name):close()
+    return dump_tree(self, assert(io.open(out, "w"))):close()
   else
-    return write_es(self, out, name)
+    return dump_tree(self, out)
+  end
+end
+
+function class:compile_es(out, name)
+  if type(out) == "string" then
+    return compile_es(self, assert(io.open(out, "w")), name):close()
+  else
+    return compile_es(self, out, name)
   end
 end
 
