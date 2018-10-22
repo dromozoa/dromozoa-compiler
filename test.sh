@@ -24,9 +24,32 @@ mkdir -p result/compile result/execute
 cp docs/dromozoa-compiler.* result/compile
 cp docs/dromozoa-compiler.* result/execute
 
-echo "<!DOCTYPE html><title>dromozoa-compiler</title>" >result/index.html
+cat <<EOH >result/index.html
+<!DOCTYPE html>
+<head>
+<title>dromozoa-compiler test</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/2.10.0/github-markdown.min.css">
+<style>
+.markdown-body {
+  box-sizing: border-box;
+  min-width: 200px;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 45px;
+}
+@media (max-width: 767px) {
+  .markdown-body {
+    padding: 15px;
+  }
+}
+</style>
+</head>
+<body>
+<div class="markdown-body">
+<h1>dromozoa-compiler test</h1>
+EOH
 
-echo "<h1>compile</h1><ul>" >>result/index.html
+echo "<h2>compile</h2><ul>" >>result/index.html
 for i in test/compile/*.lua
 do
   echo "compiling $i..."
@@ -35,15 +58,15 @@ do
   lua test/compile.lua "$i" "result/$n"
   cat <<EOH >>result/index.html
 <li>$j:
-  <a href="$n.js">es</a>
-  <a href="$n.html">tree</a>
+  <a href="$n.js">es</a>,
+  <a href="$n.html">tree</a>,
   <a href="$n.txt">protos</a>
 </li>
 EOH
 done
 echo "</ul>" >>result/index.html
 
-echo "<h1>execute</h1><ul>" >>result/index.html
+echo "<h2>execute</h2><ul>" >>result/index.html
 for i in test/execute/*.lua
 do
   echo "compiling $i..."
@@ -74,11 +97,16 @@ do
   fi
   cat <<EOH >>result/index.html
 <li>[$result] $j:
-  <a href="$n.js">es</a>
-  <a href="$n.html">tree</a>
-  <a href="$n.txt">protos</a>
-  (<a href="$n-lua.txt">lua result</a> <a href="$n-es.txt">es result</a>)
+  <a href="$n.js">es</a>,
+  <a href="$n.html">tree</a>,
+  <a href="$n.txt">protos</a>,
+  result:
+  <a href="$n-lua.txt">lua</a>,
+  <a href="$n-es.txt">es result</a>
 </li>
 EOH
 done
 echo "</ul>" >>result/index.html
+
+echo "</div></body></html>" >>result/index.html
+
