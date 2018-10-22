@@ -126,7 +126,6 @@ local function declare_name(node, key, source)
   scope_names[#scope_names + 1] = name
   local proto_names = proto.names
   proto_names[#proto_names + 1] = name
-
   return name
 end
 
@@ -236,15 +235,15 @@ local function env_name(self, node, symbol_table)
   that[2] = node;
 
   env_node.var = ref_name(env_node)[1]
-  node.var = ref_constant(node, "string")[1]
+  return ref_constant(node, "string")
 end
 
-local function assign_var(node, key)
+local function assign_var(node)
   while node do
-    local value = node[key]
+    local value = node.C
     if value then
-      node[key] = value + 1
-      return key .. value
+      node.C = value + 1
+      return "C" .. value
     end
     node = node.parent
   end
@@ -263,25 +262,25 @@ local function prepare_protos(node, symbol_table, protos)
     }
 
     local external_proto = {
-      constants = {};
-      names = { env_name };
       labels = {};
+      constants = {};
       upvalues = {};
+      names = { env_name };
       A = 0;
       B = 1;
+      C = 0;
     }
 
     local external_scope = {
       proto = external_proto;
-      names = { env_name };
       labels = {};
+      names = { env_name };
     }
 
     local proto = {
       parent = external_proto;
-      constants = {};
-      names = {};
       labels = {};
+      constants = {};
       upvalues = {
         {
           name = env_name;
@@ -289,9 +288,11 @@ local function prepare_protos(node, symbol_table, protos)
           "B0";
         };
       };
-      vararg = true;
+      names = {};
       A = 0;
       B = 0;
+      C = 0;
+      vararg = true;
       "P0";
     }
     node.proto = proto
@@ -301,8 +302,8 @@ local function prepare_protos(node, symbol_table, protos)
     node.scope = {
       proto = proto;
       parent = external_scope;
-      names = {};
       labels = {};
+      names = {};
     }
   else
     if symbol == symbol_table.funcbody then
@@ -310,12 +311,13 @@ local function prepare_protos(node, symbol_table, protos)
       local var = "P" .. n
       local proto = {
         parent = attr(node.parent, "proto");
-        constants = {};
-        names = {};
         labels = {};
+        constants = {};
         upvalues = {};
+        names = {};
         A = 0;
         B = 0;
+        C = 0;
         var;
       }
       node.proto = proto
@@ -327,8 +329,8 @@ local function prepare_protos(node, symbol_table, protos)
       node.scope = {
         proto = attr(node, "proto");
         parent = attr(node.parent, "scope");
-        names = {};
         labels = {};
+        names = {};
       }
     end
   end
@@ -518,14 +520,14 @@ local function resolve_names(self, node, symbol_table)
       if name then
         node.var = name[1]
       else
-        env_name(self, node, symbol_table)
+        node.var = env_name(self, node, symbol_table)[1]
       end
     elseif node.use then
       local name = ref_name(node)
       if name then
         node.var = name[1]
       else
-        env_name(self, node, symbol_table)
+        node.var = env_name(self, node, symbol_table)[1]
       end
     end
   end
@@ -553,7 +555,7 @@ local function resolve_vars(self, node, symbol_table)
     local vars = space_separated { var }
     that[1].def = var
     for i = 2, n do
-      local var = assign_var(node, "C")
+      local var = assign_var(node)
       vars[i] = var
       that[i].def = var
     end
@@ -562,7 +564,7 @@ local function resolve_vars(self, node, symbol_table)
     if #node == 1 then
       node.var = node[1].var
     elseif not node.def then
-      node.var = assign_var(node, "C")
+      node.var = assign_var(node)
     end
   elseif symbol == symbol_table.explist then
     local adjust = node.adjust
@@ -594,14 +596,14 @@ local function resolve_vars(self, node, symbol_table)
       end
     else
       node.adjust = 1
-      node.var = assign_var(node, "C")
+      node.var = assign_var(node)
     end
   elseif symbol == symbol_table.fieldlist then
-    node.var = assign_var(node, "C")
+    node.var = assign_var(node)
   elseif node.binop then
-    node.var = assign_var(node, "C")
+    node.var = assign_var(node)
   elseif node.unop then
-    node.var = assign_var(node, "C")
+    node.var = assign_var(node)
   end
 end
 
