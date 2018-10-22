@@ -77,8 +77,7 @@ do
   <a href="$n.js">es</a>
   <a href="$n.html">tree</a>
   <a href="$n.txt">protos</a>
-  <a href="$n-lua.txt">lua</a>
-  <a href="$n-es.txt">es</a>
+  (<a href="$n-lua.txt">lua result</a> <a href="$n-es.txt">es result</a>)
 </li>
 EOH
 done
