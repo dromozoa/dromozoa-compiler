@@ -209,7 +209,11 @@ local function write(self, out, node, symbol_table)
   local symbol = node[0]
   if symbol == symbol_table.var then
     if node.def then
-
+      if #node == 2 then
+        out:write(encode_var(node[1].var), ".set(", encode_var(node[2].var), ",", encode_var(node.def), ");\n")
+      else
+        out:write(encode_var(node[1].var), "=", encode_var(node.def), ";\n")
+      end
     else
       if #node == 2 then
         out:write(encode_var(node.var), "=", encode_var(node[1].var), ".get(", encode_var(node[2].var), ");\n")
@@ -231,6 +235,19 @@ local function write(self, out, node, symbol_table)
       out:write(encode_var(that[i].var))
     end
     out:write "];\n"
+  elseif symbol == symbol_table.explist then
+    local that = node.parent
+    if that[0] == symbol_table["="] then
+      local lvars = node.vars
+      local rvars = that.vars
+      for i = 1, #lvars do
+        local lvar = lvars[i]
+        local rvar = rvars[i]
+        if lvar ~= rvar then
+          out:write(encode_var(lvar), "=", encode_var(rvar), ";\n")
+        end
+      end
+    end
   elseif symbol == symbol_table.functioncall then
     local adjust = node.adjust
     if adjust > 0 then
