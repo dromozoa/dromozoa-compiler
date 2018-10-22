@@ -169,8 +169,8 @@ _"stat"
   :_ "local" "namelist" "=" "explist" {[1]={4,2}}
 
 _"retstat"
-  :_ "return" {[1]={}}
-  :_ "return" ";" {[1]={}}
+  :_ "return" {[1]={"explist"}}
+  :_ "return" ";" {[1]={"explist"}}
   :_ "return" "explist" {[1]={2}}
   :_ "return" "explist" ";" {[1]={2}}
 
@@ -276,13 +276,13 @@ _"functioncall"
   :_ "functioncall" ":" "Name" "args" {1,3,4} :attr "self" :attr(3, "key")
 
 _"args"
-  :_ "(" ")" {"explist"}
-  :_ "(" "explist" ")" {2}
-  :_ "tableconstructor"
-  :_ "LiteralString"
+  :_ "(" ")" {["explist"]={}}
+  :_ "(" "explist" ")" {[2]={}}
+  :_ "tableconstructor" {["explist"]={1}}
+  :_ "LiteralString" {["explist"]={1}}
 
 _"functiondef"
-  :_ "function" "funcbody" {2}
+  :_ "function" "funcbody" {[2]={}}
 
 _"funcbody"
   :_ "(" ")" "block" "end" {"namelist",3} :attr "scope"

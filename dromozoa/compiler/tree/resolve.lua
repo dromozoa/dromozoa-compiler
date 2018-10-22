@@ -15,6 +15,7 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
+local space_separated = require "dromozoa.dom.space_separated"
 local symbol_value = require "dromozoa.parser.symbol_value"
 
 local function attr(node, key)
@@ -294,6 +295,7 @@ local function prepare_protos(node, symbol_table, protos)
       "P0";
     }
     node.proto = proto
+    node.var = "P0"
     protos[1] = proto
 
     node.scope = {
@@ -305,6 +307,7 @@ local function prepare_protos(node, symbol_table, protos)
   else
     if symbol == symbol_table.funcbody then
       local n = #protos
+      local var = "P" .. n
       local proto = {
         parent = attr(node.parent, "proto");
         constants = {};
@@ -313,9 +316,10 @@ local function prepare_protos(node, symbol_table, protos)
         upvalues = {};
         A = 0;
         B = 0;
-        "P" .. n;
+        var;
       }
       node.proto = proto
+      node.var = var
       protos[n + 1] = proto
     end
 
@@ -542,13 +546,43 @@ local function resolve_vars(self, node, symbol_table)
   end
 
   local symbol = node[0]
-  if symbol == symbol_table.functiondef then
-    node.var = assign_var(node, "C")
+  if symbol == symbol_table["="] then
+    local that = node[2]
+    local n = #that
+    local var = node[1][1].var
+    local vars = space_separated { var }
+    that[1].def = var
+    for i = 2, n do
+      local var = assign_var(node, "C")
+      vars[i] = var
+      that[i].def = var
+    end
+    node.vars = vars
   elseif symbol == symbol_table.var then
     if #node == 1 then
       node.var = node[1].var
     elseif not node.def then
       node.var = assign_var(node, "C")
+    end
+  elseif symbol == symbol_table.explist then
+    local adjust = node.adjust
+    if adjust then
+      local vars = space_separated {}
+      for i = 1, #node do
+        local that = node[i]
+        local var = that.var
+        if var == "V" or var == "T" then
+          for j = 0, that.adjust - 1 do
+            vars[i + j] = var .. j
+          end
+        else
+          vars[i] = var
+        end
+      end
+      for i = #vars + 1, adjust do
+        vars[i] = "NIL"
+      end
+      node.vars = vars
     end
   elseif symbol == symbol_table["("] then
     node.var = node[1].var

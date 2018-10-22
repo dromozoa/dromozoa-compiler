@@ -16,6 +16,7 @@
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
 local resolve = require "dromozoa.compiler.tree.resolve"
+local write_es = require "dromozoa.compiler.tree.write_es"
 local write_html = require "dromozoa.compiler.tree.write_html"
 
 local function construct(self, node)
@@ -32,6 +33,10 @@ end
 local class = {}
 local metatable = { __index = class }
 
+function class:resolve()
+  return resolve(self)
+end
+
 function class:write_html(out)
   if type(out) == "string" then
     return write_html(self, assert(io.open(out, "w"))):close()
@@ -40,8 +45,12 @@ function class:write_html(out)
   end
 end
 
-function class:resolve()
-  return resolve(self)
+function class:write_es(out, name)
+  if type(out) == "string" then
+    return write_es(self, assert(io.open(out, "w")), name):close()
+  else
+    return write_es(self, out, name)
+  end
 end
 
 return setmetatable(class, {

@@ -15,46 +15,28 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-function f(...)
-  local v = {
-    nil;
-    false;
-    true;
-    ...;
-  }
+print(42)
+print("foo", "bar", "baz")
 
-  local v = {
-    3;
-    345;
-    0xff;
-    0xBEBADA;
-  }
+local p = print
+p("qux")
 
-  local v = {
-    3.0;
-    3.1416;
-    314.16e-2;
-    0.31416E1;
-    34e1;
-    0x0.1E;
-    0xA23p-4;
-    0X1.921FB54442D18P+1;
-  }
-
-  local v = {
-    "";
-    '';
-    [[]];
-    "test\n";
-    "\x41\x42\x43";
-    "abc\z
-     def";
-    "\xE3\x81\x82\227\129\132\u{3046}";
-  }
-
-  local v = {
-    HYPHENATION_POINT = "\u{2027}";
-    LINE_SEPARATOR = "\u{2028}";
-    PARAGAPH_SEPARATOR = "\u{2029}";
-  }
+local n = 0
+local f = function ()
+  n = n + 1
+  return 1, 2, 3, 4
 end
+
+local a, b, c = f()
+print(a, b, c)
+local a, b, c = f(), 42
+print(a, b, c)
+local a, b, c = f(), f(), 42
+print(a, b, c)
+local a, b, c = 42, f()
+print(a, b, c)
+local a, b, c = 42, 42, f()
+print(a, b, c)
+local a, b, c = 42, 42, 42, f()
+print(a, b, c)
+print(n)

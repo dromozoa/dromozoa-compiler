@@ -24,10 +24,12 @@ local tree = require "dromozoa.compiler.tree"
 local lexer = lua53_lexer()
 local parser = lua53_parser()
 
-local source_file, html_file, text_file = ...
+local source_file, html_file, text_file, es_file = ...
 local handle = assert(io.open(source_file))
 local source = handle:read "*a"
 handle:close()
+
+print(source_file)
 
 local terminal_nodes, message, i = lexer(source)
 if not terminal_nodes then
@@ -48,6 +50,8 @@ if not result then
   error(error_message(message, source, i, source_file))
 end
 t:write_html(html_file)
+
+t:write_es(es_file, "DROMOZOA_EXPORT")
 
 local out = assert(io.open(text_file, "w"))
 local protos = t.protos
