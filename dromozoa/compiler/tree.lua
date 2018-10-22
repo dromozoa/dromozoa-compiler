@@ -15,7 +15,7 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-local dump = require "dromozoa.compiler.tree.dump"
+local dump_tree = require "dromozoa.compiler.tree.dump_tree"
 local resolve = require "dromozoa.compiler.tree.resolve"
 local transpile_es = require "dromozoa.compiler.tree.transpile_es"
 
@@ -37,11 +37,11 @@ function class:resolve()
   return resolve(self)
 end
 
-function class:dump(out)
+function class:dump_tree(out)
   if type(out) == "string" then
-    return dump(self, assert(io.open(out, "w"))):close()
+    return dump_tree(self, assert(io.open(out, "w"))):close()
   else
-    return dump(self, out)
+    return dump_tree(self, out)
   end
 end
 

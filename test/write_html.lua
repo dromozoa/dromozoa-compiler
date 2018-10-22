@@ -49,7 +49,7 @@ local result, message, i = t:resolve()
 if not result then
   error(error_message(message, source, i, source_file))
 end
-t:dump(html_file)
+t:dump_tree(html_file)
 
 t:transpile_es(es_file, "DROMOZOA_EXPORT")
 
