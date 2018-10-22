@@ -17,6 +17,65 @@
 
 local symbol_value = require "dromozoa.parser.symbol_value"
 
+local runtime = [[
+let runtime_env = function () {
+  let tostring = function (v) {
+    const t = typeof v;
+    if (t === "undefined") {
+      return "nil";
+    } else if (t === "number") {
+      return v.toString();
+    } else if (t === "string") {
+      return v;
+    } else if (t === "boolean") {
+      if (v) {
+        return "true";
+      } else {
+        return "false";
+      }
+    } else if (t === "object") {
+      if (Map.prototype.isPrototypeOf(v)) {
+        return "table";
+      }
+    } else if (t === "function") {
+      return "function";
+    }
+    return "userdata";
+  };
+
+  let env = new Map();
+
+  env.set("print", function (...vararg) {
+    const n = vararg.length - 1;
+    for (let i = 0; i < n; ++i) {
+      process.stdout.write(env_tostring(vararg[i]));
+      process.stdout.write("\t");
+    }
+    process.stdout.write(env_tostring(vararg[n]));
+    process.stdout.write("\n");
+    return [];
+  });
+
+  env.set("assert", function (...vararg) {
+    let v = vararg[0];
+    if (v === undefined || v === false) {
+      if (vararg.length > 1) {
+        throw vararg[1];
+      } else {
+        throw "assertion failed"
+      }
+    }
+    return vararg;
+  });
+
+  return env;
+};
+
+if (env === undefined) {
+  env = runtime_env();
+}
+]]
+
 -- https://tc39.github.io/ecma262/#prod-DoubleStringCharacter
 local char_table = {
   ["\n"] = [[\n]];
@@ -75,7 +134,20 @@ end
 local function write(self, out, node)
   local proto = node.proto
   if proto then
-    out:write(("let %s = function () {\n"):format(proto[1]))
+    local A = proto.A
+    out:write(("let %s = function ("):format(proto[1]))
+    if A > 0 then
+      out:write "A0"
+      for i = 1, A - 1 do
+        out:write(", A", i)
+      end
+      if proto.vararg then
+        out:write(", ...V")
+      end
+    elseif proto.vararg then
+      out:write "...V"
+    end
+    out:write ") {\n"
 
     local constants = proto.constants
     out:write "let K = [\n"
@@ -99,7 +171,12 @@ local function write(self, out, node)
     end
     out:write "];\n"
 
-    out:write "let A = [];\n"
+    out:write "let A = [\n"
+    for i = 0, A - 1 do
+      out:write("A", i, ",\n")
+    end
+    out:write "];\n"
+
     out:write "let B = [];\n"
     out:write "let C = [];\n"
   end
@@ -114,9 +191,11 @@ local function write(self, out, node)
 end
 
 return function (self, out, name)
-  out:write(name, " = function (_ENV) {\n")
-  out:write "let B = [_ENV];\n"
+  out:write(name, " = function (env) {\n")
+  out:write(runtime);
+  out:write "let B = [env];\n"
   write(self, out, self.accepted_node)
-  out:write "}\n"
+  out:write "};\n"
+  out:write(name, "();\n");
   return out
 end

@@ -1,5 +1,4 @@
 (function () {
-
   let tostring = function (v) {
     const t = typeof v;
     if (t === "undefined") {
