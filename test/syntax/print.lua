@@ -21,7 +21,9 @@ print("foo", "bar", "baz")
 local p = print
 p("test")
 
+local n = 0
 local f = function ()
+  n = n + 1
   return 1, 2, 3, 4
 end
 
@@ -29,5 +31,11 @@ local a, b, c = f()
 print(a, b, c)
 local a, b, c = f(), 42
 print(a, b, c)
+local a, b, c = f(), f(), 42
+print(a, b, c)
 local a, b, c = 42, f()
+print(a, b, c)
+local a, b, c = 42, 42, f()
+print(a, b, c)
+local a, b, c = 42, 42, 42, f()
 print(a, b, c)

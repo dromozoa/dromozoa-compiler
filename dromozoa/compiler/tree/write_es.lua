@@ -211,25 +211,6 @@ local function write(self, out, node, symbol_table)
     if #node == 2 then
       out:write(encode_var(node.var), "=", encode_var(node[1].var), ".get(", encode_var(node[2].var), ");\n")
     end
-  elseif symbol == symbol_table.functioncall then
-    -- TODO check adjust
-    local adjust = node.adjust
-    if adjust > 0 then
-      out:write(encode_var(node.var), "=")
-    end
-    out:write(encode_var(node[1].var), "(")
-    local that = node[2]
-    for i = 1, #that do
-      if i > 1 then
-        out:write ", "
-      end
-      out:write(encode_var(that[i].var))
-    end
-    out:write ")"
-    if adjust == 1 then
-      out:write "[0]"
-    end
-    out:write ";\n"
   elseif symbol == symbol_table["local"] then
     local explist_node = node[1]
     local namelist_node = node[2]
@@ -271,6 +252,26 @@ local function write(self, out, node, symbol_table)
       out:write(encode_var(exp_node.var))
     end
     out:write "];\n"
+  elseif symbol == symbol_table.functioncall then
+    local adjust = node.adjust
+    if adjust > 0 then
+      out:write(encode_var(node.var), "=")
+    end
+    out:write(encode_var(node[1].var), "(")
+    local that = node[2]
+    for i = 1, #that do
+      if i > 1 then
+        out:write ", "
+      end
+      out:write(encode_var(that[i].var))
+    end
+    out:write ")"
+    if adjust == 1 then
+      out:write "[0]"
+    end
+    out:write ";\n"
+  elseif symbol == symbol_table["+"] then
+    out:write(encode_var(node.var), "=", encode_var(node[1].var), "+", encode_var(node[2].var), ";\n")
   end
 
   if proto then
