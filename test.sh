@@ -20,16 +20,33 @@
 LUA_PATH="?.lua;;"
 export LUA_PATH
 
-mkdir -p result/syntax
-cp docs/dromozoa-compiler.* result/syntax
+mkdir -p result/compile result/execute
+cp docs/dromozoa-compiler.* result/compile
+cp docs/dromozoa-compiler.* result/execute
 
-echo "<!DOCTYPE html><title>dromozoa-compiler</title><ul>" >result/syntax/index.html
-for i in test/syntax/*.lua
+echo "<!DOCTYPE html><title>dromozoa-compiler</title>" >result/index.html
+
+echo "<h1>compile</h1><ul>" >>result/index.html
+for i in test/compile/*.lua
 do
   echo "compiling $i..."
   j=`expr "X$i" : 'X.*/\([^/]*\)\.lua'`
-  lua "$i"
-  lua test/compile.lua "$i" "result/syntax/$j"
-  printf '<li>%s: <a href="%s.js">es</a> <a href="%s.html">tree</a>, <a href="%s.txt">protos</a></li>\n' "$j" "$j" "$j" "$j" >>result/syntax/index.html
+  n=compile/$j
+  lua test/compile.lua "$i" "result/$n"
+  printf '<li>%s: <a href="%s.js">es</a> <a href="%s.html">tree</a>, <a href="%s.txt">protos</a></li>\n' "$j" "$n" "$n" "$n" >>result/index.html
 done
-echo "</ul>" >>result/syntax/index.html
+echo "</ul>" >>result/index.html
+
+echo "<h1>execute</h1><ul>" >>result/index.html
+for i in test/execute/*.lua
+do
+  echo "compiling $i..."
+  j=`expr "X$i" : 'X.*/\([^/]*\)\.lua'`
+  n=execute/$j
+  lua test/compile.lua "$i" "result/$n"
+  echo "executing $i..."
+  lua "$i" >"result/$n-lua.txt"
+  node "result/$n.js" >"result/$n-es.txt"
+  printf '<li>%s: <a href="%s.js">es</a> <a href="%s.html">tree</a>, <a href="%s.txt">protos</a></li>\n' "$j" "$n" "$n" "$n" >>result/index.html
+done
+echo "</ul>" >>result/index.html
