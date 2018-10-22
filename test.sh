@@ -20,16 +20,93 @@
 LUA_PATH="?.lua;;"
 export LUA_PATH
 
-mkdir -p result/syntax
-cp docs/dromozoa-compiler.* result/syntax
+mkdir -p result/compile result/execute
+cp docs/dromozoa-compiler.* result/compile
+cp docs/dromozoa-compiler.* result/execute
 
-echo "<!DOCTYPE html><title>dromozoa-compiler</title><ul>" >result/syntax/index.html
-for i in test/syntax/*.lua
+cat <<EOH >result/index.html
+<!DOCTYPE html>
+<head>
+<title>dromozoa-compiler test</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/2.10.0/github-markdown.min.css">
+<style>
+.markdown-body {
+  box-sizing: border-box;
+  min-width: 200px;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 45px;
+}
+@media (max-width: 767px) {
+  .markdown-body {
+    padding: 15px;
+  }
+}
+</style>
+</head>
+<body>
+<div class="markdown-body">
+<h1>dromozoa-compiler test</h1>
+EOH
+
+echo "<h2>compile</h2><ul>" >>result/index.html
+for i in test/compile/*.lua
 do
   echo "compiling $i..."
   j=`expr "X$i" : 'X.*/\([^/]*\)\.lua'`
-  lua "$i"
-  lua test/compile.lua "$i" "result/syntax/$j"
-  printf '<li>%s: <a href="%s.js">es</a> <a href="%s.html">tree</a>, <a href="%s.txt">protos</a></li>\n' "$j" "$j" "$j" "$j" >>result/syntax/index.html
+  n=compile/$j
+  lua test/compile.lua "$i" "result/$n"
+  cat <<EOH >>result/index.html
+<li>$j:
+  <a href="$n.js">es</a>,
+  <a href="$n.html">tree</a>,
+  <a href="$n.txt">protos</a>
+</li>
+EOH
 done
-echo "</ul>" >>result/syntax/index.html
+echo "</ul>" >>result/index.html
+
+echo "<h2>execute</h2><ul>" >>result/index.html
+for i in test/execute/*.lua
+do
+  echo "compiling $i..."
+  j=`expr "X$i" : 'X.*/\([^/]*\)\.lua'`
+  n=execute/$j
+  lua test/compile.lua "$i" "result/$n"
+
+  printf 'executing %s... ' "$i"
+  lua "$i" >"result/$n-lua.txt"
+  node "result/$n.js" >"result/$n-es.txt"
+  if diff "result/$n-lua.txt" "result/$n-es.txt" >/dev/null 2>&1
+  then
+    if test -t 2
+    then
+      printf '\33[96m[OK]\33[0m\n'
+    else
+      echo "[OK]"
+    fi
+    result=OK
+  else
+    if test -t 2
+    then
+      printf '\33[91m[NG]\33[0m\n'
+    else
+      echo "[NG]"
+    fi
+    result=NG
+  fi
+  cat <<EOH >>result/index.html
+<li>[$result] $j:
+  <a href="$n.js">es</a>,
+  <a href="$n.html">tree</a>,
+  <a href="$n.txt">protos</a>,
+  result:
+  <a href="$n-lua.txt">lua</a>,
+  <a href="$n-es.txt">es result</a>
+</li>
+EOH
+done
+echo "</ul>" >>result/index.html
+
+echo "</div></body></html>" >>result/index.html
+
