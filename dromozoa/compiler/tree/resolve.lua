@@ -15,6 +15,7 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
+local space_separated = require "dromozoa.dom.space_separated"
 local symbol_value = require "dromozoa.parser.symbol_value"
 
 local function attr(node, key)
@@ -545,11 +546,37 @@ local function resolve_vars(self, node, symbol_table)
   end
 
   local symbol = node[0]
-  if symbol == symbol_table.var then
+  if symbol == symbol_table["="] then
+    local vars = space_separated { node[1][1].var }
+    for i = 2, #node[2] do
+      vars[i] = assign_var(node, "C")
+    end
+    node.vars = vars
+  elseif symbol == symbol_table.var then
     if #node == 1 then
       node.var = node[1].var
     elseif not node.def then
       node.var = assign_var(node, "C")
+    end
+  elseif symbol == symbol_table.explist then
+    local adjust = node.adjust
+    if adjust then
+      local vars = space_separated {}
+      for i = 1, #node do
+        local that = node[i]
+        local var = that.var
+        if var == "V" or var == "T" then
+          for j = 0, that.adjust - 1 do
+            vars[i + j] = var .. j
+          end
+        else
+          vars[i] = var
+        end
+      end
+      for i = #vars + 1, adjust do
+        vars[i] = "NIL"
+      end
+      node.vars = vars
     end
   elseif symbol == symbol_table["("] then
     node.var = node[1].var
