@@ -29,7 +29,7 @@ do
   echo "compiling $i..."
   j=`expr "X$i" : 'X.*/\([^/]*\)\.lua'`
   lua "$i"
-  lua test/compile.lua "$i" "result/syntax/$j";;
+  lua test/compile.lua "$i" "result/syntax/$j"
   printf '<li>%s: <a href="%s.js">es</a> <a href="%s.html">tree</a>, <a href="%s.txt">protos</a></li>\n' "$j" "$j" "$j" "$j" >>result/syntax/index.html
 done
 echo "</ul>" >>result/syntax/index.html
