@@ -19,7 +19,7 @@ print(42)
 print("foo", "bar", "baz")
 
 local p = print
-p("test")
+p("qux")
 
 local n = 0
 local f = function ()
