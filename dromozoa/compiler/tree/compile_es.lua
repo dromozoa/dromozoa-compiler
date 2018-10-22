@@ -71,17 +71,16 @@ if (env === undefined) {
 }
 ]]
 
--- https://tc39.github.io/ecma262/#prod-DoubleStringCharacter
 local char_table = {
   ["\n"] = [[\n]];
   ["\r"] = [[\r]];
   ["\\"] = [[\\]];
   ["\""] = [[\"]];
-  [string.char(0xE2, 0x80, 0xA8)] = [[\u2028]]; -- LS / LINE SEPARATOR
-  [string.char(0xE2, 0x80, 0xA9)] = [[\u2029]]; -- PS / PARAGRAPH SEPARATOR
+  [string.char(0xE2, 0x80, 0xA8)] = [[\u2028]]; -- LINE SEPARATOR
+  [string.char(0xE2, 0x80, 0xA9)] = [[\u2029]]; -- PARAGRAPH SEPARATOR
 }
 
-for byte = 0x00, 0x7F do
+for byte = 0x00, 0xFF do
   local char = string.char(byte)
   if not char_table[char] then
     char_table[char] = ([[\u04X]]):format(byte)

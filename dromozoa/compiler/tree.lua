@@ -15,10 +15,10 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
+local compile_es = require "dromozoa.compiler.tree.compile_es"
 local dump_protos = require "dromozoa.compiler.tree.dump_protos"
 local dump_tree = require "dromozoa.compiler.tree.dump_tree"
 local resolve = require "dromozoa.compiler.tree.resolve"
-local transpile_es = require "dromozoa.compiler.tree.transpile_es"
 
 local function construct(self, node)
   local id = self.id + 1
@@ -54,11 +54,11 @@ function class:dump_tree(out)
   end
 end
 
-function class:transpile_es(out, name)
+function class:compile_es(out, name)
   if type(out) == "string" then
-    return transpile_es(self, assert(io.open(out, "w")), name):close()
+    return compile_es(self, assert(io.open(out, "w")), name):close()
   else
-    return transpile_es(self, out, name)
+    return compile_es(self, out, name)
   end
 end
 

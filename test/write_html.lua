@@ -50,6 +50,6 @@ if not result then
   error(error_message(message, source, i, source_file))
 end
 
-t:transpile_es(es_file, "DROMOZOA_EXPORT")
+t:compile_es(es_file, "DROMOZOA_EXPORT")
 t:dump_tree(html_file)
 t:dump_protos(text_file)
