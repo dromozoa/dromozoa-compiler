@@ -208,8 +208,12 @@ local function write(self, out, node, symbol_table)
 
   local symbol = node[0]
   if symbol == symbol_table.var then
-    if #node == 2 then
-      out:write(encode_var(node.var), "=", encode_var(node[1].var), ".get(", encode_var(node[2].var), ");\n")
+    if node.def then
+
+    else
+      if #node == 2 then
+        out:write(encode_var(node.var), "=", encode_var(node[1].var), ".get(", encode_var(node[2].var), ");\n")
+      end
     end
   elseif symbol == symbol_table["local"] then
     local vars = node[1].vars

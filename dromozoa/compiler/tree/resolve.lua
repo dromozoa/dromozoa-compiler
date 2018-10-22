@@ -547,9 +547,15 @@ local function resolve_vars(self, node, symbol_table)
 
   local symbol = node[0]
   if symbol == symbol_table["="] then
-    local vars = space_separated { node[1][1].var }
-    for i = 2, #node[2] do
-      vars[i] = assign_var(node, "C")
+    local that = node[2]
+    local n = #that
+    local var = node[1][1].var
+    local vars = space_separated { var }
+    that[1].def = var
+    for i = 2, n do
+      local var = assign_var(node, "C")
+      vars[i] = var
+      that[i].def = var
     end
     node.vars = vars
   elseif symbol == symbol_table.var then
