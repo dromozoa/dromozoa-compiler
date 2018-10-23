@@ -72,6 +72,7 @@ local function write(self, out, node, symbol_table)
     local A = proto.A
     local B = proto.B
     local C = proto.C
+
     out:write(("const %s = function ("):format(proto[1]))
     if A > 0 then
       out:write "A0"
@@ -146,8 +147,9 @@ local function write(self, out, node, symbol_table)
     if C > 0 then
       out:write(("const C = []; /* %d */\n"):format(C))
     end
-    -- TODO update resolve
-    out:write "let T;\n"
+    if proto.T then
+      out:write "let T;\n"
+    end
   end
 
   for i = 1, #node do

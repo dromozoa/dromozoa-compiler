@@ -41,6 +41,9 @@ return function (self, out)
     out:write(("  A %d\n"):format(proto.A))
     out:write(("  B %d\n"):format(proto.B))
     out:write(("  C %d\n"):format(proto.C))
+    if proto.T then
+      out:write "  T\n"
+    end
 
     local labels = proto.labels
     if labels[1] then

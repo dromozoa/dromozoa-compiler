@@ -607,6 +607,7 @@ local function resolve_vars(self, node, symbol_table)
     local adjust = node.adjust
     if adjust then
       if adjust ~= 0 then
+        attr(node, "proto").T = true
         node.var = "T"
       end
     else
