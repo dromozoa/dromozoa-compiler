@@ -161,8 +161,17 @@ local function write(self, out, node, symbol_table)
     out:write "{\n"
   end
 
+  local inorder = node.inorder
   for i = 1, #node do
     write(self, out, node[i], symbol_table)
+    if i == inorder then
+      if symbol == symbol_table.conditional then
+        out:write "} else {\n"
+      elseif symbol == symbol_table["if"] then
+        local var = node[1].var
+        out:write("if (!(", encode_var(var), "==undefined||", encode_var(var), "===false)) {\n")
+      end
+    end
   end
 
   if symbol == symbol_table["local"] then
@@ -238,11 +247,6 @@ local function write(self, out, node, symbol_table)
     end
   elseif symbol == symbol_table["conditional"] then
     out:write "/* if */ }\n"
-  elseif symbol == symbol_table["then"] then
-    local var = node.parent[1].var
-    out:write("if (!(", encode_var(var), "==undefined||", encode_var(var), "===false)) {\n")
-  elseif symbol == symbol_table["else"] then
-    out:write "} else {\n"
   elseif symbol == symbol_table.funcname then
     if node.def then
       if #node == 2 then

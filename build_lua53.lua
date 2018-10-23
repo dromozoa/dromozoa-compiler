@@ -179,19 +179,19 @@ _"label"
 
 _"conditional"
   :_"if_"
-  :_"if_" "else_" {1,"else",2}
-  :_"if_" "conditional_" {1,"else",2}
+  :_"if_" "else_" {1,2} :attr("inorder", 1)
+  :_"if_" "conditional_" {1,2} :attr("inorder", 1)
 
 _"conditional_"
   :_ "elseif_" {["conditional"]={1}}
-  :_ "elseif_" "else_" {["conditional"]={1,"else",2}}
-  :_ "elseif_" "conditional_" {["conditional"]={1,"else",2}}
+  :_ "elseif_" "else_" {["conditional"]={1,2}} :attr("inorder", 1)
+  :_ "elseif_" "conditional_" {["conditional"]={1,2}} :attr("inorder", 1)
 
 _"if_"
-  :_ "if" "exp" "then" "block" {[1]={2,3,4}} :attr "scope"
+  :_ "if" "exp" "then" "block" {[1]={2,4}} :attr "scope" :attr("inorder", 1)
 
 _"elseif_"
-  :_ "elseif" "exp" "then" "block" {["if"]={2,3,4}} :attr "scope"
+  :_ "elseif" "exp" "then" "block" {["if"]={2,4}} :attr "scope" :attr("inorder", 1)
 
 _"else_"
   :_ "else" "block" {[2]={}} :attr "scope"

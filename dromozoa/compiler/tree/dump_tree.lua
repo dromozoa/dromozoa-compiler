@@ -35,6 +35,7 @@ local keys = {
   "for2";
   "for3";
   "for";
+  "inorder";
 
   "param";
   "declare";
