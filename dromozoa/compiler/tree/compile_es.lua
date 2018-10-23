@@ -171,6 +171,8 @@ local function write(self, out, node, symbol_table)
     for i = 1, #that do
       out:write(encode_var(that[i].var), "=", encode_var(vars[i]), ";\n")
     end
+  elseif symbol == symbol_table["break"] then
+    out:write "break;\n"
   elseif symbol == symbol_table["function"] then
     local that = node[1]
     if that.declare then
