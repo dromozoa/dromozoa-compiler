@@ -46,7 +46,7 @@ local function encode_var(var)
   if var == "V" then
     return "...V"
   elseif var == "T" then
-    return "T"
+    return "...T"
   elseif var == "NIL" then
     return "undefined"
   elseif var == "FALSE" then
@@ -203,7 +203,7 @@ local function write(self, out, node, symbol_table)
     elseif adjust == 1 then
       out:write(encode_var(node.var), "=CALL1")
     else
-      out:write(encode_var(node.var), "=CALL")
+      out:write("T=CALL")
     end
     out:write("(", encode_var(node[1].var))
     local that = node[2]
@@ -211,6 +211,9 @@ local function write(self, out, node, symbol_table)
       out:write(",",encode_var(that[i].var))
     end
     out:write ");\n"
+  elseif symbol == symbol_table.fieldlist then
+    out:write(encode_var(node.var), "=new Map();\n")
+
   elseif symbol == symbol_table["+"] then
     out:write(encode_var(node.var), "=", encode_var(node[1].var), "+", encode_var(node[2].var), ";\n")
   end

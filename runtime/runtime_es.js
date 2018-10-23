@@ -78,10 +78,31 @@ const tostring = function (v) {
   return "userdata";
 };
 
+const type = function (v) {
+  const t = typeof v;
+  if (t === "undefined") {
+    return "nil";
+  } else if (t === "number") {
+    return "number"
+  } else if (t === "string") {
+    return "string"
+  } else if (t === "boolean") {
+    return "boolean"
+  } else if (t === "object") {
+    if (Map.prototype.isPrototypeOf(v)) {
+      return "table";
+    }
+  } else if (t === "function") {
+    return "function";
+  }
+  return "userdata";
+}
+
 const open_env = function () {
   const env = new Map();
 
   env.set("tostring", tostring);
+  env.set("type", type);
 
   env.set("print", function (...vararg) {
     for (let i = 0; i < vararg.length; ++i) {
