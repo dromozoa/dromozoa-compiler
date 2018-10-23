@@ -1,30 +1,56 @@
 return [[
-let runtime_env = function () {
-  let tostring = function (v) {
-    const t = typeof v;
-    if (t === "undefined") {
-      return "nil";
-    } else if (t === "number") {
-      return v.toString();
-    } else if (t === "string") {
-      return v;
-    } else if (t === "boolean") {
-      if (v) {
-        return "true";
-      } else {
-        return "false";
-      }
-    } else if (t === "object") {
-      if (Map.prototype.isPrototypeOf(v)) {
-        return "table";
-      }
-    } else if (t === "function") {
-      return "function";
-    }
-    return "userdata";
-  };
+let CALL0 = function (f, ...vararg) {
+  f(...vararg);
+}
 
+let CALL1 = function (f, ...vararg) {
+  let result = f(...vararg);
+  if (typeof result === "object") {
+    if (Array.prototype.isPrototypeOf(result)) {
+      return result[0];
+    }
+  }
+  return result;
+}
+
+let CALL = function (f, ...vararg) {
+  let result = f(...vararg);
+  if (typeof result === "object") {
+    if (Array.prototype.isPrototypeOf(result)) {
+      return result;
+    }
+  }
+  return [result];
+}
+
+let tostring = function (v) {
+  const t = typeof v;
+  if (t === "undefined") {
+    return "nil";
+  } else if (t === "number") {
+    return v.toString();
+  } else if (t === "string") {
+    return v;
+  } else if (t === "boolean") {
+    if (v) {
+      return "true";
+    } else {
+      return "false";
+    }
+  } else if (t === "object") {
+    if (Map.prototype.isPrototypeOf(v)) {
+      return "table";
+    }
+  } else if (t === "function") {
+    return "function";
+  }
+  return "userdata";
+};
+
+let runtime_env = function () {
   let env = new Map();
+
+  env.set("tostring", tostring);
 
   env.set("print", function (...vararg) {
     for (let i = 0; i < vararg.length; ++i) {
@@ -34,7 +60,6 @@ let runtime_env = function () {
       process.stdout.write(tostring(vararg[i]));
     }
     process.stdout.write("\n");
-    return [];
   });
 
   env.set("assert", function (...vararg) {

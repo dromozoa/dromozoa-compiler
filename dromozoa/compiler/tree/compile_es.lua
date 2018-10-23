@@ -174,22 +174,19 @@ local function write(self, out, node, symbol_table)
     end
   elseif symbol == symbol_table.functioncall then
     local adjust = node.adjust
-    if adjust > 0 then
-      out:write(encode_var(node.var), "=")
+    if adjust == 0 then
+      out:write "CALL0"
+    elseif adjust == 1 then
+      out:write(encode_var(node.var), "=CALL1")
+    else
+      out:write(encode_var(node.var), "=CALL")
     end
-    out:write(encode_var(node[1].var), "(")
+    out:write("(", encode_var(node[1].var))
     local that = node[2]
     for i = 1, #that do
-      if i > 1 then
-        out:write ","
-      end
-      out:write(encode_var(that[i].var))
+      out:write(",",encode_var(that[i].var))
     end
-    out:write ")"
-    if adjust == 1 then
-      out:write "[0]"
-    end
-    out:write ";\n"
+    out:write ");\n"
   elseif symbol == symbol_table["+"] then
     out:write(encode_var(node.var), "=", encode_var(node[1].var), "+", encode_var(node[2].var), ";\n")
   end
