@@ -20,6 +20,52 @@
 // and a copy of the GCC Runtime Library Exception along with
 // dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
+const metatable_key = Symbol("metatabale");
+
+const tostring = function (v) {
+  const t = typeof v;
+  if (t === "undefined") {
+    return "nil";
+  } else if (t === "number") {
+    return v.toString();
+  } else if (t === "string") {
+    return v;
+  } else if (t === "boolean") {
+    if (v) {
+      return "true";
+    } else {
+      return "false";
+    }
+  } else if (t === "object") {
+    if (Map.prototype.isPrototypeOf(v)) {
+      return "table";
+    }
+  } else if (t === "function") {
+    return "function";
+  }
+  return "userdata";
+};
+
+const type = function (v) {
+  const t = typeof v;
+  if (t === "undefined") {
+    return "nil";
+  } else if (t === "number") {
+    return "number"
+  } else if (t === "string") {
+    return "string"
+  } else if (t === "boolean") {
+    return "boolean"
+  } else if (t === "object") {
+    if (Map.prototype.isPrototypeOf(v)) {
+      return "table";
+    }
+  } else if (t === "function") {
+    return "function";
+  }
+  return "userdata";
+}
+
 const CALL0 = function (f, ...args) {
   f(...args);
 };
@@ -68,50 +114,6 @@ const SETLIST = function (table, index, ...args) {
   for (let i = 0; i < args.length; ++i) {
     table.set(index + i, args[i]);
   }
-}
-
-const tostring = function (v) {
-  const t = typeof v;
-  if (t === "undefined") {
-    return "nil";
-  } else if (t === "number") {
-    return v.toString();
-  } else if (t === "string") {
-    return v;
-  } else if (t === "boolean") {
-    if (v) {
-      return "true";
-    } else {
-      return "false";
-    }
-  } else if (t === "object") {
-    if (Map.prototype.isPrototypeOf(v)) {
-      return "table";
-    }
-  } else if (t === "function") {
-    return "function";
-  }
-  return "userdata";
-};
-
-const type = function (v) {
-  const t = typeof v;
-  if (t === "undefined") {
-    return "nil";
-  } else if (t === "number") {
-    return "number"
-  } else if (t === "string") {
-    return "string"
-  } else if (t === "boolean") {
-    return "boolean"
-  } else if (t === "object") {
-    if (Map.prototype.isPrototypeOf(v)) {
-      return "table";
-    }
-  } else if (t === "function") {
-    return "function";
-  }
-  return "userdata";
 }
 
 const open_env = function () {
