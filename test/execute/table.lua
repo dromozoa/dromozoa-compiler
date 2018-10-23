@@ -15,5 +15,16 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
+local print = print
+
 local t = {}
 print(type(t))
+print(t[1], t[2])
+t[1] = 42
+print(t[1], t[2])
+t[2] = 69
+print(t[1], t[2])
+t[1], t[2] = t[2], t[1]
+print(t[1], t[2])
+
+print(#t)

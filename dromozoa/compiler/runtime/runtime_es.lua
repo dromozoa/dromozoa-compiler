@@ -1,10 +1,10 @@
 return [[
-const CALL0 = function (f, ...vararg) {
-  f(...vararg);
+const CALL0 = function (f, ...args) {
+  f(...args);
 };
 
-const CALL1 = function (f, ...vararg) {
-  const result = f(...vararg);
+const CALL1 = function (f, ...args) {
+  const result = f(...args);
   if (typeof result === "object" && Array.prototype.isPrototypeOf(result)) {
     return result[0];
   } else {
@@ -12,8 +12,8 @@ const CALL1 = function (f, ...vararg) {
   }
 };
 
-const CALL = function (f, ...vararg) {
-  const result = f(...vararg);
+const CALL = function (f, ...args) {
+  const result = f(...args);
   if (typeof result === "object" && Array.prototype.isPrototypeOf(result)) {
     return result;
   } else {
@@ -30,6 +30,16 @@ const SETTABLE = function (table, index, value) {
     table.delete(index);
   } else {
     table.set(index, value);
+  }
+};
+
+const LEN = function (v) {
+  if (typeof v === "object" && Map.prototype.isPrototypeOf(v)) {
+    for (let i = 1; ; ++i) {
+      if (v.get(i) === undefined) {
+        return i - 1;
+      }
+    }
   }
 };
 
@@ -83,26 +93,26 @@ const open_env = function () {
   env.set("tostring", tostring);
   env.set("type", type);
 
-  env.set("print", function (...vararg) {
-    for (let i = 0; i < vararg.length; ++i) {
+  env.set("print", function (...args) {
+    for (let i = 0; i < args.length; ++i) {
       if (i > 0) {
         process.stdout.write("\t");
       }
-      process.stdout.write(tostring(vararg[i]));
+      process.stdout.write(tostring(args[i]));
     }
     process.stdout.write("\n");
   });
 
-  env.set("assert", function (...vararg) {
-    let v = vararg[0];
+  env.set("assert", function (...args) {
+    const v = args[0];
     if (v === undefined || v === false) {
-      if (vararg.length > 1) {
-        throw vararg[1];
+      if (args.length > 1) {
+        throw args[1];
       } else {
         throw "assertion failed"
       }
     }
-    return vararg;
+    return args;
   });
 
   return env;

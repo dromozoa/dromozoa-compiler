@@ -218,6 +218,8 @@ local function write(self, out, node, symbol_table)
 
   elseif symbol == symbol_table["+"] then
     out:write(encode_var(node.var), "=", encode_var(node[1].var), "+", encode_var(node[2].var), ";\n")
+  elseif symbol == symbol_table["#"] then
+    out:write(encode_var(node.var), "=LEN(", encode_var(node[1].var), ");\n")
   end
 
   if proto then
