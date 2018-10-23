@@ -15,6 +15,17 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-print(42, 0.125)
-print("foo", "bar", "baz")
-print(nil, false, true)
+local t = {
+  f = function (self, ...)
+    print(type(self), ...)
+  end;
+}
+t.t = t
+
+t.f(1, 2, 3, 4)
+t.t.f(1, 2, 3, 4)
+t.t.t.f(1, 2, 3, 4)
+t:f(1, 2, 3, 4)
+t.t:f(1, 2, 3, 4)
+t.t.t:f(1, 2, 3, 4)
+t.t.t.t:f(1, 2, 3, 4)

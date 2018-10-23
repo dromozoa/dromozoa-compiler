@@ -15,6 +15,8 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-print(42, 0.125)
-print("foo", "bar", "baz")
-print(nil, false, true)
+local i = 0
+while i < 10 do
+  i = i + 1
+  print(i)
+end

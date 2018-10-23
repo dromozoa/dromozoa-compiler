@@ -15,6 +15,15 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-print(42, 0.125)
-print("foo", "bar", "baz")
-print(nil, false, true)
+local f = function (v)
+  print(1, type(v))
+end
+
+do
+  local f = function (v)
+    print(2, type(v))
+  end
+  f "foo"
+end
+
+f{}

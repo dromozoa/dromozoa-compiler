@@ -15,6 +15,22 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-print(42, 0.125)
-print("foo", "bar", "baz")
-print(nil, false, true)
+for i = 1, 10 do
+  print(i)
+end
+
+for i = 1, 10, 2 do
+  print(i)
+end
+
+for i = 10, 1, -2 do
+  print(i)
+end
+
+local function f(s, var)
+  return s[var]
+end
+
+for v in f, { 2, 3, 4, 5 }, 1 do
+  print(v)
+end

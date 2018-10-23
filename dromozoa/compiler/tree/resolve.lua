@@ -355,7 +355,7 @@ local function prepare_attrs(node, symbol_table)
     node[1].adjust = #node[2]
   elseif symbol == symbol_table.funcname then
     if node.self then
-      node.parent[2].proto.self = true
+      node.parent[1].proto.self = true
     end
     if #node == 1 then
       if node.def then
@@ -466,29 +466,6 @@ local function resolve_names(self, node, symbol_table)
         declare_name(node, "A", "self")
       end
     end
-  elseif symbol == symbol_table.functioncall then
-    if node.self then
-      local id = self.id + 1
-      self.id = id
-
-      local var_node = node[1]
-      local key_node = node[2]
-
-      local that = {
-        [0] = symbol_table.var;
-        parent = node;
-        id = id;
-        var_node;
-        key_node;
-      }
-
-      var_node.parent = that
-      key_node.parent = that
-
-      node[1] = that
-      node[2] = node[3]
-      node[3] = nil
-    end
   elseif symbol == symbol_table["nil"] then
     node.var = "NIL"
   elseif symbol == symbol_table["false"] then
@@ -514,6 +491,29 @@ local function resolve_names(self, node, symbol_table)
     else
       node.adjust = 1
       node.var = "V0"
+    end
+  elseif symbol == symbol_table.functioncall then
+    if node.self then
+      local id = self.id + 1
+      self.id = id
+
+      local var_node = node[1]
+      local key_node = node[2]
+
+      local that = {
+        [0] = symbol_table.var;
+        parent = node;
+        id = id;
+        var_node;
+        key_node;
+      }
+
+      var_node.parent = that
+      key_node.parent = that
+
+      node[1] = that
+      node[2] = node[3]
+      node[3] = nil
     end
   elseif symbol == symbol_table.Name then
     if node.param then
@@ -556,17 +556,32 @@ local function resolve_vars(self, node, symbol_table)
 
   local symbol = node[0]
   if symbol == symbol_table["="] then
+    local lvars = {}
+    local rvars = node[1].vars
     local that = node[2]
-    local n = #that
-    local var = node[1][1].var
-    local vars = { var }
-    that[1].def = var
-    for i = 2, n do
-      local var = assign_var(node)
-      vars[i] = var
+    for i = 1, #rvars do
+      local var = rvars[i]
+      if i == 1 then
+        if var:find "^T%d" then
+          var = assign_var(node)
+        end
+      else
+        if var:find "^[UABT]%d" then
+          var = assign_var(node)
+        end
+      end
+      lvars[i] = var
       that[i].def = var
     end
-    node.vars = vars
+    node.vars = lvars
+  elseif symbol == symbol_table["function"] then
+    node[2].def = node[1].var
+  elseif symbol == symbol_table.funcname then
+    if #node == 1 then
+      node.var = node[1].var
+    elseif not node.def then
+      node.var = assign_var(node)
+    end
   elseif symbol == symbol_table.var then
     if #node == 1 then
       node.var = node[1].var
@@ -599,11 +614,15 @@ local function resolve_vars(self, node, symbol_table)
     local adjust = node.adjust
     if adjust then
       if adjust ~= 0 then
+        attr(node, "proto").T = true
         node.var = "T"
       end
     else
       node.adjust = 1
       node.var = assign_var(node)
+    end
+    if node.self then
+      node.self = node[1][1].var
     end
   elseif symbol == symbol_table.fieldlist then
     node.var = assign_var(node)
