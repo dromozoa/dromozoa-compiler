@@ -66,44 +66,12 @@ local function encode_var(var)
   end
 end
 
-local function write_constants(self, out, proto)
-  local constants = proto.constants
-  local n = #constants
-  out:write(("let %s_K = [\n"):format(proto[1]))
-  for j = 1, #constants do
-    local constant = constants[j]
-    if constant.type == "string" then
-      out:write(("/* %s */ %s,\n"):format(constant[1], encode_string(constant.source)))
-    else
-      out:write(("/* %s */ %.17g,\n"):format(constant[1], tonumber(constant.source)))
-    end
-  end
-  out:write "];\n"
-end
-
-local function write_proto(self, out, node, proto)
-  local proto_name = proto[1]
-  out:write(("let %s = function () {\n"):format(proto_name))
-
-  local constants = proto.constants
-  out:write "let K = [\n"
-  for j = 1, #constants do
-    local constant = constants[j]
-    if constant.type == "string" then
-      out:write(("/* %s */ %s,\n"):format(constant[1], encode_string(constant.source)))
-    else
-      out:write(("/* %s */ %.17g,\n"):format(constant[1], tonumber(constant.source)))
-    end
-  end
-  out:write "];\n"
-
-  out:write "};\n";
-end
-
 local function write(self, out, node, symbol_table)
   local proto = node.proto
   if proto then
     local A = proto.A
+    local B = proto.B
+    local C = proto.C
     out:write(("let %s = function ("):format(proto[1]))
     if A > 0 then
       out:write "A0"
@@ -141,14 +109,20 @@ local function write(self, out, node, symbol_table)
     out:write "];\n"
 
     out:write "{\n"
-    out:write "let A = [\n"
-    for i = 0, A - 1 do
-      out:write("A", i, ",\n")
+    if A > 0 then
+      out:write "let A = [\n"
+      for i = 0, A - 1 do
+        out:write("A", i, ",\n")
+      end
+      out:write "];\n"
     end
-    out:write "];\n"
 
-    out:write "let B = [];\n"
-    out:write "let C = [];\n"
+    if B > 0 then
+      out:write(("let B = []; // %d\n"):format(B))
+    end
+    if C > 0 then
+      out:write(("let C = []; // %d\n"):format(C))
+    end
     out:write "let T;\n"
   end
 
@@ -207,7 +181,7 @@ local function write(self, out, node, symbol_table)
     local that = node[2]
     for i = 1, #that do
       if i > 1 then
-        out:write ", "
+        out:write ","
       end
       out:write(encode_var(that[i].var))
     end
