@@ -47,7 +47,11 @@ const GETTABLE = function (table, index) {
 };
 
 const SETTABLE = function (table, index, value) {
-  table.set(index, value);
+  if (value === undefined) {
+    table.delete(index);
+  } else {
+    table.set(index, value);
+  }
 }
 
 const tostring = function (v) {
