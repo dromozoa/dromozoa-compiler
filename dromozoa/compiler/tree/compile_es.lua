@@ -218,6 +218,21 @@ local function write(self, out, node, symbol_table)
       out:write "v += s;\n"
       out:write "if ((s >= 0 && v > l) || (s < 0 && v < l)) break;\n"
       out:write(encode_var(that[4].var), "=v;\n")
+    elseif node["for"] then
+      local that = node.parent
+      local vars = that[1].vars
+      out:write("let f = ", encode_var(vars[1]), ";\n")
+      out:write("let s = ", encode_var(vars[2]), ";\n")
+      out:write("let v = ", encode_var(vars[3]), ";\n")
+      out:write "while (true) {\n"
+      out:write "let t = CALL(f,s,v);\n"
+      local that = that[2]
+      for i = 1, #that do
+        out:write(encode_var(that[i].var), "=t[", i - 1, "];\n")
+      end
+      local var = that[1].var
+      out:write("if (", encode_var(var), "==undefined) break;\n")
+      out:write("v=", encode_var(var), "\n")
     end
   elseif symbol == symbol_table.funcname then
     if node.def then

@@ -162,7 +162,7 @@ _"stat"
   :_ "conditional" "end" {[1]={}}
   :_ "for" "Name" "=" "exp" "," "exp" "do" "block" "end" {[1]={4,6,2,7,8}} :attr "scope" :attr(2, "declare") :attr(7, "for2")
   :_ "for" "Name" "=" "exp" "," "exp" "," "exp" "do" "block" "end" {[1]={4,6,8,2,9,10}} :attr "scope" :attr(2, "declare") :attr(9, "for3")
-  :_ "for" "namelist" "in" "explist" "do" "block" "end" {[1]={4,2,5,6}} :attr "scope" :attr(5, "for")
+  :_ "for" "namelist" "in" "explist" "do" "block" "end" {[1]={4,2,5,6}} :attr "scope" :attr(4, "adjust", 3) :attr(5, "for")
   :_ "function" "funcname_" "funcbody" {[1]={3,2}}
   :_ "local" "function" "Name" "funcbody" {[2]={3,4}} :attr(3, "declare")
   :_ "local" "namelist" {[1]={"explist",2}}
