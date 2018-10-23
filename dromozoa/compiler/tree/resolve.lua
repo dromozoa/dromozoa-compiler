@@ -506,6 +506,7 @@ local function resolve_names(self, node, symbol_table)
     if not proto.vararg then
       return nil, "cannot use '...' outside a vararg function", node.i
     end
+    -- TODO check
     local adjust = node.adjust
     if adjust then
       if adjust ~= 0 then
@@ -556,17 +557,24 @@ local function resolve_vars(self, node, symbol_table)
 
   local symbol = node[0]
   if symbol == symbol_table["="] then
+    local lvars = {}
+    local rvars = node[1].vars
     local that = node[2]
-    local n = #that
-    local var = node[1][1].var
-    local vars = { var }
-    that[1].def = var
-    for i = 2, n do
-      local var = assign_var(node)
-      vars[i] = var
+    for i = 1, #rvars do
+      local var = rvars[i]
+      if i == 1 then
+        if var:find "^T" then
+          var = assign_var(node)
+        end
+      else
+        if var:find "^[UABT]" then
+          var = assign_var(node)
+        end
+      end
+      lvars[i] = var
       that[i].def = var
     end
-    node.vars = vars
+    node.vars = lvars
   elseif symbol == symbol_table.var then
     if #node == 1 then
       node.var = node[1].var

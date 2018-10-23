@@ -162,8 +162,8 @@ local function write(self, out, node, symbol_table)
   elseif symbol == symbol_table.explist then
     local that = node.parent
     if that[0] == symbol_table["="] then
-      local lvars = node.vars
-      local rvars = that.vars
+      local lvars = that.vars
+      local rvars = node.vars
       for i = 1, #lvars do
         local lvar = lvars[i]
         local rvar = rvars[i]
