@@ -64,6 +64,12 @@ const LEN = function (v) {
   }
 };
 
+const SETLIST = function (table, index, ...args) {
+  for (let i = 0; i < args.length; ++i) {
+    table.set(index + i, args[i]);
+  }
+}
+
 const tostring = function (v) {
   const t = typeof v;
   if (t === "undefined") {

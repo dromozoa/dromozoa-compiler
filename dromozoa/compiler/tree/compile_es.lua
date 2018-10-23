@@ -214,8 +214,23 @@ local function write(self, out, node, symbol_table)
     end
     out:write ");\n"
   elseif symbol == symbol_table.fieldlist then
-    out:write(encode_var(node.var), "=new Map();\n")
-
+    local var = node.var
+    out:write(encode_var(var), "=new Map();\n")
+    for i = 1, #node do
+      local that = node[i]
+      if #that == 2 then
+        out:write("SETTABLE(", encode_var(var), ",", encode_var(that[2].var), ",", encode_var(that[1].var), ");\n")
+      end
+      -- TODO adjust
+    end
+    local index = 0
+    for i = 1, #node do
+      local that = node[i]
+      if #that == 1 then
+        index = index + 1
+        out:write("SETLIST(", encode_var(var), ",", index, ",", encode_var(that[1].var), ");\n")
+      end
+    end
   elseif symbol == symbol_table["+"] then
     out:write(encode_var(node.var), "=", encode_var(node[1].var), "+", encode_var(node[2].var), ";\n")
   elseif symbol == symbol_table["#"] then

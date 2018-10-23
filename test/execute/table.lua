@@ -26,5 +26,46 @@ t[2] = 69
 print(t[1], t[2])
 t[1], t[2] = t[2], t[1]
 print(t[1], t[2])
+print(#t)
 
+t["foo"] = "qux"
+t.bar = true
+print(t.foo, t["bar"])
+print(#t)
+
+local t = {
+  ["foo"] = 42;
+  bar = false;
+}
+print(t.foo, t["bar"])
+print(#t)
+
+local t = {
+  1, 2, 3;
+  foo = true;
+  4, 5, 6;
+  bar = true;
+  7, 8, 9;
+}
+print(t.foo, t.bar, t[1], t[9], t[10])
+print(#t)
+
+local t = {
+  [1] = 17;
+  42, 666;
+  [1] = 69;
+}
+print(t[1], t[2], t[3])
+print(#t)
+
+local f = function ()
+  return 1, 2, 3, 4
+end
+
+local t = {
+  foo = f();
+  f();
+  f();
+}
+print(t.foo, t[1], t[2], t[3], t[4], t[5], t[6])
 print(#t)
