@@ -44,7 +44,7 @@ local function encode_var(var)
   end
 
   if var == "V" then
-    return "V"
+    return "...V"
   elseif var == "T" then
     return "T"
   elseif var == "NIL" then
@@ -87,28 +87,51 @@ local function write(self, out, node, symbol_table)
     out:write ") {\n"
 
     local constants = proto.constants
-    out:write "let K = [\n"
-    for i = 1, #constants do
-      local constant = constants[i]
-      if constant.type == "string" then
-        out:write(("/* %s */ %s,\n"):format(constant[1], encode_string(constant.source)))
-      else
-        out:write(("/* %s */ %.17g,\n"):format(constant[1], tonumber(constant.source)))
+    local n = #constants
+    if n > 0 then
+      out:write "let K = [\n"
+      for i = 1, n do
+        local constant = constants[i]
+        if constant.type == "string" then
+          out:write(("/* %s */ %s,\n"):format(constant[1], encode_string(constant.source)))
+        else
+          out:write(("/* %s */ %.17g,\n"):format(constant[1], tonumber(constant.source)))
+        end
       end
+      out:write "];\n"
     end
-    out:write "];\n"
 
     local upvalues = proto.upvalues
-    out:write "let U = [\n"
-    for i = 1, #upvalues do
+    local n = #upvalues
+    for i = 1, n do
       local upvalue = upvalues[i]
-      local var = upvalue[2]
-      assert(var:find "^[ABCU]%d+$")
-      out:write(("/* %s */ [%s,%d],\n"):format(upvalue[1], var:sub(1, 1), var:sub(2)))
+      if upvalue[2]:find "^U" then
+        out:write "let S = U;\n"
+        break
+      end
     end
-    out:write "];\n"
 
     out:write "{\n"
+
+    if n > 0 then
+      out:write "let U = [\n"
+      for i = 1, n do
+        local upvalue = upvalues[i]
+        local var = upvalue[2]
+        assert(var:find "^[ABU]%d+$")
+        local key = var:sub(1, 1)
+        if key == "U" then
+          local index = var:sub(2)
+          out:write(("/* %s */ [S[%d][0],S[%d][1]],\n"):format(upvalue[1], index, index))
+        else
+          out:write(("/* %s */ [%s,%d],\n"):format(upvalue[1], key, var:sub(2)))
+        end
+      end
+      out:write "];\n"
+    end
+
+    out:write "{\n"
+
     if A > 0 then
       out:write "let A = [\n"
       for i = 0, A - 1 do
@@ -192,6 +215,7 @@ local function write(self, out, node, symbol_table)
   end
 
   if proto then
+    out:write "}\n"
     out:write "}\n"
     out:write(("/* %s */ };\n"):format(proto[1]))
   end
