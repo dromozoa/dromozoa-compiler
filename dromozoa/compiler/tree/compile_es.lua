@@ -222,13 +222,28 @@ local function write(self, out, node, symbol_table)
 end
 
 return function (self, out, name)
-  out:write(name, " = function (env) {\n")
+  if name then
+    out:write(name, " = ")
+  else
+    out:write "("
+  end
+
+  out:write "function (env) {\n"
   out:write(runtime_es);
-  out:write "if (env === undefined) { env = runtime_env(); }\n"
-  out:write "let B = [env];\n"
+  out:write [[
+if (env === undefined) {
+  env = open_env();
+}
+let B = [env];
+]]
   write(self, out, self.accepted_node, self.symbol_table)
   out:write "P0();\n"
-  out:write "};\n"
-  out:write(name, "();\n");
+
+  if name then
+    out:write "};\n"
+  else
+    out:write "})();\n"
+  end
+
   return out
 end

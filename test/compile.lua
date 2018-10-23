@@ -47,6 +47,6 @@ if not result then
   error(error_message(message, source, i, source_file))
 end
 
-t:compile_es(output_name .. ".js", "DROMOZOA_EXPORT")
+t:compile_es(output_name .. ".js")
 t:dump_tree(output_name .. ".html")
 t:dump_protos(output_name .. ".txt")

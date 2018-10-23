@@ -22,25 +22,25 @@
 
 const CALL0 = function (f, ...vararg) {
   f(...vararg);
-}
+};
 
-let CALL1 = function (f, ...vararg) {
-  let result = f(...vararg);
+const CALL1 = function (f, ...vararg) {
+  const result = f(...vararg);
   if (typeof result === "object" && Array.prototype.isPrototypeOf(result)) {
     return result[0];
   } else {
     return result;
   }
-}
+};
 
 const CALL = function (f, ...vararg) {
-  let result = f(...vararg);
+  const result = f(...vararg);
   if (typeof result === "object" && Array.prototype.isPrototypeOf(result)) {
     return result;
   } else {
     return [result];
   }
-}
+};
 
 const GETTABLE = function (table, index) {
   return table.get(index);
@@ -52,7 +52,7 @@ const SETTABLE = function (table, index, value) {
   } else {
     table.set(index, value);
   }
-}
+};
 
 const tostring = function (v) {
   const t = typeof v;
@@ -78,8 +78,8 @@ const tostring = function (v) {
   return "userdata";
 };
 
-let runtime_env = function () {
-  let env = new Map();
+const open_env = function () {
+  const env = new Map();
 
   env.set("tostring", tostring);
 
