@@ -102,7 +102,7 @@ do
   <a href="$n.txt">protos</a>,
   result:
   <a href="$n-lua.txt">lua</a>,
-  <a href="$n-es.txt">es result</a>
+  <a href="$n-es.txt">es</a>
 </li>
 EOH
 done

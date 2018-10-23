@@ -49,6 +49,10 @@ local function encode_var(var)
     return "T"
   elseif var == "NIL" then
     return "undefined"
+  elseif var == "FALSE" then
+    return "false"
+  elseif var == "TRUE" then
+    return "true"
   else
     local k = var:sub(1, 1)
     if k == "U" then
