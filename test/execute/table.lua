@@ -69,3 +69,10 @@ local t = {
 }
 print(t.foo, t[1], t[2], t[3], t[4], t[5], t[6])
 print(#t)
+
+local t = {
+  foo = { bar = { baz = 42 } };
+  { { "qux" } };
+}
+print(t.foo.bar.baz, t[1][1][1])
+print(#t)
