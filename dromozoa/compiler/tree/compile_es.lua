@@ -198,7 +198,12 @@ local function write(self, out, node, symbol_table)
         end
       end
     end
+  elseif symbol == symbol_table["+"] then
+    out:write(encode_var(node.var), "=", encode_var(node[1].var), "+", encode_var(node[2].var), ";\n")
+  elseif symbol == symbol_table["#"] then
+    out:write(encode_var(node.var), "=LEN(", encode_var(node[1].var), ");\n")
   elseif symbol == symbol_table.functioncall then
+    -- TODO support this
     local adjust = node.adjust
     if adjust == 0 then
       out:write "CALL0"
@@ -209,8 +214,11 @@ local function write(self, out, node, symbol_table)
     end
     out:write("(", encode_var(node[1].var))
     local that = node[2]
+    if node.self then
+      out:write(",", encode_var(node[1][1].var))
+    end
     for i = 1, #that do
-      out:write(",",encode_var(that[i].var))
+      out:write(",", encode_var(that[i].var))
     end
     out:write ");\n"
   elseif symbol == symbol_table.fieldlist then
@@ -221,7 +229,6 @@ local function write(self, out, node, symbol_table)
       if #that == 2 then
         out:write("SETTABLE(", encode_var(var), ",", encode_var(that[2].var), ",", encode_var(that[1].var), ");\n")
       end
-      -- TODO adjust
     end
     local index = 0
     for i = 1, #node do
@@ -231,10 +238,6 @@ local function write(self, out, node, symbol_table)
         out:write("SETLIST(", encode_var(var), ",", index, ",", encode_var(that[1].var), ");\n")
       end
     end
-  elseif symbol == symbol_table["+"] then
-    out:write(encode_var(node.var), "=", encode_var(node[1].var), "+", encode_var(node[2].var), ";\n")
-  elseif symbol == symbol_table["#"] then
-    out:write(encode_var(node.var), "=LEN(", encode_var(node[1].var), ");\n")
   end
 
   if proto then
