@@ -157,6 +157,8 @@ local function write(self, out, node, symbol_table)
     out:write "while (true) {\n"
   elseif symbol == symbol_table["repeat"] then
     out:write "while (true) {\n"
+  elseif symbol == symbol_table["for"] then
+    out:write "{\n"
   end
 
   for i = 1, #node do
@@ -180,6 +182,9 @@ local function write(self, out, node, symbol_table)
     local var = node[2].var
     out:write("if (!(", encode_var(var), "===undefined||", encode_var(var), "===false)) break;\n")
     out:write "/* while */ }\n"
+  elseif symbol == symbol_table["for"] then
+    out:write "/* while */ }\n"
+    out:write "}\n"
   elseif symbol == symbol_table["return"] then
     local that = node[1]
     out:write "return ["
@@ -194,6 +199,25 @@ local function write(self, out, node, symbol_table)
     if node["while"] then
       local var = node.parent[1].var
       out:write("if (", encode_var(var), "===undefined||", encode_var(var), "===false) break;\n")
+    elseif node.for2 then
+      local that = node.parent
+      out:write("let v = ", encode_var(that[1].var), ";\n")
+      out:write("let l = ", encode_var(that[2].var), ";\n")
+      out:write "--v;\n"
+      out:write "while (true) {\n"
+      out:write "++v;\n"
+      out:write "if (v > l) break;\n"
+      out:write(encode_var(that[3].var), "=v;\n")
+    elseif node.for3 then
+      local that = node.parent
+      out:write("let v = ", encode_var(that[1].var), ";\n")
+      out:write("let l = ", encode_var(that[2].var), ";\n")
+      out:write("let s = ", encode_var(that[3].var), ";\n")
+      out:write "v -= s;\n"
+      out:write "while (true) {\n"
+      out:write "v += s;\n"
+      out:write "if ((s >= 0 && v > l) || (s < 0 && v < l)) break;\n"
+      out:write(encode_var(that[4].var), "=v;\n")
     end
   elseif symbol == symbol_table.funcname then
     if node.def then
@@ -234,6 +258,12 @@ local function write(self, out, node, symbol_table)
     end
   elseif symbol == symbol_table["+"] then
     out:write(encode_var(node.var), "=", encode_var(node[1].var), "+", encode_var(node[2].var), ";\n")
+  elseif symbol == symbol_table["-"] then
+    if #node == 2 then
+      out:write(encode_var(node.var), "=", encode_var(node[1].var), "-", encode_var(node[2].var), ";\n")
+    else
+      out:write(encode_var(node.var), "=-", encode_var(node[1].var), ";\n")
+    end
   elseif symbol == symbol_table["<"] then
     out:write(encode_var(node.var), "=", encode_var(node[1].var), "<", encode_var(node[2].var), ";\n")
   elseif symbol == symbol_table["#"] then

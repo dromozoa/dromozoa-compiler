@@ -32,6 +32,9 @@ local keys = {
   "parlist";
 
   "while";
+  "for2";
+  "for3";
+  "for";
 
   "param";
   "declare";

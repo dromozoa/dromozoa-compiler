@@ -158,11 +158,11 @@ _"stat"
   :_ "goto" "Name" {[1]={2}}
   :_ "do" "block" "end" {[1]={2}} :attr "scope"
   :_ "while" "exp" "do" "block" "end" {[1]={2,3,4}} :attr "scope" :attr(3, "while")
-  :_ "repeat" "block" "until" "exp" {[1]={2,4} :attr "scope"
+  :_ "repeat" "block" "until" "exp" {[1]={2,4}} :attr "scope"
   :_ "conditional" "end" {[1]={}}
-  :_ "for" "Name" "=" "exp" "," "exp" "do" "block" "end" {[1]={4,6,2,8}} :attr "scope" :attr(2, "declare")
-  :_ "for" "Name" "=" "exp" "," "exp" "," "exp" "do" "block" "end" {[1]={4,6,8,2,10}} :attr "scope" :attr(2, "declare")
-  :_ "for" "namelist" "in" "explist" "do" "block" "end" {[1]={4,2,6}} :attr "scope"
+  :_ "for" "Name" "=" "exp" "," "exp" "do" "block" "end" {[1]={4,6,2,7,8}} :attr "scope" :attr(2, "declare") :attr(7, "for2")
+  :_ "for" "Name" "=" "exp" "," "exp" "," "exp" "do" "block" "end" {[1]={4,6,8,2,9,10}} :attr "scope" :attr(2, "declare") :attr(9, "for3")
+  :_ "for" "namelist" "in" "explist" "do" "block" "end" {[1]={4,2,5,6}} :attr "scope" :attr(5, "for")
   :_ "function" "funcname_" "funcbody" {[1]={3,2}}
   :_ "local" "function" "Name" "funcbody" {[2]={3,4}} :attr(3, "declare")
   :_ "local" "namelist" {[1]={"explist",2}}
