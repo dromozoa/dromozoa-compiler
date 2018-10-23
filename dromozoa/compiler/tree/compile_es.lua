@@ -152,11 +152,17 @@ local function write(self, out, node, symbol_table)
     end
   end
 
+  local symbol = node[0]
+  if symbol == symbol_table["while"] then
+    out:write "while (true) {\n"
+  elseif symbol == symbol_table["repeat"] then
+    out:write "while (true) {\n"
+  end
+
   for i = 1, #node do
     write(self, out, node[i], symbol_table)
   end
 
-  local symbol = node[0]
   if symbol == symbol_table["local"] then
     local vars = node[1].vars
     local that = node[2]
@@ -168,6 +174,12 @@ local function write(self, out, node, symbol_table)
     if that.declare then
       out:write(encode_var(that.var), "=", encode_var(node[2].var), ";\n")
     end
+  elseif symbol == symbol_table["while"] then
+    out:write "/* while */ }\n"
+  elseif symbol == symbol_table["repeat"] then
+    local var = node[2].var
+    out:write("if (!(", encode_var(var), "===undefined||", encode_var(var), "===false)) break;\n")
+    out:write "/* while */ }\n"
   elseif symbol == symbol_table["return"] then
     local that = node[1]
     out:write "return ["
@@ -178,6 +190,11 @@ local function write(self, out, node, symbol_table)
       out:write(encode_var(that[i].var))
     end
     out:write "];\n"
+  elseif symbol == symbol_table["do"] then
+    if node["while"] then
+      local var = node.parent[1].var
+      out:write("if (", encode_var(var), "===undefined||", encode_var(var), "===false) break;\n")
+    end
   elseif symbol == symbol_table.funcname then
     if node.def then
       if #node == 2 then
@@ -217,6 +234,8 @@ local function write(self, out, node, symbol_table)
     end
   elseif symbol == symbol_table["+"] then
     out:write(encode_var(node.var), "=", encode_var(node[1].var), "+", encode_var(node[2].var), ";\n")
+  elseif symbol == symbol_table["<"] then
+    out:write(encode_var(node.var), "=", encode_var(node[1].var), "<", encode_var(node[2].var), ";\n")
   elseif symbol == symbol_table["#"] then
     out:write(encode_var(node.var), "=LEN(", encode_var(node[1].var), ");\n")
   elseif symbol == symbol_table.functioncall then

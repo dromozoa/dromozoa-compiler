@@ -31,6 +31,8 @@ local keys = {
   "vararg";
   "parlist";
 
+  "while";
+
   "param";
   "declare";
   "key";
