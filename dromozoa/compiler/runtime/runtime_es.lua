@@ -1,6 +1,21 @@
 return [[
 const metatable_key = Symbol("metatabale");
 
+const getmetatable = function (table) {
+  const metatable = table[metatable_key];
+  if (metatable !== undefined) {
+    if (metatable.has("__metatable")) {
+      return metatable.get("__metatable");
+    }
+  }
+  return metatable;
+};
+
+const setmetatable = function (table, metatable) {
+  metatable[metatable_key] = metatable;
+  // TODO check __metatable
+};
+
 const tostring = function (v) {
   const t = typeof v;
   if (t === "undefined") {
@@ -100,6 +115,8 @@ const open_env = function () {
 
   env.set("tostring", tostring);
   env.set("type", type);
+  env.set("getmetatable", getmetatable);
+  env.set("setmetatable", setmetatable);
 
   env.set("print", function (...args) {
     for (let i = 0; i < args.length; ++i) {
@@ -117,7 +134,7 @@ const open_env = function () {
       if (args.length > 1) {
         throw args[1];
       } else {
-        throw "assertion failed"
+        throw "assertion failed";
       }
     }
     return args;
