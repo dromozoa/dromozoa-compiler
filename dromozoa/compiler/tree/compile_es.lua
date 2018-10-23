@@ -234,6 +234,13 @@ local function write(self, out, node, symbol_table)
       out:write("if (", encode_var(var), "==undefined) break;\n")
       out:write("v=", encode_var(var), "\n")
     end
+  elseif symbol == symbol_table["conditional"] then
+    out:write "/* if */ }\n"
+  elseif symbol == symbol_table["then"] then
+    local var = node.parent[1].var
+    out:write("if (!(", encode_var(var), "==undefined||", encode_var(var), "===false)) {\n")
+  elseif symbol == symbol_table["else"] then
+    out:write "} else {\n"
   elseif symbol == symbol_table.funcname then
     if node.def then
       if #node == 2 then

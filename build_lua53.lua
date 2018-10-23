@@ -185,7 +185,7 @@ _"conditional"
 _"conditional_"
   :_ "elseif_" {["conditional"]={1}}
   :_ "elseif_" "else_" {["conditional"]={1,"else",2}}
-  :_ "elseif_" "conditional_" {["conditional"]={1,2}}
+  :_ "elseif_" "conditional_" {["conditional"]={1,"else",2}}
 
 _"if_"
   :_ "if" "exp" "then" "block" {[1]={2,3,4}} :attr "scope"
