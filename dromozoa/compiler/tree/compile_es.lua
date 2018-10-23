@@ -72,7 +72,7 @@ local function write(self, out, node, symbol_table)
     local A = proto.A
     local B = proto.B
     local C = proto.C
-    out:write(("let %s = function ("):format(proto[1]))
+    out:write(("const %s = function ("):format(proto[1]))
     if A > 0 then
       out:write "A0"
       for i = 1, A - 1 do
@@ -89,7 +89,7 @@ local function write(self, out, node, symbol_table)
     local constants = proto.constants
     local n = #constants
     if n > 0 then
-      out:write "let K = [\n"
+      out:write "const K = [\n"
       for i = 1, n do
         local constant = constants[i]
         if constant.type == "string" then
@@ -106,7 +106,7 @@ local function write(self, out, node, symbol_table)
     for i = 1, n do
       local upvalue = upvalues[i]
       if upvalue[2]:find "^U" then
-        out:write "let S = U;\n"
+        out:write "const S = U;\n"
         break
       end
     end
@@ -114,7 +114,7 @@ local function write(self, out, node, symbol_table)
     out:write "{\n"
 
     if n > 0 then
-      out:write "let U = [\n"
+      out:write "const U = [\n"
       for i = 1, n do
         local upvalue = upvalues[i]
         local var = upvalue[2]
@@ -133,7 +133,7 @@ local function write(self, out, node, symbol_table)
     out:write "{\n"
 
     if A > 0 then
-      out:write "let A = [\n"
+      out:write "const A = [\n"
       for i = 0, A - 1 do
         out:write("A", i, ",\n")
       end
@@ -141,11 +141,12 @@ local function write(self, out, node, symbol_table)
     end
 
     if B > 0 then
-      out:write(("let B = []; /* %d */\n"):format(B))
+      out:write(("const B = []; /* %d */\n"):format(B))
     end
     if C > 0 then
-      out:write(("let C = []; /* %d */\n"):format(C))
+      out:write(("const C = []; /* %d */\n"):format(C))
     end
+    -- TODO update resolve
     out:write "let T;\n"
   end
 
@@ -234,7 +235,7 @@ return function (self, out, name)
 if (env === undefined) {
   env = open_env();
 }
-let B = [env];
+const B = [env];
 ]]
   write(self, out, self.accepted_node, self.symbol_table)
   out:write "P0();\n"
