@@ -1,29 +1,35 @@
 return [[
-let CALL0 = function (f, ...vararg) {
+const CALL0 = function (f, ...vararg) {
   f(...vararg);
 }
 
 let CALL1 = function (f, ...vararg) {
   let result = f(...vararg);
-  if (typeof result === "object") {
-    if (Array.prototype.isPrototypeOf(result)) {
-      return result[0];
-    }
+  if (typeof result === "object" && Array.prototype.isPrototypeOf(result)) {
+    return result[0];
+  } else {
+    return result;
   }
-  return result;
 }
 
-let CALL = function (f, ...vararg) {
+const CALL = function (f, ...vararg) {
   let result = f(...vararg);
-  if (typeof result === "object") {
-    if (Array.prototype.isPrototypeOf(result)) {
-      return result;
-    }
+  if (typeof result === "object" && Array.prototype.isPrototypeOf(result)) {
+    return result;
+  } else {
+    return [result];
   }
-  return [result];
 }
 
-let tostring = function (v) {
+const GETTABLE = function (table, index) {
+  return table.get(index);
+};
+
+const SETTABLE = function (table, index, value) {
+  table.set(index, value);
+}
+
+const tostring = function (v) {
   const t = typeof v;
   if (t === "undefined") {
     return "nil";

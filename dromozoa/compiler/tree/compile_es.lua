@@ -134,13 +134,13 @@ local function write(self, out, node, symbol_table)
   if symbol == symbol_table.var then
     if node.def then
       if #node == 2 then
-        out:write(encode_var(node[1].var), ".set(", encode_var(node[2].var), ",", encode_var(node.def), ");\n")
+        out:write("SETTABLE(", encode_var(node[1].var), ",", encode_var(node[2].var), ",", encode_var(node.def), ");\n")
       else
         out:write(encode_var(node[1].var), "=", encode_var(node.def), ";\n")
       end
     else
       if #node == 2 then
-        out:write(encode_var(node.var), "=", encode_var(node[1].var), ".get(", encode_var(node[2].var), ");\n")
+        out:write(encode_var(node.var), "=GETTABLE(", encode_var(node[1].var), ",", encode_var(node[2].var), ");\n")
       end
     end
   elseif symbol == symbol_table["local"] then
