@@ -118,10 +118,10 @@ local function write(self, out, node, symbol_table)
     end
 
     if B > 0 then
-      out:write(("let B = []; // %d\n"):format(B))
+      out:write(("let B = []; /* %d */\n"):format(B))
     end
     if C > 0 then
-      out:write(("let C = []; // %d\n"):format(C))
+      out:write(("let C = []; /* %d */\n"):format(C))
     end
     out:write "let T;\n"
   end

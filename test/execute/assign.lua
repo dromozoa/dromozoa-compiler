@@ -21,6 +21,7 @@ local f = function ()
   return 1, 2, 3, 4
 end
 
+local print = print
 local a, b, c = f()
 print(n, a, b, c)
 local a, b, c = f(), 42
