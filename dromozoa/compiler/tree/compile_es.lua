@@ -203,7 +203,6 @@ local function write(self, out, node, symbol_table)
   elseif symbol == symbol_table["#"] then
     out:write(encode_var(node.var), "=LEN(", encode_var(node[1].var), ");\n")
   elseif symbol == symbol_table.functioncall then
-    -- TODO support this
     local adjust = node.adjust
     if adjust == 0 then
       out:write "CALL0"
@@ -213,10 +212,11 @@ local function write(self, out, node, symbol_table)
       out:write("T=CALL")
     end
     out:write("(", encode_var(node[1].var))
-    local that = node[2]
-    if node.self then
-      out:write(",", encode_var(node[1][1].var))
+    local self = node.self
+    if self then
+      out:write(",", encode_var(self))
     end
+    local that = node[2]
     for i = 1, #that do
       out:write(",", encode_var(that[i].var))
     end

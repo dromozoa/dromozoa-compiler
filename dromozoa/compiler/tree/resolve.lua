@@ -466,6 +466,32 @@ local function resolve_names(self, node, symbol_table)
         declare_name(node, "A", "self")
       end
     end
+  elseif symbol == symbol_table["nil"] then
+    node.var = "NIL"
+  elseif symbol == symbol_table["false"] then
+    node.var = "FALSE"
+  elseif symbol == symbol_table["true"] then
+    node.var = "TRUE"
+  elseif symbol == symbol_table.IntegerConstant then
+    node.var = ref_constant(node, "integer")[1]
+  elseif symbol == symbol_table.FloatConstant then
+    node.var = ref_constant(node, "float")[1]
+  elseif symbol == symbol_table.LiteralString then
+    node.var = ref_constant(node, "string")[1]
+  elseif symbol == symbol_table["..."] then
+    local proto = attr(node, "proto")
+    if not proto.vararg then
+      return nil, "cannot use '...' outside a vararg function", node.i
+    end
+    local adjust = node.adjust
+    if adjust then
+      if adjust ~= 0 then
+        node.var = "V"
+      end
+    else
+      node.adjust = 1
+      node.var = "V0"
+    end
   elseif symbol == symbol_table.functioncall then
     if node.self then
       local id = self.id + 1
@@ -488,33 +514,6 @@ local function resolve_names(self, node, symbol_table)
       node[1] = that
       node[2] = node[3]
       node[3] = nil
-    end
-  elseif symbol == symbol_table["nil"] then
-    node.var = "NIL"
-  elseif symbol == symbol_table["false"] then
-    node.var = "FALSE"
-  elseif symbol == symbol_table["true"] then
-    node.var = "TRUE"
-  elseif symbol == symbol_table.IntegerConstant then
-    node.var = ref_constant(node, "integer")[1]
-  elseif symbol == symbol_table.FloatConstant then
-    node.var = ref_constant(node, "float")[1]
-  elseif symbol == symbol_table.LiteralString then
-    node.var = ref_constant(node, "string")[1]
-  elseif symbol == symbol_table["..."] then
-    local proto = attr(node, "proto")
-    if not proto.vararg then
-      return nil, "cannot use '...' outside a vararg function", node.i
-    end
-    -- TODO check
-    local adjust = node.adjust
-    if adjust then
-      if adjust ~= 0 then
-        node.var = "V"
-      end
-    else
-      node.adjust = 1
-      node.var = "V0"
     end
   elseif symbol == symbol_table.Name then
     if node.param then
@@ -613,6 +612,9 @@ local function resolve_vars(self, node, symbol_table)
     else
       node.adjust = 1
       node.var = assign_var(node)
+    end
+    if node.self then
+      node.self = node[1][1].var
     end
   elseif symbol == symbol_table.fieldlist then
     node.var = assign_var(node)
