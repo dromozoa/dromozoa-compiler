@@ -355,7 +355,7 @@ local function prepare_attrs(node, symbol_table)
     node[1].adjust = #node[2]
   elseif symbol == symbol_table.funcname then
     if node.self then
-      node.parent[2].proto.self = true
+      node.parent[1].proto.self = true
     end
     if #node == 1 then
       if node.def then
@@ -562,11 +562,11 @@ local function resolve_vars(self, node, symbol_table)
     for i = 1, #rvars do
       local var = rvars[i]
       if i == 1 then
-        if var:find "^T" then
+        if var:find "^T%d" then
           var = assign_var(node)
         end
       else
-        if var:find "^[UABT]" then
+        if var:find "^[UABT]%d" then
           var = assign_var(node)
         end
       end
@@ -574,6 +574,14 @@ local function resolve_vars(self, node, symbol_table)
       that[i].def = var
     end
     node.vars = lvars
+  elseif symbol == symbol_table["function"] then
+    node[2].def = node[1].var
+  elseif symbol == symbol_table.funcname then
+    if #node == 1 then
+      node.var = node[1].var
+    elseif not node.def then
+      node.var = assign_var(node)
+    end
   elseif symbol == symbol_table.var then
     if #node == 1 then
       node.var = node[1].var

@@ -76,3 +76,8 @@ local t = {
 }
 print(t.foo.bar.baz, t[1][1][1])
 print(#t)
+
+t.foo.bar.qux = true
+t[1][1][2] = false
+print(t.foo.bar.qux, t[1][1][2])
+print(#t)

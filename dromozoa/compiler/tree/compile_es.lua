@@ -157,23 +157,16 @@ local function write(self, out, node, symbol_table)
   end
 
   local symbol = node[0]
-  if symbol == symbol_table.var then
-    if node.def then
-      if #node == 2 then
-        out:write("SETTABLE(", encode_var(node[1].var), ",", encode_var(node[2].var), ",", encode_var(node.def), ");\n")
-      else
-        out:write(encode_var(node[1].var), "=", encode_var(node.def), ";\n")
-      end
-    else
-      if #node == 2 then
-        out:write(encode_var(node.var), "=GETTABLE(", encode_var(node[1].var), ",", encode_var(node[2].var), ");\n")
-      end
-    end
-  elseif symbol == symbol_table["local"] then
+  if symbol == symbol_table["local"] then
     local vars = node[1].vars
     local that = node[2]
     for i = 1, #that do
       out:write(encode_var(that[i].var), "=", encode_var(vars[i]), ";\n")
+    end
+  elseif symbol == symbol_table["function"] then
+    local that = node[1]
+    if that.declare then
+      out:write(encode_var(that.var), "=", encode_var(node[2].var), ";\n")
     end
   elseif symbol == symbol_table["return"] then
     local that = node[1]
@@ -185,6 +178,30 @@ local function write(self, out, node, symbol_table)
       out:write(encode_var(that[i].var))
     end
     out:write "];\n"
+  elseif symbol == symbol_table.funcname then
+    if node.def then
+      if #node == 2 then
+        out:write("SETTABLE(", encode_var(node[1].var), ",", encode_var(node[2].var), ",", encode_var(node.def), ");\n")
+      else
+        out:write(encode_var(node[1].var), "=", encode_var(node.def), ";\n")
+      end
+    else
+      if #node == 2 then
+        out:write(encode_var(node.var), "=GETTABLE(", encode_var(node[1].var), ",", encode_var(node[2].var), ");\n")
+      end
+    end
+  elseif symbol == symbol_table.var then
+    if node.def then
+      if #node == 2 then
+        out:write("SETTABLE(", encode_var(node[1].var), ",", encode_var(node[2].var), ",", encode_var(node.def), ");\n")
+      else
+        out:write(encode_var(node[1].var), "=", encode_var(node.def), ";\n")
+      end
+    else
+      if #node == 2 then
+        out:write(encode_var(node.var), "=GETTABLE(", encode_var(node[1].var), ",", encode_var(node[2].var), ");\n")
+      end
+    end
   elseif symbol == symbol_table.explist then
     local that = node.parent
     if that[0] == symbol_table["="] then
