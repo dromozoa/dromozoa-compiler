@@ -298,14 +298,53 @@ local function write(self, out, node, symbol_table)
     else
       out:write(encode_var(node.var), "=-", encode_var(node[1].var), ";\n")
     end
+  elseif symbol == symbol_table["*"] then
+    out:write(encode_var(node.var), "=", encode_var(node[1].var), "*", encode_var(node[2].var), ";\n")
+  elseif symbol == symbol_table["/"] then
+    out:write(encode_var(node.var), "=", encode_var(node[1].var), "/", encode_var(node[2].var), ";\n")
+  elseif symbol == symbol_table["//"] then
+    out:write(encode_var(node.var), "=Math.floor(", encode_var(node[1].var), "/", encode_var(node[2].var), ");\n")
+  elseif symbol == symbol_table["^"] then
+    out:write(encode_var(node.var), "=", encode_var(node[1].var), "**", encode_var(node[2].var), ";\n")
+  elseif symbol == symbol_table["%"] then
+    out:write(encode_var(node.var), "=", encode_var(node[1].var), "%", encode_var(node[2].var), ";\n")
+  elseif symbol == symbol_table["&"] then
+    out:write(encode_var(node.var), "=", encode_var(node[1].var), "&", encode_var(node[2].var), ";\n")
+  elseif symbol == symbol_table["~"] then
+    if #node == 2 then
+      out:write(encode_var(node.var), "=", encode_var(node[1].var), "^", encode_var(node[2].var), ";\n")
+    else
+      out:write(encode_var(node.var), "=~", encode_var(node[1].var), ";\n")
+    end
+  elseif symbol == symbol_table["|"] then
+    out:write(encode_var(node.var), "=", encode_var(node[1].var), "|", encode_var(node[2].var), ";\n")
+  elseif symbol == symbol_table[">>"] then
+    out:write(encode_var(node.var), "=", encode_var(node[1].var), ">>>", encode_var(node[2].var), ";\n")
+  elseif symbol == symbol_table["<<"] then
+    out:write(encode_var(node.var), "=", encode_var(node[1].var), "<<", encode_var(node[2].var), ";\n")
+  elseif symbol == symbol_table[".."] then
+    out:write(encode_var(node.var), "=tostring(", encode_var(node[1].var), ")+tostring(", encode_var(node[2].var), ");\n")
   elseif symbol == symbol_table["<"] then
     out:write(encode_var(node.var), "=", encode_var(node[1].var), "<", encode_var(node[2].var), ";\n")
+  elseif symbol == symbol_table["<="] then
+    out:write(encode_var(node.var), "=", encode_var(node[1].var), "<=", encode_var(node[2].var), ";\n")
+  elseif symbol == symbol_table[">"] then
+    out:write(encode_var(node.var), "=", encode_var(node[1].var), ">", encode_var(node[2].var), ";\n")
+  elseif symbol == symbol_table[">="] then
+    out:write(encode_var(node.var), "=", encode_var(node[1].var), ">=", encode_var(node[2].var), ";\n")
+  elseif symbol == symbol_table["=="] then
+    out:write(encode_var(node.var), "=", encode_var(node[1].var), "===", encode_var(node[2].var), ";\n")
+  elseif symbol == symbol_table["~="] then
+    out:write(encode_var(node.var), "=", encode_var(node[1].var), "!==", encode_var(node[2].var), ";\n")
   elseif symbol == symbol_table["and"] then
     out:write(encode_var(node.var), "=", encode_var(node[2].var), ";\n")
     out:write "/* if */ }\n"
   elseif symbol == symbol_table["or"] then
     out:write(encode_var(node.var), "=", encode_var(node[2].var), ";\n")
     out:write "/* if */ }\n"
+  elseif symbol == symbol_table["not"] then
+    local var = node[1].var
+    out:write(encode_var(node.var), "=", encode_var(var), "==undefined||", encode_var(var), "===false;\n")
   elseif symbol == symbol_table["#"] then
     out:write(encode_var(node.var), "=LEN(", encode_var(node[1].var), ");\n")
   elseif symbol == symbol_table.functioncall then
