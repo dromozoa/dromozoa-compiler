@@ -243,7 +243,12 @@ local function write(self, out, node, symbol_table)
     if n == 0 then
       out:write "return;\n"
     elseif n == 1 then
-      out:write("return ", encode_var(that[1].var), ";\n")
+      local var = that[1].var
+      if var == "V" or var == "T" then
+        out:write("return ", var, ";\n")
+      else
+        out:write("return ", encode_var(that[1].var), ";\n")
+      end
     else
       out:write "return ["
       for i = 1, n do
