@@ -44,7 +44,7 @@ const CALL1 = function (f, ...args) {
   } else {
     result = getmetafield(f, "__call")(f, ...args);
   }
-  if (typeof result === "object" && Array.prototype.isPrototypeOf(result)) {
+  if (Array.prototype.isPrototypeOf(result)) {
     return result[0];
   } else {
     return result;
@@ -58,40 +58,11 @@ const CALL = function (f, ...args) {
   } else {
     result = getmetafield(f, "__call")(f, ...args);
   }
-  if (typeof result === "object" && Array.prototype.isPrototypeOf(result)) {
+  if (Array.prototype.isPrototypeOf(result)) {
     return result;
   } else {
     return [result];
   }
-};
-
-const tostring = function (v) {
-  const t = typeof v;
-  if (t === "undefined") {
-    return "nil";
-  } else if (t === "number") {
-    return v.toString();
-  } else if (t === "string") {
-    return v;
-  } else if (t === "boolean") {
-    if (v) {
-      return "true";
-    } else {
-      return "false";
-    }
-  } else if (t === "object") {
-    if (Map.prototype.isPrototypeOf(v)) {
-      const field = getmetafield(v, "__tostring");
-      if (field !== undefined) {
-        return CALL1(field, v);
-      } else {
-        return "table";
-      }
-    }
-  } else if (t === "function") {
-    return "function";
-  }
-  return "userdata";
 };
 
 const GETTABLE = function (table, index) {
@@ -129,17 +100,14 @@ const SETTABLE = function (table, index, value) {
 };
 
 const LEN = function (v) {
-  const t = typeof v;
-  if (t === "object") {
-    if (Map.prototype.isPrototypeOf(v)) {
-      const field = getmetafield(v, "__len");
-      if (field !== undefined) {
-        return CALL1(field, v);
-      }
-      for (let i = 1; ; ++i) {
-        if (v.get(i) === undefined) {
-          return i - 1;
-        }
+  if (Map.prototype.isPrototypeOf(v)) {
+    const field = getmetafield(v, "__len");
+    if (field !== undefined) {
+      return CALL1(field, v);
+    }
+    for (let i = 1; ; ++i) {
+      if (v.get(i) === undefined) {
+        return i - 1;
       }
     }
   }
@@ -149,6 +117,33 @@ const SETLIST = function (table, index, ...args) {
   for (let i = 0; i < args.length; ++i) {
     table.set(index + i, args[i]);
   }
+};
+
+const tostring = function (v) {
+  const t = typeof v;
+  if (t === "undefined") {
+    return "nil";
+  } else if (t === "number") {
+    return v.toString();
+  } else if (t === "string") {
+    return v;
+  } else if (t === "boolean") {
+    if (v) {
+      return "true";
+    } else {
+      return "false";
+    }
+  } else if (t === "function") {
+    return "function";
+  } else if (Map.prototype.isPrototypeOf(v)) {
+    const field = getmetafield(v, "__tostring");
+    if (field !== undefined) {
+      return CALL1(field, v);
+    } else {
+      return "table";
+    }
+  }
+  return "userdata";
 };
 
 const open_env = function () {
@@ -190,12 +185,10 @@ const open_env = function () {
       return "string";
     } else if (t === "boolean") {
       return "boolean";
-    } else if (t === "object") {
-      if (Map.prototype.isPrototypeOf(v)) {
-        return "table";
-      }
     } else if (t === "function") {
       return "function";
+    } else if (Map.prototype.isPrototypeOf(v)) {
+      return "table";
     }
     return "userdata";
   });
