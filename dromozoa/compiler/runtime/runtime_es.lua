@@ -78,7 +78,7 @@ const SETTABLE = (table, index, value) => {
   }
 };
 
-const LEN = (value) => {
+const LEN = value => {
   if (Map.prototype.isPrototypeOf(value)) {
     const field = getmetafield(value, "__len");
     if (field !== undefined) {
@@ -98,7 +98,7 @@ const SETLIST = (table, index, ...args) => {
   }
 };
 
-const tostring = (value) => {
+const tostring = value => {
   const t = typeof value;
   if (t === "undefined") {
     return "nil";
@@ -136,7 +136,7 @@ const open_env = () => {
 
   env.set("tostring", tostring);
 
-  env.set("getmetatable", (object) => {
+  env.set("getmetatable", object => {
     const metatable = object[metatable_key];
     if (metatable !== undefined) {
       if (metatable.has("__metatable")) {
@@ -154,7 +154,7 @@ const open_env = () => {
     return table;
   });
 
-  env.set("type", (value) => {
+  env.set("type", value => {
     const t = typeof value;
     if (t === "undefined") {
       return "nil";

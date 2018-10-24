@@ -99,7 +99,7 @@ const SETTABLE = (table, index, value) => {
   }
 };
 
-const LEN = (value) => {
+const LEN = value => {
   if (Map.prototype.isPrototypeOf(value)) {
     const field = getmetafield(value, "__len");
     if (field !== undefined) {
@@ -119,7 +119,7 @@ const SETLIST = (table, index, ...args) => {
   }
 };
 
-const tostring = (value) => {
+const tostring = value => {
   const t = typeof value;
   if (t === "undefined") {
     return "nil";
@@ -155,9 +155,23 @@ const open_env = () => {
 
   const env = new Map();
 
+  env.set("_G", env);
+  env.set("_VERSION", "Lua 5.3");
   env.set("tostring", tostring);
 
-  env.set("getmetatable", (object) => {
+  env.set("assert", (...args) => {
+    const value = args[0];
+    if (value === undefined || value === false) {
+      if (args.length > 1) {
+        throw new Error(args[1]);
+      } else {
+        throw new Error("assertion failed");
+      }
+    }
+    return args;
+  });
+
+  env.set("getmetatable", object => {
     const metatable = object[metatable_key];
     if (metatable !== undefined) {
       if (metatable.has("__metatable")) {
@@ -175,7 +189,7 @@ const open_env = () => {
     return table;
   });
 
-  env.set("type", (value) => {
+  env.set("type", value => {
     const t = typeof value;
     if (t === "undefined") {
       return "nil";
@@ -201,18 +215,6 @@ const open_env = () => {
       process.stdout.write(tostring(args[i]));
     }
     process.stdout.write("\n");
-  });
-
-  env.set("assert", (...args) => {
-    const value = args[0];
-    if (value === undefined || value === false) {
-      if (args.length > 1) {
-        throw new Error(args[1]);
-      } else {
-        throw new Error("assertion failed");
-      }
-    }
-    return args;
   });
 
   return env;
