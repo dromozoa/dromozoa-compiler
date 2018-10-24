@@ -15,16 +15,30 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-local a = { b = { c = {} } }
-
-function f(x, y, z) end
-function a.f(x, y, z) end
-function a.b.f(x, y, z) end
-function a.b.c.f(x, y, z) end
-
-function f(x, y, z) end
-function a:g(x, y, z) end
-function a.b:g(x, y, z) end
-function a.b.c:g(x, y, z) end
-
-local function f(x, y, z) return f end
+print(nil)
+print(false)
+print(true)
+print(3)
+print(345)
+print(0xff)
+print(0xBEBADA)
+print(3.0 == 3)
+print(3.1416)
+print(314.16e-2)
+print(0.31416E1)
+print(34e1 == 340)
+print(0x0.1E)
+print(0xA23p-4)
+local hex = 0X1.921FB54442D18P+1
+print(3.1415926535897 < hex and hex < 3.1415926535898)
+print ""
+print ''
+print [[]]
+print "test\n"
+print "\x41\x42\x43"
+print "abc\z
+def"
+print "\xE3\x81\x82\227\129\132\u{3046}"
+print "\u{2027}" -- HYPHENATION POINT
+print "\u{2028}" -- LINE SEPARATOR
+print "\u{2029}" -- PARAGAPH SEPARATOR

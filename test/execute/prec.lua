@@ -15,10 +15,7 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-local a = 1
-local a, b = 1, 2
-local a, b, c = 1, 2, 3
-
-local function f()
-  f()
-end
+local v = 1 + 2 * 3 + 4 + 5 / 6 + 7 + 8 // 9 + 10 + 11 % 12
+print(39.833333333333 < v and v < 39.833333333334)
+local v = 1 - -2^4
+print(v == 17)
