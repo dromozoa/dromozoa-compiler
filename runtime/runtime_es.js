@@ -165,10 +165,14 @@ const open_env = () => {
       if (args.length > 1) {
         throw new Error(args[1]);
       } else {
-        throw new Error("assertion failed");
+        throw new Error("assertion failed!");
       }
     }
     return args;
+  });
+
+  env.set("error", message => {
+    throw new Error(message);
   });
 
   env.set("getmetatable", object => {
@@ -181,6 +185,34 @@ const open_env = () => {
     return metatable;
   });
 
+  // ipairs
+  // next
+  // pairs
+
+  env.set("pcall", (f, ...args) => {
+    try {
+      const result = CALL(f, ...args);
+      return [true, ...result];
+    } catch (e) {
+      if (Error.prototype.isPrototypeOf(e)) {
+        return [false, e.message];
+      }
+      throw e;
+    }
+  });
+
+  env.set("print", (...args) => {
+    for (let i = 0; i < args.length; ++i) {
+      if (i > 0) {
+        process.stdout.write("\t");
+      }
+      process.stdout.write(tostring(args[i]));
+    }
+    process.stdout.write("\n");
+  });
+
+  // select
+
   env.set("setmetatable", function (table, metatable) {
     if (getmetafield(table, "__metatable") !== undefined) {
       throw new Error("cannot change a protected metatable");
@@ -188,6 +220,8 @@ const open_env = () => {
     table[metatable_key] = metatable;
     return table;
   });
+
+  // tonumber
 
   env.set("type", value => {
     const t = typeof value;
@@ -205,16 +239,6 @@ const open_env = () => {
       return "table";
     }
     return "userdata";
-  });
-
-  env.set("print", (...args) => {
-    for (let i = 0; i < args.length; ++i) {
-      if (i > 0) {
-        process.stdout.write("\t");
-      }
-      process.stdout.write(tostring(args[i]));
-    }
-    process.stdout.write("\n");
   });
 
   return env;
