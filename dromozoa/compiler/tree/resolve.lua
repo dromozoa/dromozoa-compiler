@@ -389,7 +389,7 @@ local function prepare_attrs(node, symbol_table)
     if node.self then
       node.parent[1].proto.self = true
     end
-    if #node == 1 then
+    if n == 1 then
       if node.def then
         node[1].def = true
       else
@@ -397,7 +397,7 @@ local function prepare_attrs(node, symbol_table)
       end
     end
   elseif symbol == symbol_table.var then
-    if #node == 1 then
+    if n == 1 then
       if node.def then
         node[1].def = true
       else
@@ -409,11 +409,11 @@ local function prepare_attrs(node, symbol_table)
       node.parent.proto.vararg = true
     end
     if node.parlist then
-      for j = 1, #node do
+      for j = 1, n do
         node[j].param = true
       end
     else
-      for j = 1, #node do
+      for j = 1, n do
         node[j].declare = true
       end
     end
@@ -490,6 +490,7 @@ end
 
 local function resolve_names(self, node, symbol_table)
   local symbol = node[0]
+
   if symbol == symbol_table.namelist then
     if node.parlist then
       if attr(node, "proto").self then
@@ -606,13 +607,13 @@ local function resolve_vars(self, node, symbol_table)
       end
     end
   elseif symbol == symbol_table.funcname then
-    if #node == 1 then
+    if n == 1 then
       node.var = node[1].var
     elseif not node.def then
       node.var = assign_var(node)
     end
   elseif symbol == symbol_table.var then
-    if #node == 1 then
+    if n == 1 then
       node.var = node[1].var
     elseif not node.def then
       node.var = assign_var(node)
@@ -621,7 +622,7 @@ local function resolve_vars(self, node, symbol_table)
     local adjust = node.adjust
     if adjust then
       local vars = {}
-      for i = 1, #node do
+      for i = 1, n do
         local that = node[i]
         local var = that.var
         if var == "V" or var == "T" then
