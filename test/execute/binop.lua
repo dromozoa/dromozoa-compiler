@@ -34,3 +34,17 @@ print(42 > 17, 42 > 42)
 print(42 >= 17, 42 >= 42)
 print(42 == 17, 42 == 42, 42 == "42")
 print(42 ~= 17, 42 ~= 42, 42 ~= "42")
+
+local t1 = {}
+local t2 = t1
+local t3 = {}
+
+print(t1 == t1, t1 == t2, t1 == t3)
+print(t1 ~= t1, t1 ~= t2, t1 ~= t3)
+
+local p1 = function () return 1 end
+local p2 = p1
+local p3 = function () return 2 end
+
+print(p1 == p1, p1 == p2, p1 == p3)
+print(p1 ~= p1, p1 ~= p2, p1 ~= p3)
