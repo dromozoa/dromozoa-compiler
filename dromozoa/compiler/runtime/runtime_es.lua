@@ -1,7 +1,7 @@
 return [[
 const metatable_key = Symbol("metatabale");
 
-const getmetafield = function (object, event) {
+const getmetafield = (object, event) => {
   const metatable = object[metatable_key];
   if (metatable !== undefined) {
     return metatable.get(event);
@@ -78,14 +78,14 @@ const SETTABLE = (table, index, value) => {
   }
 };
 
-const LEN = (v) => {
-  if (Map.prototype.isPrototypeOf(v)) {
-    const field = getmetafield(v, "__len");
+const LEN = (value) => {
+  if (Map.prototype.isPrototypeOf(value)) {
+    const field = getmetafield(value, "__len");
     if (field !== undefined) {
-      return CALL1(field, v);
+      return CALL1(field, value);
     }
     for (let i = 1; ; ++i) {
-      if (v.get(i) === undefined) {
+      if (value.get(i) === undefined) {
         return i - 1;
       }
     }
@@ -98,26 +98,26 @@ const SETLIST = (table, index, ...args) => {
   }
 };
 
-const tostring = (v) => {
-  const t = typeof v;
+const tostring = (value) => {
+  const t = typeof value;
   if (t === "undefined") {
     return "nil";
   } else if (t === "number") {
-    return v.toString();
+    return value.toString();
   } else if (t === "string") {
-    return v;
+    return value;
   } else if (t === "boolean") {
-    if (v) {
+    if (value) {
       return "true";
     } else {
       return "false";
     }
   } else if (t === "function") {
     return "function";
-  } else if (Map.prototype.isPrototypeOf(v)) {
-    const field = getmetafield(v, "__tostring");
+  } else if (Map.prototype.isPrototypeOf(value)) {
+    const field = getmetafield(value, "__tostring");
     if (field !== undefined) {
-      return CALL1(field, v);
+      return CALL1(field, value);
     } else {
       return "table";
     }
@@ -136,8 +136,8 @@ const open_env = () => {
 
   env.set("tostring", tostring);
 
-  env.set("getmetatable", (table) => {
-    const metatable = table[metatable_key];
+  env.set("getmetatable", (object) => {
+    const metatable = object[metatable_key];
     if (metatable !== undefined) {
       if (metatable.has("__metatable")) {
         return metatable.get("__metatable");
@@ -154,8 +154,8 @@ const open_env = () => {
     return table;
   });
 
-  env.set("type", (v) => {
-    const t = typeof v;
+  env.set("type", (value) => {
+    const t = typeof value;
     if (t === "undefined") {
       return "nil";
     } else if (t === "number") {
@@ -166,7 +166,7 @@ const open_env = () => {
       return "boolean";
     } else if (t === "function") {
       return "function";
-    } else if (Map.prototype.isPrototypeOf(v)) {
+    } else if (Map.prototype.isPrototypeOf(value)) {
       return "table";
     }
     return "userdata";
@@ -183,8 +183,8 @@ const open_env = () => {
   });
 
   env.set("assert", (...args) => {
-    const v = args[0];
-    if (v === undefined || v === false) {
+    const value = args[0];
+    if (value === undefined || value === false) {
       if (args.length > 1) {
         throw new Error(args[1]);
       } else {
