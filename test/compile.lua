@@ -42,7 +42,7 @@ if not accepted_node then
 end
 
 local t = syntax_tree(parser, source, terminal_nodes, accepted_node)
-local result, message, i = t:resolve()
+local result, message, i = t:analyze()
 if not result then
   error(error_message(message, source, i, source_file))
 end

@@ -15,10 +15,10 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
+local analyze = require "dromozoa.compiler.syntax_tree.analyze"
 local compile_es = require "dromozoa.compiler.syntax_tree.compile_es"
 local dump_protos = require "dromozoa.compiler.syntax_tree.dump_protos"
 local dump_tree = require "dromozoa.compiler.syntax_tree.dump_tree"
-local resolve = require "dromozoa.compiler.syntax_tree.resolve"
 
 local function construct(self, node)
   local id = self.id + 1
@@ -34,8 +34,8 @@ end
 local class = {}
 local metatable = { __index = class }
 
-function class:resolve()
-  return resolve(self)
+function class:analyze()
+  return analyze(self)
 end
 
 function class:dump_protos(out)
