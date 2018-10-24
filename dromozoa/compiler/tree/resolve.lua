@@ -591,28 +591,15 @@ local function resolve_vars(self, node, symbol_table)
   elseif symbol == symbol_table["function"] then
     node[2].def = node[1].var
   elseif symbol == symbol_table["for"] then
-    if n == 4 then
-      node.vars = {
-        assign_var(node, "B");
-        assign_var(node, "B");
-      }
-    else
-      node.vars = {
-        assign_var(node, "B");
-        assign_var(node, "B");
-        assign_var(node, "B");
-      }
-      if n == 3 then
+    if n == 4 then -- numerical for without step
+      node.vars = { assign_var(node, "B"), assign_var(node, "B") }
+    else -- numerical for with step or generic for
+      node.vars = { assign_var(node, "B"), assign_var(node, "B"), assign_var(node, "B") }
+      if n == 3 then -- generic for
         attr(node, "proto").T = true
       end
     end
-  elseif symbol == symbol_table.funcname then
-    if n == 1 then
-      node.var = node[1].var
-    elseif not node.def then
-      node.var = assign_var(node)
-    end
-  elseif symbol == symbol_table.var then
+  elseif symbol == symbol_table.funcname or symbol == symbol_table.var then
     if n == 1 then
       node.var = node[1].var
     elseif not node.def then
@@ -654,11 +641,7 @@ local function resolve_vars(self, node, symbol_table)
     if node.self then
       node.self = node[1][1].var
     end
-  elseif symbol == symbol_table.fieldlist then
-    node.var = assign_var(node)
-  elseif node.binop then
-    node.var = assign_var(node)
-  elseif node.unop then
+  elseif symbol == symbol_table.fieldlist or node.binop or node.unop then
     node.var = assign_var(node)
   end
 end
