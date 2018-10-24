@@ -15,29 +15,10 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-function f()
+local function f(a, b, c, d)
+  print(type(a), b, c, d)
 end
 
-function f()
-  v = 1
-end
-
-function f()
-  v = 1
-  v = 2
-end
-
-function f()
-  return
-end
-
-function f()
-  v = 1
-  return
-end
-
-function f()
-  v = 1
-  v = 2
-  return
-end
+f(1, 2, 3, 4)
+f"foo"
+f{1, 2, 3, 4}
