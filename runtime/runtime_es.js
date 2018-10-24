@@ -153,6 +153,14 @@ const open_env = () => {
     }
   }
 
+  const ipairs_iterator = (table, index) => {
+    ++index;
+    const value = GETTABLE(table, index);
+    if (value !== undefined) {
+      return [index, value];
+    }
+  };
+
   const env = new Map();
 
   env.set("_G", env);
@@ -185,9 +193,9 @@ const open_env = () => {
     return metatable;
   });
 
-  // ipairs
-  // next
-  // pairs
+  env.set("ipairs", table => {
+    return [ipairs_iterator, table, 0];
+  });
 
   env.set("pcall", (f, ...args) => {
     try {
@@ -211,17 +219,29 @@ const open_env = () => {
     process.stdout.write("\n");
   });
 
-  // select
+  env.set("select", (index, ...args) => {
+    if (index === "#") {
+      return args.length;
+    }
+    if (index < 0) {
+      index += args.length;
+    } else {
+      --index;
+    }
+    const result = [];
+    for (let i = index; i < args.length; ++i) {
+      result.push(args[i]);
+    }
+    return result;
+  });
 
-  env.set("setmetatable", function (table, metatable) {
+  env.set("setmetatable", (table, metatable) => {
     if (getmetafield(table, "__metatable") !== undefined) {
       throw new Error("cannot change a protected metatable");
     }
     table[metatable_key] = metatable;
     return table;
   });
-
-  // tonumber
 
   env.set("type", value => {
     const t = typeof value;
