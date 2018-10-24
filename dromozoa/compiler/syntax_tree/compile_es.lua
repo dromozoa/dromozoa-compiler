@@ -61,7 +61,7 @@ local function encode_var(var)
   end
 end
 
-local function write(self, out, node, symbol_table)
+local function compile(self, out, node, symbol_table)
   local proto = node.proto
   if proto then
     local A = proto.A
@@ -148,6 +148,7 @@ local function write(self, out, node, symbol_table)
   end
 
   local symbol = node[0]
+  local n = #node
   if symbol == symbol_table["while"] then
     out:write "while (true) {\n"
   elseif symbol == symbol_table["repeat"] then
@@ -156,10 +157,9 @@ local function write(self, out, node, symbol_table)
     out:write "{\n"
   end
 
-  local n = #node
   local inorder = node.inorder
   for i = 1, n do
-    write(self, out, node[i], symbol_table)
+    compile(self, out, node[i], symbol_table)
     if i == inorder then
       if symbol == symbol_table["while"] then
         local var = node[1].var
@@ -417,7 +417,7 @@ if (env === undefined) {
 }
 const B = [env];
 ]]
-  write(self, out, self.accepted_node, self.symbol_table)
+  compile(self, out, self.accepted_node, self.symbol_table)
   out:write "P0();\n"
 
   if name then
