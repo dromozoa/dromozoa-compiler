@@ -50,6 +50,7 @@ const setmetatable = function (table, metatable) {
     throw new Error("cannot change a protected metatable");
   }
   table[metatable_key] = metatable;
+  return table;
 };
 
 const CALL0 = function (f, ...args) {
