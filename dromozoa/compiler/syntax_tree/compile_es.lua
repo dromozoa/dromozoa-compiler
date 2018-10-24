@@ -15,7 +15,6 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-local symbol_value = require "dromozoa.parser.symbol_value"
 local runtime_es = require "dromozoa.compiler.runtime.runtime_es"
 
 local char_table = {
