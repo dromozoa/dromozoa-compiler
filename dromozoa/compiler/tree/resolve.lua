@@ -241,18 +241,25 @@ local function assign_var(node, key)
   if not key then
     key = "C"
   end
-  while node do
-    local value = node[key]
-    if value then
-      local n = value + 1
-      node[key] = n
-      local proto = attr(node, "proto")
-      if proto[key] < n then
-        proto[key] = n
+  if key == "C" then
+    while node do
+      local value = node[key]
+      if value then
+        local n = value + 1
+        node[key] = n
+        local proto = attr(node, "proto")
+        if proto[key] < n then
+          proto[key] = n
+        end
+        return key .. value
       end
-      return key .. value
+      node = node.parent
     end
-    node = node.parent
+  else
+    local proto = attr(node, "proto")
+    local n = proto[key]
+    proto[key] = n + 1
+    return key .. n
   end
 end
 
@@ -576,6 +583,23 @@ local function resolve_vars(self, node, symbol_table)
     node.vars = lvars
   elseif symbol == symbol_table["function"] then
     node[2].def = node[1].var
+  elseif symbol == symbol_table["for"] then
+    local n = #node
+    if n == 4 then
+      node.vars = {
+        assign_var(node, "B");
+        assign_var(node, "B");
+      }
+    else
+      node.vars = {
+        assign_var(node, "B");
+        assign_var(node, "B");
+        assign_var(node, "B");
+      }
+      if #node == 3 then
+        attr(node, "proto").T = true
+      end
+    end
   elseif symbol == symbol_table.funcname then
     if #node == 1 then
       node.var = node[1].var

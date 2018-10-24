@@ -167,36 +167,39 @@ local function write(self, out, node, symbol_table)
         out:write("if (", encode_var(var), "===undefined||", encode_var(var), "===false) break;\n")
       elseif symbol == symbol_table["for"] then
         if n == 4 then
-          out:write("let v = ", encode_var(node[1].var), ";\n")
-          out:write("let l = ", encode_var(node[2].var), ";\n")
-          out:write "--v;\n"
+          local vars = node.vars
+          out:write(encode_var(vars[1]), " = ", encode_var(node[1].var), ";\n")
+          out:write(encode_var(vars[2]), " = ", encode_var(node[2].var), ";\n")
+          out:write("--", encode_var(vars[1]), ";\n")
           out:write "while (true) {\n"
-          out:write "++v;\n"
-          out:write "if (v > l) break;\n"
-          out:write(encode_var(node[3].var), "=v;\n")
+          out:write("++", encode_var(vars[1]), ";\n")
+          out:write("if (", encode_var(vars[1]), " > ", encode_var(vars[2]), ") break;\n")
+          out:write(encode_var(node[3].var), "=", encode_var(vars[1]), ";\n")
         elseif n == 5 then
-          out:write("let v = ", encode_var(node[1].var), ";\n")
-          out:write("let l = ", encode_var(node[2].var), ";\n")
-          out:write("let s = ", encode_var(node[3].var), ";\n")
-          out:write "v -= s;\n"
+          local vars = node.vars
+          out:write(encode_var(vars[1]), " = ", encode_var(node[1].var), ";\n")
+          out:write(encode_var(vars[2]), " = ", encode_var(node[2].var), ";\n")
+          out:write(encode_var(vars[3]), " = ", encode_var(node[3].var), ";\n")
+          out:write(encode_var(vars[1]), "-=", encode_var(vars[3]), ";\n")
           out:write "while (true) {\n"
-          out:write "v += s;\n"
-          out:write "if ((s >= 0 && v > l) || (s < 0 && v < l)) break;\n"
-          out:write(encode_var(node[4].var), "=v;\n")
+          out:write(encode_var(vars[1]), "+=", encode_var(vars[3]), ";\n")
+          out:write("if ((", encode_var(vars[3]), " >= 0 && ", encode_var(vars[1]), " > ", encode_var(vars[2]), ") || (", encode_var(vars[3]), " < 0 && ", encode_var(vars[1]), " < ", encode_var(vars[2]), ")) break;\n")
+          out:write(encode_var(node[4].var), "=", encode_var(vars[1]), ";\n")
         else
-          local vars = node[1].vars
-          out:write("let f = ", encode_var(vars[1]), ";\n")
-          out:write("let s = ", encode_var(vars[2]), ";\n")
-          out:write("let v = ", encode_var(vars[3]), ";\n")
+          local rvars = node[1].vars
+          local lvars = node.vars
+          out:write(encode_var(lvars[1]), " = ", encode_var(rvars[1]), ";\n")
+          out:write(encode_var(lvars[2]), " = ", encode_var(rvars[2]), ";\n")
+          out:write(encode_var(lvars[3]), " = ", encode_var(rvars[3]), ";\n")
           out:write "while (true) {\n"
-          out:write "let t = CALL(f,s,v);\n"
+          out:write("T = CALL(", encode_var(lvars[1]), ",", encode_var(lvars[2]), ",", encode_var(lvars[3]), ");\n")
           local that = node[2]
           for i = 1, #that do
-            out:write(encode_var(that[i].var), "=t[", i - 1, "];\n")
+            out:write(encode_var(that[i].var), "=T[", i - 1, "];\n")
           end
           local var = that[1].var
           out:write("if (", encode_var(var), "==undefined) break;\n")
-          out:write("v=", encode_var(var), "\n")
+          out:write(encode_var(lvars[3]), "=", encode_var(var), "\n")
         end
       elseif symbol == symbol_table.conditional then
         out:write "} else {\n"
