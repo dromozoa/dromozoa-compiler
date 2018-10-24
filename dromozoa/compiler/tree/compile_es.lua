@@ -161,11 +161,48 @@ local function write(self, out, node, symbol_table)
     out:write "{\n"
   end
 
+  local n = #node
   local inorder = node.inorder
-  for i = 1, #node do
+  for i = 1, n do
     write(self, out, node[i], symbol_table)
     if i == inorder then
-      if symbol == symbol_table.conditional then
+      if symbol == symbol_table["while"] then
+        local var = node[1].var
+        out:write("if (", encode_var(var), "===undefined||", encode_var(var), "===false) break;\n")
+      elseif symbol == symbol_table["for"] then
+        if n == 4 then
+          out:write("let v = ", encode_var(node[1].var), ";\n")
+          out:write("let l = ", encode_var(node[2].var), ";\n")
+          out:write "--v;\n"
+          out:write "while (true) {\n"
+          out:write "++v;\n"
+          out:write "if (v > l) break;\n"
+          out:write(encode_var(node[3].var), "=v;\n")
+        elseif n == 5 then
+          out:write("let v = ", encode_var(node[1].var), ";\n")
+          out:write("let l = ", encode_var(node[2].var), ";\n")
+          out:write("let s = ", encode_var(node[3].var), ";\n")
+          out:write "v -= s;\n"
+          out:write "while (true) {\n"
+          out:write "v += s;\n"
+          out:write "if ((s >= 0 && v > l) || (s < 0 && v < l)) break;\n"
+          out:write(encode_var(node[4].var), "=v;\n")
+        else
+          local vars = node[1].vars
+          out:write("let f = ", encode_var(vars[1]), ";\n")
+          out:write("let s = ", encode_var(vars[2]), ";\n")
+          out:write("let v = ", encode_var(vars[3]), ";\n")
+          out:write "while (true) {\n"
+          out:write "let t = CALL(f,s,v);\n"
+          local that = node[2]
+          for i = 1, #that do
+            out:write(encode_var(that[i].var), "=t[", i - 1, "];\n")
+          end
+          local var = that[1].var
+          out:write("if (", encode_var(var), "==undefined) break;\n")
+          out:write("v=", encode_var(var), "\n")
+        end
+      elseif symbol == symbol_table.conditional then
         out:write "} else {\n"
       elseif symbol == symbol_table["if"] then
         local var = node[1].var
@@ -206,46 +243,7 @@ local function write(self, out, node, symbol_table)
       out:write(encode_var(that[i].var))
     end
     out:write "];\n"
-  elseif symbol == symbol_table["do"] then
-    if node["while"] then
-      local var = node.parent[1].var
-      out:write("if (", encode_var(var), "===undefined||", encode_var(var), "===false) break;\n")
-    elseif node.for2 then
-      local that = node.parent
-      out:write("let v = ", encode_var(that[1].var), ";\n")
-      out:write("let l = ", encode_var(that[2].var), ";\n")
-      out:write "--v;\n"
-      out:write "while (true) {\n"
-      out:write "++v;\n"
-      out:write "if (v > l) break;\n"
-      out:write(encode_var(that[3].var), "=v;\n")
-    elseif node.for3 then
-      local that = node.parent
-      out:write("let v = ", encode_var(that[1].var), ";\n")
-      out:write("let l = ", encode_var(that[2].var), ";\n")
-      out:write("let s = ", encode_var(that[3].var), ";\n")
-      out:write "v -= s;\n"
-      out:write "while (true) {\n"
-      out:write "v += s;\n"
-      out:write "if ((s >= 0 && v > l) || (s < 0 && v < l)) break;\n"
-      out:write(encode_var(that[4].var), "=v;\n")
-    elseif node["for"] then
-      local that = node.parent
-      local vars = that[1].vars
-      out:write("let f = ", encode_var(vars[1]), ";\n")
-      out:write("let s = ", encode_var(vars[2]), ";\n")
-      out:write("let v = ", encode_var(vars[3]), ";\n")
-      out:write "while (true) {\n"
-      out:write "let t = CALL(f,s,v);\n"
-      local that = that[2]
-      for i = 1, #that do
-        out:write(encode_var(that[i].var), "=t[", i - 1, "];\n")
-      end
-      local var = that[1].var
-      out:write("if (", encode_var(var), "==undefined) break;\n")
-      out:write("v=", encode_var(var), "\n")
-    end
-  elseif symbol == symbol_table["conditional"] then
+  elseif symbol == symbol_table.conditional then
     out:write "/* if */ }\n"
   elseif symbol == symbol_table.funcname then
     if node.def then
