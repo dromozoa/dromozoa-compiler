@@ -198,14 +198,12 @@ const open_env = () => {
     process.stdout.write("\n");
   });
 
-  // select
-
   env.set("select", (index, ...args) => {
     if (index === "#") {
       return args.length;
     }
     if (index < 0) {
-      index += args.length
+      index += args.length;
     } else {
       --index;
     }
