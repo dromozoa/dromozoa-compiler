@@ -39,10 +39,6 @@ local function encode_string(s)
 end
 
 local function encode_var(var)
-  if not var then
-    return "?"
-  end
-
   if var == "V" then
     return "...V"
   elseif var == "T" then
@@ -55,11 +51,11 @@ local function encode_var(var)
     return "true"
   else
     local k = var:sub(1, 1)
-    if k == "U" then
+    if k == "P" then
+      return var
+    elseif k == "U" then
       local i = var:sub(2)
       return "U[" .. i .. "][0][U[" .. i .. "][1]]"
-    elseif k == "P" then
-      return var
     else
       return k .. "[" .. var:sub(2) .. "]"
     end
@@ -243,14 +239,21 @@ local function write(self, out, node, symbol_table)
     out:write "}\n"
   elseif symbol == symbol_table["return"] then
     local that = node[1]
-    out:write "return ["
-    for i = 1, #that do
-      if i > 1 then
-        out:write ", "
+    local n = #that
+    if n == 0 then
+      out:write "return;\n"
+    elseif n == 1 then
+      out:write("return ", encode_var(that[1].var), ";\n")
+    else
+      out:write "return ["
+      for i = 1, n do
+        if i > 1 then
+          out:write ","
+        end
+        out:write(encode_var(that[i].var))
       end
-      out:write(encode_var(that[i].var))
+      out:write "];\n"
     end
-    out:write "];\n"
   elseif symbol == symbol_table.conditional then
     out:write "/* if */ }\n"
   elseif symbol == symbol_table.funcname then
