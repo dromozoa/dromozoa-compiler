@@ -1,35 +1,11 @@
 return [[
-class Error {
-  constructor(message) {
-    this.message = message;
-  }
-};
-
 const metatable_key = Symbol("metatabale");
-
-const getmetatable = function (table) {
-  const metatable = table[metatable_key];
-  if (metatable !== undefined) {
-    if (metatable.has("__metatable")) {
-      return metatable.get("__metatable");
-    }
-  }
-  return metatable;
-};
 
 const getmetafield = function (table, index) {
   const metatable = table[metatable_key];
   if (metatable !== undefined) {
     return metatable.get(index);
   }
-}
-
-const setmetatable = function (table, metatable) {
-  if (getmetafield(table, "__metatable") !== undefined) {
-    throw new Error("cannot change a protected metatable");
-  }
-  table[metatable_key] = metatable;
-  return table;
 };
 
 const CALL0 = function (f, ...args) {
@@ -152,25 +128,47 @@ const SETLIST = function (table, index, ...args) {
   for (let i = 0; i < args.length; ++i) {
     table.set(index + i, args[i]);
   }
-}
+};
 
 const open_env = function () {
+  class Error {
+    constructor(message) {
+      this.message = message;
+    }
+  }
+
   const env = new Map();
 
   env.set("tostring", tostring);
-  env.set("getmetatable", getmetatable);
-  env.set("setmetatable", setmetatable);
+
+  env.set("getmetatable", function (table) {
+    const metatable = table[metatable_key];
+    if (metatable !== undefined) {
+      if (metatable.has("__metatable")) {
+        return metatable.get("__metatable");
+      }
+    }
+    return metatable;
+  });
+
+  env.set("setmetatable", function (table, metatable) {
+    if (getmetafield(table, "__metatable") !== undefined) {
+      throw new Error("cannot change a protected metatable");
+    }
+    table[metatable_key] = metatable;
+    return table;
+  });
 
   env.set("type", function (v) {
     const t = typeof v;
     if (t === "undefined") {
       return "nil";
     } else if (t === "number") {
-      return "number"
+      return "number";
     } else if (t === "string") {
-      return "string"
+      return "string";
     } else if (t === "boolean") {
-      return "boolean"
+      return "boolean";
     } else if (t === "object") {
       if (Map.prototype.isPrototypeOf(v)) {
         return "table";
