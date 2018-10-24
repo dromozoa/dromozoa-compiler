@@ -15,31 +15,18 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-b1 = false
-b2 = true
-d1 = 42
-d2 = 17
-s1 = "foo"
-s2 = "bar"
+local t = { 1, 4, 9, 16, 25 }
+for i, v in ipairs(t) do
+  print(i, v)
+end
 
-v = d1 + d2
-v = d1 - d2
-v = d1 * d2
-v = d1 / d2
-v = d1 // d2
-v = d1 ^ d2
-v = d1 % d2
-v = d1 & d2
-v = d1 ~ d2
-v = d1 | d2
-v = d1 >> d2
-v = d1 << d2
-v = s1 .. s2
-v = d1 < d2
-v = d1 <= d2
-v = d1 > d2
-v = d1 >= d2
-v = d1 == d2
-v = d1 ~= d2
-v = b1 and b2
-v = b1 or b2
+local t = setmetatable({}, {
+  __index = function (self, index)
+    if index <= 5 then
+      return index * index
+    end
+  end;
+})
+for i, v in ipairs(t) do
+  print(i, v)
+end

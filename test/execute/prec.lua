@@ -15,24 +15,7 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-local function f()
-  return 1, 2, 3, 4, 5
-end
-
-local a                = f(), f(), f(), f()
-local a, b             = f(), f(), f(), f()
-local a, b, c          = f(), f(), f(), f()
-local a, b, c, d       = f(), f(), f(), f()
-local a, b, c, d, e    = f(), f(), f(), f()
-local a, b, c, d, e, f = f(), f(), f(), f()
-
-local function g(...)
-  local a                = ..., ..., ..., ...
-  local a, b             = ..., ..., ..., ...
-  local a, b, c          = ..., ..., ..., ...
-  local a, b, c, d       = ..., ..., ..., ...
-  local a, b, c, d, e    = ..., ..., ..., ...
-  local a, b, c, d, e, f = ..., ..., ..., ...
-end
-
-g(1, 2, 3, 4, 5)
+local v = 1 + 2 * 3 + 4 + 5 / 6 + 7 + 8 // 9 + 10 + 11 % 12
+print(39.833333333333 < v and v < 39.833333333334)
+local v = 1 - -2^4
+print(v == 17)

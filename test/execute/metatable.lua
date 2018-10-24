@@ -15,26 +15,40 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-function f() end
-local a = { f = f, b = { f = f } }
-function f1() return f end
-function f2() return a end
+local metatable = {
+  name = "metatable";
 
-v = {
-  Name;
-  (42);
-  (...);
-  ...;
-  f();
-  (f());
-  a:f();
-  a:f(1, 2, 3);
-  a.b:f();
-  a.b:f(1, 2, 3);
-  a["" .. "f"];
-  f1()();
-  f2():f();
+  __call = function (self, ...)
+    print(self, ...)
+    -- return ...
+  end;
+
+  __tostring = function (self)
+    return "self is " .. type(self)
+  end;
+
+  __len = function (self)
+    print "__len"
+    return 42
+  end;
 }
 
-f1(a, b, c, ...)
-f1(a, b, c, (...))
+local t = setmetatable({}, metatable)
+t(1, 2, 3, 4)
+print(#t)
+print(getmetatable(t).name)
+
+local metatable2 = {
+  name = "metatable2";
+
+  __metatable = metatable;
+
+  __len = function (self)
+    print "__len2"
+    return 666
+  end;
+}
+
+local t2 = setmetatable({}, metatable2)
+print(#t2)
+print(getmetatable(t2).name)

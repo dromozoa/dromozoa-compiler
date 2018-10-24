@@ -15,11 +15,18 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-b = false
-d = 42
-s = "foo"
+local print = print
 
-v = -d
-v = not b
-v = #s
-v = ~d
+local function f()
+  return 1, 2, 3, 4
+end
+
+print(select("#", f()))
+print(select(1, f()))
+print(select(2, f()))
+print(select(3, f()))
+print(select(4, f()))
+print(select(-1, f()))
+print(select(-2, f()))
+print(select(-3, f()))
+print(select(-4, f()))

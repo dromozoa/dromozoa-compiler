@@ -15,46 +15,48 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-function f(...)
-  local v = {
-    nil;
-    false;
-    true;
-    ...;
-  }
+local class = {
+  foo = 1;
+}
 
-  local v = {
-    3;
-    345;
-    0xff;
-    0xBEBADA;
-  }
+local metatable = {
+  __index = class;
+  __newindex = class;
+}
 
-  local v = {
-    3.0;
-    3.1416;
-    314.16e-2;
-    0.31416E1;
-    34e1;
-    0x0.1E;
-    0xA23p-4;
-    0X1.921FB54442D18P+1;
-  }
+local t1 = {
+  bar = 2;
+}
 
-  local v = {
-    "";
-    '';
-    [[]];
-    "test\n";
-    "\x41\x42\x43";
-    "abc\z
-     def";
-    "\xE3\x81\x82\227\129\132\u{3046}";
-  }
+print(t1.foo, t1.bar, t1.baz)
 
-  local v = {
-    HYPHENATION_POINT = "\u{2027}";
-    LINE_SEPARATOR = "\u{2028}";
-    PARAGAPH_SEPARATOR = "\u{2029}";
-  }
+setmetatable(t1, metatable)
+local t2 = setmetatable({
+  foo = 3;
+  bar = 4;
+}, metatable)
+
+print(t1.foo, t1.bar, t1.baz)
+print(t2.foo, t2.bar, t2.baz)
+
+t1.baz = 5
+
+print(t1.foo, t1.bar, t1.baz)
+print(t2.foo, t2.bar, t2.baz)
+
+function metatable:__index(k)
+  print(type(self), k)
+  return k
 end
+
+function metatable:__newindex(k, v)
+  print(type(self), k, v)
+end
+
+print(t1.foo, t1.bar, t1.baz)
+print(t2.foo, t2.bar, t2.baz)
+
+t1.baz = 6
+
+print(t1.foo, t1.bar, t1.baz)
+print(t2.foo, t2.bar, t2.baz)

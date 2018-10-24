@@ -15,64 +15,10 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-local c1 = nil
-local c2 = false
-local c3 = true
-
-if c1 then
-  v = 1
+local function f(a, b, c, d)
+  print(type(a), b, c, d)
 end
 
-if c1 then
-  v = 1
-else
-  v = 0
-end
-
-if c1 then
-  v = 1
-elseif c2 then
-  v = 2
-end
-
-if c1 then
-  v = 1
-elseif c2 then
-  v = 2
-else
-  v = 0
-end
-
-if c1 then
-  v = 1
-elseif c2 then
-  v = 2
-elseif c3 then
-  v = 3
-end
-
-if c1 then
-  v = 1
-elseif c2 then
-  v = 2
-elseif c3 then
-  v = 3
-else
-  v = 0
-end
-
-if c1 then
-  v = 1
-  if c2 then
-    v = 2
-    if c3 then
-      v = 3
-    else
-      v = 0
-    end
-  else
-    v = 0
-  end
-else
-  v = 0
-end
+f(1, 2, 3, 4)
+f"foo"
+f{1, 2, 3, 4}

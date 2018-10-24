@@ -15,17 +15,18 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-local f = function () end
-local f = function (a) end
-local f = function (a, b) end
-local f = function (...) end
-local f = function (a, ...) end
-local f = function (a, b, ...) end
+local save = _ENV
 
-local t = {}
-function t:f() end
-function t:f(a) end
-function t:f(a, b) end
-function t:f(...) end
-function t:f(a, ...) end
-function t:f(a, b, ...) end
+_ENV = {
+  print = function (...)
+    save.print("saved", ...)
+  end;
+}
+
+print(1, 2, 3, 4)
+
+print = function (...)
+  save.print("saved2", ...)
+end
+
+print(1, 2, 3, 4)

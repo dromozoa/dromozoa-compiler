@@ -15,37 +15,49 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-local d = {}
-
-local i = 1
-while i <= 10 do
-  d[i] = i * i
-  i = i + 1
+local function t()
+  print "t"
+  return true
 end
 
-local function f(x)
-  return x, x, x
+local function f()
+  print "f"
+  return false
 end
 
-while f(f(i) <= 10) do
-  d[i] = i * i
-  i = i + 1
+local function n()
+  print "n"
+  return nil
 end
 
-local i = 1
-repeat
-  d[i] = i * i
-  i = i + 1
-until i > 10
-
-for i = 1, 10 do
-  d[i] = i * i
+local function z()
+  print "z"
+  return 0
 end
 
-for i = 10, 1, -1 do
-  d[i] = i * i
+local function o()
+  print "o"
+  return 1
 end
 
-for i, v in ipairs(d) do
-  d[i] = i * i
-end
+print(t() and t())
+print(t() and f())
+print(f() and t())
+print(f() and f())
+
+print(t() or t())
+print(t() or f())
+print(f() or t())
+print(f() or f())
+
+print(t() and t() or t())
+print(t() and t() or f())
+print(t() and f() or t())
+print(t() and f() or f())
+print(f() and t() or t())
+print(f() and t() or f())
+print(f() and f() or t())
+print(f() and f() or f())
+
+print(t() and z() and o() and f())
+print(f() or n() or t())

@@ -15,16 +15,13 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-local a = { b = { c = {} } }
+local function f1(...)
+  return ...
+end
 
-function f(x, y, z) end
-function a.f(x, y, z) end
-function a.b.f(x, y, z) end
-function a.b.c.f(x, y, z) end
+local function f2(...)
+  return f1(...)
+end
 
-function f(x, y, z) end
-function a:g(x, y, z) end
-function a.b:g(x, y, z) end
-function a.b.c:g(x, y, z) end
-
-local function f(x, y, z) return f end
+print(f1(1, 2, 3, 4))
+print(f2(5, 6, 7, 8))

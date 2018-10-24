@@ -29,3 +29,17 @@ t:f(1, 2, 3, 4)
 t.t:f(1, 2, 3, 4)
 t.t.t:f(1, 2, 3, 4)
 t.t.t.t:f(1, 2, 3, 4)
+
+local f1 = function (...)
+  return 1, ...
+end
+
+local f2 = function (...)
+  return 2, ...
+end
+
+local f3 = function (...)
+  return 3, ...
+end
+
+print(f1(f2(f3(4, 5, 6))))

@@ -15,10 +15,19 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-local a = 1
-local a, b = 1, 2
-local a, b, c = 1, 2, 3
+local print = print
 
-local function f()
-  f()
-end
+print(-42)
+print(not nil)
+print(not false)
+print(not true)
+print(not 0)
+print(not 1)
+print(not "")
+print(not foo)
+print(#{})
+print(#{1})
+print(#{1,2})
+print(#{1,2,3})
+print(#{1,2,3,4})
+print(~0xDEAD)

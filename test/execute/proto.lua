@@ -15,11 +15,15 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-function f() end
-f()
+local f = function (a)
+  print(a)
+  local g = function (b)
+    print(a, b)
+    local h = function (c)
+      print(a, b, c)
+    end
+    h(3)
+  end
+  g(2)
+end
 f(1)
-f(1,2)
-f{}
-f{1}
-f{1,2}
-f"foo"
