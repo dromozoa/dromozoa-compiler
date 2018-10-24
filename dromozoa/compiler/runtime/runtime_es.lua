@@ -33,17 +33,20 @@ const setmetatable = function (table, metatable) {
 };
 
 const CALL0 = function (f, ...args) {
-  if (typeof f !== "function") {
-    f = getmetafield(f, "__call");
+  if (typeof f === "function") {
+    f(...args);
+  } else {
+    getmetafield(f, "__call")(f, ...args);
   }
-  f(...args);
 };
 
 const CALL1 = function (f, ...args) {
-  if (typeof f !== "function") {
-    f = getmetafield(f, "__call");
+  let result;
+  if (typeof f === "function") {
+    result = f(...args);
+  } else {
+    result = getmetafield(f, "__call")(f, ...args);
   }
-  const result = f(...args);
   if (typeof result === "object" && Array.prototype.isPrototypeOf(result)) {
     return result[0];
   } else {
@@ -52,10 +55,12 @@ const CALL1 = function (f, ...args) {
 };
 
 const CALL = function (f, ...args) {
-  if (typeof f !== "function") {
-    f = getmetafield(f, "__call");
+  let result;
+  if (typeof f === "function") {
+    result = f(...args);
+  } else {
+    result = getmetafield(f, "__call")(f, ...args);
   }
-  const result = f(...args);
   if (typeof result === "object" && Array.prototype.isPrototypeOf(result)) {
     return result;
   } else {
@@ -79,7 +84,7 @@ const tostring = function (v) {
     }
   } else if (t === "object") {
     if (Map.prototype.isPrototypeOf(v)) {
-      const field = getmetafield(v);
+      const field = getmetafield(v, "__tostring");
       if (field !== undefined) {
         return CALL1(field, v);
       } else {
