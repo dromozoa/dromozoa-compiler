@@ -75,9 +75,9 @@ do
   lua test/compile.lua "$i" "result/$n"
 
   printf 'executing %s... ' "$i"
-  lua "$i" >"result/$n-lua.txt"
+  lua "$i" >"result/$n-expected.txt"
   node "result/$n.js" >"result/$n-es.txt"
-  if diff "result/$n-lua.txt" "result/$n-es.txt" >/dev/null 2>&1
+  if diff "result/$n-expected.txt" "result/$n-es.txt" >/dev/null 2>&1
   then
     if test -t 2
     then
@@ -101,7 +101,7 @@ do
   <a href="$n.html">tree</a>,
   <a href="$n.txt">protos</a>,
   result:
-  <a href="$n-lua.txt">lua</a>,
+  <a href="$n-expected.txt">lua</a>,
   <a href="$n-es.txt">es</a>
 </li>
 EOH
