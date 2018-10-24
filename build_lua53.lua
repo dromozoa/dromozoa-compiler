@@ -256,8 +256,8 @@ _"exp"
   :_ "exp" ">="  "exp" {[2]={1,3}} :attr "binop"
   :_ "exp" "=="  "exp" {[2]={1,3}} :attr "binop"
   :_ "exp" "~="  "exp" {[2]={1,3}} :attr "binop"
-  :_ "exp" "and" "exp" {[2]={1,3}} :attr "binop"
-  :_ "exp" "or"  "exp" {[2]={1,3}} :attr "binop"
+  :_ "exp" "and" "exp" {[2]={1,3}} :attr "binop" :attr("inorder", 1)
+  :_ "exp" "or"  "exp" {[2]={1,3}} :attr "binop" :attr("inorder", 1)
 -- unop
   :_ "-"   "exp" :prec "UNM"  {[1]={2}} :attr "unop"
   :_ "not" "exp"              {[1]={2}} :attr "unop"

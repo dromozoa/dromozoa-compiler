@@ -40,4 +40,24 @@ local function o()
   return 1
 end
 
--- print(t() or f())
+print(t() and t())
+print(t() and f())
+print(f() and t())
+print(f() and f())
+
+print(t() or t())
+print(t() or f())
+print(f() or t())
+print(f() or f())
+
+print(t() and t() or t())
+print(t() and t() or f())
+print(t() and f() or t())
+print(t() and f() or f())
+print(f() and t() or t())
+print(f() and t() or f())
+print(f() and f() or t())
+print(f() and f() or f())
+
+print(t() and z() and o() and f())
+print(f() or n() or t())

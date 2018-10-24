@@ -207,6 +207,14 @@ local function write(self, out, node, symbol_table)
       elseif symbol == symbol_table["if"] then
         local var = node[1].var
         out:write("if (!(", encode_var(var), "==undefined||", encode_var(var), "===false)) {\n")
+      elseif symbol == symbol_table["and"] then
+        local var = node.var
+        out:write(encode_var(node.var), "=", encode_var(node[1].var), ";\n")
+        out:write("if (!(", encode_var(var), "==undefined||", encode_var(var), "===false)) {\n")
+      elseif symbol == symbol_table["or"] then
+        local var = node.var
+        out:write(encode_var(node.var), "=", encode_var(node[1].var), ";\n")
+        out:write("if (", encode_var(var), "==undefined||", encode_var(var), "===false) {\n")
       end
     end
   end
@@ -293,7 +301,11 @@ local function write(self, out, node, symbol_table)
   elseif symbol == symbol_table["<"] then
     out:write(encode_var(node.var), "=", encode_var(node[1].var), "<", encode_var(node[2].var), ";\n")
   elseif symbol == symbol_table["and"] then
-    -- END IF
+    out:write(encode_var(node.var), "=", encode_var(node[2].var), ";\n")
+    out:write "/* if */ }\n"
+  elseif symbol == symbol_table["or"] then
+    out:write(encode_var(node.var), "=", encode_var(node[2].var), ";\n")
+    out:write "/* if */ }\n"
   elseif symbol == symbol_table["#"] then
     out:write(encode_var(node.var), "=LEN(", encode_var(node[1].var), ");\n")
   elseif symbol == symbol_table.functioncall then
