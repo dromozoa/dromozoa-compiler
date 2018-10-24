@@ -16,6 +16,8 @@
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
 local metatable = {
+  name = "metatable";
+
   __call = function (self, ...)
     print(self, ...)
     -- return ...
@@ -34,3 +36,19 @@ local metatable = {
 local t = setmetatable({}, metatable)
 t(1, 2, 3, 4)
 print(#t)
+print(getmetatable(t).name)
+
+local metatable2 = {
+  name = "metatable2";
+
+  __metatable = metatable;
+
+  __len = function (self)
+    print "__len2"
+    return 666
+  end;
+}
+
+local t2 = setmetatable({}, metatable2)
+print(#t2)
+print(getmetatable(t2).name)

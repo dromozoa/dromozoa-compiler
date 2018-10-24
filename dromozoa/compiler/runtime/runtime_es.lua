@@ -1,14 +1,14 @@
 return [[
 const metatable_key = Symbol("metatabale");
 
-const getmetafield = function (table, index) {
-  const metatable = table[metatable_key];
+const getmetafield = function (object, event) {
+  const metatable = object[metatable_key];
   if (metatable !== undefined) {
-    return metatable.get(index);
+    return metatable.get(event);
   }
 };
 
-const CALL0 = function (f, ...args) {
+const CALL0 = (f, ...args) => {
   if (typeof f === "function") {
     f(...args);
   } else {
@@ -16,7 +16,7 @@ const CALL0 = function (f, ...args) {
   }
 };
 
-const CALL1 = function (f, ...args) {
+const CALL1 = (f, ...args) => {
   let result;
   if (typeof f === "function") {
     result = f(...args);
@@ -30,7 +30,7 @@ const CALL1 = function (f, ...args) {
   }
 };
 
-const CALL = function (f, ...args) {
+const CALL = (f, ...args) => {
   let result;
   if (typeof f === "function") {
     result = f(...args);
@@ -44,7 +44,7 @@ const CALL = function (f, ...args) {
   }
 };
 
-const GETTABLE = function (table, index) {
+const GETTABLE = (table, index) => {
   const result = table.get(index);
   if (result === undefined) {
     const field = getmetafield(table, "__index");
@@ -59,7 +59,7 @@ const GETTABLE = function (table, index) {
   return result;
 };
 
-const SETTABLE = function (table, index, value) {
+const SETTABLE = (table, index, value) => {
   const result = table.get(index);
   if (result === undefined) {
     const field = getmetafield(table, "__newindex");
@@ -78,7 +78,7 @@ const SETTABLE = function (table, index, value) {
   }
 };
 
-const LEN = function (v) {
+const LEN = (v) => {
   if (Map.prototype.isPrototypeOf(v)) {
     const field = getmetafield(v, "__len");
     if (field !== undefined) {
@@ -92,13 +92,13 @@ const LEN = function (v) {
   }
 };
 
-const SETLIST = function (table, index, ...args) {
+const SETLIST = (table, index, ...args) => {
   for (let i = 0; i < args.length; ++i) {
     table.set(index + i, args[i]);
   }
 };
 
-const tostring = function (v) {
+const tostring = (v) => {
   const t = typeof v;
   if (t === "undefined") {
     return "nil";
@@ -125,7 +125,7 @@ const tostring = function (v) {
   return "userdata";
 };
 
-const open_env = function () {
+const open_env = () => {
   class Error {
     constructor(message) {
       this.message = message;
@@ -136,7 +136,7 @@ const open_env = function () {
 
   env.set("tostring", tostring);
 
-  env.set("getmetatable", function (table) {
+  env.set("getmetatable", (table) => {
     const metatable = table[metatable_key];
     if (metatable !== undefined) {
       if (metatable.has("__metatable")) {
@@ -154,7 +154,7 @@ const open_env = function () {
     return table;
   });
 
-  env.set("type", function (v) {
+  env.set("type", (v) => {
     const t = typeof v;
     if (t === "undefined") {
       return "nil";
@@ -172,7 +172,7 @@ const open_env = function () {
     return "userdata";
   });
 
-  env.set("print", function (...args) {
+  env.set("print", (...args) => {
     for (let i = 0; i < args.length; ++i) {
       if (i > 0) {
         process.stdout.write("\t");
@@ -182,7 +182,7 @@ const open_env = function () {
     process.stdout.write("\n");
   });
 
-  env.set("assert", function (...args) {
+  env.set("assert", (...args) => {
     const v = args[0];
     if (v === undefined || v === false) {
       if (args.length > 1) {
