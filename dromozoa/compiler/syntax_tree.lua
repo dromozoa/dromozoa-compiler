@@ -17,6 +17,7 @@
 
 local analyze = require "dromozoa.compiler.syntax_tree.analyze"
 local compile_es = require "dromozoa.compiler.syntax_tree.compile_es"
+local generate = require "dromozoa.compiler.syntax_tree.generate"
 local dump_protos = require "dromozoa.compiler.syntax_tree.dump_protos"
 local dump_tree = require "dromozoa.compiler.syntax_tree.dump_tree"
 
@@ -36,6 +37,10 @@ local metatable = { __index = class }
 
 function class:analyze()
   return analyze(self)
+end
+
+function class:generate()
+  return generate(self)
 end
 
 function class:dump_protos(out)
