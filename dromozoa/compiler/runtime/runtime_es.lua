@@ -1,4 +1,10 @@
 return [[
+class Error {
+  constructor(message) {
+    this.message = message;
+  }
+};
+
 const metatable_key = Symbol("metatabale");
 
 const getmetatable = function (table) {
@@ -11,9 +17,49 @@ const getmetatable = function (table) {
   return metatable;
 };
 
+const getmetafield = function (table, index) {
+  const metatable = table[metatable_key];
+  if (metatable !== undefined) {
+    return metatable.get(index);
+  }
+}
+
 const setmetatable = function (table, metatable) {
-  metatable[metatable_key] = metatable;
-  // TODO check __metatable
+  if (getmetafield(table, "__metatable") !== undefined) {
+    throw new Error("cannot change a protected metatable");
+  }
+  table[metatable_key] = metatable;
+};
+
+const CALL0 = function (f, ...args) {
+  if (typeof f !== "function") {
+    f = getmetafield(f, "__call");
+  }
+  f(...args);
+};
+
+const CALL1 = function (f, ...args) {
+  if (typeof f !== "function") {
+    f = getmetafield(f, "__call");
+  }
+  const result = f(...args);
+  if (typeof result === "object" && Array.prototype.isPrototypeOf(result)) {
+    return result[0];
+  } else {
+    return result;
+  }
+};
+
+const CALL = function (f, ...args) {
+  if (typeof f !== "function") {
+    f = getmetafield(f, "__call");
+  }
+  const result = f(...args);
+  if (typeof result === "object" && Array.prototype.isPrototypeOf(result)) {
+    return result;
+  } else {
+    return [result];
+  }
 };
 
 const tostring = function (v) {
@@ -32,7 +78,12 @@ const tostring = function (v) {
     }
   } else if (t === "object") {
     if (Map.prototype.isPrototypeOf(v)) {
-      return "table";
+      const field = getmetafield(v);
+      if (field !== undefined) {
+        return CALL1(field, v);
+      } else {
+        return "table";
+      }
     }
   } else if (t === "function") {
     return "function";
@@ -60,28 +111,6 @@ const type = function (v) {
   return "userdata";
 }
 
-const CALL0 = function (f, ...args) {
-  f(...args);
-};
-
-const CALL1 = function (f, ...args) {
-  const result = f(...args);
-  if (typeof result === "object" && Array.prototype.isPrototypeOf(result)) {
-    return result[0];
-  } else {
-    return result;
-  }
-};
-
-const CALL = function (f, ...args) {
-  const result = f(...args);
-  if (typeof result === "object" && Array.prototype.isPrototypeOf(result)) {
-    return result;
-  } else {
-    return [result];
-  }
-};
-
 const GETTABLE = function (table, index) {
   return table.get(index);
 };
@@ -95,10 +124,13 @@ const SETTABLE = function (table, index, value) {
 };
 
 const LEN = function (v) {
-  if (typeof v === "object" && Map.prototype.isPrototypeOf(v)) {
-    for (let i = 1; ; ++i) {
-      if (v.get(i) === undefined) {
-        return i - 1;
+  const t = typeof v;
+  if (t === "object") {
+    if (Map.prototype.isPrototypeOf(v)) {
+      for (let i = 1; ; ++i) {
+        if (v.get(i) === undefined) {
+          return i - 1;
+        }
       }
     }
   }
