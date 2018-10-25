@@ -23,17 +23,21 @@ local function dump_use(out, item, key)
 end
 
 local function dump_code(out, code, indent)
-  local name = code[0]
-  if name then
-    local code_indent = indent .. "  "
-    out:write(indent, name, " {\n")
+  if code.block then
+    local block_indent = indent .. "  "
+    out:write(indent)
+    local name = code[0]
+    if name then
+      out:write(name, " ")
+    end
+    out:write "{\n"
     for i = 1, #code do
-      dump_code(out, code[i], code_indent)
+      dump_code(out, code[i], block_indent)
     end
     out:write(indent, "}\n")
   else
-    out:write(indent, code[1])
-    for i = 2, #code do
+    out:write(indent, code[0])
+    for i = 1, #code do
       out:write(" ", code[i])
     end
     out:write "\n"

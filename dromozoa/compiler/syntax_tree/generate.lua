@@ -23,7 +23,7 @@ local function generate(stack, node, symbol_table)
   local proto = node.proto
   if proto then
     code_builder(stack, node):CLOSURE(proto[1])
-    local block = { [0] = "BLOCK" }
+    local block = { block = true }
     proto.block = block
     stack = { block }
   end
@@ -138,11 +138,11 @@ local function generate(stack, node, symbol_table)
     _:LOOP_END()
   elseif symbol == symbol_table["return"] then
     local that = node[1]
-    local vars = {}
+    local args = {}
     for i = 1, #that do
-      vars[i] = that[i].var
+      args[i] = that[i].var
     end
-    _:RETURN(unpack(vars))
+    _:RETURN(unpack(args))
   elseif symbol == symbol_table.conditional then
     _:COND_END()
   elseif symbol == symbol_table.funcname or symbol == symbol_table.var then
@@ -182,10 +182,39 @@ local function generate(stack, node, symbol_table)
     _[binop](_, node.var, node[1].var, node[2].var)
   elseif unop then
     _[unop](_, node.var, node[1].var)
+  elseif symbol == symbol_table.functioncall then
+    local self = node.self
+    local args = {}
+    local that = node[2]
+    for i = 1, #that do
+      args[i] = that[i].var
+    end
+    if self then
+      _:CALL(node.var or "NIL", node[1].var, self, unpack(args))
+    else
+      _:CALL(node.var or "NIL", node[1].var, unpack(args))
+    end
+  elseif symbol == symbol_table.fieldlist then
+    local var = node.var
+    _:NEWTABLE(var)
+    for i = 1, n do
+      local that = node[i]
+      if #that == 2 then
+        _:SETTABLE(var, that[2].var, that[1].var)
+      end
+    end
+    local index = 0
+    for i = 1, n do
+      local that = node[i]
+      if #that == 1 then
+        index = index + 1
+        _:SETLIST(var, index, var)
+      end
+    end
   end
 end
 
 return function (self)
-  generate({ { [0] = "BLOCK" } }, self.accepted_node, self.symbol_table)
+  generate({ { block = true } }, self.accepted_node, self.symbol_table)
   return self
 end

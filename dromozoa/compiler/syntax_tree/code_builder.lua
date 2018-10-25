@@ -19,7 +19,7 @@ local function _(name)
   return function (self, ...)
     local s = self.stack
     local b = s[#s]
-    b[#b + 1] = { name, ... }
+    b[#b + 1] = { [0] = name, ... }
     return self
   end
 end
@@ -31,6 +31,7 @@ local function pop(self, name)
   local b2 = s[n - 1]
   s[n] = nil
   b2[#b2 + 1] = b1
+  assert(b1.block)
   assert(b1[0] == name)
 end
 
@@ -65,6 +66,9 @@ local class = {
   SETTABLE = _"SETTABLE";
   CALL = _"CALL";
   CLOSURE = _"CLOSURE";
+  NEWTABLE = _"NEWTABLE";
+  SETLIST = _"SETLIST";
+
   BREAK = _"BREAK";
   RETURN = _"RETURN";
   TONUMBER = _"TONUMBER";
@@ -73,7 +77,7 @@ local metatable = { __index = class }
 
 function class:LOOP()
   local s = self.stack
-  s[#s + 1] = { [0] = "LOOP" }
+  s[#s + 1] = { block = true, [0] = "LOOP" }
   return self
 end
 
@@ -85,20 +89,20 @@ end
 function class:COND_IF(...)
   local s = self.stack
   local n = #s
-  s[n + 1] = { [0] = "COND", { "IF", ... } }
-  s[n + 2] = { [0] = "BLOCK" }
+  s[n + 1] = { block = true, [0] = "COND", { [0] = "IF", ... } }
+  s[n + 2] = { block = true }
   return self
 end
 
 function class:COND_ELSE()
-  pop(self, "BLOCK")
+  pop(self)
   local s = self.stack
-  s[#s + 1] = { [0] = "BLOCK" }
+  s[#s + 1] = { block = true }
   return self
 end
 
 function class:COND_END()
-  pop(self, "BLOCK")
+  pop(self)
   pop(self, "COND")
   return self
 end
