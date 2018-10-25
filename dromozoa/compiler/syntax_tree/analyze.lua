@@ -477,6 +477,7 @@ local function ref_labels(node, symbol_table)
     if not result then
       return nil, message, i
     end
+    attr(node, "proto")["goto"] = true
     that.label = result[1]
   end
 
