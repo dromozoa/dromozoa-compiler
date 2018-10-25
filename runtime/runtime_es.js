@@ -120,8 +120,9 @@ const SETLIST = (table, index, ...args) => {
 };
 
 const tonumber = value => {
-  // TODO impl
-  return value;
+  if (typeof value == "number") {
+    return value;
+  }
 };
 
 const tostring = value => {
