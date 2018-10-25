@@ -23,9 +23,9 @@ local function generate(stack, node, symbol_table)
   local proto = node.proto
   if proto then
     code_builder(stack, node):CLOSURE(proto[1])
-    local block = { block = true }
-    proto.block = block
-    stack = { block }
+    local code = { block = true }
+    proto.code = code
+    stack = { code }
   end
 
   local symbol = node[0]
@@ -60,6 +60,7 @@ local function generate(stack, node, symbol_table)
            :  COND_IF(vars[4], "TRUE")
            :    BREAK()
            :  COND_END()
+           :  MOVE(node[3].var, vars[1])
         elseif n == 5 then -- numerical for with step
           local vars = node.vars
           _:TONUMBER(vars[1], node[1].var)
@@ -82,6 +83,7 @@ local function generate(stack, node, symbol_table)
            :      BREAK()
            :    COND_END()
            :  COND_END()
+           :  MOVE(node[4].var, vars[1])
         else -- generic for
           local rvars = node[1].vars
           local lvars = node.vars
@@ -94,7 +96,7 @@ local function generate(stack, node, symbol_table)
           for i = 1, #that do
             _:MOVE(that[i].var, "T" .. i - 1)
           end
-          _:EQ(lvars[4], that[1].var, "NIL")
+          _:EQ(lvars[4], that[1].var, "NIL", "TRUE")
            :COND_IF(lvars[4], "TRUE")
            :  BREAK()
            :COND_END()
@@ -216,7 +218,7 @@ local function generate(stack, node, symbol_table)
       local that = node[i]
       if #that == 1 then
         index = index + 1
-        _:SETLIST(var, index, var)
+        _:SETLIST(var, index, that[1].var)
       end
     end
   end

@@ -107,7 +107,7 @@ local function dump_proto(out, proto)
     end
   end
 
-  dump_code(out, proto.block, "  ")
+  dump_code(out, proto.code, "  ")
 
   out:write "\n"
 end

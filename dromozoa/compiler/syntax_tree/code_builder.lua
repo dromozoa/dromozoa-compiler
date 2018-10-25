@@ -31,8 +31,6 @@ local function pop(self, name)
   local b2 = s[n - 1]
   s[n] = nil
   b2[#b2 + 1] = b1
-  assert(b1.block)
-  assert(b1[0] == name)
 end
 
 local class = {
