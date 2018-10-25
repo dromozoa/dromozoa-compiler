@@ -64,7 +64,9 @@ local class = {
   RETURN   = _"RETURN";
   SETLIST  = _"SETLIST";
   CLOSURE  = _"CLOSURE";
+  LABEL    = _"LABEL";
   BREAK    = _"BREAK";
+  GOTO     = _"GOTO";
   TONUMBER = _"TONUMBER";
 }
 local metatable = { __index = class }

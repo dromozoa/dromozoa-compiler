@@ -103,7 +103,7 @@ local function generate(stack, node, symbol_table)
       elseif symbol == symbol_table.conditional then
         _:COND_ELSE()
       elseif symbol == symbol_table["if"] then
-        _:COND_IF(node[1].var)
+        _:COND_IF(node[1].var, "TRUE")
       elseif binop == "AND" then
         _:MOVE(node.var, node[1].var)
          :COND_IF(node.var, "TRUE")
@@ -120,8 +120,12 @@ local function generate(stack, node, symbol_table)
     for i = 1, #that do
       _:MOVE(that[i].var, vars[i])
     end
+  elseif symbol == symbol_table["::"] then
+    _:LABEL(node[1].label)
   elseif symbol == symbol_table["break"] then
     _:BREAK()
+  elseif symbol == symbol_table["goto"] then
+    _:GOTO(node[1].label)
   elseif symbol == symbol_table["function"] then
     local that = node[1]
     if that.declare then
