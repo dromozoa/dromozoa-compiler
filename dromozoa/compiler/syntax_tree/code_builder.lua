@@ -35,12 +35,30 @@ local function pop(self, name)
 end
 
 local class = {
-  ADD = _"ADD";
-  SUB = _"SUB";
-  LT = _"LT";
-  LE = _"LE";
-  EQ = _"EQ";
-  NE = _"NE";
+  -- binop
+  ADD    = _"ADD";
+  SUB    = _"SUB";
+  MUL    = _"MUL";
+  DIV    = _"DIV";
+  IDIV   = _"IDIV";
+  POW    = _"POW";
+  MOD    = _"MOD";
+  BAND   = _"BAND";
+  BXOR   = _"BXOR";
+  BOR    = _"BOR";
+  SHR    = _"SHR";
+  SHL    = _"SHL";
+  CONCAT = _"CONCAT";
+  LT     = _"LT";
+  LE     = _"LE";
+  EQ     = _"EQ";
+  NE     = _"NE";
+
+  -- unop
+  UNM  = _"UNM";
+  NOT  = _"NOT";
+  LEN  = _"LEN";
+  BNOT = _"BNOT";
 
   MOVE = _"MOVE";
   GETTABLE = _"GETTABLE";

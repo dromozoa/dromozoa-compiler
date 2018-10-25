@@ -30,6 +30,9 @@ local function generate(stack, node, symbol_table)
 
   local symbol = node[0]
   local n = #node
+  local inorder = node.inorder
+  local binop = node.binop
+  local unop = node.unop
   local _ = code_builder(stack, node)
 
   if symbol == symbol_table["while"] then
@@ -38,7 +41,6 @@ local function generate(stack, node, symbol_table)
     _:LOOP()
   end
 
-  local inorder = node.inorder
   for i = 1, n do
     generate(stack, node[i], symbol_table)
     if i == inorder then
@@ -102,6 +104,12 @@ local function generate(stack, node, symbol_table)
         _:COND_ELSE()
       elseif symbol == symbol_table["if"] then
         _:COND_IF(node[1].var)
+      elseif binop == "AND" then
+        _:MOVE(node.var, node[1].var)
+         :COND_IF(node.var, "TRUE")
+      elseif binop == "OR" then
+        _:MOVE(node.var, node[1].var)
+         :COND_IF(node.var, "FALSE")
       end
     end
   end
@@ -150,6 +158,30 @@ local function generate(stack, node, symbol_table)
         _:GETTABLE(node.var, node[1].var, node[2].var)
       end
     end
+  elseif symbol == symbol_table.explist then
+    local that = node.parent
+    if that[0] == symbol_table["="] then
+      local lvars = that.vars
+      local rvars = node.vars
+      for i = 1, #lvars do
+        local lvar = lvars[i]
+        local rvar = rvars[i]
+        if lvar ~= rvar then
+          _:MOVE(lvar, rvar)
+        end
+      end
+    end
+  elseif binop == "GT" then
+    _:LT(node.var, node[2].var, node[1].var)
+  elseif binop == "GE" then
+    _:LE(node.var, node[2].var, node[1].var)
+  elseif binop == "AND" or binop == "OR" then
+    _:MOVE(node.var, node[2].var)
+     :COND_END()
+  elseif binop then
+    _[binop](_, node.var, node[1].var, node[2].var)
+  elseif unop then
+    _[unop](_, node.var, node[1].var)
   end
 end
 
