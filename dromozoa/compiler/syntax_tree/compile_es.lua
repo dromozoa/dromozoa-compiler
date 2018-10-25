@@ -176,14 +176,13 @@ function compile_code(self, out, code)
     end
   else
     if name == "CALL" then
-      local args = encode_vars(code, 2)
       local var = code[1]
       if var == "NIL" then
-        out:write(("CALL0(%s);\n"):format(args))
+        out:write(("CALL0(%s);\n"):format(encode_vars(code, 2)))
       elseif var == "T" then
-        out:write(("T = CALL(%s);\n"):format(args))
+        out:write(("T = CALL(%s);\n"):format(encode_vars(code, 2)))
       else
-        out:write(("%s = CALL1(%s);\n"):format(encode_var(var), args))
+        out:write(("%s = CALL1(%s);\n"):format(encode_var_not_spread(var), encode_vars(code, 2)))
       end
     elseif name == "RETURN" then
       local n = #code
