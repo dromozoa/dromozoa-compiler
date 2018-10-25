@@ -152,7 +152,7 @@ function compile_code(self, out, code)
   local name = code[0]
   if code.block then
     if name == "LOOP" then
-      out:write "while (true) {\n"
+      out:write "for (;;) {\n"
       write_block(self, out, code)
       out:write "}\n"
     elseif name == "COND" then
@@ -297,7 +297,7 @@ function compile_proto(self, out, name)
 
   compile_code(self, out, proto.code)
 
-  out:write "}}}\n"
+  out:write "}}};\n"
 end
 
 return function (self, out, name)

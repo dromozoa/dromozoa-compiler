@@ -1,11 +1,11 @@
-(function (root) {
-  let parseFloat = root.parseFloat;
-  let requestAnimationFrame = root.requestAnimationFrame;
-  let pow = root.Math.pow;
-  let $ = root.jQuery;
-  let duration = 400;
+(() => {
+  "use strict";
 
-  let Transform = class {
+  const pow = Math.pow;
+  const $ = jQuery;
+  const duration = 400;
+
+  class Transform {
     constructor() {
       this.k = 1.002;
       this.s = 1;
@@ -25,8 +25,8 @@
     }
 
     interpolate(a, b, t) {
-      let alpha = t;
-      let beta = 1 - t;
+      const alpha = t;
+      const beta = 1 - t;
       this.k = a.k * beta + b.k * alpha;
       this.s = a.s * beta + b.s * alpha;
       this.x = a.x * beta + b.x * alpha;
@@ -44,27 +44,27 @@
     }
 
     scale(x, y, d) {
-      let t = pow(this.k, d)
+      const t = pow(this.k, d);
       this.s *= t;
       this.x = (this.x - x) * t + x;
       this.y = (this.y - y) * t + y;
     }
 
     transform_vector(v) {
-      let s = this.s;
+      const s = this.s;
       v.x *= s;
       v.y *= s;
     }
-  };
+  }
 
-  let click = function (node_id) {
+  const click = node_id => {
     $(".active").removeClass("active");
     $(".S" + node_id).addClass("active");
-    let $path = $("g.u_paths > path[data-node-id=" + node_id + "]");
+    const $path = $("g.u_paths > path[data-node-id=" + node_id + "]");
     $path.addClass("active");
-    let data = [];
-    $.each($path.get(0).attributes, function (_, attr) {
-      let name = attr.name;
+    const data = [];
+    $.each($path.get(0).attributes, (_, attr) => {
+      const name = attr.name;
       if (name.startsWith("data-")) {
         data.push([ name.substr(5), attr.value ]);
       }
@@ -72,25 +72,22 @@
     console.log(data);
   };
 
-  $(function () {
-    let $svg = $("svg");
-    let hw = parseFloat($svg.attr("width")) * 0.5;
-    let hh = parseFloat($svg.attr("height")) * 0.5;
-    let $view = $("g.view");
-
-    let transform = new Transform();
-
-    let animation = {
+  $(() => {
+    const $svg = $("svg");
+    const hw = parseFloat($svg.attr("width")) * 0.5;
+    const hh = parseFloat($svg.attr("height")) * 0.5;
+    const $view = $("g.view");
+    const transform = new Transform();
+    const animation = {
       t: false,
       a: new Transform(),
       b: new Transform(),
     };
-
-    let animation_step = function (t) {
+    const animation_step = t => {
       if (!animation.t) {
         animation.t = t;
       }
-      let d = t - animation.t;
+      const d = t - animation.t;
       if (d < duration) {
         transform.interpolate(animation.a, animation.b, d / duration);
         $view.attr("transform", transform.toString());
@@ -102,22 +99,22 @@
       }
     };
 
-    let mouse = {
+    const mouse = {
       active: false,
       x: 0,
       y: 0,
     };
 
-    $(".S").on("click", function () {
-      let node_id = $(this).attr("data-node-id");
+    $(".S").on("click", () => {
+      const node_id = $(this).attr("data-node-id");
       if (node_id) {
-        let $text = $("g.u_texts > text[data-node-id=" + node_id + "]");
-        let v = {
+        const $text = $("g.u_texts > text[data-node-id=" + node_id + "]");
+        const v = {
           x: parseFloat($text.attr("x")),
           y: parseFloat($text.attr("y")),
         };
-        let a = animation.a;
-        let b = animation.b;
+        const a = animation.a;
+        const b = animation.b;
         a.set(transform);
         b.set(transform);
         b.transform_vector(v);
@@ -128,37 +125,37 @@
       }
     });
 
-    $("g.u_texts > text").on("click", function () {
+    $("g.u_texts > text").on("click", () => {
       click($(this).attr("data-node-id"));
     });
 
-    $svg.on("wheel", function ($ev) {
+    $svg.on("wheel", $ev => {
       $ev.preventDefault();
-      let ev = $ev.originalEvent;
+      const ev = $ev.originalEvent;
       transform.scale(ev.offsetX, ev.offsetY, -ev.deltaY);
       $view.attr("transform", transform.toString());
     });
 
-    $("rect.viewport").on("mousedown", function ($ev) {
-      let ev = $ev.originalEvent;
+    $("rect.viewport").on("mousedown", $ev => {
+      const ev = $ev.originalEvent;
       mouse.active = true;
       mouse.x = ev.offsetX;
       mouse.y = ev.offsetY;
-    }).on("mousemove", function ($ev) {
+    }).on("mousemove", $ev => {
       if (mouse.active) {
-        let ev = $ev.originalEvent;
-        let x = ev.offsetX;
-        let y = ev.offsetY;
+        const ev = $ev.originalEvent;
+        const x = ev.offsetX;
+        const y = ev.offsetY;
         transform.translate(x - mouse.x, y - mouse.y);
         mouse.x = x;
         mouse.y = y;
         $view.attr("transform", transform.toString());
       }
-    }).on("mouseup", function ($ev) {
-      let ev = $ev.originalEvent;
+    }).on("mouseup", $ev => {
+      const ev = $ev.originalEvent;
       mouse.active = false;
       mouse.x = ev.offsetX;
       mouse.y = ev.offsetX;
     });
   });
-}(window));
+})(window);
