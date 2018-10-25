@@ -144,11 +144,9 @@ function compile_code(self, out, code)
     elseif name == "CONCAT" then
       out:write(("%s = tostring(%s) + tostring(%s);\n"):format(_(code[1]), _(code[2]), _(code[3])))
     elseif name == "EQ" then
-      if code[4] == "TRUE" then
-        out:write(("%s = %s === %s;\n"):format(_(code[1]), _(code[2]), _(code[3])))
-      else
-        out:write(("%s = %s !== %s;\n"):format(_(code[1]), _(code[2]), _(code[3])))
-      end
+      out:write(("%s = %s === %s;\n"):format(_(code[1]), _(code[2]), _(code[3])))
+    elseif name == "NE" then
+      out:write(("%s = %s !== %s;\n"):format(_(code[1]), _(code[2]), _(code[3])))
     elseif name == "LT" then
       out:write(("%s = %s < %s;\n"):format(_(code[1]), _(code[2]), _(code[3])))
     elseif name == "LE" then

@@ -35,9 +35,7 @@ local function generate(stack, node, symbol_table)
   local unop = node.unop
   local _ = code_builder(stack, node)
 
-  if symbol == symbol_table["while"] then
-    _:LOOP()
-  elseif symbol == symbol_table["repeat"] then
+  if symbol == symbol_table["while"] or symbol == symbol_table["repeat"] then
     _:LOOP()
   end
 
@@ -96,7 +94,7 @@ local function generate(stack, node, symbol_table)
           for i = 1, #that do
             _:MOVE(that[i].var, "T" .. i - 1)
           end
-          _:EQ(lvars[4], that[1].var, "NIL", "TRUE")
+          _:EQ(lvars[4], that[1].var, "NIL")
            :COND_IF(lvars[4], "TRUE")
            :  BREAK()
            :COND_END()
@@ -181,10 +179,6 @@ local function generate(stack, node, symbol_table)
     _:LT(node.var, node[2].var, node[1].var)
   elseif binop == "GE" then
     _:LE(node.var, node[2].var, node[1].var)
-  elseif binop == "EQ" then
-    _:EQ(node.var, node[1].var, node[2].var, "TRUE")
-  elseif binop == "NE" then
-    _:EQ(node.var, node[1].var, node[2].var, "FALSE")
   elseif binop == "AND" or binop == "OR" then
     _:MOVE(node.var, node[2].var)
      :COND_END()
