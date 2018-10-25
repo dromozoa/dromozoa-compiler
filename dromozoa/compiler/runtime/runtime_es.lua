@@ -98,6 +98,11 @@ const SETLIST = (table, index, ...args) => {
   }
 };
 
+const tonumber = value => {
+  // TODO impl
+  return value;
+};
+
 const tostring = value => {
   const t = typeof value;
   if (t === "undefined") {
@@ -144,6 +149,7 @@ const open_env = () => {
 
   env.set("_G", env);
   env.set("_VERSION", "Lua 5.3");
+  env.set("tonumber", tonumber);
   env.set("tostring", tostring);
 
   env.set("assert", (...args) => {

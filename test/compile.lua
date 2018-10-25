@@ -18,7 +18,7 @@
 local error_message = require "dromozoa.parser.error_message"
 local lua53_lexer = require "dromozoa.compiler.lua53_lexer"
 local lua53_parser = require "dromozoa.compiler.lua53_parser"
-local tree = require "dromozoa.compiler.tree"
+local syntax_tree = require "dromozoa.compiler.syntax_tree"
 
 local lexer = lua53_lexer()
 local parser = lua53_parser()
@@ -41,11 +41,13 @@ if not accepted_node then
   error(error_message(message, source, i, source_file))
 end
 
-local t = tree(parser, source, terminal_nodes, accepted_node)
-local result, message, i = t:resolve()
+local t = syntax_tree(parser, source, terminal_nodes, accepted_node)
+local result, message, i = t:analyze()
 if not result then
   error(error_message(message, source, i, source_file))
 end
+
+t:generate()
 
 t:compile_es(output_name .. ".js")
 t:dump_tree(output_name .. ".html")

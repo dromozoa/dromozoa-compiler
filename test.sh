@@ -20,8 +20,7 @@
 LUA_PATH="?.lua;;"
 export LUA_PATH
 
-mkdir -p result/compile result/execute
-cp docs/dromozoa-compiler.* result/compile
+mkdir -p result/execute
 cp docs/dromozoa-compiler.* result/execute
 
 cat <<EOH >result/index.html
@@ -48,23 +47,6 @@ cat <<EOH >result/index.html
 <div class="markdown-body">
 <h1>dromozoa-compiler test</h1>
 EOH
-
-echo "<h2>compile</h2><ul>" >>result/index.html
-for i in test/compile/*.lua
-do
-  echo "compiling $i..."
-  j=`expr "X$i" : 'X.*/\([^/]*\)\.lua'`
-  n=compile/$j
-  lua test/compile.lua "$i" "result/$n"
-  cat <<EOH >>result/index.html
-<li>$j:
-  <a href="$n.js">es</a>,
-  <a href="$n.html">tree</a>,
-  <a href="$n.txt">protos</a>
-</li>
-EOH
-done
-echo "</ul>" >>result/index.html
 
 echo "<h2>execute</h2><ul>" >>result/index.html
 for i in test/execute/*.lua

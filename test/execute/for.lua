@@ -34,3 +34,11 @@ end
 for v in f, { 2, 3, 4, 5 }, 1 do
   print(v)
 end
+
+for i = 1, 4 do
+  for j = 5, 8 do
+    for k = 9, 12 do
+      print(i, j, k)
+    end
+  end
+end

@@ -76,8 +76,10 @@ local function ref_label(node)
   return nil, ("no visible label %q for <goto>"):format(source), node.i
 end
 
-local function ref_constant(node, type)
-  local source = symbol_value(node)
+local function ref_constant(node, type, source)
+  if not source then
+    source = symbol_value(node)
+  end
   local proto = attr(node, "proto")
 
   local constants = proto.constants
@@ -201,7 +203,30 @@ local function ref_name(node)
   return resolve_name(node, "use", "upuse")
 end
 
-local function env_name(self, node, symbol_table)
+local function normalize_self(self, node, symbol_table)
+  local id = self.id + 1
+  self.id = id
+
+  local var_node = node[1]
+  local key_node = node[2]
+
+  local that = {
+    [0] = symbol_table.var;
+    parent = node;
+    id = id;
+    var_node;
+    key_node;
+  }
+
+  var_node.parent = that
+  key_node.parent = that
+
+  node[1] = that
+  node[2] = node[3]
+  node[3] = nil
+end
+
+local function normalize_env(self, node, symbol_table)
   local that = node.parent
 
   local var_id = self.id + 1
@@ -234,25 +259,32 @@ local function env_name(self, node, symbol_table)
   that[2] = node;
 
   env_node.var = ref_name(env_node)[1]
-  return ref_constant(node, "string")
+  node.var = ref_constant(node, "string")[1]
 end
 
 local function assign_var(node, key)
   if not key then
     key = "C"
   end
-  while node do
-    local value = node[key]
-    if value then
-      local n = value + 1
-      node[key] = n
-      local proto = attr(node, "proto")
-      if proto[key] < n then
-        proto[key] = n
+  if key == "C" then
+    while node do
+      local value = node[key]
+      if value then
+        local n = value + 1
+        node[key] = n
+        local proto = attr(node, "proto")
+        if proto[key] < n then
+          proto[key] = n
+        end
+        return key .. value
       end
-      return key .. value
+      node = node.parent
     end
-    node = node.parent
+  else
+    local proto = attr(node, "proto")
+    local n = proto[key]
+    proto[key] = n + 1
+    return key .. n
   end
 end
 
@@ -349,6 +381,8 @@ end
 
 local function prepare_attrs(node, symbol_table)
   local symbol = node[0]
+  local n = #node
+
   if symbol == symbol_table["="] then
     node[1].adjust = #node[2]
   elseif symbol == symbol_table["local"] then
@@ -357,7 +391,7 @@ local function prepare_attrs(node, symbol_table)
     if node.self then
       node.parent[1].proto.self = true
     end
-    if #node == 1 then
+    if n == 1 then
       if node.def then
         node[1].def = true
       else
@@ -365,7 +399,7 @@ local function prepare_attrs(node, symbol_table)
       end
     end
   elseif symbol == symbol_table.var then
-    if #node == 1 then
+    if n == 1 then
       if node.def then
         node[1].def = true
       else
@@ -377,16 +411,15 @@ local function prepare_attrs(node, symbol_table)
       node.parent.proto.vararg = true
     end
     if node.parlist then
-      for j = 1, #node do
+      for j = 1, n do
         node[j].param = true
       end
     else
-      for j = 1, #node do
+      for j = 1, n do
         node[j].declare = true
       end
     end
   elseif symbol == symbol_table.explist then
-    local n = #node
     if n > 0 then
       local adjust = node.adjust
       if adjust then
@@ -404,7 +437,6 @@ local function prepare_attrs(node, symbol_table)
   elseif symbol == symbol_table.funcbody then
     node[1].parlist = true
   elseif symbol == symbol_table.fieldlist then
-    local n = #node
     if n > 0 then
       local that = node[n]
       if #that == 1 then
@@ -413,7 +445,7 @@ local function prepare_attrs(node, symbol_table)
     end
   end
 
-  for i = 1, #node do
+  for i = 1, n do
     prepare_attrs(node[i], symbol_table)
   end
 end
@@ -445,6 +477,7 @@ local function ref_labels(node, symbol_table)
     if not result then
       return nil, message, i
     end
+    attr(node, "proto")["goto"] = true
     that.label = result[1]
   end
 
@@ -460,6 +493,7 @@ end
 
 local function resolve_names(self, node, symbol_table)
   local symbol = node[0]
+
   if symbol == symbol_table.namelist then
     if node.parlist then
       if attr(node, "proto").self then
@@ -494,26 +528,7 @@ local function resolve_names(self, node, symbol_table)
     end
   elseif symbol == symbol_table.functioncall then
     if node.self then
-      local id = self.id + 1
-      self.id = id
-
-      local var_node = node[1]
-      local key_node = node[2]
-
-      local that = {
-        [0] = symbol_table.var;
-        parent = node;
-        id = id;
-        var_node;
-        key_node;
-      }
-
-      var_node.parent = that
-      key_node.parent = that
-
-      node[1] = that
-      node[2] = node[3]
-      node[3] = nil
+      normalize_self(self, node, symbol_table)
     end
   elseif symbol == symbol_table.Name then
     if node.param then
@@ -527,14 +542,14 @@ local function resolve_names(self, node, symbol_table)
       if name then
         node.var = name[1]
       else
-        node.var = env_name(self, node, symbol_table)[1]
+        normalize_env(self, node, symbol_table)
       end
     elseif node.use then
       local name = ref_name(node)
       if name then
         node.var = name[1]
       else
-        node.var = env_name(self, node, symbol_table)[1]
+        normalize_env(self, node, symbol_table)
       end
     end
   end
@@ -550,11 +565,13 @@ local function resolve_names(self, node, symbol_table)
 end
 
 local function resolve_vars(self, node, symbol_table)
-  for i = 1, #node do
+  local symbol = node[0]
+  local n = #node
+
+  for i = 1, n do
     resolve_vars(self, node[i], symbol_table)
   end
 
-  local symbol = node[0]
   if symbol == symbol_table["="] then
     local lvars = {}
     local rvars = node[1].vars
@@ -576,14 +593,35 @@ local function resolve_vars(self, node, symbol_table)
     node.vars = lvars
   elseif symbol == symbol_table["function"] then
     node[2].def = node[1].var
-  elseif symbol == symbol_table.funcname then
-    if #node == 1 then
-      node.var = node[1].var
-    elseif not node.def then
-      node.var = assign_var(node)
+  elseif symbol == symbol_table["for"] then
+    if n == 4 then -- numerical for without step
+      node.vars = {
+        assign_var(node, "B"); -- var
+        assign_var(node, "B"); -- limit
+        ref_constant(node, "integer", "1")[1]; -- step
+        assign_var(node);
+      }
+    elseif n == 5 then -- numerical for with step
+      node.vars = {
+        assign_var(node, "B"); -- var
+        assign_var(node, "B"); -- limit
+        assign_var(node, "B"); -- step
+        assign_var(node);
+        ref_constant(node, "integer", "0")[1];
+      }
+    else -- generic for
+      node.vars = {
+        assign_var(node, "B"); -- var
+        assign_var(node, "B"); -- limit
+        assign_var(node, "B"); -- step
+        assign_var(node);
+      }
+      if n == 3 then -- generic for
+        attr(node, "proto").T = true
+      end
     end
-  elseif symbol == symbol_table.var then
-    if #node == 1 then
+  elseif symbol == symbol_table.funcname or symbol == symbol_table.var then
+    if n == 1 then
       node.var = node[1].var
     elseif not node.def then
       node.var = assign_var(node)
@@ -592,7 +630,7 @@ local function resolve_vars(self, node, symbol_table)
     local adjust = node.adjust
     if adjust then
       local vars = {}
-      for i = 1, #node do
+      for i = 1, n do
         local that = node[i]
         local var = that.var
         if var == "V" or var == "T" then
@@ -624,11 +662,7 @@ local function resolve_vars(self, node, symbol_table)
     if node.self then
       node.self = node[1][1].var
     end
-  elseif symbol == symbol_table.fieldlist then
-    node.var = assign_var(node)
-  elseif node.binop then
-    node.var = assign_var(node)
-  elseif node.unop then
+  elseif symbol == symbol_table.fieldlist or node.binop or node.unop then
     node.var = assign_var(node)
   end
 end

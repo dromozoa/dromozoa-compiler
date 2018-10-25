@@ -15,31 +15,22 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-local builtin = require "dromozoa.runtime.builtin"
+local i = 1
 
-local stdout = builtin.native_io.stdout
+::BEGIN::
+print("label BEGIN", i)
 
-local b = builtin.native_byte_array.construct(3)
-b:set(0, 0x66)
-b:set(1, 0x6F)
-b:set(2, 0x6F)
-stdout:write_byte_array(b)
+if i > 10 then
+  print("goto END", i)
+  goto END
+end
 
-b:resize(2)
-stdout:write_byte_array(b)
+i = i + 1
+print("goto BEGIN", i)
+goto BEGIN
 
-b:resize(4)
-b:set(2, 0x6F)
-b:set(3, 0x0A)
-stdout:write_byte_array(b)
+::NOT_USED::
+print("label NOT_USED", i)
 
-local o = builtin.native_object.construct()
-o:set("foo", b)
-stdout:write_byte_array(o:get "foo")
-
-local s = builtin.native_string.construct "bar\n"
-stdout:write_string(s)
-
-s:destruct()
-o:destruct()
-b:destruct()
+::END::
+print("label END", i)
