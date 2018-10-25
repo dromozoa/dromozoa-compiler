@@ -36,41 +36,35 @@ local function pop(self, name)
 end
 
 local class = {
-  -- binop
-  ADD    = _"ADD";
-  SUB    = _"SUB";
-  MUL    = _"MUL";
-  DIV    = _"DIV";
-  IDIV   = _"IDIV";
-  POW    = _"POW";
-  MOD    = _"MOD";
-  BAND   = _"BAND";
-  BXOR   = _"BXOR";
-  BOR    = _"BOR";
-  SHR    = _"SHR";
-  SHL    = _"SHL";
-  CONCAT = _"CONCAT";
-  LT     = _"LT";
-  LE     = _"LE";
-  EQ     = _"EQ";
-  NE     = _"NE";
-
-  -- unop
-  UNM  = _"UNM";
-  NOT  = _"NOT";
-  LEN  = _"LEN";
-  BNOT = _"BNOT";
-
-  MOVE = _"MOVE";
+  MOVE     = _"MOVE";
   GETTABLE = _"GETTABLE";
   SETTABLE = _"SETTABLE";
-  CALL = _"CALL";
-  CLOSURE = _"CLOSURE";
   NEWTABLE = _"NEWTABLE";
-  SETLIST = _"SETLIST";
-
-  BREAK = _"BREAK";
-  RETURN = _"RETURN";
+  ADD      = _"ADD";
+  SUB      = _"SUB";
+  MUL      = _"MUL";
+  MOD      = _"MOD";
+  POW      = _"POW";
+  DIV      = _"DIV";
+  IDIV     = _"IDIV";
+  BAND     = _"BAND";
+  BOR      = _"BOR";
+  BXOR     = _"BXOR";
+  SHL      = _"SHL";
+  SHR      = _"SHR";
+  UNM      = _"UNM";
+  BNOT     = _"BNOT";
+  NOT      = _"NOT";
+  LEN      = _"LEN";
+  CONCAT   = _"CONCAT";
+  EQ       = _"EQ";
+  LT       = _"LT";
+  LE       = _"LE";
+  CALL     = _"CALL";
+  RETURN   = _"RETURN";
+  SETLIST  = _"SETLIST";
+  CLOSURE  = _"CLOSURE";
+  BREAK    = _"BREAK";
   TONUMBER = _"TONUMBER";
 }
 local metatable = { __index = class }

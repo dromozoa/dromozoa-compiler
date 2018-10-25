@@ -175,6 +175,10 @@ local function generate(stack, node, symbol_table)
     _:LT(node.var, node[2].var, node[1].var)
   elseif binop == "GE" then
     _:LE(node.var, node[2].var, node[1].var)
+  elseif binop == "EQ" then
+    _:EQ(node.var, node[1].var, node[2].var, "TRUE")
+  elseif binop == "NE" then
+    _:EQ(node.var, node[1].var, node[2].var, "FALSE")
   elseif binop == "AND" or binop == "OR" then
     _:MOVE(node.var, node[2].var)
      :COND_END()
