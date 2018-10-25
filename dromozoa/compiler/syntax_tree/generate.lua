@@ -150,12 +150,11 @@ local function generate(stack, node, symbol_table)
   elseif symbol == symbol_table.conditional then
     _:COND_END()
   elseif symbol == symbol_table.funcname or symbol == symbol_table.var then
-    local def = node.def
-    if def then
+    if node.def then
       if n == 2 then
-        _:SETTABLE(node[1].var, node[2].var, def)
+        _:SETTABLE(node[1].var, node[2].var, node.def)
       else
-        _:MOVE(node[1].var, def)
+        _:MOVE(node[1].var, node.def)
       end
     else
       if n == 2 then
@@ -187,24 +186,22 @@ local function generate(stack, node, symbol_table)
   elseif unop then
     _[unop](_, node.var, node[1].var)
   elseif symbol == symbol_table.functioncall then
-    local self = node.self
-    local args = {}
     local that = node[2]
+    local args = {}
     for i = 1, #that do
       args[i] = that[i].var
     end
-    if self then
-      _:CALL(node.var or "NIL", node[1].var, self, unpack(args))
+    if node.self then
+      _:CALL(node.var or "NIL", node[1].var, node.self, unpack(args))
     else
       _:CALL(node.var or "NIL", node[1].var, unpack(args))
     end
   elseif symbol == symbol_table.fieldlist then
-    local var = node.var
-    _:NEWTABLE(var)
+    _:NEWTABLE(node.var)
     for i = 1, n do
       local that = node[i]
       if #that == 2 then
-        _:SETTABLE(var, that[2].var, that[1].var)
+        _:SETTABLE(node.var, that[2].var, that[1].var)
       end
     end
     local index = 0
@@ -212,7 +209,7 @@ local function generate(stack, node, symbol_table)
       local that = node[i]
       if #that == 1 then
         index = index + 1
-        _:SETLIST(var, index, that[1].var)
+        _:SETLIST(node.var, index, that[1].var)
       end
     end
   end
