@@ -37,11 +37,19 @@ local function encode_string(s)
   return "\"" .. s:gsub("[%z\1-\31\127]", char_table):gsub("\226\128[\168\169]", char_table) .. "\""
 end
 
-local function encode_var(var)
+local function _(var, not_spread)
   if var == "V" then
-    return "...V"
+    if not_spread then
+      return var
+    else
+      return "...V"
+    end
   elseif var == "T" then
-    return "...T"
+    if not_spread then
+      return var
+    else
+      return "...T"
+    end
   elseif var == "NIL" then
     return "undefined"
   elseif var == "FALSE" then
@@ -61,353 +69,225 @@ local function encode_var(var)
   end
 end
 
-local function compile(self, out, node, symbol_table)
-  local proto = node.proto
-  if proto then
-    local A = proto.A
-    local B = proto.B
-    local C = proto.C
+local compile_proto
 
-    out:write(("const %s = function ("):format(proto[1]))
-    if A > 0 then
-      out:write "A0"
-      for i = 1, A - 1 do
-        out:write(", A", i)
+function compile_code(self, out, code)
+  local name = code[0]
+  if code.block then
+    if name == "LOOP" then
+      out:write "while (true) {\n"
+      for i = 1, #code do
+        compile_code(self, out, code[i])
       end
-      if proto.vararg then
-        out:write(", ...V")
+      out:write "}\n"
+    elseif name == "COND" then
+      local cond = code[1]
+      if cond[2] == "TRUE" then
+        out:write(("if (%s !== undefined && %s !== false) {\n"):format(_(cond[1]), _(cond[1])))
+      else
+        out:write(("if (%s === undefined || %s === false) {\n"):format(_(cond[1]), _(cond[1])))
       end
-    elseif proto.vararg then
-      out:write "...V"
+      compile_code(self, out, code[2])
+      if #code == 2 then
+        out:write "}\n"
+      else
+        out:write "} else {\n"
+        compile_code(self, out, code[3])
+        out:write "}\n"
+      end
+    else
+      for i = 1, #code do
+        compile_code(self, out, code[i])
+      end
     end
-    out:write ") {\n"
-
-    local constants = proto.constants
-    local n = #constants
-    if n > 0 then
-      out:write "const K = [\n"
-      for i = 1, n do
-        local constant = constants[i]
-        if constant.type == "string" then
-          out:write(("/* %s */ %s,\n"):format(constant[1], encode_string(constant.source)))
-        else
-          out:write(("/* %s */ %.17g,\n"):format(constant[1], tonumber(constant.source)))
+  else
+    if name == "MOVE" then
+      out:write(("%s = %s;\n"):format(_(code[1]), _(code[2])))
+    elseif name == "GETTABLE" then
+      out:write(("%s = GETTABLE(%s, %s);\n"):format(_(code[1]), _(code[2]), _(code[3])))
+    elseif name == "SETTABLE" then
+      out:write(("SETTABLE(%s, %s, %s);\n"):format(_(code[1]), _(code[2]), _(code[3])))
+    elseif name == "NEWTABLE" then
+      out:write(("%s = new Map();\n"):format(_(code[1])))
+    elseif name == "ADD" then
+      out:write(("%s = %s + %s;\n"):format(_(code[1]), _(code[2]), _(code[3])))
+    elseif name == "SUB" then
+      out:write(("%s = %s - %s;\n"):format(_(code[1]), _(code[2]), _(code[3])))
+    elseif name == "MUL" then
+      out:write(("%s = %s * %s;\n"):format(_(code[1]), _(code[2]), _(code[3])))
+    elseif name == "MOD" then
+      out:write(("%s = %s %% %s;\n"):format(_(code[1]), _(code[2]), _(code[3])))
+    elseif name == "POW" then
+      out:write(("%s = %s ** %s;\n"):format(_(code[1]), _(code[2]), _(code[3])))
+    elseif name == "DIV" then
+      out:write(("%s = %s / %s;\n"):format(_(code[1]), _(code[2]), _(code[3])))
+    elseif name == "IDIV" then
+      out:write(("%s = Math.floor(%s / %s);\n"):format(_(code[1]), _(code[2]), _(code[3])))
+    elseif name == "BAND" then
+      out:write(("%s = %s & %s;\n"):format(_(code[1]), _(code[2]), _(code[3])))
+    elseif name == "BOR" then
+      out:write(("%s = %s | %s;\n"):format(_(code[1]), _(code[2]), _(code[3])))
+    elseif name == "BXOR" then
+      out:write(("%s = %s ^ %s;\n"):format(_(code[1]), _(code[2]), _(code[3])))
+    elseif name == "SHL" then
+      out:write(("%s = %s << %s;\n"):format(_(code[1]), _(code[2]), _(code[3])))
+    elseif name == "SHR" then
+      out:write(("%s = %s >>> %s;\n"):format(_(code[1]), _(code[2]), _(code[3])))
+    elseif name == "UNM" then
+      out:write(("%s = -%s;\n"):format(_(code[1]), _(code[2])))
+    elseif name == "BNOT" then
+      out:write(("%s = ~%s;\n"):format(_(code[1]), _(code[2])))
+    elseif name == "NOT" then
+      out:write(("%s = %s === undefined || %s === false;\n"):format(_(code[1]), _(code[2]), _(code[2])))
+    elseif name == "LEN" then
+      out:write(("%s = LEN(%s);\n"):format(_(code[1]), _(code[2])))
+    elseif name == "CONCAT" then
+      out:write(("%s = tostring(%s) + tostring(%s);\n"):format(_(code[1]), _(code[2]), _(code[3])))
+    elseif name == "EQ" then
+      if code[4] == "TRUE" then
+        out:write(("%s = %s === %s;\n"):format(_(code[1]), _(code[2]), _(code[3])))
+      else
+        out:write(("%s = %s !== %s;\n"):format(_(code[1]), _(code[2]), _(code[3])))
+      end
+    elseif name == "LT" then
+      out:write(("%s = %s < %s;\n"):format(_(code[1]), _(code[2]), _(code[3])))
+    elseif name == "LE" then
+      out:write(("%s = %s <= %s;\n"):format(_(code[1]), _(code[2]), _(code[3])))
+    elseif name == "CALL" then
+      local args = {}
+      for i = 2, #code do
+        args[i - 1] = _(code[i])
+      end
+      local var = code[1]
+      if var == "NIL" then
+        out:write(("CALL0(%s);\n"):format(table.concat(args, ", ")))
+      elseif var == "T" then
+        out:write(("T = CALL(%s);\n"):format(table.concat(args, ", ")))
+      else
+        out:write(("%s = CALL1(%s);\n"):format(_(var), table.concat(args, ", ")))
+      end
+    elseif name == "RETURN" then
+      local n = #code
+      if n == 0 then
+        out:write "return;\n"
+      elseif n == 1 then
+        out:write(("return %s;\n"):format(_(code[1], true)))
+      else
+        local rets = {}
+        for i = 1, #code do
+          rets[i] = _(code[i])
         end
+        out:write(("return [%s];\n"):format(table.concat(rets, ", ")))
       end
-      out:write "];\n"
+    elseif name == "SETLIST" then
+      out:write(("SETLIST(%s, %d, %s);\n"):format(_(code[1]), code[2], _(code[3])))
+    elseif name == "CLOSURE" then
+      compile_proto(self, out, code[1])
+    elseif name == "LABEL" then
+      -- TODO warn
+    elseif name == "BREAK" then
+      out:write "break;\n"
+    elseif name == "GOTO" then
+      -- TODO warn
+    elseif name == "TONUMBER" then
+      out:write(("%s = tonumber(%s);\n"):format(_(code[1]), _(code[2])))
+    else
+      -- DEBUG
+      error("invalid name " .. name)
     end
+  end
+end
 
-    local upvalues = proto.upvalues
-    local n = #upvalues
+function compile_proto(self, out, name)
+  local protos = self.protos
+  local proto
+  for i = 1, #protos do
+    proto = protos[i]
+    if proto[1] == name then
+      break
+    end
+    proto = nil
+  end
+
+  local A = proto.A
+  local B = proto.B
+  local C = proto.C
+
+  local pars = {}
+  for i = 0, A - 1 do
+    pars[#pars + 1] = "A" .. i
+  end
+  if proto.vararg then
+    pars[#pars + 1] = "...V"
+  end
+  out:write(("const %s = (%s) => {\n"):format(_(proto[1]), table.concat(pars, ", ")))
+
+  local constants = proto.constants
+  local n = #constants
+  if n > 0 then
+    out:write "const K = [\n"
+    for i = 1, n do
+      local constant = constants[i]
+      if constant.type == "string" then
+        out:write(("/* %s */ %s,\n"):format(constant[1], encode_string(constant.source)))
+      else
+        out:write(("/* %s */ %.17g,\n"):format(constant[1], tonumber(constant.source)))
+      end
+    end
+    out:write "];\n"
+  end
+
+  local upvalues = proto.upvalues
+  local n = #upvalues
+  for i = 1, n do
+    local upvalue = upvalues[i]
+    if upvalue[2]:find "^U" then
+      out:write "const S = U;\n"
+      break
+    end
+  end
+
+  out:write "{\n"
+
+  if n > 0 then
+    out:write "const U = [\n"
     for i = 1, n do
       local upvalue = upvalues[i]
-      if upvalue[2]:find "^U" then
-        out:write "const S = U;\n"
-        break
-      end
-    end
-
-    out:write "{\n"
-
-    if n > 0 then
-      out:write "const U = [\n"
-      for i = 1, n do
-        local upvalue = upvalues[i]
-        local var = upvalue[2]
-        assert(var:find "^[ABU]%d+$")
-        local key = var:sub(1, 1)
-        if key == "U" then
-          local index = var:sub(2)
-          out:write(("/* %s */ [S[%d][0],S[%d][1]],\n"):format(upvalue[1], index, index))
-        else
-          out:write(("/* %s */ [%s,%d],\n"):format(upvalue[1], key, var:sub(2)))
-        end
-      end
-      out:write "];\n"
-    end
-
-    out:write "{\n"
-
-    if A > 0 then
-      out:write "const A = [\n"
-      for i = 0, A - 1 do
-        out:write("A", i, ",\n")
-      end
-      out:write "];\n"
-    end
-
-    if B > 0 then
-      out:write(("const B = []; /* %d */\n"):format(B))
-    end
-    if C > 0 then
-      out:write(("const C = []; /* %d */\n"):format(C))
-    end
-    if proto.T then
-      out:write "let T;\n"
-    end
-  end
-
-  local symbol = node[0]
-  local n = #node
-  if symbol == symbol_table["while"] then
-    out:write "while (true) {\n"
-  elseif symbol == symbol_table["repeat"] then
-    out:write "while (true) {\n"
-  elseif symbol == symbol_table["for"] then
-    out:write "{\n"
-  end
-
-  local inorder = node.inorder
-  for i = 1, n do
-    compile(self, out, node[i], symbol_table)
-    if i == inorder then
-      if symbol == symbol_table["while"] then
-        local var = node[1].var
-        out:write("if (", encode_var(var), "===undefined||", encode_var(var), "===false) break;\n")
-      elseif symbol == symbol_table["for"] then
-        if n == 4 then
-          local vars = node.vars
-          out:write(encode_var(vars[1]), " = ", encode_var(node[1].var), ";\n")
-          out:write(encode_var(vars[2]), " = ", encode_var(node[2].var), ";\n")
-          out:write("--", encode_var(vars[1]), ";\n")
-          out:write "while (true) {\n"
-          out:write("++", encode_var(vars[1]), ";\n")
-          out:write("if (", encode_var(vars[2]), " < ", encode_var(vars[1]), ") break;\n")
-          out:write(encode_var(node[3].var), "=", encode_var(vars[1]), ";\n")
-        elseif n == 5 then
-          local vars = node.vars
-          out:write(encode_var(vars[1]), " = ", encode_var(node[1].var), ";\n")
-          out:write(encode_var(vars[2]), " = ", encode_var(node[2].var), ";\n")
-          out:write(encode_var(vars[3]), " = ", encode_var(node[3].var), ";\n")
-          out:write(encode_var(vars[1]), "-=", encode_var(vars[3]), ";\n")
-          out:write "while (true) {\n"
-          out:write(encode_var(vars[1]), "+=", encode_var(vars[3]), ";\n")
-          out:write("if (0 <= ", encode_var(vars[3]), ") {")
-          out:write("if (", encode_var(vars[2]), " < ", encode_var(vars[1]), ") {")
-          out:write "break;"
-          out:write "}}"
-          out:write("if (", encode_var(vars[3]), " < 0) {")
-          out:write("if (", encode_var(vars[1]), " < ", encode_var(vars[2]), ") {")
-          out:write "break;"
-          out:write "}}"
-          out:write "\n"
-          out:write(encode_var(node[4].var), "=", encode_var(vars[1]), ";\n")
-        else
-          local rvars = node[1].vars
-          local lvars = node.vars
-          out:write(encode_var(lvars[1]), " = ", encode_var(rvars[1]), ";\n")
-          out:write(encode_var(lvars[2]), " = ", encode_var(rvars[2]), ";\n")
-          out:write(encode_var(lvars[3]), " = ", encode_var(rvars[3]), ";\n")
-          out:write "while (true) {\n"
-          out:write("T = CALL(", encode_var(lvars[1]), ",", encode_var(lvars[2]), ",", encode_var(lvars[3]), ");\n")
-          local that = node[2]
-          for i = 1, #that do
-            out:write(encode_var(that[i].var), "=T[", i - 1, "];\n")
-          end
-          local var = that[1].var
-          out:write("if (", encode_var(var), "===undefined) break;\n")
-          out:write(encode_var(lvars[3]), "=", encode_var(var), "\n")
-        end
-      elseif symbol == symbol_table.conditional then
-        out:write "} else {\n"
-      elseif symbol == symbol_table["if"] then
-        local var = node[1].var
-        out:write("if (!(", encode_var(var), "==undefined||", encode_var(var), "===false)) {\n")
-      elseif symbol == symbol_table["and"] then
-        local var = node.var
-        out:write(encode_var(node.var), "=", encode_var(node[1].var), ";\n")
-        out:write("if (!(", encode_var(var), "==undefined||", encode_var(var), "===false)) {\n")
-      elseif symbol == symbol_table["or"] then
-        local var = node.var
-        out:write(encode_var(node.var), "=", encode_var(node[1].var), ";\n")
-        out:write("if (", encode_var(var), "==undefined||", encode_var(var), "===false) {\n")
-      end
-    end
-  end
-
-  if symbol == symbol_table["local"] then
-    local vars = node[1].vars
-    local that = node[2]
-    for i = 1, #that do
-      out:write(encode_var(that[i].var), "=", encode_var(vars[i]), ";\n")
-    end
-  elseif symbol == symbol_table["break"] then
-    out:write "break;\n"
-  elseif symbol == symbol_table["function"] then
-    local that = node[1]
-    if that.declare then
-      out:write(encode_var(that.var), "=", encode_var(node[2].var), ";\n")
-    end
-  elseif symbol == symbol_table["while"] then
-    out:write "/* while */ }\n"
-  elseif symbol == symbol_table["repeat"] then
-    local var = node[2].var
-    out:write("if (!(", encode_var(var), "===undefined||", encode_var(var), "===false)) break;\n")
-    out:write "/* while */ }\n"
-  elseif symbol == symbol_table["for"] then
-    out:write "/* while */ }\n"
-    out:write "}\n"
-  elseif symbol == symbol_table["return"] then
-    local that = node[1]
-    local n = #that
-    if n == 0 then
-      out:write "return;\n"
-    elseif n == 1 then
-      local var = that[1].var
-      if var == "V" or var == "T" then
-        out:write("return ", var, ";\n")
+      local var = upvalue[2]
+      assert(var:find "^[ABU]%d+$")
+      local key = var:sub(1, 1)
+      if key == "U" then
+        local index = var:sub(2)
+        out:write(("/* %s */ [S[%d][0], S[%d][1]],\n"):format(upvalue[1], index, index))
       else
-        out:write("return ", encode_var(that[1].var), ";\n")
-      end
-    else
-      out:write "return ["
-      for i = 1, n do
-        if i > 1 then
-          out:write ","
-        end
-        out:write(encode_var(that[i].var))
-      end
-      out:write "];\n"
-    end
-  elseif symbol == symbol_table.conditional then
-    out:write "/* if */ }\n"
-  elseif symbol == symbol_table.funcname then
-    if node.def then
-      if #node == 2 then
-        out:write("SETTABLE(", encode_var(node[1].var), ",", encode_var(node[2].var), ",", encode_var(node.def), ");\n")
-      else
-        out:write(encode_var(node[1].var), "=", encode_var(node.def), ";\n")
-      end
-    else
-      if #node == 2 then
-        out:write(encode_var(node.var), "=GETTABLE(", encode_var(node[1].var), ",", encode_var(node[2].var), ");\n")
+        out:write(("/* %s */ [%s, %d],\n"):format(upvalue[1], key, var:sub(2)))
       end
     end
-  elseif symbol == symbol_table.var then
-    if node.def then
-      if #node == 2 then
-        out:write("SETTABLE(", encode_var(node[1].var), ",", encode_var(node[2].var), ",", encode_var(node.def), ");\n")
-      else
-        out:write(encode_var(node[1].var), "=", encode_var(node.def), ";\n")
-      end
-    else
-      if #node == 2 then
-        out:write(encode_var(node.var), "=GETTABLE(", encode_var(node[1].var), ",", encode_var(node[2].var), ");\n")
-      end
-    end
-  elseif symbol == symbol_table.explist then
-    local that = node.parent
-    if that[0] == symbol_table["="] then
-      local lvars = that.vars
-      local rvars = node.vars
-      for i = 1, #lvars do
-        local lvar = lvars[i]
-        local rvar = rvars[i]
-        if lvar ~= rvar then
-          out:write(encode_var(lvar), "=", encode_var(rvar), ";\n")
-        end
-      end
-    end
-  elseif symbol == symbol_table["+"] then
-    out:write(encode_var(node.var), "=", encode_var(node[1].var), "+", encode_var(node[2].var), ";\n")
-  elseif symbol == symbol_table["-"] then
-    if #node == 2 then
-      out:write(encode_var(node.var), "=", encode_var(node[1].var), "-", encode_var(node[2].var), ";\n")
-    else
-      out:write(encode_var(node.var), "=-", encode_var(node[1].var), ";\n")
-    end
-  elseif symbol == symbol_table["*"] then
-    out:write(encode_var(node.var), "=", encode_var(node[1].var), "*", encode_var(node[2].var), ";\n")
-  elseif symbol == symbol_table["/"] then
-    out:write(encode_var(node.var), "=", encode_var(node[1].var), "/", encode_var(node[2].var), ";\n")
-  elseif symbol == symbol_table["//"] then
-    out:write(encode_var(node.var), "=Math.floor(", encode_var(node[1].var), "/", encode_var(node[2].var), ");\n")
-  elseif symbol == symbol_table["^"] then
-    out:write(encode_var(node.var), "=", encode_var(node[1].var), "**", encode_var(node[2].var), ";\n")
-  elseif symbol == symbol_table["%"] then
-    out:write(encode_var(node.var), "=", encode_var(node[1].var), "%", encode_var(node[2].var), ";\n")
-  elseif symbol == symbol_table["&"] then
-    out:write(encode_var(node.var), "=", encode_var(node[1].var), "&", encode_var(node[2].var), ";\n")
-  elseif symbol == symbol_table["~"] then
-    if #node == 2 then
-      out:write(encode_var(node.var), "=", encode_var(node[1].var), "^", encode_var(node[2].var), ";\n")
-    else
-      out:write(encode_var(node.var), "=~", encode_var(node[1].var), ";\n")
-    end
-  elseif symbol == symbol_table["|"] then
-    out:write(encode_var(node.var), "=", encode_var(node[1].var), "|", encode_var(node[2].var), ";\n")
-  elseif symbol == symbol_table[">>"] then
-    out:write(encode_var(node.var), "=", encode_var(node[1].var), ">>>", encode_var(node[2].var), ";\n")
-  elseif symbol == symbol_table["<<"] then
-    out:write(encode_var(node.var), "=", encode_var(node[1].var), "<<", encode_var(node[2].var), ";\n")
-  elseif symbol == symbol_table[".."] then
-    out:write(encode_var(node.var), "=tostring(", encode_var(node[1].var), ")+tostring(", encode_var(node[2].var), ");\n")
-  elseif symbol == symbol_table["<"] then
-    out:write(encode_var(node.var), "=", encode_var(node[1].var), "<", encode_var(node[2].var), ";\n")
-  elseif symbol == symbol_table["<="] then
-    out:write(encode_var(node.var), "=", encode_var(node[1].var), "<=", encode_var(node[2].var), ";\n")
-  elseif symbol == symbol_table[">"] then
-    out:write(encode_var(node.var), "=", encode_var(node[1].var), ">", encode_var(node[2].var), ";\n")
-  elseif symbol == symbol_table[">="] then
-    out:write(encode_var(node.var), "=", encode_var(node[1].var), ">=", encode_var(node[2].var), ";\n")
-  elseif symbol == symbol_table["=="] then
-    out:write(encode_var(node.var), "=", encode_var(node[1].var), "===", encode_var(node[2].var), ";\n")
-  elseif symbol == symbol_table["~="] then
-    out:write(encode_var(node.var), "=", encode_var(node[1].var), "!==", encode_var(node[2].var), ";\n")
-  elseif symbol == symbol_table["and"] then
-    out:write(encode_var(node.var), "=", encode_var(node[2].var), ";\n")
-    out:write "/* if */ }\n"
-  elseif symbol == symbol_table["or"] then
-    out:write(encode_var(node.var), "=", encode_var(node[2].var), ";\n")
-    out:write "/* if */ }\n"
-  elseif symbol == symbol_table["not"] then
-    local var = node[1].var
-    out:write(encode_var(node.var), "=", encode_var(var), "==undefined||", encode_var(var), "===false;\n")
-  elseif symbol == symbol_table["#"] then
-    out:write(encode_var(node.var), "=LEN(", encode_var(node[1].var), ");\n")
-  elseif symbol == symbol_table.functioncall then
-    local adjust = node.adjust
-    if adjust == 0 then
-      out:write "CALL0"
-    elseif adjust == 1 then
-      out:write(encode_var(node.var), "=CALL1")
-    else
-      out:write("T=CALL")
-    end
-    out:write("(", encode_var(node[1].var))
-    local self = node.self
-    if self then
-      out:write(",", encode_var(self))
-    end
-    local that = node[2]
-    for i = 1, #that do
-      out:write(",", encode_var(that[i].var))
-    end
-    out:write ");\n"
-  elseif symbol == symbol_table.fieldlist then
-    local var = node.var
-    out:write(encode_var(var), "=new Map();\n")
-    for i = 1, #node do
-      local that = node[i]
-      if #that == 2 then
-        out:write("SETTABLE(", encode_var(var), ",", encode_var(that[2].var), ",", encode_var(that[1].var), ");\n")
-      end
-    end
-    local index = 0
-    for i = 1, #node do
-      local that = node[i]
-      if #that == 1 then
-        index = index + 1
-        out:write("SETLIST(", encode_var(var), ",", index, ",", encode_var(that[1].var), ");\n")
-      end
-    end
+    out:write "];\n"
   end
 
-  if proto then
-    out:write "}\n"
-    out:write "}\n"
-    out:write(("/* %s */ };\n"):format(proto[1]))
+  out:write "{\n"
+
+  if A > 0 then
+    out:write "const A = [\n"
+    for i = 0, A - 1 do
+      out:write("A", i, ",\n")
+    end
+    out:write "];\n"
   end
+  if B > 0 then
+    out:write(("const B = []; /* %d */\n"):format(B))
+  end
+  if C > 0 then
+    out:write(("const C = []; /* %d */\n"):format(C))
+  end
+  if proto.T then
+    out:write "let T;\n"
+  end
+
+  compile_code(self, out, proto.code)
+
+  out:write "}}}\n"
 end
 
 return function (self, out, name)
@@ -417,7 +297,7 @@ return function (self, out, name)
     out:write "("
   end
 
-  out:write "function (env) {\n"
+  out:write "env => {\n"
   out:write(runtime_es);
   out:write [[
 if (env === undefined) {
@@ -425,7 +305,8 @@ if (env === undefined) {
 }
 const B = [env];
 ]]
-  compile(self, out, self.accepted_node, self.symbol_table)
+
+  compile_proto(self, out, "P0")
   out:write "P0();\n"
 
   if name then

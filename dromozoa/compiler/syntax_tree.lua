@@ -17,7 +17,6 @@
 
 local analyze = require "dromozoa.compiler.syntax_tree.analyze"
 local compile_es = require "dromozoa.compiler.syntax_tree.compile_es"
-local compile_es2 = require "dromozoa.compiler.syntax_tree.compile_es2"
 local generate = require "dromozoa.compiler.syntax_tree.generate"
 local dump_protos = require "dromozoa.compiler.syntax_tree.dump_protos"
 local dump_tree = require "dromozoa.compiler.syntax_tree.dump_tree"
@@ -65,14 +64,6 @@ function class:compile_es(out, name)
     return compile_es(self, assert(io.open(out, "w")), name):close()
   else
     return compile_es(self, out, name)
-  end
-end
-
-function class:compile_es2(out, name)
-  if type(out) == "string" then
-    return compile_es2(self, assert(io.open(out, "w")), name):close()
-  else
-    return compile_es2(self, out, name)
   end
 end
 
