@@ -172,7 +172,7 @@ local function compile(self, out, node, symbol_table)
           out:write("--", encode_var(vars[1]), ";\n")
           out:write "while (true) {\n"
           out:write("++", encode_var(vars[1]), ";\n")
-          out:write("if (", encode_var(vars[1]), " > ", encode_var(vars[2]), ") break;\n")
+          out:write("if (", encode_var(vars[2]), " < ", encode_var(vars[1]), ") break;\n")
           out:write(encode_var(node[3].var), "=", encode_var(vars[1]), ";\n")
         elseif n == 5 then
           local vars = node.vars
@@ -182,7 +182,15 @@ local function compile(self, out, node, symbol_table)
           out:write(encode_var(vars[1]), "-=", encode_var(vars[3]), ";\n")
           out:write "while (true) {\n"
           out:write(encode_var(vars[1]), "+=", encode_var(vars[3]), ";\n")
-          out:write("if ((", encode_var(vars[3]), " >= 0 && ", encode_var(vars[1]), " > ", encode_var(vars[2]), ") || (", encode_var(vars[3]), " < 0 && ", encode_var(vars[1]), " < ", encode_var(vars[2]), ")) break;\n")
+          out:write("if (0 <= ", encode_var(vars[3]), ") {")
+          out:write("if (", encode_var(vars[2]), " < ", encode_var(vars[1]), ") {")
+          out:write "break;"
+          out:write "}}"
+          out:write("if (", encode_var(vars[3]), " < 0) {")
+          out:write("if (", encode_var(vars[1]), " < ", encode_var(vars[2]), ") {")
+          out:write "break;"
+          out:write "}}"
+          out:write "\n"
           out:write(encode_var(node[4].var), "=", encode_var(vars[1]), ";\n")
         else
           local rvars = node[1].vars
@@ -197,7 +205,7 @@ local function compile(self, out, node, symbol_table)
             out:write(encode_var(that[i].var), "=T[", i - 1, "];\n")
           end
           local var = that[1].var
-          out:write("if (", encode_var(var), "==undefined) break;\n")
+          out:write("if (", encode_var(var), "===undefined) break;\n")
           out:write(encode_var(lvars[3]), "=", encode_var(var), "\n")
         end
       elseif symbol == symbol_table.conditional then

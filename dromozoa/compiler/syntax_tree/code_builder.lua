@@ -15,13 +15,73 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-local class = {}
+local function _(name)
+  return function (self, ...)
+    local s = self.stack
+    local b = s[#s]
+    b[#b + 1] = { name, ... }
+    return self
+  end
+end
+
+local function pop(self, name)
+  local s = self.stack
+  local n = #s
+  local b1 = s[n]
+  local b2 = s[n - 1]
+  s[n] = nil
+  b2[#b2 + 1] = b1
+  assert(b1[0] == name)
+end
+
+local class = {
+  ADD = _"ADD";
+  SUB = _"SUB";
+  LT = _"LT";
+  LE = _"LE";
+  EQ = _"EQ";
+  NE = _"NE";
+
+  MOVE = _"MOVE";
+  GETTABLE = _"GETTABLE";
+  SETTABLE = _"SETTABLE";
+  CALL = _"CALL";
+  CLOSURE = _"CLOSURE";
+  BREAK = _"BREAK";
+  RETURN = _"RETURN";
+  TONUMBER = _"TONUMBER";
+}
 local metatable = { __index = class }
 
-function class:MOVE(...)
-  local stack = self.stack
-  local codes = stack[#stack]
-  codes[#codes + 1] = { [0] = "MOVE", ... }
+function class:LOOP()
+  local s = self.stack
+  s[#s + 1] = { [0] = "LOOP" }
+  return self
+end
+
+function class:LOOP_END()
+  pop(self, "LOOP")
+  return self
+end
+
+function class:COND_IF(...)
+  local s = self.stack
+  local n = #s
+  s[n + 1] = { [0] = "COND", { "IF", ... } }
+  s[n + 2] = { [0] = "BLOCK" }
+  return self
+end
+
+function class:COND_ELSE()
+  pop(self, "BLOCK")
+  local s = self.stack
+  s[#s + 1] = { [0] = "BLOCK" }
+  return self
+end
+
+function class:COND_END()
+  pop(self, "BLOCK")
+  pop(self, "COND")
   return self
 end
 

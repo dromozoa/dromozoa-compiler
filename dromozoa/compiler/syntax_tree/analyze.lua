@@ -76,8 +76,10 @@ local function ref_label(node)
   return nil, ("no visible label %q for <goto>"):format(source), node.i
 end
 
-local function ref_constant(node, type)
-  local source = symbol_value(node)
+local function ref_constant(node, type, source)
+  if not source then
+    source = symbol_value(node)
+  end
   local proto = attr(node, "proto")
 
   local constants = proto.constants
@@ -592,9 +594,27 @@ local function resolve_vars(self, node, symbol_table)
     node[2].def = node[1].var
   elseif symbol == symbol_table["for"] then
     if n == 4 then -- numerical for without step
-      node.vars = { assign_var(node, "B"), assign_var(node, "B") }
-    else -- numerical for with step or generic for
-      node.vars = { assign_var(node, "B"), assign_var(node, "B"), assign_var(node, "B") }
+      node.vars = {
+        assign_var(node, "B"); -- var
+        assign_var(node, "B"); -- limit
+        ref_constant(node, "integer", "1")[1]; -- step
+        assign_var(node);
+      }
+    elseif n == 5 then -- numerical for with step
+      node.vars = {
+        assign_var(node, "B"); -- var
+        assign_var(node, "B"); -- limit
+        assign_var(node, "B"); -- step
+        assign_var(node);
+        ref_constant(node, "integer", "0")[1];
+      }
+    else -- generic for
+      node.vars = {
+        assign_var(node, "B"); -- var
+        assign_var(node, "B"); -- limit
+        assign_var(node, "B"); -- step
+        assign_var(node);
+      }
       if n == 3 then -- generic for
         attr(node, "proto").T = true
       end
