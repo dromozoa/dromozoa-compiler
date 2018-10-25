@@ -265,7 +265,6 @@ function compile_proto(self, out, name)
     for i = 1, n do
       local upvalue = upvalues[i]
       local var = upvalue[2]
-      assert(var:find "^[ABU]%d+$")
       local key = var:sub(1, 1)
       if key == "U" then
         local index = var:sub(2)
