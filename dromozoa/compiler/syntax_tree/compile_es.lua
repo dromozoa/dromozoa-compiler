@@ -198,11 +198,11 @@ function compile_code(self, out, code)
     elseif name == "CLOSURE" then
       compile_proto(self, out, code[1])
     elseif name == "LABEL" then
-      out:write(("%s:\n"):format(code[1]))
+      out:write(("case %s:\n"):format(code[1]))
     elseif name == "BREAK" then
       out:write "break;\n"
     elseif name == "GOTO" then
-      out:write(("// GOTO %s\n"):format(code[1]))
+      out:write(("L = %s; continue;\n"):format(code[1]))
     else
       templates[name](out, code)
     end
@@ -295,7 +295,25 @@ function compile_proto(self, out, name)
     out:write "let T;\n"
   end
 
+  local emulate_goto = proto["goto"]
+  if emulate_goto then
+    local labels = proto.labels
+    for i = 1, #labels do
+      out:write(("const %s = %d;\n"):format(labels[i][1], i))
+    end
+    out:write "let L = 0;\n"
+    out:write "for (;;) {\n"
+    out:write "switch (L) {\n"
+    out:write "case 0:\n"
+  end
+
   compile_code(self, out, proto.code)
+
+  if emulate_goto then
+    out:write "}\n"
+    out:write "return;\n"
+    out:write "}\n"
+  end
 
   out:write "}}};\n"
 end

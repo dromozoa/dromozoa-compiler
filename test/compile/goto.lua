@@ -18,14 +18,19 @@
 local i = 1
 
 ::BEGIN::
+print("label BEGIN", i)
 
 if i > 10 then
+  print("goto END", i)
   goto END
 end
 
 i = i + 1
+print("goto BEGIN", i)
 goto BEGIN
 
 ::NOT_USED::
+print("label NOT_USED", i)
 
 ::END::
+print("label END", i)
