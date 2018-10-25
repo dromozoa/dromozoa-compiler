@@ -1,0 +1,60 @@
+@import url('https://fonts.googleapis.com/css?family=Roboto+Mono');
+
+body {
+  margin: 0;
+  font-family: 'Roboto Mono', monospace;
+  white-space: pre;
+}
+
+text {
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+.source {
+  position: absolute;
+  margin: 0 0.5rem;
+}
+
+.source span {
+  transition: background-color 400ms;
+}
+
+.source span.active {
+  background-color: #FF0;
+  transition: background-color 400ms;
+}
+
+.tree {
+  background-color: rgba(0,0,0,0.125);
+  position: fixed;
+  right: 0;
+}
+
+.tree svg {
+  display: block;
+}
+
+.u_paths {
+  fill: #FFF;
+  stroke: #000;
+}
+
+.u_paths path {
+  transition: fill 400ms;
+}
+
+.u_paths path.active {
+  fill: #FF0;
+  transition: fill 400ms;
+}
+
+.u_texts {
+  fill: #000;
+  stroke: none;
+}
+
+.e_paths {
+  fill: none;
+  stroke: #000;
+}

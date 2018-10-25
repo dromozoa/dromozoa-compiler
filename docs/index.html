@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<title>dromozoa-compiler</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/2.10.0/github-markdown.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.9.0/katex.min.css">
+<style>
+.markdown-body {
+  box-sizing: border-box;
+  min-width: 200px;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 45px;
+}
+@media (max-width: 767px) {
+  .markdown-body {
+    padding: 15px;
+  }
+}
+</style>
+</head>
+<body>
+<div class="markdown-body">
+
+<h1>dromozoa-compiler</h1>
+
+<h2>Name</h2>
+
+<table>
+  <tr>
+    <th>Name</th>
+    <th>Mode</th>
+    <th>Description</th>
+  </tr>
+  <tr>
+    <td><code>Pi</code></td>
+    <td>read only</td>
+    <td>proto</td>
+  </tr>
+  <tr>
+    <td><code>Li</code></td>
+    <td>read only</td>
+    <td>label</td>
+  </tr>
+  <tr>
+    <td><code>Ki</code></td>
+    <td>read only</td>
+    <td>constant</td>
+  </tr>
+  <tr>
+    <td><code>Ui</code></td>
+    <td></td>
+    <td>upvalue</td>
+  </tr>
+  <tr>
+    <td><code>Ai</code></td>
+    <td></td>
+    <td>parameter</td>
+  </tr>
+  <tr>
+    <td><code>Bi</code></td>
+    <td></td>
+    <td>named register</td>
+  </tr>
+  <tr>
+    <td><code>Ci</code></td>
+    <td></td>
+    <td>unnamed register</td>
+  </tr>
+  <tr>
+    <td><code>V</code>, <code>Vi</code></td>
+    <td>read only</td>
+    <td>vararg</td>
+  </tr>
+  <tr>
+    <td><code>T</code>, <code>Ti</code></td>
+    <td>read only</td>
+    <td>results</td>
+  </tr>
+  <tr>
+    <td><code>NIL</code></td>
+    <td>read only</td>
+    <td>nil</td>
+  </tr>
+  <tr>
+    <td><code>FALSE</code></td>
+    <td>read only</td>
+    <td>false</td>
+  </tr>
+  <tr>
+    <td><code>TRUE</code></td>
+    <td>read only</td>
+    <td>true</td>
+  </tr>
+</table>
+
+<h2>Transpilable Lua</h2>
+
+<h3>チャンク</h3>
+
+<blockquote cite="https://www.lua.org/manual/5.3/manual.html#3.3.2">
+<p>
+Lua handles a chunk as the body of an anonymous function with a variable number of arguments.
+</p>
+</blockquote>
+
+<p>
+ホスト言語のために、チャンクになんらかの識別子を与える。
+C++では<code>DROMOZOA_EXPORT</code>マクロで識別子を与える。
+ECMAScriptでは<code>DROMOZOA_EXPORT</code>グローバル変数で識別子を与える。
+</p>
+
+<h3>関数</h3>
+
+<h4>可変長引数</h4>
+
+<p>
+C++ではvariadic templatesで実現できる。
+ECMAScriptではrest parameterで実現できる。
+</p>
+
+<h4>可変長返り値</h4>
+
+<p>
+C++では<code>std::tuple</code>で値を返し、<code>std::tie</code>で代入できる。
+コンパイル時に呼び出し側が要求する返り値の長さが決まる場合、これをテンプレート引数として与えることにする。
+返り値の長さが決まらない場合、<code>std::vector</code>を使うことにする。
+ECMAScriptでは配列で値を返し、Destructuring Assignmentで代入できる。
+</p>
+
+<h4>上位値</h4>
+
+<p>
+C++もECMAScriptもクロージャを用いて実現できる。
+上位値の扱いは効率的な実装が可能かどうかに影響する。
+</p>
+
+<ol>
+  <li>関数が上位値を持たない場合</li>
+  <li>関数が上位値の参照だけを行い、上位値に代入しない場合</li>
+  <li>関数が上位値に代入を行う場合</li>
+</ol>
+
+<h3>Native Components</h3>
+
+<dl>
+  <dt>native number</dt>
+  <dd>
+    IEEE 754倍精度浮動小数点数で表現される数値型。
+  </dd>
+  <dt>native array</dt>
+  <dd>
+    伸長可能な配列。
+  </dd>
+  <dt>native byte array</dt>
+  <dd>
+    効率のために特殊化したバイト配列。
+  </dd>
+  <dt>native string</dt>
+  <dd>
+    処理系によってUTF-8またはUTF-16で表現されるUnicode文字列。
+  </dd>
+  <dt>native object</dt>
+  <dd>
+    native stringをキーとする連想配列。
+  </dd>
+  <dt>native IO</dt>
+  <dd>
+    バイト列の低レベル入出力。
+  </dd>
+</dl>
+
+<h2>Runtime</h2>
+
+<h3>Embedded Data Types</h3>
+
+<ul>
+  <li>boolean</li>
+  <li>number</li>
+  <li>array
+    <ul>
+      <li>byte_array</li>
+    </ul>
+  </li>
+  <li>tuple</li>
+</ul>
+
+<h3>Lua 5.3 basic types</h3>
+
+<pre>
+#define LUA_TNIL		0
+#define LUA_TBOOLEAN		1
+#define LUA_TLIGHTUSERDATA	2
+#define LUA_TNUMBER		3
+#define LUA_TSTRING		4
+#define LUA_TTABLE		5
+#define LUA_TFUNCTION		6
+#define LUA_TUSERDATA		7
+#define LUA_TTHREAD		8
+</pre>
+
+<h2>カメラの移動とズーム</h2>
+
+<h3></h3>
+
+<p>
+モデル座標系の\((c_x, c_y)\)をビュー\((w, h)\)の中心にするような移動を考える。
+\[\begin{aligned}
+  \bm{M}
+  &amp;=
+  \begin{pmatrix}
+    s &amp; 0 &amp; x \\
+    0 &amp; s &amp; y \\
+    0 &amp; 0 &amp; 1 \\
+  \end{pmatrix} \\
+
+  \begin{pmatrix}
+    w/2 \\
+    h/2 \\
+    1 \\
+  \end{pmatrix}
+  &amp;=
+  \bm{M}
+  \begin{pmatrix}
+    c_x \\
+    c_y \\
+    1 \\
+  \end{pmatrix} \\
+
+  x &amp;= w/2 - s c_x \\
+  y &amp;= h/2 - s c_y \\
+\end{aligned}\]
+</p>
+
+<h3>ズーム</h3>
+
+<p>
+現在の変換行列が\(\bm{M}_1\)で与えられているとき、
+ビュー座標系の\((v_x, v_y)\)を中心にしたズームを考える。
+\[\begin{aligned}
+  \bm{M}_1
+  &amp;=
+  \begin{pmatrix}
+    s_1 &amp; 0   &amp; x_1 \\
+    0   &amp; s_1 &amp; y_1 \\
+    0   &amp; 0   &amp; 1 \\
+  \end{pmatrix} \\
+
+  \bm{M}_1^{-1}
+  &amp;=
+  \frac{1}{s_1}
+  \begin{pmatrix}
+    1 &amp; 0 &amp; -x_1 \\
+    0 &amp; 1 &amp; -y_1 \\
+    0 &amp; 0 &amp;  s_1 \\
+  \end{pmatrix} \\
+
+  \begin{pmatrix}
+    m_x \\
+    m_y \\
+    1 \\
+  \end{pmatrix}
+  &amp;=
+  \bm{M}_1^{-1}
+  \begin{pmatrix}
+    v_x \\
+    v_y \\
+    1 \\
+  \end{pmatrix} \\
+  &amp;=
+  \frac{1}{s_1}
+  \begin{pmatrix}
+    v_x - x_1 \\
+    v_y - y_1 \\
+    s_1 \\
+  \end{pmatrix} \\
+\end{aligned}\]
+モデル座標系で\((x, y)\)をズームの中心に移動する変換行列\(\bm{V}\)、
+ズームを行う変換行列\(\bm{U}\)、
+元の場所に移動する変換行列\(\bm{T}\)を用いて
+\[\begin{aligned}
+  \bm{V}
+  &amp;=
+  \begin{pmatrix}
+    1 &amp; 0 &amp; -m_x \\
+    0 &amp; 1 &amp; -m_y \\
+    0 &amp; 0 &amp;  1 \\
+  \end{pmatrix} \\
+
+  \bm{U}
+  &amp;=
+  \begin{pmatrix}
+    s_2 &amp; 0   &amp; 0 \\
+    0   &amp; s_2 &amp; 0 \\
+    0   &amp; 0   &amp;  1 \\
+  \end{pmatrix} \\
+
+  \bm{T}
+  &amp;=
+  \begin{pmatrix}
+    1 &amp; 0 &amp; v_x \\
+    0 &amp; 1 &amp; v_y \\
+    0 &amp; 0 &amp; 1 \\
+  \end{pmatrix} \\
+
+  \bm{M}_2
+  &amp;= \bm{T} \bm{U} \bm{V} \\
+  &amp;=
+  \begin{pmatrix}
+    s_2 &amp; 0   &amp; v_x - m_x s_2 \\
+    0   &amp; s_2 &amp; v_y - m_y s_2 \\
+    0   &amp; 0   &amp; 1 \\
+  \end{pmatrix} \\
+  &amp;=
+  \begin{pmatrix}
+    s_2 &amp; 0   &amp; x_2 \\
+    0   &amp; s_2 &amp; y_2 \\
+    0   &amp; 0   &amp; 1 \\
+  \end{pmatrix} \\
+
+  x_2
+  &amp;= v_x - s_2 m_x \\
+  &amp;= v_x + \frac{s_2}{s_1}(x_1 - v_x) \\
+
+  y_2
+  &amp;= v_y - s_2 m_y \\
+  &amp;= v_y + \frac{s_2}{s_1}(y_1 - v_y) \\
+\end{aligned}\]
+</p>
+
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.9.0/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.9.0/contrib/auto-render.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  renderMathInElement(document.body);
+});
+</script>
+</body>
+</html>
