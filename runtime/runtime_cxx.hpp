@@ -101,15 +101,12 @@ namespace dromozoa {
     using string_ptr = std::shared_ptr<const string_t>;
     using table_t = std::map<value_t, value_t>;
     using table_ptr = std::shared_ptr<table_t>;
-
-
     using function_ptr = std::shared_ptr<const function_t>;
 
     class value_t {
     public:
       value_t() noexcept {
         type_ = type_t::nil;
-        number_ = 42; // DEBUG
       }
 
       value_t(const value_t& that) noexcept {
@@ -354,7 +351,6 @@ namespace dromozoa {
         A = std::make_shared<array_t>(argc_);
         for (; i < argc_; ++i) {
           (*A)[i] = args[i];
-          // A->push_back(args[i]);
         }
       }
       if (vararg_) {
