@@ -50,16 +50,10 @@ namespace dromozoa {
     using array_t = std::vector<value_t>;
     using array_ptr = std::shared_ptr<array_t>;
 
-    class result_t {
+    class tuple_t {
     public:
-      result_t(std::initializer_list<value_t> values)
-        : values_(values) {}
-
-      result_t(std::initializer_list<value_t> values, array_ptr extra)
+      tuple_t(std::initializer_list<value_t> values, array_ptr extra = nullptr)
         : values_(values), extra_(extra) {}
-
-      result_t(array_ptr extra)
-        : extra_(extra) {}
 
       std::size_t size() const {
         if (extra_) {
@@ -69,7 +63,10 @@ namespace dromozoa {
         }
       }
 
+      const value_t& operator[](std::size_t index) const;
+
       array_ptr make_array() const;
+
     private:
       std::initializer_list<value_t> values_;
       array_ptr extra_;
@@ -77,7 +74,7 @@ namespace dromozoa {
 
     class function_t {
     public:
-      using closure_t = std::function<result_t(array_ptr, array_ptr)>;
+      using closure_t = std::function<tuple_t(array_ptr, array_ptr)>;
 
       template <class T>
       function_t(std::size_t argc, bool vararg, const T& closure)
@@ -91,6 +88,8 @@ namespace dromozoa {
       function_t(function_t&&) = delete;
       function_t& operator=(const function_t&) = delete;
       function_t& operator=(function_t&&) = delete;
+
+      tuple_t call(std::initializer_list<value_t> values, array_ptr extra = nullptr);
 
     private:
       std::size_t argc_;
@@ -110,83 +109,31 @@ namespace dromozoa {
     public:
       value_t() noexcept {
         type_ = type_t::nil;
+        number_ = 42; // DEBUG
       }
 
       value_t(const value_t& that) noexcept {
-        type_ = that.type_;
-        switch (type_) {
-          case type_t::nil:
-            break;
-          case type_t::boolean:
-            boolean_ = that.boolean_;
-            break;
-          case type_t::number:
-            number_ = that.number_;
-            break;
-          case type_t::string:
-            new (&string_) string_ptr(that.string_);
-            break;
-          case type_t::table:
-            new (&table_) table_ptr(that.table_);
-            break;
-          case type_t::function:
-            new (&function_) function_ptr(that.function_);
-            break;
-        }
+        construct(that);
       }
 
       value_t(value_t&& that) noexcept {
-        type_ = that.type_;
-        that.type_ = type_t::nil;
-        switch (type_) {
-          case type_t::nil:
-            break;
-          case type_t::boolean:
-            boolean_ = that.boolean_;
-            break;
-          case type_t::number:
-            number_ = that.number_;
-            break;
-          case type_t::string:
-            new (&string_) string_ptr(std::move(that.string_));
-            break;
-          case type_t::table:
-            new (&table_) table_ptr(std::move(that.table_));
-            break;
-          case type_t::function:
-            new (&function_) function_ptr(std::move(that.function_));
-            break;
-        }
+        construct(that);
       }
 
       value_t& operator=(const value_t& that) noexcept {
-        value_t(that).swap(*this);
+        destruct();
+        construct(that);
         return *this;
       }
 
       value_t& operator=(value_t&& that) noexcept {
-        value_t(std::move(that)).swap(*this);
+        destruct();
+        construct(that);
         return *this;
       }
 
       ~value_t() {
-        switch (type_) {
-          case type_t::nil:
-            break;
-          case type_t::boolean:
-            break;
-          case type_t::number:
-            break;
-          case type_t::string:
-            string_.~shared_ptr();
-            break;
-          case type_t::table:
-            table_.~shared_ptr();
-            break;
-          case type_t::function:
-            function_.~shared_ptr();
-            break;
-        }
+        destruct();
       }
 
       void swap(value_t& that) noexcept {
@@ -289,6 +236,74 @@ namespace dromozoa {
       }
 
     private:
+      void construct(const value_t& that) noexcept {
+        type_ = that.type_;
+        switch (type_) {
+          case type_t::nil:
+            break;
+          case type_t::boolean:
+            boolean_ = that.boolean_;
+            break;
+          case type_t::number:
+            number_ = that.number_;
+            break;
+          case type_t::string:
+            new (&string_) string_ptr(that.string_);
+            break;
+          case type_t::table:
+            new (&table_) table_ptr(that.table_);
+            break;
+          case type_t::function:
+            new (&function_) function_ptr(that.function_);
+            break;
+        }
+      }
+
+      void construct(value_t&& that) noexcept {
+        type_ = that.type_;
+        that.type_ = type_t::nil;
+        switch (type_) {
+          case type_t::nil:
+            break;
+          case type_t::boolean:
+            boolean_ = that.boolean_;
+            break;
+          case type_t::number:
+            number_ = that.number_;
+            break;
+          case type_t::string:
+            new (&string_) string_ptr(std::move(that.string_));
+            break;
+          case type_t::table:
+            new (&table_) table_ptr(std::move(that.table_));
+            break;
+          case type_t::function:
+            new (&function_) function_ptr(std::move(that.function_));
+            break;
+        }
+      }
+
+      void destruct() noexcept {
+        switch (type_) {
+          case type_t::nil:
+            break;
+          case type_t::boolean:
+            break;
+          case type_t::number:
+            break;
+          case type_t::string:
+            string_.~shared_ptr();
+            break;
+          case type_t::table:
+            table_.~shared_ptr();
+            break;
+          case type_t::function:
+            function_.~shared_ptr();
+            break;
+        }
+        type_ = type_t::nil;
+      }
+
       type_t type_;
       union {
         bool boolean_;
@@ -299,7 +314,25 @@ namespace dromozoa {
       };
     };
 
-    inline array_ptr result_t::make_array() const {
+    static const value_t NIL;
+    static const value_t FALSE = value_t::boolean(false);
+    static const value_t TRUE = value_t::boolean(true);
+
+    inline const value_t& tuple_t::operator[](std::size_t index) const {
+      std::size_t size = values_.size();
+      if (index < size) {
+        return *(values_.begin() + index);
+      }
+      if (extra_) {
+        index -= size;
+        if (index < extra_->size()) {
+          return (*extra_)[index];
+        }
+      }
+      return NIL;
+    }
+
+    inline array_ptr tuple_t::make_array() const {
       array_ptr array = std::make_shared<array_t>();
       for (const value_t& value : values_) {
         array->push_back(value);
@@ -310,6 +343,27 @@ namespace dromozoa {
         }
       }
       return array;
+    }
+
+    inline tuple_t function_t::call(std::initializer_list<value_t> values, array_ptr extra) {
+      tuple_t args(values, extra);
+      array_ptr A;
+      array_ptr V;
+      std::size_t i = 0;
+      if (argc_) {
+        A = std::make_shared<array_t>(argc_);
+        for (; i < argc_; ++i) {
+          (*A)[i] = args[i];
+          // A->push_back(args[i]);
+        }
+      }
+      if (vararg_) {
+        V = std::make_shared<array_t>();
+        for (; i < args.size(); ++i) {
+          V->push_back(args[i]);
+        }
+      }
+      return closure_(A, V);
     }
   }
 }

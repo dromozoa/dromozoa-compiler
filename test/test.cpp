@@ -20,21 +20,40 @@ int main(int, char*[]) {
   value_t t2 = t1;
   std::cout << t2 << "\n";
 
-  value_t f = value_t::function(3, false, [=](array_ptr args, array_ptr) -> result_t {
+  value_t f = value_t::function(3, false, [=](array_ptr args, array_ptr) -> tuple_t {
     std::cout << "!!!\n";
     return { { value_t::number(1.5) }, args };
   });
   std::cout << f << "\n";
 
   array_ptr a = std::make_shared<array_t>();
-  a->push_back(value_t::boolean(true));
-  a->push_back(value_t::boolean(false));
-  a->push_back(value_t());
-  result_t r{ { value_t::number(42) }, a };
-  // result_t r{ value_t::number(42) };
-  // result_t r{ a };
-  std::cout << r.size() << "\n";
+  a->push_back(TRUE);
+  a->push_back(NIL);
+  a->push_back(FALSE);
+  tuple_t r1({ value_t::number(42) }, a);
+  tuple_t r2({ value_t::number(42) });
+  tuple_t r3({}, a);
+  std::cout << r1.size() << "\n";
+  std::cout << r2.size() << "\n";
+  std::cout << r3.size() << "\n";
 
+  std::cout << r1[0] << "\n";
+  std::cout << r1[1] << "\n";
+  std::cout << r1[2] << "\n";
+  std::cout << r1[3] << "\n";
+  std::cout << r1[4] << "\n";
+
+  function_t g(3, true, [=](array_ptr A, array_ptr V) -> tuple_t {
+    for (const value_t& a : *A) {
+      std::cout << "A " << a << "\n";
+    }
+    for (const value_t& v : *V) {
+      std::cout << "V " << v << "\n";
+    }
+    return { { TRUE }, V };
+  });
+
+  tuple_t result = g.call({ value_t::number(1), value_t::number(2), value_t::number(3), value_t::number(4), value_t::number(5) });
 
 
 
