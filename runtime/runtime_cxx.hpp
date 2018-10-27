@@ -205,8 +205,44 @@ namespace dromozoa {
         return out;
       }
 
-      bool operator<(const value_t& rhs) {
-        return type_ < rhs.type_;
+      bool operator==(const value_t& that) {
+        if (type_ != that.type_) {
+          return false;
+        }
+        switch (type_) {
+          case type_t::nil:
+            return true;
+          case type_t::boolean:
+            return boolean_ == that.boolean_;
+          case type_t::number:
+            return number_ == that.number_;
+          case type_t::string:
+            return *string_ == *that.string_;
+          case type_t::table:
+            return table_ == that.table_;
+          case type_t::function:
+            return function_ == that.function_;
+        }
+      }
+
+      bool operator<(const value_t& that) {
+        if (type_ != that.type_) {
+          return type_ < that.type_;
+        }
+        switch (type_) {
+          case type_t::nil:
+            return false;
+          case type_t::boolean:
+            return boolean_ < that.boolean_;
+          case type_t::number:
+            return number_ < that.number_;
+          case type_t::string:
+            return *string_ < *that.string_;
+          case type_t::table:
+            return table_ < that.table_;
+          case type_t::function:
+            return function_ < that.function_;
+        }
       }
 
     private:

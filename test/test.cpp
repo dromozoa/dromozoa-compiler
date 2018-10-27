@@ -56,6 +56,5 @@ int main(int, char*[]) {
   tuple_t result = g.call({ value_t::number(1), value_t::number(2), value_t::number(3), value_t::number(4), value_t::number(5) });
 
 
-
   return 0;
 }
