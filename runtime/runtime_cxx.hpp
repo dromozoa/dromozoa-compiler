@@ -89,7 +89,7 @@ namespace dromozoa {
       function_t& operator=(const function_t&) = delete;
       function_t& operator=(function_t&&) = delete;
 
-      tuple_t call(std::initializer_list<value_t> values, array_ptr extra = nullptr);
+      tuple_t call(const std::initializer_list<value_t>& values, array_ptr extra = nullptr);
 
     private:
       std::size_t argc_;
@@ -354,7 +354,7 @@ namespace dromozoa {
       return array;
     }
 
-    inline tuple_t function_t::call(std::initializer_list<value_t> values, array_ptr extra) {
+    inline tuple_t function_t::call(const std::initializer_list<value_t>& values, array_ptr extra) {
       tuple_t args(values, extra);
       array_ptr A;
       array_ptr V;
