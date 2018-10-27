@@ -31,7 +31,7 @@ int main(int, char*[]) {
         << g << "\n";
 
     assert(a == a);
-    assert(!(b == c));
+    assert(b != c);
     assert(f == f);
     assert(f == g);
   }
@@ -40,7 +40,7 @@ int main(int, char*[]) {
     value_t a = value_t::table();
     value_t b = value_t::table();
     assert(a == a);
-    assert(!(a == b));
+    assert(a != b);
 
   }
 

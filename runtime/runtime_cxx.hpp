@@ -148,7 +148,7 @@ namespace dromozoa {
         return *this;
       }
 
-      ~value_t() {
+      ~value_t() noexcept {
         destruct();
       }
 
@@ -242,6 +242,10 @@ namespace dromozoa {
           case type_t::function:
             return function_ == that.function_;
         }
+      }
+
+      bool operator!=(const value_t& that) const noexcept {
+        return !operator==(that);
       }
 
       bool operator<(const value_t& that) const noexcept {
@@ -373,7 +377,7 @@ namespace dromozoa {
       return array;
     }
 
-    const value_t& table_t::gettable(const value_t& index) const noexcept {
+    inline const value_t& table_t::gettable(const value_t& index) const noexcept {
       const auto i = map_.find(index);
       if (i == map_.end()) {
         return NIL;
@@ -381,7 +385,7 @@ namespace dromozoa {
       return i->second;
     }
 
-    void table_t::settable(const value_t& index, const value_t& value) {
+    inline void table_t::settable(const value_t& index, const value_t& value) {
       map_[index] = value;
     }
 
