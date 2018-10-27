@@ -52,10 +52,10 @@ namespace dromozoa {
 
     class tuple_t {
     public:
-      tuple_t(std::initializer_list<value_t> values, array_ptr extra = nullptr)
+      tuple_t(const std::initializer_list<value_t>& values, array_ptr extra = nullptr)
         : values_(values), extra_(extra) {}
 
-      std::size_t size() const {
+      std::size_t size() const noexcept {
         if (extra_) {
           return values_.size() + extra_->size();
         } else {
@@ -63,7 +63,7 @@ namespace dromozoa {
         }
       }
 
-      const value_t& operator[](std::size_t index) const;
+      const value_t& operator[](std::size_t index) const noexcept;
 
       array_ptr make_array() const;
 
@@ -131,29 +131,6 @@ namespace dromozoa {
 
       ~value_t() {
         destruct();
-      }
-
-      void swap(value_t& that) noexcept {
-        std::swap(type_, that.type_);
-        switch (type_) {
-          case type_t::nil:
-            break;
-          case type_t::boolean:
-            std::swap(boolean_, that.boolean_);
-            break;
-          case type_t::number:
-            std::swap(number_, that.number_);
-            break;
-          case type_t::string:
-            std::swap(string_, that.string_);
-            break;
-          case type_t::table:
-            std::swap(table_, that.table_);
-            break;
-          case type_t::function:
-            std::swap(function_, that.function_);
-            break;
-        }
       }
 
       static value_t boolean(bool boolean) {
@@ -298,7 +275,6 @@ namespace dromozoa {
             function_.~shared_ptr();
             break;
         }
-        type_ = type_t::nil;
       }
 
       type_t type_;
@@ -315,7 +291,7 @@ namespace dromozoa {
     static const value_t FALSE = value_t::boolean(false);
     static const value_t TRUE = value_t::boolean(true);
 
-    inline const value_t& tuple_t::operator[](std::size_t index) const {
+    inline const value_t& tuple_t::operator[](std::size_t index) const noexcept {
       std::size_t size = values_.size();
       if (index < size) {
         return *(values_.begin() + index);
