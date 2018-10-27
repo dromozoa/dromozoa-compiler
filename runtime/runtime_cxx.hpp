@@ -46,9 +46,15 @@ namespace dromozoa {
     };
 
     class value_t;
-
     using array_t = std::vector<value_t>;
     using array_ptr = std::shared_ptr<array_t>;
+
+    using string_t = std::string;
+    using string_ptr = std::shared_ptr<string_t>;
+    class table_t;
+    using table_ptr = std::shared_ptr<table_t>;
+    class function_t;
+    using function_ptr = std::shared_ptr<function_t>;
 
     class tuple_t {
     public:
@@ -70,6 +76,15 @@ namespace dromozoa {
     private:
       std::initializer_list<value_t> values_;
       array_ptr extra_;
+    };
+
+    class table_t {
+    public:
+      using map_t = std::map<value_t, value_t>;
+
+    private:
+      map_t map_;
+      table_ptr metatable_;
     };
 
     class function_t {
@@ -96,12 +111,6 @@ namespace dromozoa {
       bool vararg_;
       closure_t closure_;
     };
-
-    using string_t = std::string;
-    using string_ptr = std::shared_ptr<const string_t>;
-    using table_t = std::map<value_t, value_t>;
-    using table_ptr = std::shared_ptr<table_t>;
-    using function_ptr = std::shared_ptr<const function_t>;
 
     class value_t {
     public:
@@ -150,7 +159,7 @@ namespace dromozoa {
       static value_t string(const char* data, std::size_t size) {
         value_t self;
         self.type_ = type_t::string;
-        new (&self.string_) string_ptr(std::make_shared<const string_t>(data, size));
+        new (&self.string_) string_ptr(std::make_shared<string_t>(data, size));
         return self;
       }
 
@@ -165,7 +174,7 @@ namespace dromozoa {
       static value_t function(std::size_t argc, bool vararg, const T& closure) {
         value_t self;
         self.type_ = type_t::function;
-        new (&self.function_) function_ptr(std::make_shared<const function_t>(argc, vararg, closure));
+        new (&self.function_) function_ptr(std::make_shared<function_t>(argc, vararg, closure));
         return self;
       }
 
@@ -173,7 +182,7 @@ namespace dromozoa {
       static value_t function(std::size_t argc, bool vararg, T&& closure) {
         value_t self;
         self.type_ = type_t::function;
-        new (&self.function_) function_ptr(std::make_shared<const function_t>(argc, vararg, std::move(closure)));
+        new (&self.function_) function_ptr(std::make_shared<function_t>(argc, vararg, std::move(closure)));
         return self;
       }
 
