@@ -70,7 +70,6 @@ namespace dromozoa {
       }
 
       const value_t& operator[](std::size_t index) const noexcept;
-
       array_ptr make_array() const;
 
     private:
@@ -81,6 +80,17 @@ namespace dromozoa {
     class table_t {
     public:
       using map_t = std::map<value_t, value_t>;
+
+      table_ptr getmetatable() const noexcept {
+        return metatable_;
+      }
+
+      void setmetatable(table_ptr metatable) noexcept {
+        metatable_ = metatable;
+      }
+
+      const value_t& gettable(const value_t& index) const noexcept;
+      void settable(const value_t& index, const value_t& value);
 
     private:
       map_t map_;
@@ -214,7 +224,7 @@ namespace dromozoa {
         return out;
       }
 
-      bool operator==(const value_t& that) {
+      bool operator==(const value_t& that) const noexcept {
         if (type_ != that.type_) {
           return false;
         }
@@ -234,7 +244,7 @@ namespace dromozoa {
         }
       }
 
-      bool operator<(const value_t& that) {
+      bool operator<(const value_t& that) const noexcept {
         if (type_ != that.type_) {
           return type_ < that.type_;
         }
@@ -361,6 +371,18 @@ namespace dromozoa {
         }
       }
       return array;
+    }
+
+    const value_t& table_t::gettable(const value_t& index) const noexcept {
+      const auto i = map_.find(index);
+      if (i == map_.end()) {
+        return NIL;
+      }
+      return i->second;
+    }
+
+    void table_t::settable(const value_t& index, const value_t& value) {
+      map_[index] = value;
     }
 
     inline tuple_t function_t::call(const std::initializer_list<value_t>& values, array_ptr extra) {
