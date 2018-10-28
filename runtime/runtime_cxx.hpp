@@ -50,7 +50,7 @@ namespace dromozoa {
       function,
     };
 
-    using error_t = std::runtime_error;
+    void error(const char* message);
 
     class value_t;
     using array_t = std::vector<value_t>;
@@ -92,7 +92,6 @@ namespace dromozoa {
     public:
       value_t() noexcept {
         type_ = type_t::nil;
-        number_ = 42;
       }
 
       value_t(const value_t& that) noexcept {
@@ -190,7 +189,6 @@ namespace dromozoa {
       const value_t& getmetafield(const char* event) const noexcept;
 
       const table_ptr getmetatable() const noexcept {
-        // TODO return string module if is_string()
         if (!is_table()) {
           return nullptr;
         }
@@ -199,14 +197,17 @@ namespace dromozoa {
 
       void setmetatable(const value_t& metatable) {
         if (!is_table()) {
-          throw error_t("table expected");
+          error("table expected");
+          return;
         }
         if (!metatable.is_nil() && !metatable.is_table()) {
-          throw error_t("nil or table expected");
+          error("nil or table expected");
+          return;
         }
         if (table_->metatable_) {
           if (!table_->metatable_->getmetafield("__metatable").is_nil()) {
-            throw error_t("cannot change a protected metatable");
+            error("cannot change a protected metatable");
+            return;
           }
         }
         if (metatable.is_nil()) {
@@ -246,7 +247,10 @@ namespace dromozoa {
             return *string_;
           case type_t::table:
             {
-              // TODO impl __tostring
+              const auto& field = getmetafield("__tostring");
+              if (!field.is_nil()) {
+                return field.call1({*this}).tostring();
+              }
               std::ostringstream out;
               out << "table: " << table_.get();
               return out.str();
@@ -377,7 +381,6 @@ namespace dromozoa {
       }
 
       type_t type_;
-      // TODO const flag
       union {
         bool boolean_;
         double number_;
@@ -390,6 +393,14 @@ namespace dromozoa {
     static const value_t NIL;
     static const value_t FALSE = value_t::boolean(false);
     static const value_t TRUE = value_t::boolean(true);
+
+    inline const value_t& get(array_ptr array, std::size_t index) {
+      if (index < array->size()) {
+        return (*array)[index];
+      } else {
+        return NIL;
+      }
+    }
 
     inline array_ptr newarray(const std::initializer_list<value_t>& values, array_ptr array = nullptr) {
       array_ptr result = std::make_shared<array_t>();
@@ -404,12 +415,18 @@ namespace dromozoa {
       return result;
     }
 
-    inline const value_t& get(array_ptr array, std::size_t index) {
-      if (index < array->size()) {
-        return (*array)[index];
-      } else {
-        return NIL;
+    inline array_ptr newarray(const value_t& value, const std::initializer_list<value_t>& values, array_ptr array = nullptr) {
+      array_ptr result = std::make_shared<array_t>();
+      result->push_back(value);
+      for (const auto& value : values) {
+        result->push_back(value);
       }
+      if (array) {
+        for (const auto& value : *array) {
+          result->push_back(value);
+        }
+      }
+      return result;
     }
 
     inline const value_t& table_t::getmetafield(const char* event) const noexcept {
@@ -441,12 +458,6 @@ namespace dromozoa {
       return closure_(A, V);
     }
 
-    inline value_t open_env() {
-      value_t env = value_t::table();
-
-      return env;
-    }
-
     inline const value_t& value_t::getmetafield(const char* event) const noexcept {
       if (!is_table()) {
         return NIL;
@@ -454,17 +465,26 @@ namespace dromozoa {
       return table_->getmetafield(event);
     }
 
-    array_ptr value_t::call(const std::initializer_list<value_t>& values, array_ptr array) const {
+    inline array_ptr value_t::call(const std::initializer_list<value_t>& values, array_ptr array) const {
       if (is_function()) {
         return function_->call(newarray(values, array));
       }
-      // TODO test lua5.3 behavior
       const auto& field = getmetafield("__call");
-      if (field.is_function()) {
-        // TODO more nice interface (fixed size, no allocation)
-        // return field.call({ field }, tuple_t(values, extra).make_array());
+      if (!field.is_function()) {
+        error("attempt to call a non-function value");
+        return nullptr;
       }
-      throw error_t("function expected");
+      return field.function_->call(newarray(field, values, array));
+    }
+
+    inline void error(const char* message) {
+      throw value_t::string(message, std::strlen(message));
+    }
+
+    inline value_t open_env() {
+      value_t env = value_t::table();
+
+      return env;
     }
 
 
