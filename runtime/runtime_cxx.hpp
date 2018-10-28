@@ -62,28 +62,6 @@ namespace dromozoa {
     class function_t;
     using function_ptr = std::shared_ptr<function_t>;
 
-    class tuple_t {
-    public:
-      tuple_t(const std::initializer_list<value_t>& values, array_ptr extra = nullptr)
-        : values_(values), extra_(extra) {}
-
-      std::size_t size() const noexcept {
-        if (extra_) {
-          return values_.size() + extra_->size();
-        } else {
-          return values_.size();
-        }
-      }
-
-      const value_t& operator[](std::size_t index) const noexcept;
-      array_ptr make_array() const;
-
-    private:
-      // std::initializer_list<value_t> values_;
-      std::vector<value_t> values_;
-      array_ptr extra_;
-    };
-
     class table_t {
       friend class value_t;
     public:
@@ -96,14 +74,14 @@ namespace dromozoa {
 
     class function_t {
     public:
-      using closure_t = std::function<tuple_t(array_ptr, array_ptr)>;
+      using closure_t = std::function<array_ptr(array_ptr, array_ptr)>;
       template <class T>
       function_t(std::size_t argc, bool vararg, const T& closure)
         : argc_(argc), vararg_(vararg), closure_(closure) {}
       template <class T>
       function_t(std::size_t argc, bool vararg, T&& closure)
         : argc_(argc), vararg_(vararg), closure_(std::move(closure)) {}
-      tuple_t call(const std::initializer_list<value_t>& values, array_ptr extra = nullptr) const;
+      array_ptr call(const std::initializer_list<value_t>& values, array_ptr array = nullptr) const;
     private:
       std::size_t argc_;
       bool vararg_;
@@ -245,7 +223,7 @@ namespace dromozoa {
         }
       }
 
-      tuple_t call(const std::initializer_list<value_t>& values, array_ptr extra = nullptr) const {
+      array_ptr call(const std::initializer_list<value_t>& values, array_ptr extra = nullptr) const {
         if (is_function()) {
           return function_->call(values, extra);
         }
@@ -253,7 +231,7 @@ namespace dromozoa {
         const auto& field = getmetafield("__call");
         if (field.is_function()) {
           // TODO more nice interface (fixed size, no allocation)
-          return field.call({ field }, tuple_t(values, extra).make_array());
+          // return field.call({ field }, tuple_t(values, extra).make_array());
         }
         throw error_t("function expected");
       }
@@ -262,9 +240,9 @@ namespace dromozoa {
         call(values, extra);
       }
 
-      value_t call1(const std::initializer_list<value_t>& values, array_ptr extra = nullptr) const {
-        return call(values, extra)[0];
-      }
+      // value_t call1(const std::initializer_list<value_t>& values, array_ptr extra = nullptr) const {
+      //   return (*call(values, extra))[0];
+      // }
 
       std::string tostring() const {
         switch (type_) {
@@ -431,39 +409,25 @@ namespace dromozoa {
     static const value_t FALSE = value_t::boolean(false);
     static const value_t TRUE = value_t::boolean(true);
 
+    inline array_ptr newarray(const std::initializer_list<value_t>& values, array_ptr array = nullptr) {
+      array_ptr result = std::make_shared<array_t>();
+      for (const auto& value : values) {
+        result->push_back(value);
+      }
+      if (array) {
+        for (const auto& value : *array) {
+          result->push_back(value);
+        }
+      }
+      return result;
+    }
+
     inline const value_t& get(array_ptr array, std::size_t index) {
       if (index < array->size()) {
         return (*array)[index];
       } else {
         return NIL;
       }
-    }
-
-    inline const value_t& tuple_t::operator[](std::size_t index) const noexcept {
-      std::size_t size = values_.size();
-      if (index < size) {
-        return *(values_.begin() + index);
-      }
-      if (extra_) {
-        index -= size;
-        if (index < extra_->size()) {
-          return (*extra_)[index];
-        }
-      }
-      return NIL;
-    }
-
-    inline array_ptr tuple_t::make_array() const {
-      array_ptr array = std::make_shared<array_t>();
-      for (const value_t& value : values_) {
-        array->push_back(value);
-      }
-      if (extra_) {
-        for (const value_t& value : *extra_) {
-          array->push_back(value);
-        }
-      }
-      return array;
     }
 
     inline const value_t& table_t::getmetafield(const char* event) const noexcept {
@@ -476,21 +440,21 @@ namespace dromozoa {
       return NIL;
     }
 
-    inline tuple_t function_t::call(const std::initializer_list<value_t>& values, array_ptr extra) const {
-      tuple_t args(values, extra);
+    inline array_ptr function_t::call(const std::initializer_list<value_t>& values, array_ptr extra) const {
+      const auto args = newarray(values, extra);
       array_ptr A;
       array_ptr V;
       std::size_t i = 0;
       if (argc_) {
         A = std::make_shared<array_t>(argc_);
         for (; i < argc_; ++i) {
-          (*A)[i] = args[i];
+          (*A)[i] = (*args)[i];
         }
       }
       if (vararg_) {
         V = std::make_shared<array_t>();
-        for (; i < args.size(); ++i) {
-          V->push_back(args[i]);
+        for (; i < args->size(); ++i) {
+          V->push_back((*args)[i]);
         }
       }
       return closure_(A, V);

@@ -44,7 +44,7 @@ int main(int, char*[]) {
   }
 
   {
-    value_t a = value_t::function(3, true, [&](array_ptr A, array_ptr V) -> tuple_t {
+    value_t a = value_t::function(3, true, [&](array_ptr A, array_ptr V) -> array_ptr {
       std::cout
           << (*A)[0] << " "
           << (*A)[1] << " "
@@ -53,11 +53,11 @@ int main(int, char*[]) {
           << (*V)[1] << " "
           << (*V)[2] << "\n";
       // return { value_t::number(1), value_t::number(2) };
-      return tuple_t({ value_t::number(42) }, A);
+      return newarray({ value_t::number(42) }, A);
     });
     auto r = a.call({ TRUE, TRUE, TRUE, TRUE, TRUE, TRUE }, nullptr);
-    assert(r.size() == 4);
-    assert(r[0].is_number());
+    assert(r->size() == 4);
+    assert((*r)[0].is_number());
   }
 
   return 0;
