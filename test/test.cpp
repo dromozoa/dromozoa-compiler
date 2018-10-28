@@ -55,9 +55,10 @@ int main(int, char*[]) {
       // return { value_t::number(1), value_t::number(2) };
       return newarray({ value_t::number(42) }, A);
     });
-    auto r = a.call({ TRUE, TRUE, TRUE, TRUE, TRUE, TRUE }, nullptr);
-    assert(r->size() == 4);
-    assert((*r)[0].is_number());
+    auto r = a.call1({ TRUE, TRUE, TRUE, TRUE, TRUE, TRUE }, nullptr);
+    // assert(r->size() == 4);
+    assert(r.is_number());
+    std::cout << r << "\n";
   }
 
   return 0;

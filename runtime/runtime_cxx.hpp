@@ -81,7 +81,7 @@ namespace dromozoa {
       template <class T>
       function_t(std::size_t argc, bool vararg, T&& closure)
         : argc_(argc), vararg_(vararg), closure_(std::move(closure)) {}
-      array_ptr call(const std::initializer_list<value_t>& values, array_ptr array = nullptr) const;
+      array_ptr call(array_ptr array) const;
     private:
       std::size_t argc_;
       bool vararg_;
@@ -157,13 +157,6 @@ namespace dromozoa {
         return self;
       }
 
-      static value_t string(string_t&& string) {
-        value_t self;
-        self.type_ = type_t::string;
-        new (&self.string_) string_ptr(std::make_shared<string_t>(std::move(string)));
-        return self;
-      }
-
       static value_t string(const char* data, std::size_t size) {
         value_t self;
         self.type_ = type_t::string;
@@ -223,26 +216,15 @@ namespace dromozoa {
         }
       }
 
-      array_ptr call(const std::initializer_list<value_t>& values, array_ptr extra = nullptr) const {
-        if (is_function()) {
-          return function_->call(values, extra);
-        }
-        // TODO test lua5.3 behavior
-        const auto& field = getmetafield("__call");
-        if (field.is_function()) {
-          // TODO more nice interface (fixed size, no allocation)
-          // return field.call({ field }, tuple_t(values, extra).make_array());
-        }
-        throw error_t("function expected");
-      }
+      array_ptr call(const std::initializer_list<value_t>& values, array_ptr extra = nullptr) const;
 
       void call0(const std::initializer_list<value_t>& values, array_ptr extra = nullptr) const {
         call(values, extra);
       }
 
-      // value_t call1(const std::initializer_list<value_t>& values, array_ptr extra = nullptr) const {
-      //   return (*call(values, extra))[0];
-      // }
+      value_t call1(const std::initializer_list<value_t>& values, array_ptr extra = nullptr) const {
+        return (*call(values, extra))[0];
+      }
 
       std::string tostring() const {
         switch (type_) {
@@ -440,21 +422,20 @@ namespace dromozoa {
       return NIL;
     }
 
-    inline array_ptr function_t::call(const std::initializer_list<value_t>& values, array_ptr extra) const {
-      const auto args = newarray(values, extra);
+    inline array_ptr function_t::call(array_ptr array) const {
       array_ptr A;
       array_ptr V;
       std::size_t i = 0;
       if (argc_) {
         A = std::make_shared<array_t>(argc_);
         for (; i < argc_; ++i) {
-          (*A)[i] = (*args)[i];
+          (*A)[i] = (*array)[i];
         }
       }
       if (vararg_) {
         V = std::make_shared<array_t>();
-        for (; i < args->size(); ++i) {
-          V->push_back((*args)[i]);
+        for (; i < array->size(); ++i) {
+          V->push_back((*array)[i]);
         }
       }
       return closure_(A, V);
@@ -472,6 +453,21 @@ namespace dromozoa {
       }
       return table_->getmetafield(event);
     }
+
+    array_ptr value_t::call(const std::initializer_list<value_t>& values, array_ptr array) const {
+      if (is_function()) {
+        return function_->call(newarray(values, array));
+      }
+      // TODO test lua5.3 behavior
+      const auto& field = getmetafield("__call");
+      if (field.is_function()) {
+        // TODO more nice interface (fixed size, no allocation)
+        // return field.call({ field }, tuple_t(values, extra).make_array());
+      }
+      throw error_t("function expected");
+    }
+
+
   }
 }
 
