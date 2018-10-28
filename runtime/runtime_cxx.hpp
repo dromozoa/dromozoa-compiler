@@ -52,16 +52,14 @@ namespace dromozoa {
     using error_t = std::runtime_error;
 
     class value_t;
-
+    using array_t = std::vector<value_t>;
+    using array_ptr = std::shared_ptr<array_t>;
     using string_t = std::string;
     using string_ptr = std::shared_ptr<string_t>;
     class table_t;
     using table_ptr = std::shared_ptr<table_t>;
     class function_t;
     using function_ptr = std::shared_ptr<function_t>;
-
-    using array_t = std::vector<value_t>;
-    using array_ptr = std::shared_ptr<array_t>;
 
     class tuple_t {
     public:
@@ -96,6 +94,7 @@ namespace dromozoa {
         metatable_ = metatable;
       }
 
+      const value_t& getmetafield(const std::string& event) const noexcept;
       const value_t& gettable(const value_t& index) const noexcept;
       void settable(const value_t& index, const value_t& value);
 
@@ -173,6 +172,20 @@ namespace dromozoa {
         return self;
       }
 
+      static value_t string(const string_t& string) {
+        value_t self;
+        self.type_ = type_t::string;
+        new (&self.string_) string_ptr(std::make_shared<string_t>(string));
+        return self;
+      }
+
+      static value_t string(string_t&& string) {
+        value_t self;
+        self.type_ = type_t::string;
+        new (&self.string_) string_ptr(std::make_shared<string_t>(std::move(string)));
+        return self;
+      }
+
       static value_t string(const char* data, std::size_t size) {
         value_t self;
         self.type_ = type_t::string;
@@ -201,6 +214,10 @@ namespace dromozoa {
         self.type_ = type_t::function;
         new (&self.function_) function_ptr(std::make_shared<function_t>(argc, vararg, std::move(closure)));
         return self;
+      }
+
+      type_t type() const noexcept {
+        return type_;
       }
 
       tuple_t call(const std::initializer_list<value_t>& values, array_ptr extra) const {
@@ -399,6 +416,14 @@ namespace dromozoa {
     static const value_t FALSE = value_t::boolean(false);
     static const value_t TRUE = value_t::boolean(true);
 
+    inline const value_t& get(array_ptr array, std::size_t index) {
+      if (index < array->size()) {
+        return (*array)[index];
+      } else {
+        return NIL;
+      }
+    }
+
     inline const value_t& tuple_t::operator[](std::size_t index) const noexcept {
       std::size_t size = values_.size();
       if (index < size) {
@@ -426,12 +451,26 @@ namespace dromozoa {
       return array;
     }
 
+    inline const value_t& table_t::getmetafield(const std::string& event) const noexcept {
+      if (metatable_) {
+        return metatable_->gettable(value_t::string(event));
+      }
+      return NIL;
+    }
+
     inline const value_t& table_t::gettable(const value_t& index) const noexcept {
       const auto i = map_.find(index);
-      if (i == map_.end()) {
-        return NIL;
+      if (i != map_.end()) {
+        return i->second;
       }
-      return i->second;
+
+      const auto field = getmetafield("__index");
+      if (field != NIL) {
+        if (field.type() == type_t::function) {
+          // return field.call1(field, );
+        }
+      }
+      return NIL;
     }
 
     inline void table_t::settable(const value_t& index, const value_t& value) {
