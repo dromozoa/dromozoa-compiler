@@ -43,5 +43,19 @@ int main(int, char*[]) {
     assert(a != b);
   }
 
+  {
+    value_t a = value_t::function(3, true, [&](array_ptr A, array_ptr V) -> tuple_t {
+      std::cout
+          << (*A)[0] << " "
+          << (*A)[1] << " "
+          << (*A)[2] << " "
+          << (*V)[0] << " "
+          << (*V)[1] << " "
+          << (*V)[2] << "\n";
+      return {};
+    });
+    a.call({ TRUE, TRUE, TRUE, TRUE, TRUE, TRUE }, nullptr);
+  }
+
   return 0;
 }

@@ -25,11 +25,15 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <array>
 #include <functional>
 #include <initializer_list>
+#include <iomanip>
 #include <iostream>
 #include <map>
 #include <memory>
+#include <sstream>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
@@ -45,9 +49,9 @@ namespace dromozoa {
       function,
     };
 
+    using error_t = std::runtime_error;
+
     class value_t;
-    using array_t = std::vector<value_t>;
-    using array_ptr = std::shared_ptr<array_t>;
 
     using string_t = std::string;
     using string_ptr = std::shared_ptr<string_t>;
@@ -55,6 +59,9 @@ namespace dromozoa {
     using table_ptr = std::shared_ptr<table_t>;
     class function_t;
     using function_ptr = std::shared_ptr<function_t>;
+
+    using array_t = std::vector<value_t>;
+    using array_ptr = std::shared_ptr<array_t>;
 
     class tuple_t {
     public:
@@ -114,7 +121,7 @@ namespace dromozoa {
       function_t& operator=(const function_t&) = delete;
       function_t& operator=(function_t&&) = delete;
 
-      tuple_t call(const std::initializer_list<value_t>& values, array_ptr extra = nullptr);
+      tuple_t call(const std::initializer_list<value_t>& values, array_ptr extra = nullptr) const;
 
     private:
       std::size_t argc_;
@@ -194,6 +201,47 @@ namespace dromozoa {
         self.type_ = type_t::function;
         new (&self.function_) function_ptr(std::make_shared<function_t>(argc, vararg, std::move(closure)));
         return self;
+      }
+
+      tuple_t call(const std::initializer_list<value_t>& values, array_ptr extra) const {
+        if (type_ == type_t::function) {
+          return function_->call(values, extra);
+        }
+        throw error_t("");
+      }
+
+      std::string tostring() const {
+        switch (type_) {
+          case type_t::nil:
+            return "nil";
+          case type_t::boolean:
+            if (boolean_) {
+              return "true";
+            } else {
+              return "false";
+            }
+          case type_t::number:
+            {
+              std::ostringstream out;
+              out << std::setprecision(17) << number_;
+              return out.str();
+            }
+          case type_t::string:
+            return *string_;
+          case type_t::table:
+            {
+              // TODO impl __tostring
+              std::ostringstream out;
+              out << "table: " << table_.get();
+              return out.str();
+            }
+          case type_t::function:
+            {
+              std::ostringstream out;
+              out << "function: " << function_.get();
+              return out.str();
+            }
+        }
       }
 
       friend std::ostream& operator<<(std::ostream& out, const value_t& self) {
@@ -337,6 +385,7 @@ namespace dromozoa {
       }
 
       type_t type_;
+      // TODO const flag
       union {
         bool boolean_;
         double number_;
@@ -389,7 +438,7 @@ namespace dromozoa {
       map_[index] = value;
     }
 
-    inline tuple_t function_t::call(const std::initializer_list<value_t>& values, array_ptr extra) {
+    inline tuple_t function_t::call(const std::initializer_list<value_t>& values, array_ptr extra) const {
       tuple_t args(values, extra);
       array_ptr A;
       array_ptr V;
@@ -407,6 +456,12 @@ namespace dromozoa {
         }
       }
       return closure_(A, V);
+    }
+
+    inline value_t open_env() {
+      value_t env = value_t::table();
+
+      return env;
     }
   }
 }

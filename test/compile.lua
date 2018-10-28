@@ -50,5 +50,6 @@ end
 t:generate()
 
 t:compile_es(output_name .. ".js")
+t:compile_cxx(output_name .. ".cpp")
 t:dump_tree(output_name .. ".html")
 t:dump_protos(output_name .. ".txt")

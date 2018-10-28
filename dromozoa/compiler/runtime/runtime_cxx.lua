@@ -387,6 +387,12 @@ namespace dromozoa {
       }
       return closure_(A, V);
     }
+
+    inline value_t open_env() {
+      value_t env = value_t::table();
+
+      return env;
+    }
   }
 }
 
