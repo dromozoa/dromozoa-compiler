@@ -50,7 +50,7 @@ namespace dromozoa {
       function,
     };
 
-    void error(const char* message);
+    [[noreturn]] void error(const char* message);
 
     class value_t;
     using array_t = std::vector<value_t>;
@@ -61,6 +61,8 @@ namespace dromozoa {
     using table_ptr = std::shared_ptr<table_t>;
     class function_t;
     using function_ptr = std::shared_ptr<function_t>;
+
+    const value_t& get(array_ptr array, std::size_t index) noexcept;
 
     class table_t {
       friend class value_t;
@@ -163,6 +165,10 @@ namespace dromozoa {
         return self;
       }
 
+      static value_t string(const char* data) {
+        return string(data, std::strlen(data));
+      }
+
       static value_t table() {
         value_t self;
         self.type_ = type_t::table;
@@ -223,8 +229,35 @@ namespace dromozoa {
         call(values, extra);
       }
 
-      value_t call1(const std::initializer_list<value_t>& values, array_ptr extra = nullptr) const {
-        return (*call(values, extra))[0];
+      const value_t& call1(const std::initializer_list<value_t>& values, array_ptr extra = nullptr) const {
+        return get(call(values, extra), 0);
+      }
+
+      const value_t& gettable(const value_t& index) const;
+
+      void settable(const value_t& index, const value_t& value) const {
+        if (!is_table()) {
+          error("table expected");
+          return;
+        }
+        const auto i = table_->map_.find(index);
+        if (i == table_->map_.end()) {
+          const auto& field = getmetafield("__newindex");
+          if (!field.is_nil()) {
+            if (field.is_function()) {
+              field.call0({field, *this, index, value});
+              return;
+            } else {
+              field.settable(index, value);
+              return;
+            }
+          }
+        }
+        if (value.is_nil()) {
+          table_->map_.erase(index);
+        } else {
+          table_->map_[index] = value;
+        }
       }
 
       std::string tostring() const {
@@ -394,14 +427,6 @@ namespace dromozoa {
     static const value_t FALSE = value_t::boolean(false);
     static const value_t TRUE = value_t::boolean(true);
 
-    inline const value_t& get(array_ptr array, std::size_t index) {
-      if (index < array->size()) {
-        return (*array)[index];
-      } else {
-        return NIL;
-      }
-    }
-
     inline array_ptr newarray(const std::initializer_list<value_t>& values, array_ptr array = nullptr) {
       array_ptr result = std::make_shared<array_t>();
       for (const auto& value : values) {
@@ -429,9 +454,21 @@ namespace dromozoa {
       return result;
     }
 
+    inline void error(const char* message) {
+      throw value_t::string(message);
+    }
+
+    inline const value_t& get(array_ptr array, std::size_t index) noexcept {
+      if (index < array->size()) {
+        return (*array)[index];
+      } else {
+        return NIL;
+      }
+    }
+
     inline const value_t& table_t::getmetafield(const char* event) const noexcept {
       if (metatable_) {
-        const auto i = metatable_->map_.find(value_t::string(event, std::strlen(event)));
+        const auto i = metatable_->map_.find(value_t::string(event));
         if (i != metatable_->map_.end()) {
           return i->second;
         }
@@ -477,17 +514,29 @@ namespace dromozoa {
       return field.function_->call(newarray(field, values, array));
     }
 
-    inline void error(const char* message) {
-      throw value_t::string(message, std::strlen(message));
+    const value_t& value_t::gettable(const value_t& index) const {
+      if (!is_table()) {
+        error("table expected");
+        return NIL;
+      }
+      const auto i = table_->map_.find(index);
+      if (i == table_->map_.end()) {
+        const auto& field = getmetafield("__index");
+        if (!field.is_nil()) {
+          if (field.is_function()) {
+            return field.call1({ field, *this, index });
+          } else {
+            return field.gettable(index);
+          }
+        }
+      }
+      return i->second;
     }
 
     inline value_t open_env() {
       value_t env = value_t::table();
-
       return env;
     }
-
-
   }
 }
 

@@ -55,10 +55,34 @@ int main(int, char*[]) {
       // return { value_t::number(1), value_t::number(2) };
       return newarray({ value_t::number(42) }, A);
     });
-    auto r = a.call1({ TRUE, TRUE, TRUE, TRUE, TRUE, TRUE }, nullptr);
-    // assert(r->size() == 4);
-    assert(r.is_number());
+    auto r = a.call1({
+      value_t::number(17),
+      value_t::number(23),
+      value_t::number(37),
+      value_t::string("foo"),
+      value_t::string("bar"),
+      value_t::string("baz"),
+    }, nullptr);
     std::cout << r << "\n";
+    assert(r.is_number());
+    assert(r == value_t::number(42));
+    assert(r != value_t::string("42"));
+  }
+
+  {
+    value_t t = value_t::table();
+    t.settable(value_t::number(1), value_t::string("foo"));
+    t.settable(value_t::number(2), value_t::string("bar"));
+    t.settable(value_t::number(3), value_t::string("baz"));
+    std::cout
+        << t.gettable(value_t::number(1)) << " "
+        << t.gettable(value_t::number(2)) << " "
+        << t.gettable(value_t::number(3)) << "\n";
+    t.settable(value_t::number(3), NIL);
+    std::cout
+        << t.gettable(value_t::number(1)) << " "
+        << t.gettable(value_t::number(2)) << " "
+        << t.gettable(value_t::number(3)) << "\n";
   }
 
   return 0;
