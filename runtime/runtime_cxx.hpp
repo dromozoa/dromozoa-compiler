@@ -83,20 +83,11 @@ namespace dromozoa {
     };
 
     class table_t {
+      friend class value_t;
     public:
       using map_t = std::map<value_t, value_t>;
 
-      table_ptr getmetatable() const noexcept {
-        return metatable_;
-      }
-
-      void setmetatable(table_ptr metatable) noexcept {
-        metatable_ = metatable;
-      }
-
       const value_t& getmetafield(const std::string& event) const noexcept;
-      const value_t& gettable(const value_t& index) const noexcept;
-      void settable(const value_t& index, const value_t& value);
 
     private:
       map_t map_;
@@ -214,6 +205,32 @@ namespace dromozoa {
         self.type_ = type_t::function;
         new (&self.function_) function_ptr(std::make_shared<function_t>(argc, vararg, std::move(closure)));
         return self;
+      }
+
+      const table_ptr getmetatable() const noexcept {
+        if (type_ != type_t::table) {
+          return nullptr;
+        }
+        return table_->metatable_;
+      }
+
+      void setmetatable(const value_t& metatable) {
+        if (type_ != type_t::table) {
+          throw error_t("table expected");
+        }
+        if (metatable.type_ != type_t::nil && metatable.type_ != type_t::table) {
+          throw error_t("nil or table expected");
+        }
+        if (table_->metatable_) {
+          if (table_->metatable_->getmetafield("__metatable").type_ != type_t::nil) {
+            throw error_t("cannot change a protected metatable");
+          }
+        }
+        if (metatable.type_ == type_t::nil) {
+          table_->metatable_ = nullptr;
+        } else if (metatable.type_ == type_t::table) {
+          table_->metatable_ = metatable.table_;
+        }
       }
 
       type_t type() const noexcept {
@@ -453,28 +470,12 @@ namespace dromozoa {
 
     inline const value_t& table_t::getmetafield(const std::string& event) const noexcept {
       if (metatable_) {
-        return metatable_->gettable(value_t::string(event));
-      }
-      return NIL;
-    }
-
-    inline const value_t& table_t::gettable(const value_t& index) const noexcept {
-      const auto i = map_.find(index);
-      if (i != map_.end()) {
-        return i->second;
-      }
-
-      const auto field = getmetafield("__index");
-      if (field != NIL) {
-        if (field.type() == type_t::function) {
-          // return field.call1(field, );
+        const auto i = metatable_->map_.find(value_t::string(event));
+        if (i != metatable_->map_.end()) {
+          return i->second;
         }
       }
       return NIL;
-    }
-
-    inline void table_t::settable(const value_t& index, const value_t& value) {
-      map_[index] = value;
     }
 
     inline tuple_t function_t::call(const std::initializer_list<value_t>& values, array_ptr extra) const {
