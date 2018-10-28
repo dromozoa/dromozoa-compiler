@@ -25,6 +25,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <array>
 #include <functional>
 #include <initializer_list>
@@ -86,9 +87,7 @@ namespace dromozoa {
       friend class value_t;
     public:
       using map_t = std::map<value_t, value_t>;
-
-      const value_t& getmetafield(const std::string& event) const noexcept;
-
+      const value_t& getmetafield(const char* event) const noexcept;
     private:
       map_t map_;
       table_ptr metatable_;
@@ -105,11 +104,6 @@ namespace dromozoa {
       template <class T>
       function_t(std::size_t argc, bool vararg, T&& closure)
         : argc_(argc), vararg_(vararg), closure_(std::move(closure)) {}
-
-      function_t(const function_t&) = delete;
-      function_t(function_t&&) = delete;
-      function_t& operator=(const function_t&) = delete;
-      function_t& operator=(function_t&&) = delete;
 
       tuple_t call(const std::initializer_list<value_t>& values, array_ptr extra = nullptr) const;
 
@@ -147,6 +141,30 @@ namespace dromozoa {
 
       ~value_t() noexcept {
         destruct();
+      }
+
+      bool is_nil() const noexcept {
+        return type_ == type_t::nil;
+      }
+
+      bool is_boolean() const noexcept {
+        return type_ == type_t::boolean;
+      }
+
+      bool is_number() const noexcept {
+        return type_ == type_t::number;
+      }
+
+      bool is_string() const noexcept {
+        return type_ == type_t::string;
+      }
+
+      bool is_table() const noexcept {
+        return type_ == type_t::table;
+      }
+
+      bool is_function() const noexcept {
+        return type_ == type_t::function;
       }
 
       static value_t boolean(bool boolean) {
@@ -468,9 +486,9 @@ namespace dromozoa {
       return array;
     }
 
-    inline const value_t& table_t::getmetafield(const std::string& event) const noexcept {
+    inline const value_t& table_t::getmetafield(const char* event) const noexcept {
       if (metatable_) {
-        const auto i = metatable_->map_.find(value_t::string(event));
+        const auto i = metatable_->map_.find(value_t::string(event, std::strlen(event)));
         if (i != metatable_->map_.end()) {
           return i->second;
         }
