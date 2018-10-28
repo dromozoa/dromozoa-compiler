@@ -79,7 +79,8 @@ namespace dromozoa {
       array_ptr make_array() const;
 
     private:
-      std::initializer_list<value_t> values_;
+      // std::initializer_list<value_t> values_;
+      std::vector<value_t> values_;
       array_ptr extra_;
     };
 
@@ -96,17 +97,13 @@ namespace dromozoa {
     class function_t {
     public:
       using closure_t = std::function<tuple_t(array_ptr, array_ptr)>;
-
       template <class T>
       function_t(std::size_t argc, bool vararg, const T& closure)
         : argc_(argc), vararg_(vararg), closure_(closure) {}
-
       template <class T>
       function_t(std::size_t argc, bool vararg, T&& closure)
         : argc_(argc), vararg_(vararg), closure_(std::move(closure)) {}
-
       tuple_t call(const std::initializer_list<value_t>& values, array_ptr extra = nullptr) const;
-
     private:
       std::size_t argc_;
       bool vararg_;
@@ -117,6 +114,7 @@ namespace dromozoa {
     public:
       value_t() noexcept {
         type_ = type_t::nil;
+        number_ = 42;
       }
 
       value_t(const value_t& that) noexcept {
@@ -181,13 +179,6 @@ namespace dromozoa {
         return self;
       }
 
-      static value_t string(const string_t& string) {
-        value_t self;
-        self.type_ = type_t::string;
-        new (&self.string_) string_ptr(std::make_shared<string_t>(string));
-        return self;
-      }
-
       static value_t string(string_t&& string) {
         value_t self;
         self.type_ = type_t::string;
@@ -225,41 +216,54 @@ namespace dromozoa {
         return self;
       }
 
+      const value_t& getmetafield(const char* event) const noexcept;
+
       const table_ptr getmetatable() const noexcept {
-        if (type_ != type_t::table) {
+        // TODO return string module if is_string()
+        if (!is_table()) {
           return nullptr;
         }
         return table_->metatable_;
       }
 
       void setmetatable(const value_t& metatable) {
-        if (type_ != type_t::table) {
+        if (!is_table()) {
           throw error_t("table expected");
         }
-        if (metatable.type_ != type_t::nil && metatable.type_ != type_t::table) {
+        if (!metatable.is_nil() && !metatable.is_table()) {
           throw error_t("nil or table expected");
         }
         if (table_->metatable_) {
-          if (table_->metatable_->getmetafield("__metatable").type_ != type_t::nil) {
+          if (!table_->metatable_->getmetafield("__metatable").is_nil()) {
             throw error_t("cannot change a protected metatable");
           }
         }
-        if (metatable.type_ == type_t::nil) {
+        if (metatable.is_nil()) {
           table_->metatable_ = nullptr;
-        } else if (metatable.type_ == type_t::table) {
+        } else {
           table_->metatable_ = metatable.table_;
         }
       }
 
-      type_t type() const noexcept {
-        return type_;
-      }
-
-      tuple_t call(const std::initializer_list<value_t>& values, array_ptr extra) const {
-        if (type_ == type_t::function) {
+      tuple_t call(const std::initializer_list<value_t>& values, array_ptr extra = nullptr) const {
+        if (is_function()) {
           return function_->call(values, extra);
         }
-        throw error_t("");
+        // TODO test lua5.3 behavior
+        const auto& field = getmetafield("__call");
+        if (field.is_function()) {
+          // TODO more nice interface (fixed size, no allocation)
+          return field.call({ field }, tuple_t(values, extra).make_array());
+        }
+        throw error_t("function expected");
+      }
+
+      void call0(const std::initializer_list<value_t>& values, array_ptr extra = nullptr) const {
+        call(values, extra);
+      }
+
+      value_t call1(const std::initializer_list<value_t>& values, array_ptr extra = nullptr) const {
+        return call(values, extra)[0];
       }
 
       std::string tostring() const {
@@ -297,31 +301,7 @@ namespace dromozoa {
       }
 
       friend std::ostream& operator<<(std::ostream& out, const value_t& self) {
-        switch (self.type_) {
-          case type_t::nil:
-            out << "nil";
-            break;
-          case type_t::boolean:
-            if (self.boolean_) {
-              out << "true";
-            } else {
-              out << "false";
-            }
-            break;
-          case type_t::number:
-            out << self.number_;
-            break;
-          case type_t::string:
-            out << *self.string_;
-            break;
-          case type_t::table:
-            out << "table: " << self.table_.get();
-            break;
-          case type_t::function:
-            out << "function: " << self.function_.get();
-            break;
-        }
-        return out;
+        return out << self.tostring();
       }
 
       bool operator==(const value_t& that) const noexcept {
@@ -520,6 +500,13 @@ namespace dromozoa {
       value_t env = value_t::table();
 
       return env;
+    }
+
+    inline const value_t& value_t::getmetafield(const char* event) const noexcept {
+      if (!is_table()) {
+        return NIL;
+      }
+      return table_->getmetafield(event);
     }
   }
 }

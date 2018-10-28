@@ -52,9 +52,12 @@ int main(int, char*[]) {
           << (*V)[0] << " "
           << (*V)[1] << " "
           << (*V)[2] << "\n";
-      return {};
+      // return { value_t::number(1), value_t::number(2) };
+      return tuple_t({ value_t::number(42) }, A);
     });
-    a.call({ TRUE, TRUE, TRUE, TRUE, TRUE, TRUE }, nullptr);
+    auto r = a.call({ TRUE, TRUE, TRUE, TRUE, TRUE, TRUE }, nullptr);
+    assert(r.size() == 4);
+    assert(r[0].is_number());
   }
 
   return 0;
