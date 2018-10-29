@@ -297,6 +297,14 @@ namespace dromozoa {
         }
       }
 
+      double tonumber() const {
+        // TODO fix me
+        if (is_number()) {
+          return number_;
+        }
+        error("number expected");
+      }
+
       friend std::ostream& operator<<(std::ostream& out, const value_t& self) {
         return out << self.tostring();
       }
@@ -459,7 +467,7 @@ namespace dromozoa {
     }
 
     inline const value_t& get(array_ptr array, std::size_t index) noexcept {
-      if (index < array->size()) {
+      if (array && index < array->size()) {
         return (*array)[index];
       } else {
         return NIL;
@@ -535,6 +543,20 @@ namespace dromozoa {
 
     inline value_t open_env() {
       value_t env = value_t::table();
+
+      env.settable(value_t::string("print"), value_t::function(0, true, [](array_ptr, array_ptr V) -> array_ptr {
+        std::size_t i = 0;
+        for (const auto& value : *V) {
+          if (i > 0) {
+            std::cout << "\t";
+          }
+          std::cout << value.tostring();
+          ++i;
+        }
+        std::cout << "\n";
+        return nullptr;
+      }));
+
       return env;
     }
   }
