@@ -2,14 +2,20 @@ return [[
 #ifndef DROMOZOA_COMPILER_RUNTIME_CXX_HPP
 #define DROMOZOA_COMPILER_RUNTIME_CXX_HPP
 
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <functional>
 #include <initializer_list>
+#include <iomanip>
 #include <iostream>
 #include <map>
 #include <memory>
+#include <sstream>
+#include <stdexcept>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -24,10 +30,17 @@ namespace dromozoa {
       function,
     };
 
+    class error_t : public std::runtime_error {
+    public:
+      error_t(const char* message)
+        : std::runtime_error(message) {}
+    };
+
     class value_t;
     using array_t = std::vector<value_t>;
     using array_ptr = std::shared_ptr<array_t>;
-
+    using upvalues_t = std::vector<std::tuple<array_ptr, std::size_t>>;
+    using upvalues_ptr = std::shared_ptr<upvalues_t>;
     using string_t = std::string;
     using string_ptr = std::shared_ptr<string_t>;
     class table_t;
@@ -35,42 +48,24 @@ namespace dromozoa {
     class function_t;
     using function_ptr = std::shared_ptr<function_t>;
 
-    class tuple_t {
-    public:
-      tuple_t(const std::initializer_list<value_t>& values, array_ptr extra = nullptr)
-        : values_(values), extra_(extra) {}
+    const value_t& nil() noexcept;
 
-      std::size_t size() const noexcept {
-        if (extra_) {
-          return values_.size() + extra_->size();
-        } else {
-          return values_.size();
-        }
+    array_ptr newarray(const std::initializer_list<value_t>& values, array_ptr array = nullptr);
+    array_ptr newarray(const value_t& value, const std::initializer_list<value_t>& values, array_ptr array);
+
+    inline const value_t& get(array_ptr array, std::size_t index) noexcept {
+      if (array && index < array->size()) {
+        return (*array)[index];
+      } else {
+        return nil();
       }
-
-      const value_t& operator[](std::size_t index) const noexcept;
-      array_ptr make_array() const;
-
-    private:
-      std::initializer_list<value_t> values_;
-      array_ptr extra_;
-    };
+    }
 
     class table_t {
+      friend class value_t;
     public:
       using map_t = std::map<value_t, value_t>;
-
-      table_ptr getmetatable() const noexcept {
-        return metatable_;
-      }
-
-      void setmetatable(table_ptr metatable) noexcept {
-        metatable_ = metatable;
-      }
-
-      const value_t& gettable(const value_t& index) const noexcept;
-      void settable(const value_t& index, const value_t& value);
-
+      const value_t& getmetafield(const char* event) const noexcept;
     private:
       map_t map_;
       table_ptr metatable_;
@@ -78,23 +73,11 @@ namespace dromozoa {
 
     class function_t {
     public:
-      using closure_t = std::function<tuple_t(array_ptr, array_ptr)>;
-
-      template <class T>
-      function_t(std::size_t argc, bool vararg, const T& closure)
-        : argc_(argc), vararg_(vararg), closure_(closure) {}
-
+      using closure_t = std::function<array_ptr(array_ptr, array_ptr)>;
       template <class T>
       function_t(std::size_t argc, bool vararg, T&& closure)
-        : argc_(argc), vararg_(vararg), closure_(std::move(closure)) {}
-
-      function_t(const function_t&) = delete;
-      function_t(function_t&&) = delete;
-      function_t& operator=(const function_t&) = delete;
-      function_t& operator=(function_t&&) = delete;
-
-      tuple_t call(const std::initializer_list<value_t>& values, array_ptr extra = nullptr);
-
+        : argc_(argc), vararg_(vararg), closure_(std::forward<T>(closure)) {}
+      array_ptr call(array_ptr array) const;
     private:
       std::size_t argc_;
       bool vararg_;
@@ -131,76 +114,224 @@ namespace dromozoa {
         destruct();
       }
 
-      static value_t boolean(bool boolean) {
-        value_t self;
-        self.type_ = type_t::boolean;
-        self.boolean_ = boolean;
-        return self;
-      }
-
-      static value_t number(double number) {
-        value_t self;
-        self.type_ = type_t::number;
-        self.number_ = number;
-        return self;
-      }
-
-      static value_t string(const char* data, std::size_t size) {
-        value_t self;
-        self.type_ = type_t::string;
-        new (&self.string_) string_ptr(std::make_shared<string_t>(data, size));
-        return self;
-      }
-
-      static value_t table() {
-        value_t self;
-        self.type_ = type_t::table;
-        new (&self.table_) table_ptr(std::make_shared<table_t>());
-        return self;
-      }
-
+      friend value_t boolean(bool boolean);
+      friend value_t number(double number);
+      friend value_t string(const char* data, std::size_t size);
+      friend value_t string(const std::string& data);
+      friend value_t table();
       template <class T>
-      static value_t function(std::size_t argc, bool vararg, const T& closure) {
-        value_t self;
-        self.type_ = type_t::function;
-        new (&self.function_) function_ptr(std::make_shared<function_t>(argc, vararg, closure));
-        return self;
+      friend value_t function(std::size_t argc, bool vararg, T&& closure);
+
+      bool is_nil() const noexcept {
+        return type_ == type_t::nil;
       }
 
-      template <class T>
-      static value_t function(std::size_t argc, bool vararg, T&& closure) {
-        value_t self;
-        self.type_ = type_t::function;
-        new (&self.function_) function_ptr(std::make_shared<function_t>(argc, vararg, std::move(closure)));
-        return self;
+      bool is_boolean() const noexcept {
+        return type_ == type_t::boolean;
+      }
+
+      bool is_number() const noexcept {
+        return type_ == type_t::number;
+      }
+
+      bool is_string() const noexcept {
+        return type_ == type_t::string;
+      }
+
+      bool is_table() const noexcept {
+        return type_ == type_t::table;
+      }
+
+      bool is_function() const noexcept {
+        return type_ == type_t::function;
+      }
+
+      const value_t& getmetafield(const char* event) const noexcept {
+        if (!is_table()) {
+          return nil();
+        }
+        return table_->getmetafield(event);
+      }
+
+      table_ptr getmetatable() const noexcept {
+        if (!is_table()) {
+          return nullptr;
+        }
+        return table_->metatable_;
+      }
+
+      void setmetatable(const value_t& metatable) {
+        if (!is_table()) {
+          throw error_t("table expected");
+        }
+        if (!metatable.is_nil() && !metatable.is_table()) {
+          throw error_t("nil or table expected");
+        }
+        if (table_->metatable_) {
+          if (!table_->metatable_->getmetafield("__metatable").is_nil()) {
+            throw error_t("cannot change a protected metatable");
+          }
+        }
+        if (metatable.is_nil()) {
+          table_->metatable_ = nullptr;
+        } else {
+          table_->metatable_ = metatable.table_;
+        }
+      }
+
+      array_ptr call(const std::initializer_list<value_t>& values, array_ptr array = nullptr) const {
+        if (is_function()) {
+          return function_->call(newarray(values, array));
+        }
+        const auto& field = getmetafield("__call");
+        if (!field.is_function()) {
+          throw error_t("attempt to call a non-function value");
+        }
+        return field.function_->call(newarray(field, values, array));
+        throw error_t("function expected");
+      }
+
+      void call0(const std::initializer_list<value_t>& values, array_ptr extra = nullptr) const {
+        call(values, extra);
+      }
+
+      const value_t& call1(const std::initializer_list<value_t>& values, array_ptr extra = nullptr) const {
+        return get(call(values, extra), 0);
+      }
+
+      const value_t& gettable(const value_t& index) const {
+        if (!is_table()) {
+          throw error_t("table expected");
+        }
+        const auto i = table_->map_.find(index);
+        if (i != table_->map_.end()) {
+          return i->second;
+        }
+        const auto& field = getmetafield("__index");
+        if (!field.is_nil()) {
+          if (field.is_function()) {
+            return field.call1({ field, *this, index });
+          } else {
+            return field.gettable(index);
+          }
+        }
+        return nil();
+      }
+
+      void settable(const value_t& index, const value_t& value) const {
+        if (!is_table()) {
+          throw error_t("table expected");
+        }
+        const auto i = table_->map_.find(index);
+        if (i == table_->map_.end()) {
+          const auto& field = getmetafield("__newindex");
+          if (!field.is_nil()) {
+            if (field.is_function()) {
+              field.call0({ field, *this, index, value });
+              return;
+            } else {
+              field.settable(index, value);
+              return;
+            }
+          }
+        }
+        if (value.is_nil()) {
+          table_->map_.erase(index);
+        } else {
+          table_->map_[index] = value;
+        }
+      }
+
+      void setlist(double index, const value_t& value) const;
+      void setlist(double index, array_ptr array) const;
+
+      std::string type() const {
+        switch (type_) {
+          case type_t::nil:
+            return "nil";
+          case type_t::boolean:
+            return "boolean";
+          case type_t::number:
+            return "number";
+          case type_t::string:
+            return "string";
+          case type_t::table:
+            return "table";
+          case type_t::function:
+            return "function";
+        }
+      }
+
+      std::string tostring() const {
+        switch (type_) {
+          case type_t::nil:
+            return "nil";
+          case type_t::boolean:
+            if (boolean_) {
+              return "true";
+            } else {
+              return "false";
+            }
+          case type_t::number:
+            {
+              std::ostringstream out;
+              out << std::setprecision(17) << number_;
+              return out.str();
+            }
+          case type_t::string:
+            return *string_;
+          case type_t::table:
+            {
+              const auto& field = getmetafield("__tostring");
+              if (!field.is_nil()) {
+                return field.call1({ *this }).tostring();
+              }
+              std::ostringstream out;
+              out << "table: " << table_.get();
+              return out.str();
+            }
+          case type_t::function:
+            {
+              std::ostringstream out;
+              out << "function: " << function_.get();
+              return out.str();
+            }
+        }
+      }
+
+      double tonumber() const {
+        if (is_number()) {
+          return number_;
+        }
+        throw error_t("number expected");
+      }
+
+      std::int64_t tointeger() const {
+        return tonumber();
+      }
+
+      value_t len() const;
+
+      bool lt(const value_t& that) const {
+        if (is_number() && that.is_number()) {
+          return number_ < that.number_;
+        } else if (is_string() && that.is_string()) {
+          return string_ < that.string_;
+        }
+        throw error_t("attempt to compare...");
+      }
+
+      bool le(const value_t& that) const {
+        if (is_number() && that.is_number()) {
+          return number_ <= that.number_;
+        } else if (is_string() && that.is_string()) {
+          return string_ <= that.string_;
+        }
+        throw error_t("attempt to compare...");
       }
 
       friend std::ostream& operator<<(std::ostream& out, const value_t& self) {
-        switch (self.type_) {
-          case type_t::nil:
-            out << "nil";
-            break;
-          case type_t::boolean:
-            if (self.boolean_) {
-              out << "true";
-            } else {
-              out << "false";
-            }
-            break;
-          case type_t::number:
-            out << self.number_;
-            break;
-          case type_t::string:
-            out << *self.string_;
-            break;
-          case type_t::table:
-            out << "table: " << self.table_.get();
-            break;
-          case type_t::function:
-            out << "function: " << self.function_.get();
-            break;
-        }
-        return out;
+        return out << self.tostring();
       }
 
       bool operator==(const value_t& that) const noexcept {
@@ -325,71 +456,188 @@ namespace dromozoa {
       };
     };
 
-    static const value_t NIL;
-    static const value_t FALSE = value_t::boolean(false);
-    static const value_t TRUE = value_t::boolean(true);
+    inline value_t boolean(bool boolean) {
+      value_t self;
+      self.type_ = type_t::boolean;
+      self.boolean_ = boolean;
+      return self;
+    }
 
-    inline const value_t& tuple_t::operator[](std::size_t index) const noexcept {
-      std::size_t size = values_.size();
-      if (index < size) {
-        return *(values_.begin() + index);
+    inline value_t number(double number) {
+        value_t self;
+        self.type_ = type_t::number;
+        self.number_ = number;
+      return self;
+    }
+
+    inline value_t string(const char* data, std::size_t size) {
+      value_t self;
+      self.type_ = type_t::string;
+      new (&self.string_) string_ptr(std::make_shared<string_t>(data, size));
+      return self;
+    }
+
+    inline value_t string(const std::string& data) {
+      value_t self;
+      self.type_ = type_t::string;
+      new (&self.string_) string_ptr(std::make_shared<string_t>(data));
+      return self;
+    }
+
+    inline value_t table() {
+      value_t self;
+      self.type_ = type_t::table;
+      new (&self.table_) table_ptr(std::make_shared<table_t>());
+      return self;
+    }
+
+    template <class T>
+    inline value_t function(std::size_t argc, bool vararg, T&& closure) {
+      value_t self;
+      self.type_ = type_t::function;
+      new (&self.function_) function_ptr(std::make_shared<function_t>(argc, vararg, std::forward<T>(closure)));
+      return self;
+    }
+
+    inline const value_t& nil() noexcept {
+      static const value_t self;
+      return self;
+    }
+
+    inline const value_t& false_() noexcept {
+      static const value_t self = boolean(false);
+      return self;
+    }
+
+    inline const value_t& true_() noexcept {
+      static const value_t self = boolean(true);
+      return self;
+    }
+
+    inline array_ptr newarray(const std::initializer_list<value_t>& values, array_ptr array) {
+      array_ptr result = std::make_shared<array_t>();
+      for (const auto& value : values) {
+        result->push_back(value);
       }
-      if (extra_) {
-        index -= size;
-        if (index < extra_->size()) {
-          return (*extra_)[index];
+      if (array) {
+        for (const auto& value : *array) {
+          result->push_back(value);
         }
       }
-      return NIL;
+      return result;
     }
 
-    inline array_ptr tuple_t::make_array() const {
-      array_ptr array = std::make_shared<array_t>();
-      for (const value_t& value : values_) {
-        array->push_back(value);
+    inline array_ptr newarray(const value_t& value, const std::initializer_list<value_t>& values, array_ptr array) {
+      array_ptr result = std::make_shared<array_t>();
+      result->push_back(value);
+      for (const auto& value : values) {
+        result->push_back(value);
       }
-      if (extra_) {
-        for (const value_t& value : *extra_) {
-          array->push_back(value);
+      if (array) {
+        for (const auto& value : *array) {
+          result->push_back(value);
         }
       }
-      return array;
+      return result;
     }
 
-    inline const value_t& table_t::gettable(const value_t& index) const noexcept {
-      const auto i = map_.find(index);
-      if (i == map_.end()) {
-        return NIL;
+    inline const value_t& table_t::getmetafield(const char* event) const noexcept {
+      if (metatable_) {
+        const auto i = metatable_->map_.find(string(event));
+        if (i != metatable_->map_.end()) {
+          return i->second;
+        }
       }
-      return i->second;
+      return nil();
     }
 
-    inline void table_t::settable(const value_t& index, const value_t& value) {
-      map_[index] = value;
-    }
-
-    inline tuple_t function_t::call(const std::initializer_list<value_t>& values, array_ptr extra) {
-      tuple_t args(values, extra);
+    inline array_ptr function_t::call(array_ptr array) const {
       array_ptr A;
       array_ptr V;
       std::size_t i = 0;
       if (argc_) {
         A = std::make_shared<array_t>(argc_);
         for (; i < argc_; ++i) {
-          (*A)[i] = args[i];
+          (*A)[i] = (*array)[i];
         }
       }
       if (vararg_) {
         V = std::make_shared<array_t>();
-        for (; i < args.size(); ++i) {
-          V->push_back(args[i]);
+        for (; i < array->size(); ++i) {
+          V->push_back((*array)[i]);
         }
       }
       return closure_(A, V);
     }
 
+    void value_t::setlist(double index, const value_t& value) const {
+      if (!is_table()) {
+        throw error_t("table expected");
+      }
+      // not care metafield because setlist is used from tableconstructor
+      if (value.is_nil()) {
+        table_->map_.erase(number(index));
+      } else {
+        table_->map_[number(index)] = value;
+      }
+    }
+
+    void value_t::setlist(double index, array_ptr array) const {
+      if (!is_table()) {
+        throw error_t("table expected");
+      }
+      // not care metafield because setlist is used from tableconstructor
+      for (const auto& value : *array) {
+        if (value.is_nil()) {
+          table_->map_.erase(number(index));
+        } else {
+          table_->map_[number(index)] = value;
+        }
+        ++index;
+      }
+    }
+
+    value_t value_t::len() const {
+      if (!is_table()) {
+        throw error_t("table expected");
+      }
+      for (double i = 1; ; ++i) {
+        if (gettable(number(i)).is_nil()) {
+          return number(i - 1);
+        }
+      }
+    }
+
     inline value_t open_env() {
-      value_t env = value_t::table();
+      value_t env = table();
+
+      env.settable(string("_G"), env);
+      env.settable(string("_VERSION"), string("Lua 5.3"));
+
+      env.settable(string("tonumber"), function(1, false, [](array_ptr A, array_ptr) -> array_ptr {
+        return newarray({ number(get(A, 0).tonumber()) });
+      }));
+
+      env.settable(string("tostring"), function(1, false, [](array_ptr A, array_ptr) -> array_ptr {
+        return newarray({ string(get(A, 0).tostring()) });
+      }));
+
+      env.settable(string("print"), function(0, true, [](array_ptr, array_ptr V) -> array_ptr {
+        std::size_t i = 0;
+        for (const auto& value : *V) {
+          if (i > 0) {
+            std::cout << "\t";
+          }
+          std::cout << value.tostring();
+          ++i;
+        }
+        std::cout << "\n";
+        return nullptr;
+      }));
+
+      env.settable(string("type"), function(1, false, [](array_ptr A, array_ptr) -> array_ptr {
+        return newarray({ string(get(A, 0).type()) });
+      }));
 
       return env;
     }

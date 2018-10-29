@@ -23,6 +23,7 @@
 #ifndef DROMOZOA_COMPILER_RUNTIME_CXX_HPP
 #define DROMOZOA_COMPILER_RUNTIME_CXX_HPP
 
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
@@ -35,6 +36,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -58,6 +60,8 @@ namespace dromozoa {
     class value_t;
     using array_t = std::vector<value_t>;
     using array_ptr = std::shared_ptr<array_t>;
+    using upvalues_t = std::vector<std::tuple<array_ptr, std::size_t>>;
+    using upvalues_ptr = std::shared_ptr<upvalues_t>;
     using string_t = std::string;
     using string_ptr = std::shared_ptr<string_t>;
     class table_t;
@@ -205,6 +209,7 @@ namespace dromozoa {
           throw error_t("attempt to call a non-function value");
         }
         return field.function_->call(newarray(field, values, array));
+        throw error_t("function expected");
       }
 
       void call0(const std::initializer_list<value_t>& values, array_ptr extra = nullptr) const {
@@ -220,17 +225,18 @@ namespace dromozoa {
           throw error_t("table expected");
         }
         const auto i = table_->map_.find(index);
-        if (i == table_->map_.end()) {
-          const auto& field = getmetafield("__index");
-          if (!field.is_nil()) {
-            if (field.is_function()) {
-              return field.call1({ field, *this, index });
-            } else {
-              return field.gettable(index);
-            }
+        if (i != table_->map_.end()) {
+          return i->second;
+        }
+        const auto& field = getmetafield("__index");
+        if (!field.is_nil()) {
+          if (field.is_function()) {
+            return field.call1({ field, *this, index });
+          } else {
+            return field.gettable(index);
           }
         }
-        return i->second;
+        return nil();
       }
 
       void settable(const value_t& index, const value_t& value) const {
@@ -254,6 +260,26 @@ namespace dromozoa {
           table_->map_.erase(index);
         } else {
           table_->map_[index] = value;
+        }
+      }
+
+      void setlist(double index, const value_t& value) const;
+      void setlist(double index, array_ptr array) const;
+
+      std::string type() const {
+        switch (type_) {
+          case type_t::nil:
+            return "nil";
+          case type_t::boolean:
+            return "boolean";
+          case type_t::number:
+            return "number";
+          case type_t::string:
+            return "string";
+          case type_t::table:
+            return "table";
+          case type_t::function:
+            return "function";
         }
       }
 
@@ -299,6 +325,30 @@ namespace dromozoa {
           return number_;
         }
         throw error_t("number expected");
+      }
+
+      std::int64_t tointeger() const {
+        return tonumber();
+      }
+
+      value_t len() const;
+
+      bool lt(const value_t& that) const {
+        if (is_number() && that.is_number()) {
+          return number_ < that.number_;
+        } else if (is_string() && that.is_string()) {
+          return string_ < that.string_;
+        }
+        throw error_t("attempt to compare...");
+      }
+
+      bool le(const value_t& that) const {
+        if (is_number() && that.is_number()) {
+          return number_ <= that.number_;
+        } else if (is_string() && that.is_string()) {
+          return string_ <= that.string_;
+        }
+        throw error_t("attempt to compare...");
       }
 
       friend std::ostream& operator<<(std::ostream& out, const value_t& self) {
@@ -541,6 +591,44 @@ namespace dromozoa {
       return closure_(A, V);
     }
 
+    void value_t::setlist(double index, const value_t& value) const {
+      if (!is_table()) {
+        throw error_t("table expected");
+      }
+      // not care metafield because setlist is used from tableconstructor
+      if (value.is_nil()) {
+        table_->map_.erase(number(index));
+      } else {
+        table_->map_[number(index)] = value;
+      }
+    }
+
+    void value_t::setlist(double index, array_ptr array) const {
+      if (!is_table()) {
+        throw error_t("table expected");
+      }
+      // not care metafield because setlist is used from tableconstructor
+      for (const auto& value : *array) {
+        if (value.is_nil()) {
+          table_->map_.erase(number(index));
+        } else {
+          table_->map_[number(index)] = value;
+        }
+        ++index;
+      }
+    }
+
+    value_t value_t::len() const {
+      if (!is_table()) {
+        throw error_t("table expected");
+      }
+      for (double i = 1; ; ++i) {
+        if (gettable(number(i)).is_nil()) {
+          return number(i - 1);
+        }
+      }
+    }
+
     inline value_t open_env() {
       value_t env = table();
 
@@ -566,6 +654,10 @@ namespace dromozoa {
         }
         std::cout << "\n";
         return nullptr;
+      }));
+
+      env.settable(string("type"), function(1, false, [](array_ptr A, array_ptr) -> array_ptr {
+        return newarray({ string(get(A, 0).type()) });
       }));
 
       return env;
