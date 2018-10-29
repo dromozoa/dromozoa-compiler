@@ -701,6 +701,24 @@ namespace dromozoa {
         return nullptr;
       }));
 
+      env.settable(string("select"), function(1, true, [](array_ptr A, array_ptr V) -> array_ptr {
+        auto index = get(A, 0);
+        if (index == string("#")) {
+          return newarray({ number(V->size()) });
+        }
+        double i = index.tonumber();
+        if (i < 0) {
+          i += V->size();
+        } else {
+          --i;
+        }
+        array_ptr result = std::make_shared<array_t>();
+        for (; i < V->size(); ++i) {
+          result->push_back(get(V, i));
+        }
+        return result;
+      }));
+
       env.settable(string("setmetatable"), function(2, false, [](array_ptr A, array_ptr) -> array_ptr {
         auto table = get(A, 0);
         table.setmetatable(get(A, 1));
