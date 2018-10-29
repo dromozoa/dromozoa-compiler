@@ -70,6 +70,9 @@ namespace dromozoa {
     const value_t& FALSE() noexcept;
     const value_t& TRUE() noexcept;
 
+    array_ptr newarray(const std::initializer_list<value_t>& values, array_ptr array = nullptr);
+    array_ptr newarray(const value_t& value, const std::initializer_list<value_t>& values, array_ptr array);
+
     inline const value_t& get(array_ptr array, std::size_t index) noexcept {
       if (array && index < array->size()) {
         return (*array)[index];
@@ -92,11 +95,8 @@ namespace dromozoa {
     public:
       using closure_t = std::function<array_ptr(array_ptr, array_ptr)>;
       template <class T>
-      function_t(std::size_t argc, bool vararg, const T& closure)
-        : argc_(argc), vararg_(vararg), closure_(closure) {}
-      template <class T>
       function_t(std::size_t argc, bool vararg, T&& closure)
-        : argc_(argc), vararg_(vararg), closure_(std::move(closure)) {}
+        : argc_(argc), vararg_(vararg), closure_(std::forward<T>(closure)) {}
       array_ptr call(array_ptr array) const;
     private:
       std::size_t argc_;
@@ -194,18 +194,10 @@ namespace dromozoa {
       }
 
       template <class T>
-      static value_t function(std::size_t argc, bool vararg, const T& closure) {
-        value_t self;
-        self.type_ = type_t::function;
-        new (&self.function_) function_ptr(std::make_shared<function_t>(argc, vararg, closure));
-        return self;
-      }
-
-      template <class T>
       static value_t function(std::size_t argc, bool vararg, T&& closure) {
         value_t self;
         self.type_ = type_t::function;
-        new (&self.function_) function_ptr(std::make_shared<function_t>(argc, vararg, std::move(closure)));
+        new (&self.function_) function_ptr(std::make_shared<function_t>(argc, vararg, std::forward<T>(closure)));
         return self;
       }
 
@@ -216,7 +208,7 @@ namespace dromozoa {
         return table_->getmetafield(event);
       }
 
-      const table_ptr getmetatable() const noexcept {
+      table_ptr getmetatable() const noexcept {
         if (!is_table()) {
           return nullptr;
         }
@@ -242,7 +234,16 @@ namespace dromozoa {
         }
       }
 
-      array_ptr call(const std::initializer_list<value_t>& values, array_ptr extra = nullptr) const;
+      array_ptr call(const std::initializer_list<value_t>& values, array_ptr array = nullptr) const {
+        if (is_function()) {
+          return function_->call(newarray(values, array));
+        }
+        const auto& field = getmetafield("__call");
+        if (!field.is_function()) {
+          throw error_t("attempt to call a non-function value");
+        }
+        return field.function_->call(newarray(field, values, array));
+      }
 
       void call0(const std::initializer_list<value_t>& values, array_ptr extra = nullptr) const {
         call(values, extra);
@@ -279,7 +280,7 @@ namespace dromozoa {
           const auto& field = getmetafield("__newindex");
           if (!field.is_nil()) {
             if (field.is_function()) {
-              field.call0({field, *this, index, value});
+              field.call0({ field, *this, index, value });
               return;
             } else {
               field.settable(index, value);
@@ -316,7 +317,7 @@ namespace dromozoa {
             {
               const auto& field = getmetafield("__tostring");
               if (!field.is_nil()) {
-                return field.call1({*this}).tostring();
+                return field.call1({ *this }).tostring();
               }
               std::ostringstream out;
               out << "table: " << table_.get();
@@ -332,7 +333,6 @@ namespace dromozoa {
       }
 
       double tonumber() const {
-        // TODO fix me
         if (is_number()) {
           return number_;
         }
@@ -480,7 +480,7 @@ namespace dromozoa {
       return TRUE;
     }
 
-    inline array_ptr newarray(const std::initializer_list<value_t>& values, array_ptr array = nullptr) {
+    inline array_ptr newarray(const std::initializer_list<value_t>& values, array_ptr array) {
       array_ptr result = std::make_shared<array_t>();
       for (const auto& value : values) {
         result->push_back(value);
@@ -493,7 +493,7 @@ namespace dromozoa {
       return result;
     }
 
-    inline array_ptr newarray(const value_t& value, const std::initializer_list<value_t>& values, array_ptr array = nullptr) {
+    inline array_ptr newarray(const value_t& value, const std::initializer_list<value_t>& values, array_ptr array) {
       array_ptr result = std::make_shared<array_t>();
       result->push_back(value);
       for (const auto& value : values) {
@@ -534,17 +534,6 @@ namespace dromozoa {
         }
       }
       return closure_(A, V);
-    }
-
-    inline array_ptr value_t::call(const std::initializer_list<value_t>& values, array_ptr array) const {
-      if (is_function()) {
-        return function_->call(newarray(values, array));
-      }
-      const auto& field = getmetafield("__call");
-      if (!field.is_function()) {
-        throw error_t("attempt to call a non-function value");
-      }
-      return field.function_->call(newarray(field, values, array));
     }
 
     inline value_t open_env() {
