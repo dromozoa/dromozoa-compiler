@@ -117,7 +117,7 @@ do
   <a href="$n.txt">protos</a>,
   result:
   <a href="$n-expected.txt">lua</a>,
-  <a href="$n-es.txt">es</a>
+  <a href="$n-es.txt">es</a>,
   <a href="$n-cxx.txt">cxx</a>
 </li>
 EOH

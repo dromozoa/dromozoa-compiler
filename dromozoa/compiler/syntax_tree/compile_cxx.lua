@@ -50,8 +50,8 @@ local function encode_var(var)
     local key = var:sub(1, 1)
     if key == "P" then
       return var
-    elseif key == "V" then
-      return "get(V, " .. var:sub(2) .. ")"
+    elseif key == "V" or key == "T" then
+      return "get(" .. key .. ", " .. var:sub(2) .. ")"
     elseif key == "U" then
       local index = var:sub(2)
       return "(*std::get<0>((*U)[" .. index .. "]))[std::get<1>((*U)[" .. index .. "])]"
@@ -226,7 +226,7 @@ function compile_proto(self, out, name)
   local param_V = "array_ptr"
   local vararg = "false"
   if A > 0 then
-    param_A = "array_ptr A"
+    param_A = "array_ptr args"
   end
   if proto.vararg then
     param_V = "array_ptr V"
@@ -278,6 +278,9 @@ function compile_proto(self, out, name)
 
   out:write "{\n"
 
+  if A > 0 then
+    out:write "auto A = args;\n"
+  end
   if B > 0 then
     out:write(("array_ptr B = std::make_shared<array_t>(%d);\n"):format(B))
   end

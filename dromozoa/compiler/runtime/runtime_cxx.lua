@@ -51,7 +51,7 @@ namespace dromozoa {
     const value_t& nil() noexcept;
 
     array_ptr newarray(std::initializer_list<value_t> values, array_ptr array = nullptr);
-    array_ptr newarray2(const value_t& value, array_ptr array);
+    array_ptr newarray(const value_t& value, array_ptr array);
 
     inline const value_t& get(array_ptr array, std::size_t index) noexcept {
       if (array && index < array->size()) {
@@ -119,6 +119,7 @@ namespace dromozoa {
       friend value_t string(const char* data, std::size_t size);
       friend value_t string(const std::string& data);
       friend value_t table();
+      friend value_t table(table_ptr table);
       template <class T>
       friend value_t function(std::size_t argc, bool vararg, T&& closure);
 
@@ -153,14 +154,9 @@ namespace dromozoa {
         return table_->getmetafield(event);
       }
 
-      table_ptr getmetatable() const noexcept {
-        if (!is_table()) {
-          return nullptr;
-        }
-        return table_->metatable_;
-      }
+      table_ptr getmetatable() const noexcept;
 
-      void setmetatable(const value_t& metatable) {
+      void setmetatable(const value_t& metatable) const {
         if (!is_table()) {
           throw error_t("table expected");
         }
@@ -187,7 +183,7 @@ namespace dromozoa {
         if (!field.is_function()) {
           throw error_t("attempt to call a non-function value");
         }
-        return field.function_->call(newarray2(field, array));
+        return field.function_->call(newarray(*this, array));
       }
 
       void call0(array_ptr array) const {
@@ -209,7 +205,7 @@ namespace dromozoa {
         const auto& field = getmetafield("__index");
         if (!field.is_nil()) {
           if (field.is_function()) {
-            return field.call1(newarray({ field, *this, index }));
+            return field.call1(newarray({ *this, index }));
           } else {
             return field.gettable(index);
           }
@@ -226,7 +222,7 @@ namespace dromozoa {
           const auto& field = getmetafield("__newindex");
           if (!field.is_nil()) {
             if (field.is_function()) {
-              field.call0(newarray({ field, *this, index, value }));
+              field.call0(newarray({ *this, index, value }));
               return;
             } else {
               field.settable(index, value);
@@ -492,6 +488,13 @@ namespace dromozoa {
       return self;
     }
 
+    inline value_t table(table_ptr table) {
+      value_t self;
+      self.type_ = type_t::table;
+      new (&self.table_) table_ptr(table);
+      return self;
+    }
+
     template <class T>
     inline value_t function(std::size_t argc, bool vararg, T&& closure) {
       value_t self;
@@ -528,7 +531,7 @@ namespace dromozoa {
       return result;
     }
 
-    inline array_ptr newarray2(const value_t& value, array_ptr array) {
+    inline array_ptr newarray(const value_t& value, array_ptr array) {
       array_ptr result = std::make_shared<array_t>();
       result->push_back(value);
       if (array) {
@@ -568,6 +571,23 @@ namespace dromozoa {
       return closure_(A, V);
     }
 
+    table_ptr value_t::getmetatable() const noexcept {
+      if (!is_table()) {
+        return nullptr;
+      }
+      table_ptr metatable = table_->metatable_;
+      if (metatable) {
+        const auto i = metatable->map_.find(string("__metatable"));
+        if (i != metatable->map_.end()) {
+          if (!i->second.is_table()) {
+            throw error_t("table expected");
+          }
+          return i->second.table_;
+        }
+      }
+      return metatable;
+    }
+
     void value_t::setlist(double index, const value_t& value) const {
       if (!is_table()) {
         throw error_t("table expected");
@@ -599,6 +619,10 @@ namespace dromozoa {
       if (!is_table()) {
         throw error_t("table expected");
       }
+      auto field = getmetafield("__len");
+      if (!field.is_nil()) {
+        return field.call1(newarray({*this}));
+      }
       for (double i = 1; ; ++i) {
         if (gettable(number(i)).is_nil()) {
           return number(i - 1);
@@ -609,6 +633,16 @@ namespace dromozoa {
     inline value_t open_env() {
       value_t env = table();
 
+      const value_t ipairs_iterator = function(2, false, [](array_ptr A, array_ptr) -> array_ptr {
+        const value_t table = get(A, 0);
+        const value_t index = number(get(A, 1).tonumber() + 1);
+        const value_t value = table.gettable(index);
+        if (!value.is_nil()) {
+          return newarray({ index, value });
+        }
+        return nullptr;
+      });
+
       env.settable(string("_G"), env);
       env.settable(string("_VERSION"), string("Lua 5.3"));
 
@@ -618,6 +652,40 @@ namespace dromozoa {
 
       env.settable(string("tostring"), function(1, false, [](array_ptr A, array_ptr) -> array_ptr {
         return newarray({ string(get(A, 0).tostring()) });
+      }));
+
+      env.settable(string("assert"), function(1, true, [](array_ptr A, array_ptr V) -> array_ptr {
+        const auto value = get(A, 0);
+        if (value.is_nil() || value == false_()) {
+          if (V->size() > 0) {
+            throw get(V, 0);
+          } else {
+            throw error_t("assertion failed!");
+          }
+        }
+        return newarray(value, V);
+      }));
+
+      env.settable(string("error"), function(1, false, [](array_ptr A, array_ptr) -> array_ptr {
+        throw get(A, 0);
+      }));
+
+      env.settable(string("getmetatable"), function(1, false, [=](array_ptr A, array_ptr) -> array_ptr {
+        return newarray({ table(get(A, 0).getmetatable()) });
+      }));
+
+      env.settable(string("ipairs"), function(1, false, [=](array_ptr A, array_ptr) -> array_ptr {
+        return newarray({ ipairs_iterator, get(A, 0), number(0) });
+      }));
+
+      env.settable(string("pcall"), function(1, true, [](array_ptr A, array_ptr V) -> array_ptr {
+        try {
+          return newarray(true_(), get(A, 0).call(V));
+        } catch (const error_t& e) {
+          return newarray({ false_(), string(e.what()) });
+        } catch (const value_t& e) {
+          return newarray({ false_(), e });
+        }
       }));
 
       env.settable(string("print"), function(0, true, [](array_ptr, array_ptr V) -> array_ptr {
@@ -631,6 +699,30 @@ namespace dromozoa {
         }
         std::cout << "\n";
         return nullptr;
+      }));
+
+      env.settable(string("setmetatable"), function(2, false, [](array_ptr A, array_ptr) -> array_ptr {
+        auto table = get(A, 0);
+        table.setmetatable(get(A, 1));
+        return newarray({ table });
+      }));
+
+      env.settable(string("type"), function(1, true, [](array_ptr A, array_ptr V) -> array_ptr {
+        const auto value = get(A, 0);
+        if (value == string("#")) {
+          return newarray({ number(V->size()) });
+        }
+        double index = value.tonumber();
+        if (index < 0) {
+          index += V->size();
+        } else {
+          --index;
+        }
+        array_ptr result = std::make_shared<array_t>();
+        for (std::size_t i = index; i < V->size(); ++i) {
+          result->push_back(get(V, index));
+        }
+        return result;
       }));
 
       env.settable(string("type"), function(1, false, [](array_ptr A, array_ptr) -> array_ptr {
