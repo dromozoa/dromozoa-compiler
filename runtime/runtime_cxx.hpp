@@ -50,7 +50,11 @@ namespace dromozoa {
       function,
     };
 
-    [[noreturn]] void error(const char* message);
+    class error_t : public std::runtime_error {
+    public:
+      error_t(const char* message)
+        : std::runtime_error(message) {}
+    };
 
     class value_t;
     using array_t = std::vector<value_t>;
@@ -62,7 +66,17 @@ namespace dromozoa {
     class function_t;
     using function_ptr = std::shared_ptr<function_t>;
 
-    const value_t& get(array_ptr array, std::size_t index) noexcept;
+    const value_t& NIL() noexcept;
+    const value_t& FALSE() noexcept;
+    const value_t& TRUE() noexcept;
+
+    inline const value_t& get(array_ptr array, std::size_t index) noexcept {
+      if (array && index < array->size()) {
+        return (*array)[index];
+      } else {
+        return NIL();
+      }
+    }
 
     class table_t {
       friend class value_t;
@@ -165,8 +179,11 @@ namespace dromozoa {
         return self;
       }
 
-      static value_t string(const char* data) {
-        return string(data, std::strlen(data));
+      static value_t string(const std::string& data) {
+        value_t self;
+        self.type_ = type_t::string;
+        new (&self.string_) string_ptr(std::make_shared<string_t>(data));
+        return self;
       }
 
       static value_t table() {
@@ -192,7 +209,12 @@ namespace dromozoa {
         return self;
       }
 
-      const value_t& getmetafield(const char* event) const noexcept;
+      const value_t& getmetafield(const char* event) const noexcept {
+        if (!is_table()) {
+          return NIL();
+        }
+        return table_->getmetafield(event);
+      }
 
       const table_ptr getmetatable() const noexcept {
         if (!is_table()) {
@@ -203,17 +225,14 @@ namespace dromozoa {
 
       void setmetatable(const value_t& metatable) {
         if (!is_table()) {
-          error("table expected");
-          return;
+          throw error_t("table expected");
         }
         if (!metatable.is_nil() && !metatable.is_table()) {
-          error("nil or table expected");
-          return;
+          throw error_t("nil or table expected");
         }
         if (table_->metatable_) {
           if (!table_->metatable_->getmetafield("__metatable").is_nil()) {
-            error("cannot change a protected metatable");
-            return;
+            throw error_t("cannot change a protected metatable");
           }
         }
         if (metatable.is_nil()) {
@@ -237,8 +256,7 @@ namespace dromozoa {
 
       void settable(const value_t& index, const value_t& value) const {
         if (!is_table()) {
-          error("table expected");
-          return;
+          throw error_t("table expected");
         }
         const auto i = table_->map_.find(index);
         if (i == table_->map_.end()) {
@@ -302,7 +320,7 @@ namespace dromozoa {
         if (is_number()) {
           return number_;
         }
-        error("number expected");
+        throw error_t("number expected");
       }
 
       friend std::ostream& operator<<(std::ostream& out, const value_t& self) {
@@ -431,9 +449,20 @@ namespace dromozoa {
       };
     };
 
-    static const value_t NIL;
-    static const value_t FALSE = value_t::boolean(false);
-    static const value_t TRUE = value_t::boolean(true);
+    inline const value_t& NIL() noexcept {
+      static const value_t NIL;
+      return NIL;
+    }
+
+    inline const value_t& FALSE() noexcept {
+      static const value_t FALSE = value_t::boolean(false);
+      return FALSE;
+    }
+
+    inline const value_t& TRUE() noexcept {
+      static const value_t TRUE = value_t::boolean(true);
+      return TRUE;
+    }
 
     inline array_ptr newarray(const std::initializer_list<value_t>& values, array_ptr array = nullptr) {
       array_ptr result = std::make_shared<array_t>();
@@ -462,18 +491,6 @@ namespace dromozoa {
       return result;
     }
 
-    inline void error(const char* message) {
-      throw value_t::string(message);
-    }
-
-    inline const value_t& get(array_ptr array, std::size_t index) noexcept {
-      if (array && index < array->size()) {
-        return (*array)[index];
-      } else {
-        return NIL;
-      }
-    }
-
     inline const value_t& table_t::getmetafield(const char* event) const noexcept {
       if (metatable_) {
         const auto i = metatable_->map_.find(value_t::string(event));
@@ -481,7 +498,7 @@ namespace dromozoa {
           return i->second;
         }
       }
-      return NIL;
+      return NIL();
     }
 
     inline array_ptr function_t::call(array_ptr array) const {
@@ -503,29 +520,20 @@ namespace dromozoa {
       return closure_(A, V);
     }
 
-    inline const value_t& value_t::getmetafield(const char* event) const noexcept {
-      if (!is_table()) {
-        return NIL;
-      }
-      return table_->getmetafield(event);
-    }
-
     inline array_ptr value_t::call(const std::initializer_list<value_t>& values, array_ptr array) const {
       if (is_function()) {
         return function_->call(newarray(values, array));
       }
       const auto& field = getmetafield("__call");
       if (!field.is_function()) {
-        error("attempt to call a non-function value");
-        return nullptr;
+        throw error_t("attempt to call a non-function value");
       }
       return field.function_->call(newarray(field, values, array));
     }
 
     const value_t& value_t::gettable(const value_t& index) const {
       if (!is_table()) {
-        error("table expected");
-        return NIL;
+        throw error_t("table expected");
       }
       const auto i = table_->map_.find(index);
       if (i == table_->map_.end()) {

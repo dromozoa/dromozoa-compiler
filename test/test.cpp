@@ -13,9 +13,9 @@ int main(int, char*[]) {
   using namespace dromozoa::runtime;
 
   {
-    value_t a = NIL;
-    value_t b = FALSE;
-    value_t c = TRUE;
+    value_t a = NIL();
+    value_t b = FALSE();
+    value_t c = TRUE();
     value_t d = value_t::number(42);
     value_t e = value_t::number(0.25);
     value_t f = value_t::string("foobarbaz", 9);
@@ -78,7 +78,7 @@ int main(int, char*[]) {
         << t.gettable(value_t::number(1)) << " "
         << t.gettable(value_t::number(2)) << " "
         << t.gettable(value_t::number(3)) << "\n";
-    t.settable(value_t::number(3), NIL);
+    t.settable(value_t::number(3), NIL());
     std::cout
         << t.gettable(value_t::number(1)) << " "
         << t.gettable(value_t::number(2)) << " "
