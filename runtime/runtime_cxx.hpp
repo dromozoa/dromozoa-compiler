@@ -544,6 +544,17 @@ namespace dromozoa {
     inline value_t open_env() {
       value_t env = value_t::table();
 
+      env.settable(value_t::string("_G"), env);
+      env.settable(value_t::string("_VERSION"), value_t::string("Lua 5.3"));
+
+      env.settable(value_t::string("tonumber"), value_t::function(1, false, [](array_ptr A, array_ptr) -> array_ptr {
+        return newarray({ value_t::number(get(A, 0).tonumber()) });
+      }));
+
+      env.settable(value_t::string("tostring"), value_t::function(1, false, [](array_ptr A, array_ptr) -> array_ptr {
+        return newarray({ value_t::string(get(A, 0).tostring()) });
+      }));
+
       env.settable(value_t::string("print"), value_t::function(0, true, [](array_ptr, array_ptr V) -> array_ptr {
         std::size_t i = 0;
         for (const auto& value : *V) {
