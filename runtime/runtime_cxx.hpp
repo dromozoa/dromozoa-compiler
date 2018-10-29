@@ -26,7 +26,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
-#include <array>
 #include <functional>
 #include <initializer_list>
 #include <iomanip>
@@ -66,9 +65,7 @@ namespace dromozoa {
     class function_t;
     using function_ptr = std::shared_ptr<function_t>;
 
-    const value_t& NIL() noexcept;
-    const value_t& FALSE() noexcept;
-    const value_t& TRUE() noexcept;
+    const value_t& nil() noexcept;
 
     array_ptr newarray(const std::initializer_list<value_t>& values, array_ptr array = nullptr);
     array_ptr newarray(const value_t& value, const std::initializer_list<value_t>& values, array_ptr array);
@@ -77,7 +74,7 @@ namespace dromozoa {
       if (array && index < array->size()) {
         return (*array)[index];
       } else {
-        return NIL();
+        return nil();
       }
     }
 
@@ -134,6 +131,14 @@ namespace dromozoa {
         destruct();
       }
 
+      friend value_t boolean(bool boolean);
+      friend value_t number(double number);
+      friend value_t string(const char* data, std::size_t size);
+      friend value_t string(const std::string& data);
+      friend value_t table();
+      template <class T>
+      friend value_t function(std::size_t argc, bool vararg, T&& closure);
+
       bool is_nil() const noexcept {
         return type_ == type_t::nil;
       }
@@ -158,52 +163,9 @@ namespace dromozoa {
         return type_ == type_t::function;
       }
 
-      static value_t boolean(bool boolean) {
-        value_t self;
-        self.type_ = type_t::boolean;
-        self.boolean_ = boolean;
-        return self;
-      }
-
-      static value_t number(double number) {
-        value_t self;
-        self.type_ = type_t::number;
-        self.number_ = number;
-        return self;
-      }
-
-      static value_t string(const char* data, std::size_t size) {
-        value_t self;
-        self.type_ = type_t::string;
-        new (&self.string_) string_ptr(std::make_shared<string_t>(data, size));
-        return self;
-      }
-
-      static value_t string(const std::string& data) {
-        value_t self;
-        self.type_ = type_t::string;
-        new (&self.string_) string_ptr(std::make_shared<string_t>(data));
-        return self;
-      }
-
-      static value_t table() {
-        value_t self;
-        self.type_ = type_t::table;
-        new (&self.table_) table_ptr(std::make_shared<table_t>());
-        return self;
-      }
-
-      template <class T>
-      static value_t function(std::size_t argc, bool vararg, T&& closure) {
-        value_t self;
-        self.type_ = type_t::function;
-        new (&self.function_) function_ptr(std::make_shared<function_t>(argc, vararg, std::forward<T>(closure)));
-        return self;
-      }
-
       const value_t& getmetafield(const char* event) const noexcept {
         if (!is_table()) {
-          return NIL();
+          return nil();
         }
         return table_->getmetafield(event);
       }
@@ -465,19 +427,62 @@ namespace dromozoa {
       };
     };
 
-    inline const value_t& NIL() noexcept {
-      static const value_t NIL;
-      return NIL;
+    inline value_t boolean(bool boolean) {
+      value_t self;
+      self.type_ = type_t::boolean;
+      self.boolean_ = boolean;
+      return self;
     }
 
-    inline const value_t& FALSE() noexcept {
-      static const value_t FALSE = value_t::boolean(false);
-      return FALSE;
+    inline value_t number(double number) {
+        value_t self;
+        self.type_ = type_t::number;
+        self.number_ = number;
+      return self;
     }
 
-    inline const value_t& TRUE() noexcept {
-      static const value_t TRUE = value_t::boolean(true);
-      return TRUE;
+    inline value_t string(const char* data, std::size_t size) {
+      value_t self;
+      self.type_ = type_t::string;
+      new (&self.string_) string_ptr(std::make_shared<string_t>(data, size));
+      return self;
+    }
+
+    inline value_t string(const std::string& data) {
+      value_t self;
+      self.type_ = type_t::string;
+      new (&self.string_) string_ptr(std::make_shared<string_t>(data));
+      return self;
+    }
+
+    inline value_t table() {
+      value_t self;
+      self.type_ = type_t::table;
+      new (&self.table_) table_ptr(std::make_shared<table_t>());
+      return self;
+    }
+
+    template <class T>
+    inline value_t function(std::size_t argc, bool vararg, T&& closure) {
+      value_t self;
+      self.type_ = type_t::function;
+      new (&self.function_) function_ptr(std::make_shared<function_t>(argc, vararg, std::forward<T>(closure)));
+      return self;
+    }
+
+    inline const value_t& nil() noexcept {
+      static const value_t self;
+      return self;
+    }
+
+    inline const value_t& false_() noexcept {
+      static const value_t self = boolean(false);
+      return self;
+    }
+
+    inline const value_t& true_() noexcept {
+      static const value_t self = boolean(true);
+      return self;
     }
 
     inline array_ptr newarray(const std::initializer_list<value_t>& values, array_ptr array) {
@@ -509,12 +514,12 @@ namespace dromozoa {
 
     inline const value_t& table_t::getmetafield(const char* event) const noexcept {
       if (metatable_) {
-        const auto i = metatable_->map_.find(value_t::string(event));
+        const auto i = metatable_->map_.find(string(event));
         if (i != metatable_->map_.end()) {
           return i->second;
         }
       }
-      return NIL();
+      return nil();
     }
 
     inline array_ptr function_t::call(array_ptr array) const {
@@ -537,20 +542,20 @@ namespace dromozoa {
     }
 
     inline value_t open_env() {
-      value_t env = value_t::table();
+      value_t env = table();
 
-      env.settable(value_t::string("_G"), env);
-      env.settable(value_t::string("_VERSION"), value_t::string("Lua 5.3"));
+      env.settable(string("_G"), env);
+      env.settable(string("_VERSION"), string("Lua 5.3"));
 
-      env.settable(value_t::string("tonumber"), value_t::function(1, false, [](array_ptr A, array_ptr) -> array_ptr {
-        return newarray({ value_t::number(get(A, 0).tonumber()) });
+      env.settable(string("tonumber"), function(1, false, [](array_ptr A, array_ptr) -> array_ptr {
+        return newarray({ number(get(A, 0).tonumber()) });
       }));
 
-      env.settable(value_t::string("tostring"), value_t::function(1, false, [](array_ptr A, array_ptr) -> array_ptr {
-        return newarray({ value_t::string(get(A, 0).tostring()) });
+      env.settable(string("tostring"), function(1, false, [](array_ptr A, array_ptr) -> array_ptr {
+        return newarray({ string(get(A, 0).tostring()) });
       }));
 
-      env.settable(value_t::string("print"), value_t::function(0, true, [](array_ptr, array_ptr V) -> array_ptr {
+      env.settable(string("print"), function(0, true, [](array_ptr, array_ptr V) -> array_ptr {
         std::size_t i = 0;
         for (const auto& value : *V) {
           if (i > 0) {
