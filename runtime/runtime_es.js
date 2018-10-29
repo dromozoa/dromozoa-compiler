@@ -28,6 +28,25 @@ class Error {
   }
 }
 
+const type = value => {
+  const t = typeof value;
+  if (t === "undefined") {
+    return "nil";
+  } else if (t === "number") {
+    return "number";
+  } else if (t === "string") {
+    return "string";
+  } else if (t === "boolean") {
+    return "boolean";
+  } else if (t === "function") {
+    return "function";
+  } else if (Map.prototype.isPrototypeOf(value)) {
+    return "table";
+  } else {
+    return "userdata";
+  }
+};
+
 const getmetafield = (object, event) => {
   const metatable = object[metatable_key];
   if (metatable !== undefined) {
@@ -43,7 +62,7 @@ const call0 = (f, ...args) => {
     if (typeof field == "function") {
       field(f, ...args);
     } else {
-      throw new Error("attempt to call an invalid value");
+      throw new Error("attempt to call a " + type(f) + " value");
     }
   }
 };
@@ -57,7 +76,7 @@ const call1 = (f, ...args) => {
     if (typeof field == "function") {
       result = field(f, ...args);
     } else {
-      throw new Error("attempt to call an invalid value");
+      throw new Error("attempt to call a " + type(f) + " value");
     }
   }
   if (Array.prototype.isPrototypeOf(result)) {
@@ -76,7 +95,7 @@ const call = (f, ...args) => {
     if (typeof field == "function") {
       result = field(f, ...args);
     } else {
-      throw new Error("attempt to call an invalid value");
+      throw new Error("attempt to call a " + type(f) + " value");
     }
   }
   if (Array.prototype.isPrototypeOf(result)) {
@@ -87,6 +106,9 @@ const call = (f, ...args) => {
 };
 
 const gettable = (table, index) => {
+  if (!Map.prototype.isPrototypeOf(table)) {
+    throw new Error("attempt to index a " + type(table) + " value");
+  }
   const result = table.get(index);
   if (result === undefined) {
     const field = getmetafield(table, "__index");
@@ -102,6 +124,12 @@ const gettable = (table, index) => {
 };
 
 const settable = (table, index, value) => {
+  if (!Map.prototype.isPrototypeOf(table)) {
+    throw new Error("attempt to index a " + type(table) + " value");
+  }
+  if (index === undefined) {
+    throw new Error("table index is nil");
+  }
   const result = table.get(index);
   if (result === undefined) {
     const field = getmetafield(table, "__newindex");
@@ -121,7 +149,9 @@ const settable = (table, index, value) => {
 };
 
 const len = value => {
-  if (Map.prototype.isPrototypeOf(value)) {
+  if (typeof value === "string") {
+    throw new Error("not implemented");
+  } else if (Map.prototype.isPrototypeOf(value)) {
     const field = getmetafield(value, "__len");
     if (field !== undefined) {
       return call1(field, value);
@@ -131,18 +161,26 @@ const len = value => {
         return i - 1;
       }
     }
+  } else {
+    throw new Error("attempt to get index of a " + type(value) + " value");
   }
 };
 
 const setlist = (table, index, ...args) => {
   for (let i = 0; i < args.length; ++i) {
-    table.set(index + i, args[i]);
+    const value = args[i];
+    if (value !== undefined) {
+      table.set(index + i, args[i]);
+    }
   }
 };
 
 const tonumber = value => {
-  if (typeof value == "number") {
+  const t = typeof value;
+  if (t == "number") {
     return value;
+  } else if (t == "string") {
+    // TODO not implemented
   }
 };
 
@@ -169,8 +207,9 @@ const tostring = value => {
     } else {
       return "table";
     }
+  } else {
+    return "userdata";
   }
-  return "userdata";
 };
 
 const open_env = () => {
@@ -186,8 +225,6 @@ const open_env = () => {
 
   env.set("_G", env);
   env.set("_VERSION", "Lua 5.3");
-  env.set("tonumber", tonumber);
-  env.set("tostring", tostring);
 
   env.set("assert", (...args) => {
     const value = args[0];
@@ -226,8 +263,9 @@ const open_env = () => {
     } catch (e) {
       if (Error.prototype.isPrototypeOf(e)) {
         return [false, e.message];
+      } else {
+        throw e;
       }
-      throw e;
     }
   });
 
@@ -245,6 +283,7 @@ const open_env = () => {
     if (index === "#") {
       return args.length;
     }
+    // TODO index = tonumber(index);
     if (index < 0) {
       index += args.length;
     } else {
@@ -258,6 +297,12 @@ const open_env = () => {
   });
 
   env.set("setmetatable", (table, metatable) => {
+    if (!Map.prototype.isPrototypeOf(table)) {
+      throw new Error("bad argument #1");
+    }
+    if (metatable !== undefined && !Map.prototype.isPrototypeOf(metatable)) {
+      throw new Error("nil or table expected");
+    }
     if (getmetafield(table, "__metatable") !== undefined) {
       throw new Error("cannot change a protected metatable");
     }
@@ -265,23 +310,11 @@ const open_env = () => {
     return table;
   });
 
-  env.set("type", value => {
-    const t = typeof value;
-    if (t === "undefined") {
-      return "nil";
-    } else if (t === "number") {
-      return "number";
-    } else if (t === "string") {
-      return "string";
-    } else if (t === "boolean") {
-      return "boolean";
-    } else if (t === "function") {
-      return "function";
-    } else if (Map.prototype.isPrototypeOf(value)) {
-      return "table";
-    }
-    return "userdata";
-  });
+  env.set("tonumber", tonumber);
+
+  env.set("tostring", tostring);
+
+  env.set("type", type);
 
   return env;
 };
