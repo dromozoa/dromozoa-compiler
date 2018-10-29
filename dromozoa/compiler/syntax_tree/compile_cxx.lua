@@ -115,7 +115,7 @@ local templates = {
   ADD      = _123 "%s = number(%s.tonumber() + %s.tonumber())";
   SUB      = _123 "%s = number(%s.tonumber() - %s.tonumber())";
   MUL      = _123 "%s = number(%s.tonumber() * %s.tonumber())";
-  MOD      = _123 "%s = number(%s.tonumber() %% %s.tonumber())";
+  MOD      = _123 "%s = number(%s.tointeger() %% %s.tointeger())";
   POW      = _123 "%s = number(std::pow(%s.tonumber(), %s.tonumber()))";
   DIV      = _123 "%s = number(%s.tonumber() / %s.tonumber())";
   IDIV     = _123 "%s = number(std::floor(%s.tonumber() / %s.tonumber()))";
@@ -269,7 +269,7 @@ function compile_proto(self, out, name)
       local key = var:sub(1, 1)
       if key == "U" then
         local index = var:sub(2)
-        out:write(("(*U)[%d] = std::make_tuple(S, %d);\n"):format(i - 1, index))
+        out:write(("(*U)[%d] = (*S)[%d];\n"):format(i - 1, index))
       else
         out:write(("(*U)[%d] = std::make_tuple(%s, %d);\n"):format(i - 1, key, var:sub(2)))
       end

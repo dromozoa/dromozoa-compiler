@@ -191,12 +191,12 @@ namespace dromozoa {
         throw error_t("function expected");
       }
 
-      void call0(const std::initializer_list<value_t>& values, array_ptr extra = nullptr) const {
-        call(values, extra);
+      void call0(const std::initializer_list<value_t>& values, array_ptr array = nullptr) const {
+        call(values, array);
       }
 
-      const value_t& call1(const std::initializer_list<value_t>& values, array_ptr extra = nullptr) const {
-        return get(call(values, extra), 0);
+      const value_t& call1(const std::initializer_list<value_t>& values, array_ptr array = nullptr) const {
+        return get(call(values, array), 0);
       }
 
       const value_t& gettable(const value_t& index) const {
