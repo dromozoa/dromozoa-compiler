@@ -54,3 +54,4 @@ local function build(source, result)
 end
 
 build("runtime/runtime_es.js", "dromozoa/compiler/runtime/runtime_es.lua")
+build("runtime/runtime_cxx.hpp", "dromozoa/compiler/runtime/runtime_cxx.lua")
