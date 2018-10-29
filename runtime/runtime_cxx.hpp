@@ -252,7 +252,23 @@ namespace dromozoa {
         return get(call(values, extra), 0);
       }
 
-      const value_t& gettable(const value_t& index) const;
+      const value_t& gettable(const value_t& index) const {
+        if (!is_table()) {
+          throw error_t("table expected");
+        }
+        const auto i = table_->map_.find(index);
+        if (i == table_->map_.end()) {
+          const auto& field = getmetafield("__index");
+          if (!field.is_nil()) {
+            if (field.is_function()) {
+              return field.call1({ field, *this, index });
+            } else {
+              return field.gettable(index);
+            }
+          }
+        }
+        return i->second;
+      }
 
       void settable(const value_t& index, const value_t& value) const {
         if (!is_table()) {
@@ -529,24 +545,6 @@ namespace dromozoa {
         throw error_t("attempt to call a non-function value");
       }
       return field.function_->call(newarray(field, values, array));
-    }
-
-    const value_t& value_t::gettable(const value_t& index) const {
-      if (!is_table()) {
-        throw error_t("table expected");
-      }
-      const auto i = table_->map_.find(index);
-      if (i == table_->map_.end()) {
-        const auto& field = getmetafield("__index");
-        if (!field.is_nil()) {
-          if (field.is_function()) {
-            return field.call1({ field, *this, index });
-          } else {
-            return field.gettable(index);
-          }
-        }
-      }
-      return i->second;
     }
 
     inline value_t open_env() {
