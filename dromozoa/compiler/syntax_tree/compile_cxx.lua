@@ -175,11 +175,11 @@ function compile_code(self, out, code)
     if name == "CALL" then
       local var = code[1]
       if var == "NIL" then
-        out:write(("%s.call0(%s);\n"):format(encode_var(code[2]), encode_vars(code, 3)))
+        out:write(("%s.call0(newarray(%s));\n"):format(encode_var(code[2]), encode_vars(code, 3)))
       elseif var == "T" then
-        out:write(("T = %s.call(%s);\n"):format(encode_var(code[2]), encode_vars(code, 3)))
+        out:write(("T = %s.call(newarray(%s));\n"):format(encode_var(code[2]), encode_vars(code, 3)))
       else
-        out:write(("%s = %s.call1(%s);\n"):format(encode_var(var), encode_var(code[2]), encode_vars(code, 3)))
+        out:write(("%s = %s.call1(newarray(%s));\n"):format(encode_var(var), encode_var(code[2]), encode_vars(code, 3)))
       end
     elseif name == "RETURN" then
       local n = #code
@@ -317,7 +317,7 @@ array_ptr B = std::make_shared<array_t>(1);
 
   out:write "try {\n";
   compile_proto(self, out, "P0")
-  out:write "return P0.call1({});\n"
+  out:write "return P0.call1(newarray({}));\n"
   out:write "} catch (const error_t& e) {\n"
   out:write "std::cerr << e.what() << std::endl;\n"
   out:write "return nil();\n"

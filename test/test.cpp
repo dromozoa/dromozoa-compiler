@@ -55,14 +55,14 @@ int main(int, char*[]) {
       // return { number(1), number(2) };
       return newarray({ number(42) }, A);
     });
-    auto r = a.call1({
+    auto r = a.call1(newarray({
       number(17),
       number(23),
       number(37),
       string("foo"),
       string("bar"),
       string("baz"),
-    }, nullptr);
+    }));
     std::cout << r << "\n";
     assert(r.is_number());
     assert(r == number(42));
@@ -87,7 +87,7 @@ int main(int, char*[]) {
 
   {
     value_t env = open_env();
-    env.gettable(string("print")).call({ number(42), string("foo") });
+    env.gettable(string("print")).call(newarray({ number(42), string("foo") }));
   }
 
   return 0;

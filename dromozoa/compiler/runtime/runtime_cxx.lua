@@ -50,8 +50,8 @@ namespace dromozoa {
 
     const value_t& nil() noexcept;
 
-    array_ptr newarray(const std::initializer_list<value_t>& values, array_ptr array = nullptr);
-    array_ptr newarray(const value_t& value, const std::initializer_list<value_t>& values, array_ptr array);
+    array_ptr newarray(std::initializer_list<value_t> values, array_ptr array = nullptr);
+    array_ptr newarray2(const value_t& value, array_ptr array);
 
     inline const value_t& get(array_ptr array, std::size_t index) noexcept {
       if (array && index < array->size()) {
@@ -179,27 +179,26 @@ namespace dromozoa {
         }
       }
 
-      array_ptr call(const std::initializer_list<value_t>& values, array_ptr array = nullptr) const {
+      array_ptr call(array_ptr array) const {
         if (is_function()) {
-          return function_->call(newarray(values, array));
+          return function_->call(array);
         }
         const auto& field = getmetafield("__call");
         if (!field.is_function()) {
           throw error_t("attempt to call a non-function value");
         }
-        return field.function_->call(newarray(field, values, array));
-        throw error_t("function expected");
+        return field.function_->call(newarray2(field, array));
       }
 
-      void call0(const std::initializer_list<value_t>& values, array_ptr array = nullptr) const {
-        call(values, array);
+      void call0(array_ptr array) const {
+        call(array);
       }
 
-      const value_t& call1(const std::initializer_list<value_t>& values, array_ptr array = nullptr) const {
-        return get(call(values, array), 0);
+      value_t call1(array_ptr array = nullptr) const {
+        return get(call(array), 0);
       }
 
-      const value_t& gettable(const value_t& index) const {
+      value_t gettable(const value_t& index) const {
         if (!is_table()) {
           throw error_t("table expected");
         }
@@ -210,7 +209,7 @@ namespace dromozoa {
         const auto& field = getmetafield("__index");
         if (!field.is_nil()) {
           if (field.is_function()) {
-            return field.call1({ field, *this, index });
+            return field.call1(newarray({ field, *this, index }));
           } else {
             return field.gettable(index);
           }
@@ -227,7 +226,7 @@ namespace dromozoa {
           const auto& field = getmetafield("__newindex");
           if (!field.is_nil()) {
             if (field.is_function()) {
-              field.call0({ field, *this, index, value });
+              field.call0(newarray({ field, *this, index, value }));
               return;
             } else {
               field.settable(index, value);
@@ -260,6 +259,7 @@ namespace dromozoa {
           case type_t::function:
             return "function";
         }
+        throw error_t("???");
       }
 
       std::string tostring() const {
@@ -284,7 +284,7 @@ namespace dromozoa {
             {
               const auto& field = getmetafield("__tostring");
               if (!field.is_nil()) {
-                return field.call1({ *this }).tostring();
+                return field.call1(newarray({ *this })).tostring();
               }
               std::ostringstream out;
               out << "table: " << table_.get();
@@ -297,6 +297,7 @@ namespace dromozoa {
               return out.str();
             }
         }
+        throw error_t("!!!");
       }
 
       double tonumber() const {
@@ -514,7 +515,7 @@ namespace dromozoa {
       return self;
     }
 
-    inline array_ptr newarray(const std::initializer_list<value_t>& values, array_ptr array) {
+    inline array_ptr newarray(std::initializer_list<value_t> values, array_ptr array) {
       array_ptr result = std::make_shared<array_t>();
       for (const auto& value : values) {
         result->push_back(value);
@@ -527,12 +528,9 @@ namespace dromozoa {
       return result;
     }
 
-    inline array_ptr newarray(const value_t& value, const std::initializer_list<value_t>& values, array_ptr array) {
+    inline array_ptr newarray2(const value_t& value, array_ptr array) {
       array_ptr result = std::make_shared<array_t>();
       result->push_back(value);
-      for (const auto& value : values) {
-        result->push_back(value);
-      }
       if (array) {
         for (const auto& value : *array) {
           result->push_back(value);
@@ -558,13 +556,13 @@ namespace dromozoa {
       if (argc_) {
         A = std::make_shared<array_t>(argc_);
         for (; i < argc_; ++i) {
-          (*A)[i] = (*array)[i];
+          (*A)[i] = get(array, i);
         }
       }
       if (vararg_) {
         V = std::make_shared<array_t>();
         for (; i < array->size(); ++i) {
-          V->push_back((*array)[i]);
+          V->push_back(get(array, i));
         }
       }
       return closure_(A, V);
