@@ -1,6 +1,12 @@
 return [[
 const metatable_key = Symbol("metatabale");
 
+class Error {
+  constructor(message) {
+    this.message = message;
+  }
+}
+
 const getmetafield = (object, event) => {
   const metatable = object[metatable_key];
   if (metatable !== undefined) {
@@ -132,12 +138,6 @@ const tostring = value => {
 };
 
 const open_env = () => {
-  class Error {
-    constructor(message) {
-      this.message = message;
-    }
-  }
-
   const ipairs_iterator = (table, index) => {
     ++index;
     const value = gettable(table, index);
