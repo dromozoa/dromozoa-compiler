@@ -8,7 +8,7 @@ const getmetafield = (object, event) => {
   }
 };
 
-const CALL0 = (f, ...args) => {
+const call0 = (f, ...args) => {
   if (typeof f === "function") {
     f(...args);
   } else {
@@ -16,7 +16,7 @@ const CALL0 = (f, ...args) => {
   }
 };
 
-const CALL1 = (f, ...args) => {
+const call1 = (f, ...args) => {
   let result;
   if (typeof f === "function") {
     result = f(...args);
@@ -30,7 +30,7 @@ const CALL1 = (f, ...args) => {
   }
 };
 
-const CALL = (f, ...args) => {
+const call = (f, ...args) => {
   let result;
   if (typeof f === "function") {
     result = f(...args);
@@ -44,30 +44,30 @@ const CALL = (f, ...args) => {
   }
 };
 
-const GETTABLE = (table, index) => {
+const gettable = (table, index) => {
   const result = table.get(index);
   if (result === undefined) {
     const field = getmetafield(table, "__index");
     if (field !== undefined) {
       if (typeof field === "function") {
-        return CALL1(field, table, index);
+        return call1(field, table, index);
       } else {
-        return GETTABLE(field, index);
+        return gettable(field, index);
       }
     }
   }
   return result;
 };
 
-const SETTABLE = (table, index, value) => {
+const settable = (table, index, value) => {
   const result = table.get(index);
   if (result === undefined) {
     const field = getmetafield(table, "__newindex");
     if (field !== undefined) {
       if (typeof field === "function") {
-        return CALL0(field, table, index, value);
+        return call0(field, table, index, value);
       } else {
-        return SETTABLE(field, index, value);
+        return settable(field, index, value);
       }
     }
   }
@@ -78,11 +78,11 @@ const SETTABLE = (table, index, value) => {
   }
 };
 
-const LEN = value => {
+const len = value => {
   if (Map.prototype.isPrototypeOf(value)) {
     const field = getmetafield(value, "__len");
     if (field !== undefined) {
-      return CALL1(field, value);
+      return call1(field, value);
     }
     for (let i = 1; ; ++i) {
       if (value.get(i) === undefined) {
@@ -92,7 +92,7 @@ const LEN = value => {
   }
 };
 
-const SETLIST = (table, index, ...args) => {
+const setlist = (table, index, ...args) => {
   for (let i = 0; i < args.length; ++i) {
     table.set(index + i, args[i]);
   }
@@ -123,7 +123,7 @@ const tostring = value => {
   } else if (Map.prototype.isPrototypeOf(value)) {
     const field = getmetafield(value, "__tostring");
     if (field !== undefined) {
-      return CALL1(field, value);
+      return call1(field, value);
     } else {
       return "table";
     }
@@ -140,7 +140,7 @@ const open_env = () => {
 
   const ipairs_iterator = (table, index) => {
     ++index;
-    const value = GETTABLE(table, index);
+    const value = gettable(table, index);
     if (value !== undefined) {
       return [index, value];
     }
@@ -185,7 +185,7 @@ const open_env = () => {
 
   env.set("pcall", (f, ...args) => {
     try {
-      const result = CALL(f, ...args);
+      const result = call(f, ...args);
       return [true, ...result];
     } catch (e) {
       if (Error.prototype.isPrototypeOf(e)) {

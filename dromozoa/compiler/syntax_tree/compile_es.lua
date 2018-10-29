@@ -112,8 +112,8 @@ end
 
 local templates = {
   MOVE     = _12  "%s = %s";
-  GETTABLE = _123 "%s = GETTABLE(%s, %s)";
-  SETTABLE = _123 "SETTABLE(%s, %s, %s)";
+  GETTABLE = _123 "%s = gettable(%s, %s)";
+  SETTABLE = _123 "settable(%s, %s, %s)";
   NEWTABLE = _1   "%s = new Map()";
   ADD      = _123 "%s = %s + %s";
   SUB      = _123 "%s = %s - %s";
@@ -130,7 +130,7 @@ local templates = {
   UNM      = _12  "%s = -%s";
   BNOT     = _12  "%s = ~%s";
   NOT      = _122 "%s = %s === undefined || %s === false";
-  LEN      = _12  "%s = LEN(%s)";
+  LEN      = _12  "%s = len(%s)";
   CONCAT   = _123 "%s = tostring(%s) + tostring(%s)";
   EQ       = _123 "%s = %s === %s";
   NE       = _123 "%s = %s !== %s";
@@ -178,11 +178,11 @@ function compile_code(self, out, code)
     if name == "CALL" then
       local var = code[1]
       if var == "NIL" then
-        out:write(("CALL0(%s);\n"):format(encode_vars(code, 2)))
+        out:write(("call0(%s);\n"):format(encode_vars(code, 2)))
       elseif var == "T" then
-        out:write(("T = CALL(%s);\n"):format(encode_vars(code, 2)))
+        out:write(("T = call(%s);\n"):format(encode_vars(code, 2)))
       else
-        out:write(("%s = CALL1(%s);\n"):format(encode_var_not_spread(var), encode_vars(code, 2)))
+        out:write(("%s = call1(%s);\n"):format(encode_var_not_spread(var), encode_vars(code, 2)))
       end
     elseif name == "RETURN" then
       local n = #code
@@ -194,7 +194,7 @@ function compile_code(self, out, code)
         out:write(("return [%s];\n"):format(encode_vars(code)))
       end
     elseif name == "SETLIST" then
-      out:write(("SETLIST(%s, %d, %s);\n"):format(encode_var(code[1]), code[2], encode_var(code[3])))
+      out:write(("setlist(%s, %d, %s);\n"):format(encode_var(code[1]), code[2], encode_var(code[3])))
     elseif name == "CLOSURE" then
       compile_proto(self, out, code[1])
     elseif name == "LABEL" then
@@ -268,7 +268,7 @@ function compile_proto(self, out, name)
       local key = var:sub(1, 1)
       if key == "U" then
         local index = var:sub(2)
-        out:write(("/* %s */ [S[%d][0], S[%d][1]],\n"):format(upvalue[1], index, index))
+        out:write(("/* %s */ S[%d],\n"):format(upvalue[1], index))
       else
         out:write(("/* %s */ [%s, %d],\n"):format(upvalue[1], key, var:sub(2)))
       end

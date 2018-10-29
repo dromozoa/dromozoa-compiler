@@ -90,23 +90,26 @@ do
     result=NG
   fi
 
-  printf 'compiling %s (cxx)... ' "$i"
-  if clang++ -std=c++11 -Wall -W "result/$n.cpp" -g -O3 -o "result/$n.exe" >"result/$n-compile.txt" 2>&1
+  if test "X$NO_CXX_TEST" = "X"
   then
-    ok
-  else
-    ng
-    result=NG
-  fi
+    printf 'compiling %s (cxx)... ' "$i"
+    if clang++ -std=c++11 -Wall -W "result/$n.cpp" -g -O3 -o "result/$n.exe" >"result/$n-compile.txt" 2>&1
+    then
+      ok
+    else
+      ng
+      result=NG
+    fi
 
-  printf 'executing %s (cxx)... ' "$i"
-  "result/$n.exe" >"result/$n-cxx.txt" 2>&1
-  if diff "result/$n-expected.txt" "result/$n-cxx.txt" >/dev/null 2>&1
-  then
-    ok
-  else
-    ng
-    result=NG
+    printf 'executing %s (cxx)... ' "$i"
+    "result/$n.exe" >"result/$n-cxx.txt" 2>&1
+    if diff "result/$n-expected.txt" "result/$n-cxx.txt" >/dev/null 2>&1
+    then
+      ok
+    else
+      ng
+      result=NG
+    fi
   fi
 
   cat <<EOH >>result/index.html
