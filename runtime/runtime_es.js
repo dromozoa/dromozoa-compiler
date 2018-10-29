@@ -212,6 +212,10 @@ const tostring = value => {
   }
 };
 
+const suppress_no_unsed = () => {};
+suppress_no_unsed(len);
+suppress_no_unsed(setlist);
+
 const open_env = () => {
   const ipairs_iterator = (table, index) => {
     ++index;

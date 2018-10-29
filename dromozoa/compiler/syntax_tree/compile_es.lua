@@ -292,7 +292,7 @@ function compile_proto(self, out, name)
     out:write(("const C = []; /* %d */\n"):format(C))
   end
   if proto.T then
-    out:write "let T;\n"
+    out:write "let T = undefined;\n"
   end
 
   local emulate_goto = proto["goto"]

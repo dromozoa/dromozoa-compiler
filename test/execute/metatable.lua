@@ -27,7 +27,7 @@ local metatable = {
     return "self is " .. type(self)
   end;
 
-  __len = function (self)
+  __len = function ()
     print "__len"
     return 42
   end;
@@ -43,7 +43,7 @@ local metatable2 = {
 
   __metatable = metatable;
 
-  __len = function (self)
+  __len = function ()
     print "__len2"
     return 666
   end;
