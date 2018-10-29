@@ -1,9 +1,9 @@
 rockspec_format = "3.0"
 package = "dromozoa-compiler"
-version = "1.0-1"
+version = "1.1-1"
 source = {
-  url = "https://github.com/dromozoa/dromozoa-compiler/archive/v1.0.tar.gz";
-  file = "dromozoa-compiler-1.0.tar.gz";
+  url = "https://github.com/dromozoa/dromozoa-compiler/archive/v1.1.tar.gz";
+  file = "dromozoa-compiler-1.1.tar.gz";
 }
 description = {
   summary = "Lua compiler toolkit";
@@ -26,10 +26,12 @@ build = {
   modules = {
     ["dromozoa.compiler.lua53_lexer"] = "dromozoa/compiler/lua53_lexer.lua";
     ["dromozoa.compiler.lua53_parser"] = "dromozoa/compiler/lua53_parser.lua";
+    ["dromozoa.compiler.runtime.runtime_cxx"] = "dromozoa/compiler/runtime/runtime_cxx.lua";
     ["dromozoa.compiler.runtime.runtime_es"] = "dromozoa/compiler/runtime/runtime_es.lua";
     ["dromozoa.compiler.syntax_tree"] = "dromozoa/compiler/syntax_tree.lua";
     ["dromozoa.compiler.syntax_tree.analyze"] = "dromozoa/compiler/syntax_tree/analyze.lua";
     ["dromozoa.compiler.syntax_tree.code_builder"] = "dromozoa/compiler/syntax_tree/code_builder.lua";
+    ["dromozoa.compiler.syntax_tree.compile_cxx"] = "dromozoa/compiler/syntax_tree/compile_cxx.lua";
     ["dromozoa.compiler.syntax_tree.compile_es"] = "dromozoa/compiler/syntax_tree/compile_es.lua";
     ["dromozoa.compiler.syntax_tree.dump_protos"] = "dromozoa/compiler/syntax_tree/dump_protos.lua";
     ["dromozoa.compiler.syntax_tree.dump_tree"] = "dromozoa/compiler/syntax_tree/dump_tree.lua";

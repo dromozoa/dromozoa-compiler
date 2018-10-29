@@ -20,6 +20,25 @@
 LUA_PATH="?.lua;;"
 export LUA_PATH
 
+ok() {
+  if test -t 2
+  then
+    printf '\33[96m[OK]\33[0m\n'
+  else
+    echo "[OK]"
+  fi
+}
+
+ng() {
+  if test -t 2
+  then
+    printf '\33[91m[NG]\33[0m\n'
+  else
+    echo "[NG]"
+  fi
+}
+
+
 mkdir -p result/execute
 cp docs/dromozoa-compiler.* result/execute
 
@@ -51,40 +70,55 @@ EOH
 echo "<h2>execute</h2><ul>" >>result/index.html
 for i in test/execute/*.lua
 do
+  result=OK
+
   echo "compiling $i..."
   j=`expr "X$i" : 'X.*/\([^/]*\)\.lua'`
   n=execute/$j
   lua test/compile.lua "$i" "result/$n"
 
-  printf 'executing %s... ' "$i"
+  echo "executing $i..."
   lua "$i" >"result/$n-expected.txt"
-  node "result/$n.js" >"result/$n-es.txt"
+
+  printf 'executing %s (es)... ' "$i"
+  node "result/$n.js" >"result/$n-es.txt" 2>&1
   if diff "result/$n-expected.txt" "result/$n-es.txt" >/dev/null 2>&1
   then
-    if test -t 2
-    then
-      printf '\33[96m[OK]\33[0m\n'
-    else
-      echo "[OK]"
-    fi
-    result=OK
+    ok
   else
-    if test -t 2
-    then
-      printf '\33[91m[NG]\33[0m\n'
-    else
-      echo "[NG]"
-    fi
+    ng
     result=NG
   fi
+
+  printf 'compiling %s (cxx)... ' "$i"
+  if clang++ -std=c++11 -Wall -W "result/$n.cpp" -g -O3 -o "result/$n.exe" >"result/$n-compile.txt" 2>&1
+  then
+    ok
+  else
+    ng
+    result=NG
+  fi
+
+  printf 'executing %s (cxx)... ' "$i"
+  "result/$n.exe" >"result/$n-cxx.txt" 2>&1
+  if diff "result/$n-expected.txt" "result/$n-cxx.txt" >/dev/null 2>&1
+  then
+    ok
+  else
+    ng
+    result=NG
+  fi
+
   cat <<EOH >>result/index.html
 <li>[$result] $j:
   <a href="$n.js">es</a>,
+  <a href="$n.cpp">cxx</a>,
   <a href="$n.html">tree</a>,
   <a href="$n.txt">protos</a>,
   result:
   <a href="$n-expected.txt">lua</a>,
-  <a href="$n-es.txt">es</a>
+  <a href="$n-es.txt">es</a>,
+  <a href="$n-cxx.txt">cxx</a>
 </li>
 EOH
 done

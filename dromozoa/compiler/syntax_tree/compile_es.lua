@@ -320,7 +320,7 @@ end
 
 return function (self, out, name)
   if name then
-    out:write(name, " = ")
+    out:write(("%s = "):format(name))
   else
     out:write "("
   end

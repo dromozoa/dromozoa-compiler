@@ -23,9 +23,12 @@ print(345)
 print(0xff)
 print(0xBEBADA)
 print(3.0 == 3)
-print(3.1416)
-print(314.16e-2)
-print(0.31416E1)
+local pi = 3.1416
+print(3.14159999 < pi and pi < 3.14160000)
+local pi = 314.16e-2
+print(3.14159999 < pi and pi < 3.14160000)
+local pi = 0.31416E1
+print(3.14159999 < pi and pi < 3.14160000)
 print(34e1 == 340)
 print(0x0.1E)
 print(0xA23p-4)

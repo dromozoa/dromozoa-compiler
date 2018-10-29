@@ -16,10 +16,11 @@
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
 local analyze = require "dromozoa.compiler.syntax_tree.analyze"
+local compile_cxx = require "dromozoa.compiler.syntax_tree.compile_cxx"
 local compile_es = require "dromozoa.compiler.syntax_tree.compile_es"
-local generate = require "dromozoa.compiler.syntax_tree.generate"
 local dump_protos = require "dromozoa.compiler.syntax_tree.dump_protos"
 local dump_tree = require "dromozoa.compiler.syntax_tree.dump_tree"
+local generate = require "dromozoa.compiler.syntax_tree.generate"
 
 local function construct(self, node)
   local id = self.id + 1
@@ -64,6 +65,14 @@ function class:compile_es(out, name)
     return compile_es(self, assert(io.open(out, "w")), name):close()
   else
     return compile_es(self, out, name)
+  end
+end
+
+function class:compile_cxx(out, name)
+  if type(out) == "string" then
+    return compile_cxx(self, assert(io.open(out, "w")), name):close()
+  else
+    return compile_cxx(self, out, name)
   end
 end
 
