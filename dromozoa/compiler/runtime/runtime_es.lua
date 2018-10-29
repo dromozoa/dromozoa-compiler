@@ -18,7 +18,12 @@ const call0 = (f, ...args) => {
   if (typeof f === "function") {
     f(...args);
   } else {
-    getmetafield(f, "__call")(f, ...args);
+    const field = getmetafield(f, "__call");
+    if (typeof field == "function") {
+      field(f, ...args);
+    } else {
+      throw new Error("attempt to call an invalid value");
+    }
   }
 };
 
@@ -27,7 +32,12 @@ const call1 = (f, ...args) => {
   if (typeof f === "function") {
     result = f(...args);
   } else {
-    result = getmetafield(f, "__call")(f, ...args);
+    const field = getmetafield(f, "__call");
+    if (typeof field == "function") {
+      result = field(f, ...args);
+    } else {
+      throw new Error("attempt to call an invalid value");
+    }
   }
   if (Array.prototype.isPrototypeOf(result)) {
     return result[0];
@@ -41,7 +51,12 @@ const call = (f, ...args) => {
   if (typeof f === "function") {
     result = f(...args);
   } else {
-    result = getmetafield(f, "__call")(f, ...args);
+    const field = getmetafield(f, "__call");
+    if (typeof field == "function") {
+      result = field(f, ...args);
+    } else {
+      throw new Error("attempt to call an invalid value");
+    }
   }
   if (Array.prototype.isPrototypeOf(result)) {
     return result;

@@ -228,7 +228,7 @@ function compile_proto(self, out, name)
   for i = 0, A - 1 do
     pars[#pars + 1] = "A" .. i
   end
-  if proto.vararg then
+  if proto.V then
     pars[#pars + 1] = "...V"
   end
   out:write(("const %s = (%s) => {\n"):format(proto[1], table.concat(pars, ", ")))
