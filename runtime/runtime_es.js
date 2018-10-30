@@ -175,9 +175,9 @@ const setlist = (table, index, ...args) => {
   }
 };
 
-const decint_pattern = /^\s*(-?\d+)\s*$/;
-const hexint_pattern = /^\s*(-?0[xX][0-9A-Fa-f]+)\s*$/;
-const decflt_pattern = /^\s*((?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)\s*/;
+const decint_pattern = /^\s*([+-]?\d+)\s*$/;
+const hexint_pattern = /^\s*([+-]?0[xX][0-9A-Fa-f]+)\s*$/;
+const decflt_pattern = /^\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)\s*$/;
 
 const tonumber = value => {
   const t = typeof value;
@@ -196,6 +196,13 @@ const tonumber = value => {
     if (match) {
       return parseFloat(match[0]);
     }
+  }
+};
+
+const tointeger = value => {
+  const result = tonumber(value);
+  if (Number.isInteger(result)) {
+    return result;
   }
 };
 
@@ -302,7 +309,10 @@ const open_env = () => {
     if (index === "#") {
       return args.length;
     }
-    // TODO index = tonumber(index);
+    index = tointeger(index);
+    if (index === undefined) {
+      throw new Error("bad argument #1");
+    }
     if (index < 0) {
       index += args.length;
     } else {
