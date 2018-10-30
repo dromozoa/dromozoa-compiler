@@ -128,4 +128,3 @@ done
 echo "</ul>" >>result/index.html
 
 echo "</div></body></html>" >>result/index.html
-
