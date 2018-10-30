@@ -21,3 +21,9 @@ local s1 = "abc"
 local s2 = "あいうえお"
 print(#s1)
 print(#s2)
+
+print(string.byte(s1, 1))
+-- print(type(string.byte))
+-- print(type(s1.byte))
+print(s1:byte(1))
+
