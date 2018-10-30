@@ -52,7 +52,7 @@ local function encode_var(var)
     return result
   else
     local key = var:sub(1, 1)
-    if key == "P" then
+    if key == "P" or key == "L" then
       return var
     elseif key == "U" then
       local index = var:sub(2)
@@ -111,6 +111,8 @@ local tmpl = template(encode_var, {
   NE       = "%1 = %2 !== %3";
   LT       = "%1 = %2 < %3";
   LE       = "%1 = %2 <= %3";
+  BREAK    = "break";
+  GOTO     = "L = %1; continue";
   TONUMBER = "%1 = tonumber(%2)";
 })
 
@@ -173,11 +175,7 @@ function compile_code(self, out, code)
     elseif name == "CLOSURE" then
       compile_proto(self, out, code[1])
     elseif name == "LABEL" then
-      out:write(("case %s:\n"):format(code[1]))
-    elseif name == "BREAK" then
-      out:write "break;\n"
-    elseif name == "GOTO" then
-      out:write(("L = %s; continue;\n"):format(code[1]))
+      out:write(("case %s:\n"):format(encode_var(code[1])))
     else
       out:write(tmpl:eval(name, code), ";\n")
     end
@@ -299,21 +297,15 @@ return function (self, out, name)
   else
     out:write "("
   end
-
   out:write "() => {\n"
   out:write(runtime_es);
-  out:write [[
-const B = [env];
-]]
-
+  out:write "const B = [env];\n"
   compile_proto(self, out, "P0")
   out:write "P0();\n"
-
   if name then
     out:write "};\n"
   else
     out:write "})();\n"
   end
-
   return out
 end
