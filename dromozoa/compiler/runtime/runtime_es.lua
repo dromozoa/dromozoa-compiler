@@ -1,8 +1,8 @@
 return [[
 const METATABLE = Symbol("metatabale");
 
-const env = new Map();
 const string_buffers = new Map();
+const string_metatable = new Map();
 
 class Error {
   constructor(message) {
@@ -53,6 +53,9 @@ const type = value => {
 };
 
 const getmetafield = (object, event) => {
+  if (typeof object === "string") {
+    return string_metatable;
+  }
   const metatable = object[METATABLE];
   if (metatable !== undefined) {
     return metatable.get(event);
@@ -112,8 +115,16 @@ const call = (f, ...args) => {
 
 const gettable = (table, index) => {
   if (typeof table === "string") {
-    return gettable(env.get("string"), index);
-  } else if (!Map.prototype.isPrototypeOf(table)) {
+    const field = getmetafield(table, "__index");
+    if (field !== undefined) {
+      if (typeof field === "function") {
+        return call1(field, table, index);
+      } else {
+        return gettable(field, index);
+      }
+    }
+  }
+  if (!Map.prototype.isPrototypeOf(table)) {
     throw new Error("attempt to index a " + type(table) + " value");
   }
   const result = table.get(index);
@@ -431,8 +442,10 @@ const open_string = env => {
   });
 
   env.set("string", module);
+  string_metatable.set("__index", module);
 };
 
+const env = new Map();
 open_base(env);
 open_string(env);
 ]]
