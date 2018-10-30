@@ -22,8 +22,22 @@ local s2 = "あいうえお"
 print(#s1)
 print(#s2)
 
-print(string.byte(s1, 1))
--- print(type(string.byte))
--- print(type(s1.byte))
-print(s1:byte(1))
+print(string.byte(s1))
+print(s1:byte())
+for i = -4, 4 do
+  print(s1:byte(i))
+  for j = -4, 4 do
+    print(s1:byte(i, j))
+  end
+end
+print(s2:byte(1, -1))
+
+print(string.char())
+print(string.char(0x41, 0xE2, 0x89, 0xA2, 0xCE, 0x91, 0x2E))
+print(string.char(0xED, 0x95, 0x9C, 0xEA, 0xB5, 0xAD, 0xEC, 0x96, 0xB4))
+print(string.char(0xE6, 0x97, 0xA5, 0xE6, 0x9C, 0xAC, 0xE8, 0xAA, 0x9E))
+print(string.char(0xEF, 0xBB, 0xBF, 0xF0, 0xA3, 0x8E, 0xB4))
+
+print(s1:len())
+print(s2:len())
 

@@ -21,14 +21,38 @@
 // dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
 const METATABLE = Symbol("metatabale");
-const STRING_BUFFER = Symbol("string_buffer");
+
 const env = new Map();
+const string_buffers = new Map();
 
 class Error {
   constructor(message) {
     this.message = message;
   }
 }
+
+const string_buffer = s => {
+  let buffer = string_buffers.get(s);
+  if (buffer !== undefined) {
+    string_buffers.delete(s);
+  } else {
+    if (typeof TextEncoder !== "undefined") {
+      buffer = new TextEncoder().encode(s);
+    } else if (typeof Buffer !== "undefined") {
+      buffer = Buffer.from(s);
+    } else {
+      throw new Error("no UTF-8 encoder");
+    }
+  }
+  string_buffers.set(s, buffer);
+  if (string_buffers.size > 16) {
+    for (const entry of string_buffers) {
+      string_buffers.delete(entry[0]);
+      break;
+    }
+  }
+  return buffer;
+};
 
 const type = value => {
   const t = typeof value;
@@ -54,20 +78,6 @@ const getmetafield = (object, event) => {
   if (metatable !== undefined) {
     return metatable.get(event);
   }
-};
-
-const string_buffer = s => {
-  let buffer = s[STRING_BUFFER];
-  if (buffer !== undefined) {
-    return buffer;
-  }
-  if (typeof TextEncoder !== "undefined") {
-    buffer = new TextEncoder().encode(s);
-  } else if (typeof Buffer !== "undefined") {
-    buffer = Buffer.from(s);
-  }
-  s[STRING_BUFFER] = buffer;
-  return buffer;
 };
 
 const call0 = (f, ...args) => {
@@ -415,6 +425,9 @@ const open_string = env => {
 
   module.set("byte", (s, i, j) => {
     const buffer = string_buffer(s);
+    if (i === undefined) {
+      i = 1;
+    }
     const min = range_i(buffer, 2, i);
     const max = range_j(buffer, 3, j, i);
     const result = [];
@@ -422,6 +435,20 @@ const open_string = env => {
       result.push(buffer[i]);
     }
     return result;
+  });
+
+  module.set("char", (...args) => {
+    if (typeof TextDecoder !== "undefined") {
+      return new TextDecoder().decode(new Uint8Array(args));
+    } else if (typeof Buffer !== "undefined") {
+      return Buffer.from(args).toString();
+    } else {
+      throw new Error("no UTF-8 decoder");
+    }
+  });
+
+  module.set("len", s => {
+    return string_buffer(s).byteLength;
   });
 
   env.set("string", module);
