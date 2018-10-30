@@ -75,7 +75,7 @@ const type = value => {
 
 const getmetafield = (object, event) => {
   if (typeof object === "string") {
-    return string_metatable;
+    return string_metatable.get(event);
   }
   const metatable = object[METATABLE];
   if (metatable !== undefined) {
@@ -307,6 +307,9 @@ const open_base = env => {
   });
 
   env.set("getmetatable", object => {
+    if (typeof object === "string") {
+      return string_metatable;
+    }
     const metatable = object[METATABLE];
     if (metatable !== undefined) {
       if (metatable.has("__metatable")) {
@@ -460,6 +463,25 @@ const open_string = env => {
 
   module.set("len", s => {
     return string_buffer(s).byteLength;
+  });
+
+  module.set("sub", (s, i, j) => {
+    const buffer = string_buffer(s);
+    if (i === undefined) {
+      i = 1;
+    }
+    const min = range_i(buffer, 2, i);
+    const max = range_j(buffer, 3, j);
+    if (min > max) {
+      return "";
+    }
+    if (typeof TextDecoder !== "undefined") {
+      return new TextDecoder().decode(buffer.slice(min, max + 1));
+    } else if (typeof Buffer !== "undefined") {
+      return buffer.slice(min, max + 1).toString();
+    } else {
+      throw new Error("no UTF-8 decoder");
+    }
   });
 
   env.set("string", module);

@@ -41,3 +41,11 @@ print(string.char(0xEF, 0xBB, 0xBF, 0xF0, 0xA3, 0x8E, 0xB4))
 print(s1:len())
 print(s2:len())
 
+for i = -4, 4 do
+  print(s1:sub(i))
+  for j = -4, 4 do
+    print(s1:sub(i, j))
+  end
+end
+
+print(getmetatable("foo").__index == string)
