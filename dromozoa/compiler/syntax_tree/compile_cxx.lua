@@ -15,7 +15,7 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-local runtime_cxx = require "dromozoa.compiler.runtime.runtime_cxx"
+local template = require "dromozoa.compiler.syntax_tree.template"
 
 local char_table = {
   ["\""] = [[\"]];
@@ -23,7 +23,7 @@ local char_table = {
   ["\n"] = [[\n]];
 }
 
-for byte = 0x00, 0xFF do
+for byte = 0x00, 0x7F do
   local char = string.char(byte)
   if not char_table[char] then
     char_table[char] = ([[\x02X]]):format(byte)
@@ -48,7 +48,7 @@ local function encode_var(var)
     return result
   else
     local key = var:sub(1, 1)
-    if key == "P" then
+    if key == "P" or key == "L" then
       return var
     elseif key == "V" or key == "T" then
       return "get(" .. key .. ", " .. var:sub(2) .. ")"
@@ -81,60 +81,36 @@ local function encode_vars(source, i, j)
   end
 end
 
-local function _1(template)
-  return function (out, code)
-    out:write(template:format(encode_var(code[1])), ";\n")
-  end
-end
-
-local function _12(template)
-  return function (out, code)
-    out:write(template:format(encode_var(code[1]), encode_var(code[2])), ";\n")
-  end
-end
-
-local function _122(template)
-  return function (out, code)
-    local a = encode_var(code[1])
-    local b = encode_var(code[2])
-    out:write(template:format(a, b, b), ";\n")
-  end
-end
-
-local function _123(template)
-  return function (out, code)
-    out:write(template:format(encode_var(code[1]), encode_var(code[2]), encode_var(code[3])), ";\n")
-  end
-end
-
-local templates = {
-  MOVE     = _12  "%s = %s";
-  GETTABLE = _123 "%s = %s.gettable(%s)";
-  SETTABLE = _123 "%s.settable(%s, %s)";
-  NEWTABLE = _1   "%s = table()";
-  ADD      = _123 "%s = number(%s.tonumber() + %s.tonumber())";
-  SUB      = _123 "%s = number(%s.tonumber() - %s.tonumber())";
-  MUL      = _123 "%s = number(%s.tonumber() * %s.tonumber())";
-  MOD      = _123 "%s = number(%s.tointeger() %% %s.tointeger())";
-  POW      = _123 "%s = number(std::pow(%s.tonumber(), %s.tonumber()))";
-  DIV      = _123 "%s = number(%s.tonumber() / %s.tonumber())";
-  IDIV     = _123 "%s = number(std::floor(%s.tonumber() / %s.tonumber()))";
-  BAND     = _123 "%s = number(%s.tointeger() & %s.tointeger())";
-  BOR      = _123 "%s = number(%s.tointeger() | %s.tointeger())";
-  BXOR     = _123 "%s = number(%s.tointeger() ^ %s.tointeger())";
-  SHL      = _123 "%s = number(%s.tointeger() << %s.tointeger())";
-  SHR      = _123 "%s = number(%s.tointeger() >> %s.tointeger())";
-  UNM      = _12  "%s = number(-%s.tonumber())";
-  BNOT     = _12  "%s = number(~%s.tointeger())";
-  NOT      = _122 "%s = boolean(%s == nil() || %s == false_())";
-  LEN      = _12  "%s = %s.len()";
-  CONCAT   = _123 "%s = string(%s.tostring() + %s.tostring())";
-  EQ       = _123 "%s = boolean(%s == %s)";
-  NE       = _123 "%s = boolean(%s != %s)";
-  LT       = _123 "%s = boolean(%s.lt(%s))";
-  LE       = _123 "%s = boolean(%s.le(%s))";
-  TONUMBER = _12  "%s = number(%s.tonumber())";
-}
+local tmpl = template(encode_var, {
+  MOVE     = "%1 = %2";
+  GETTABLE = "%1 = %2.gettable(%3)";
+  SETTABLE = "%1.settable(%2, %3)";
+  NEWTABLE = "%1 = table()";
+  ADD      = "%1 = number(%2.tonumber() + %3.tonumber())";
+  SUB      = "%1 = number(%2.tonumber() - %3.tonumber())";
+  MUL      = "%1 = number(%2.tonumber() * %3.tonumber())";
+  MOD      = "%1 = number(%2.tointeger() % %3.tointeger())";
+  POW      = "%1 = number(std::pow(%2.tonumber(), %3.tonumber()))";
+  DIV      = "%1 = number(%2.tonumber() / %3.tonumber())";
+  IDIV     = "%1 = number(std::floor(%2.tonumber() / %3.tonumber()))";
+  BAND     = "%1 = number(%2.tointeger() & %3.tointeger())";
+  BOR      = "%1 = number(%2.tointeger() | %3.tointeger())";
+  BXOR     = "%1 = number(%2.tointeger() ^ %3.tointeger())";
+  SHL      = "%1 = number(%2.tointeger() << %3.tointeger())";
+  SHR      = "%1 = number(%2.tointeger() >> %3.tointeger())";
+  UNM      = "%1 = number(-%2.tonumber())";
+  BNOT     = "%1 = number(~%2.tointeger())";
+  NOT      = "%1 = boolean(%2 == nil() || %2 == false_())";
+  LEN      = "%1 = %2.len()";
+  CONCAT   = "%1 = string(%2.tostring() + %3.tostring())";
+  EQ       = "%1 = boolean(%2 == %3)";
+  NE       = "%1 = boolean(%2 != %3)";
+  LT       = "%1 = boolean(%2.lt(%3))";
+  LE       = "%1 = boolean(%2.le(%3))";
+  BREAK    = "break";
+  GOTO     = "goto %1";
+  TONUMBER = "%1 = number(%2.tonumber())";
+})
 
 local compile_proto
 local compile_code
@@ -194,15 +170,8 @@ function compile_code(self, out, code)
       compile_proto(self, out, code[1])
     elseif name == "LABEL" then
       out:write(("%s:\n"):format(code[1]))
-    elseif name == "BREAK" then
-      out:write "break;\n"
-    elseif name == "GOTO" then
-      out:write(("goto %s;\n"):format(code[1]))
     else
-      local t = templates[name]
-      if t then
-        t(out, code)
-      end
+      out:write(tmpl:eval(name, code), ";\n")
     end
   end
 end
@@ -300,7 +269,7 @@ end
 
 
 return function (self, out, name)
-  out:write(runtime_cxx);
+  out:write "#include \"runtime_cxx.hpp\"\n"
 
   if name then
     out:write(("%s = "):format(name))
