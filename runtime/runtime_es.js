@@ -21,6 +21,7 @@
 // dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
 const METATABLE = Symbol("metatabale");
+const STRING_BUFFER = Symbol("string_buffer");
 
 class Error {
   constructor(message) {
@@ -52,6 +53,16 @@ const getmetafield = (object, event) => {
   if (metatable !== undefined) {
     return metatable.get(event);
   }
+};
+
+const string_buffer = s => {
+  let buffer = s[STRING_BUFFER];
+  if (buffer !== undefined) {
+    return buffer;
+  }
+  buffer = new TextEncoder().encode(s);
+  s[STRING_BUFFER] = buffer;
+  return buffer;
 };
 
 const call0 = (f, ...args) => {
@@ -150,7 +161,7 @@ const settable = (table, index, value) => {
 
 const len = value => {
   if (typeof value === "string") {
-    throw new Error("not implemented");
+    return string_buffer(value).byteLength;
   } else if (Map.prototype.isPrototypeOf(value)) {
     const field = getmetafield(value, "__len");
     if (field !== undefined) {
