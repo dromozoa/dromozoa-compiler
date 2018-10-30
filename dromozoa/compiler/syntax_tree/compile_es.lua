@@ -27,7 +27,7 @@ local char_table = {
   [string.char(0xE2, 0x80, 0xA9)] = [[\u2029]]; -- PARAGRAPH SEPARATOR
 }
 
-for byte = 0x00, 0xFF do
+for byte = 0x00, 0x7F do
   local char = string.char(byte)
   if not char_table[char] then
     char_table[char] = ([[\u04X]]):format(byte)
@@ -60,14 +60,6 @@ local function encode_var(var)
     else
       return key .. "[" .. var:sub(2) .. "]"
     end
-  end
-end
-
-local function encode_var_not_spread(var)
-  if var == "V" or var == "T" then
-    return var
-  else
-    return encode_var(var)
   end
 end
 
@@ -134,11 +126,11 @@ function compile_code(self, out, code)
       out:write "}\n"
     elseif name == "COND" then
       local cond = code[1]
-      local a = encode_var(cond[1])
+      local var = encode_var(cond[1])
       if cond[2] == "TRUE" then
-        out:write(("if (%s !== undefined && %s !== false) {\n"):format(a, a))
+        out:write(("if (%s !== undefined && %s !== false) {\n"):format(var, var))
       else
-        out:write(("if (%s === undefined || %s === false) {\n"):format(a, a))
+        out:write(("if (%s === undefined || %s === false) {\n"):format(var, var))
       end
       compile_code(self, out, code[2])
       if #code == 2 then
@@ -159,14 +151,19 @@ function compile_code(self, out, code)
       elseif var == "T" then
         out:write(("T = call(%s);\n"):format(encode_vars(code, 2)))
       else
-        out:write(("%s = call1(%s);\n"):format(encode_var_not_spread(var), encode_vars(code, 2)))
+        out:write(("%s = call1(%s);\n"):format(encode_var(var), encode_vars(code, 2)))
       end
     elseif name == "RETURN" then
       local n = #code
       if n == 0 then
         out:write "return;\n"
       elseif n == 1 then
-        out:write(("return %s;\n"):format(encode_var_not_spread(code[1])))
+        local var = code[1]
+        if var == "V" or var == "T" then
+          out:write(("return %s;\n"):format(var))
+        else
+          out:write(("return %s;\n"):format(encode_var(var)))
+        end
       else
         out:write(("return [%s];\n"):format(encode_vars(code)))
       end
