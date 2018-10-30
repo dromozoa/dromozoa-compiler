@@ -16,6 +16,7 @@
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
 local runtime_es = require "dromozoa.compiler.runtime.runtime_es"
+local template = require "dromozoa.compiler.syntax_tree.template"
 
 local char_table = {
   ["\n"] = [[\n]];
@@ -84,60 +85,34 @@ local function encode_vars(source, i, j)
   return table.concat(result, ", ")
 end
 
-local function _1(template)
-  return function (out, code)
-    out:write(template:format(encode_var(code[1])), ";\n")
-  end
-end
-
-local function _12(template)
-  return function (out, code)
-    out:write(template:format(encode_var(code[1]), encode_var(code[2])), ";\n")
-  end
-end
-
-local function _122(template)
-  return function (out, code)
-    local a = encode_var(code[1])
-    local b = encode_var(code[2])
-    out:write(template:format(a, b, b), ";\n")
-  end
-end
-
-local function _123(template)
-  return function (out, code)
-    out:write(template:format(encode_var(code[1]), encode_var(code[2]), encode_var(code[3])), ";\n")
-  end
-end
-
-local templates = {
-  MOVE     = _12  "%s = %s";
-  GETTABLE = _123 "%s = gettable(%s, %s)";
-  SETTABLE = _123 "settable(%s, %s, %s)";
-  NEWTABLE = _1   "%s = new Map()";
-  ADD      = _123 "%s = %s + %s";
-  SUB      = _123 "%s = %s - %s";
-  MUL      = _123 "%s = %s * %s";
-  MOD      = _123 "%s = %s %% %s";
-  POW      = _123 "%s = %s ** %s";
-  DIV      = _123 "%s = %s / %s";
-  IDIV     = _123 "%s = Math.floor(%s / %s)";
-  BAND     = _123 "%s = %s & %s";
-  BOR      = _123 "%s = %s | %s";
-  BXOR     = _123 "%s = %s ^ %s";
-  SHL      = _123 "%s = %s << %s";
-  SHR      = _123 "%s = %s >>> %s";
-  UNM      = _12  "%s = -%s";
-  BNOT     = _12  "%s = ~%s";
-  NOT      = _122 "%s = %s === undefined || %s === false";
-  LEN      = _12  "%s = len(%s)";
-  CONCAT   = _123 "%s = tostring(%s) + tostring(%s)";
-  EQ       = _123 "%s = %s === %s";
-  NE       = _123 "%s = %s !== %s";
-  LT       = _123 "%s = %s < %s";
-  LE       = _123 "%s = %s <= %s";
-  TONUMBER = _12  "%s = tonumber(%s)";
-}
+local tmpl = template(encode_var, {
+  MOVE     = "%1 = %2";
+  GETTABLE = "%1 = gettable(%2, %3)";
+  SETTABLE = "settable(%1, %2, %3)";
+  NEWTABLE = "%1 = new Map()";
+  ADD      = "%1 = %2 + %3";
+  SUB      = "%1 = %2 - %3";
+  MUL      = "%1 = %2 * %3";
+  MOD      = "%1 = %2 % %3";
+  POW      = "%1 = %2 ** %3";
+  DIV      = "%1 = %2 / %3";
+  IDIV     = "%1 = Math.floor(%2 / %3)";
+  BAND     = "%1 = %2 & %3";
+  BOR      = "%1 = %2 | %3";
+  BXOR     = "%1 = %2 ^ %3";
+  SHL      = "%1 = %2 << %3";
+  SHR      = "%1 = %2 >>> %3";
+  UNM      = "%1 = -%2";
+  BNOT     = "%1 = ~%2";
+  NOT      = "%1 = %2 === undefined || %2 === false";
+  LEN      = "%1 = len(%2)";
+  CONCAT   = "%1 = tostring(%2) + tostring(%3)";
+  EQ       = "%1 = %2 === %3";
+  NE       = "%1 = %2 !== %3";
+  LT       = "%1 = %2 < %3";
+  LE       = "%1 = %2 <= %3";
+  TONUMBER = "%1 = tonumber(%2)";
+})
 
 local compile_proto
 local compile_code
@@ -204,7 +179,7 @@ function compile_code(self, out, code)
     elseif name == "GOTO" then
       out:write(("L = %s; continue;\n"):format(code[1]))
     else
-      templates[name](out, code)
+      out:write(tmpl:eval(name, code), ";\n")
     end
   end
 end
