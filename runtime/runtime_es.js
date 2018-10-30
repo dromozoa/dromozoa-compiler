@@ -177,7 +177,7 @@ const setlist = (table, index, ...args) => {
 
 const decint_pattern = /^\s*(-?\d+)\s*$/;
 const hexint_pattern = /^\s*(-?0[xX][0-9A-Fa-f]+)\s*$/;
-const decflt_pattern = /^\s*((?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+\-]?\d+)?)\s*/;
+const decflt_pattern = /^\s*((?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)\s*/;
 
 const tonumber = value => {
   const t = typeof value;
