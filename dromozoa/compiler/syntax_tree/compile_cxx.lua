@@ -197,7 +197,7 @@ function compile_proto(self, out, name)
   if A > 0 then
     param_A = "array_ptr args"
   end
-  if proto.vararg then
+  if proto.V then
     param_V = "array_ptr V"
     vararg = "true"
   end
