@@ -60,7 +60,11 @@ const string_buffer = s => {
   if (buffer !== undefined) {
     return buffer;
   }
-  buffer = new TextEncoder().encode(s);
+  if (typeof TextEncoder !== "undefined") {
+    buffer = new TextEncoder().encode(s);
+  } else if (typeof Buffer !== "undefined") {
+    buffer = Buffer.from(s);
+  }
   s[STRING_BUFFER] = buffer;
   return buffer;
 };

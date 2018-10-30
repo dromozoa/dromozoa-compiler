@@ -35,12 +35,16 @@ const getmetafield = (object, event) => {
 };
 
 const string_buffer = s => {
-  let buffer = value[STRING_BUFFER];
+  let buffer = s[STRING_BUFFER];
   if (buffer !== undefined) {
     return buffer;
   }
-  buffer = new TextEncoder().encode(s);
-  value[STRING_BUFFER] = buffer;
+  if (typeof TextEncoder !== "undefined") {
+    buffer = new TextEncoder().encode(s);
+  } else if (Buffer) {
+    buffer = Buffer.from(s);
+  }
+  s[STRING_BUFFER] = buffer;
   return buffer;
 };
 
