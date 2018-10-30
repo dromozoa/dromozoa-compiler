@@ -325,12 +325,9 @@ return function (self, out, name)
     out:write "("
   end
 
-  out:write "env => {\n"
+  out:write "() => {\n"
   out:write(runtime_es);
   out:write [[
-if (env === undefined) {
-  env = open_env();
-}
 const B = [env];
 ]]
 

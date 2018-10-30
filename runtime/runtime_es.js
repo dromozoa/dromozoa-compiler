@@ -22,6 +22,7 @@
 
 const METATABLE = Symbol("metatabale");
 const STRING_BUFFER = Symbol("string_buffer");
+const env = new Map();
 
 class Error {
   constructor(message) {
@@ -48,12 +49,7 @@ const type = value => {
   }
 };
 
-const string_metatable = new Map();
-
 const getmetafield = (object, event) => {
-  if (typeof object === "string") {
-    return string_metatable;
-  }
   const metatable = object[METATABLE];
   if (metatable !== undefined) {
     return metatable.get(event);
@@ -127,9 +123,8 @@ const call = (f, ...args) => {
 
 const gettable = (table, index) => {
   if (typeof table === "string") {
-    return gettable(string_metatable.get("__index"), index);
-  }
-  if (!Map.prototype.isPrototypeOf(table)) {
+    return gettable(env.get("string"), index);
+  } else if (!Map.prototype.isPrototypeOf(table)) {
     throw new Error("attempt to index a " + type(table) + " value");
   }
   const result = table.get(index);
@@ -261,72 +256,7 @@ const suppress_no_unsed = () => {};
 suppress_no_unsed(len);
 suppress_no_unsed(setlist);
 
-const open_string = () => {
-  const module = new Map();
-
-  const range_i = (buffer, arg, i) => {
-    if (i === undefined) {
-      return 0;
-    } else {
-      i = tointeger(i);
-      if (i === undefined) {
-        throw new Error("bad argument #" + arg);
-      }
-    }
-    if (i === 0) {
-      return 0;
-    } else if (i < 0) {
-      i += buffer.byteLength;
-      if (i < 0) {
-        return 0;
-      } else {
-        return i;
-      }
-    } else {
-      return i - 1;
-    }
-  };
-
-  const range_j = (buffer, arg, j, d) => {
-    if (j === undefined) {
-      if (d === undefined) {
-        return buffer.byteLength - 1;
-      } else {
-        j = d;
-      }
-    } else {
-      j = tointeger(j);
-      if (j === undefined) {
-        throw new Error("bad argument #" + arg);
-      }
-    }
-    if (j < 0) {
-      return j + buffer.byteLength;
-    } else {
-      if (j >= buffer.byteLength) {
-        return buffer.byteLength - 1;
-      } else {
-        return j - 1;
-      }
-    }
-  };
-
-  module.set("byte", (s, i, j) => {
-    const buffer = string_buffer(s);
-    const min = range_i(buffer, 2, i);
-    const max = range_j(buffer, 3, j, i);
-    const result = [];
-    for (let i = min; i <= max; ++i) {
-      result.push(buffer[i]);
-    }
-    return result;
-  });
-
-  string_metatable.set("__index", module);
-  return module;
-};
-
-const open_env = () => {
+const open_base = env => {
   const ipairs_iterator = (table, index) => {
     ++index;
     const value = gettable(table, index);
@@ -335,9 +265,8 @@ const open_env = () => {
     }
   };
 
-  const env = new Map();
-
   env.set("_G", env);
+
   env.set("_VERSION", "Lua 5.3");
 
   env.set("assert", (...args) => {
@@ -432,8 +361,71 @@ const open_env = () => {
   env.set("tostring", tostring);
 
   env.set("type", type);
-
-  env.set("string", open_string());
-
-  return env;
 };
+
+const open_string = env => {
+  const module = new Map();
+
+  const range_i = (buffer, arg, i) => {
+    if (i === undefined) {
+      return 0;
+    } else {
+      i = tointeger(i);
+      if (i === undefined) {
+        throw new Error("bad argument #" + arg);
+      }
+    }
+    if (i === 0) {
+      return 0;
+    } else if (i < 0) {
+      i += buffer.byteLength;
+      if (i < 0) {
+        return 0;
+      } else {
+        return i;
+      }
+    } else {
+      return i - 1;
+    }
+  };
+
+  const range_j = (buffer, arg, j, d) => {
+    if (j === undefined) {
+      if (d === undefined) {
+        return buffer.byteLength - 1;
+      } else {
+        j = d;
+      }
+    } else {
+      j = tointeger(j);
+      if (j === undefined) {
+        throw new Error("bad argument #" + arg);
+      }
+    }
+    if (j < 0) {
+      return j + buffer.byteLength;
+    } else {
+      if (j >= buffer.byteLength) {
+        return buffer.byteLength - 1;
+      } else {
+        return j - 1;
+      }
+    }
+  };
+
+  module.set("byte", (s, i, j) => {
+    const buffer = string_buffer(s);
+    const min = range_i(buffer, 2, i);
+    const max = range_j(buffer, 3, j, i);
+    const result = [];
+    for (let i = min; i <= max; ++i) {
+      result.push(buffer[i]);
+    }
+    return result;
+  });
+
+  env.set("string", module);
+};
+
+open_base(env);
+open_string(env);
