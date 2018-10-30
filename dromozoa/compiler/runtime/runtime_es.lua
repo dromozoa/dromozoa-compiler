@@ -316,13 +316,17 @@ const open_base = env => {
   });
 
   env.set("print", (...args) => {
-    for (let i = 0; i < args.length; ++i) {
-      if (i > 0) {
-        process.stdout.write("\t");
+    if (typeof process !== "undefined") {
+      for (let i = 0; i < args.length; ++i) {
+        if (i > 0) {
+          process.stdout.write("\t");
+        }
+        process.stdout.write(tostring(args[i]));
       }
-      process.stdout.write(tostring(args[i]));
+      process.stdout.write("\n");
+    } else {
+      console.log(...args);
     }
-    process.stdout.write("\n");
   });
 
   env.set("select", (index, ...args) => {
