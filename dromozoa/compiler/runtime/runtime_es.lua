@@ -154,12 +154,27 @@ const setlist = (table, index, ...args) => {
   }
 };
 
+const decint_pattern = /^\s*(-?\d+)\s*$/;
+const hexint_pattern = /^\s*(-?0[xX][0-9A-Fa-f]+)\s*$/;
+const decflt_pattern = /^\s*((?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+\-]?\d+)?)\s*/;
+
 const tonumber = value => {
   const t = typeof value;
   if (t == "number") {
     return value;
   } else if (t == "string") {
-    // TODO not implemented
+    let match = decint_pattern.exec(value);
+    if (match) {
+      return parseInt(match[0], 10);
+    }
+    match = hexint_pattern.exec(value);
+    if (match) {
+      return parseInt(match[0], 16);
+    }
+    match = decflt_pattern.exec(value);
+    if (match) {
+      return parseFloat(match[0]);
+    }
   }
 };
 
