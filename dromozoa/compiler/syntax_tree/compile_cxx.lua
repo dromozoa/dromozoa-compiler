@@ -42,6 +42,10 @@ local function encode_string(s)
   return "\"" .. s:gsub("[%z\1-\31\127]", char_table) .. "\""
 end
 
+local function proto_name(var)
+  return "proto" .. var:sub(2)
+end
+
 local function encode_var(var)
   local result = var_table[var]
   if result then
@@ -167,7 +171,7 @@ function compile_code(self, out, code)
     elseif name == "SETLIST" then
       out:write(("%s.setlist(%d, %s);\n"):format(encode_var(code[1]), code[2], encode_var(code[3])))
     elseif name == "CLOSURE" then
-      compile_proto(self, out, code[1])
+      out:write(("auto %s = function(std::make_shared<%s>(U, A, B));\n"):format(code[1], proto_name(code[1])))
     elseif name == "LABEL" then
       out:write(("%s:\n"):format(code[1]))
     else
@@ -176,38 +180,24 @@ function compile_code(self, out, code)
   end
 end
 
-function compile_proto(self, out, name)
-  local protos = self.protos
-  local proto
-  for i = 1, #protos do
-    proto = protos[i]
-    if proto[1] == name then
-      break
-    end
-    proto = nil
-  end
-
-  local A = proto.A
-  local B = proto.B
-  local C = proto.C
-
-  local param_A = "array_ptr"
-  local param_V = "array_ptr"
-  local vararg = "false"
-  if A > 0 then
-    param_A = "array_ptr args"
-  end
-  if proto.V then
-    param_V = "array_ptr V"
-    vararg = "true"
-  end
-  out:write(("value_t %s = function(%d, %s, [=](%s, %s) -> array_ptr {\n"):format(proto[1], A, vararg, param_A, param_V))
+function compile_proto(self, out, proto)
+  out:write(("struct %s : function_t {\n"):format(proto_name(proto[1])))
 
   local constants = proto.constants
-  local n = #constants
-  if n > 0 then
-    out:write(("array_ptr K = std::make_shared<array_t>(%d);\n"):format(n))
-    for i = 1, n do
+  local upvalues = proto.upvalues
+
+  local kn = #constants
+  local un = #upvalues
+
+  out:write "array_ptr K;\n"
+  out:write "upvalues_ptr U;\n"
+
+  out:write(("%s(upvalues_ptr S, array_ptr A, array_ptr B)\n"):format(proto_name(proto[1])))
+  out:write((": function_t(%d, %s) {\n"):format(proto.A, proto.V and "true" or "false"))
+
+  if #constants > 0 then
+    out:write(("K = std::make_shared<array_t>(%d);\n"):format(#constants))
+    for i = 1, #constants do
       local constant = constants[i]
       if constant.type == "string" then
         local source = constant.source
@@ -217,22 +207,9 @@ function compile_proto(self, out, name)
       end
     end
   end
-
-  local upvalues = proto.upvalues
-  local n = #upvalues
-  for i = 1, n do
-    local upvalue = upvalues[i]
-    if upvalue[2]:find "^U" then
-      out:write "auto S = U;\n"
-      break
-    end
-  end
-
-  out:write "{\n"
-
-  if n > 0 then
-    out:write(("upvalues_ptr U = std::make_shared<upvalues_t>(%d);\n"):format(n))
-    for i = 1, n do
+  if #upvalues > 0 then
+    out:write(("U = std::make_shared<upvalues_t>(%d);\n"):format(#upvalues))
+    for i = 1, #upvalues do
       local upvalue = upvalues[i]
       local var = upvalue[2]
       local key = var:sub(1, 1)
@@ -244,64 +221,65 @@ function compile_proto(self, out, name)
       end
     end
   end
+  out:write "}\n"
 
-  out:write "{\n"
+  local A = proto.A
+  local B = proto.B
+  local C = proto.C
 
-  if A > 0 then
-    out:write "auto A = args;\n"
-  end
-  if B > 0 then
-    out:write(("array_ptr B = std::make_shared<array_t>(%d);\n"):format(B))
-  end
-  if C > 0 then
-    out:write(("array_ptr C = std::make_shared<array_t>(%d);\n"):format(C))
-  end
+  out:write "array_ptr operator()(array_ptr A, array_ptr V) const {\n"
+  out:write(("array_ptr B = std::make_shared<array_t>(%d);\n"):format(B))
+  out:write(("array_ptr C = std::make_shared<array_t>(%d);\n"):format(C))
   if proto.T then
     out:write "array_ptr T;\n"
   end
 
   compile_code(self, out, proto.code)
 
-  out:write "}}\n"
   out:write "return nullptr;\n"
-  out:write "});\n"
+  out:write "}\n"
+
+  out:write "};\n"
 end
 
 
 return function (self, out, name)
   out:write "#include \"runtime_cxx.hpp\"\n"
 
+  out:write "namespace"
   if name then
-    out:write(("%s = "):format(name))
-  else
-    out:write "int main(int, char*[]) { ("
+    out:write(" ", name)
+  end
+  out:write "{\n"
+  out:write "using namespace dromozoa::runtime;\n"
+
+  local protos = self.protos
+  for i = #protos, 1, -1 do
+    compile_proto(self, out, protos[i])
   end
 
-  out:write [[
-[=](dromozoa::runtime::value_t env) -> dromozoa::runtime::value_t {
-using namespace dromozoa::runtime;
-if (env.is_nil()) {
-  env = open_env();
-}
-array_ptr B = std::make_shared<array_t>(1);
-(*B)[0] = env;
-]]
-
-  out:write "try {\n";
-  compile_proto(self, out, "P0")
-  out:write "return P0.call1(newarray({}));\n"
-  out:write "} catch (const error_t& e) {\n"
-  out:write "std::cerr << e.what() << std::endl;\n"
-  out:write "return nil();\n"
   out:write "}\n"
 
   if name then
-    out:write "};\n"
-  else
-    out:write "})(dromozoa::runtime::nil());\n"
-    out:write "return 0;\n"
-    out:write "}\n"
+    return out
   end
+
+  out:write [[
+int main(int, char*[]) {
+  using namespace dromozoa::runtime;
+
+  array_ptr B = std::make_shared<array_t>(1);
+  (*B)[0] = env();
+  try {
+    auto P0 = proto0(nullptr, nullptr, B);
+    P0(nullptr, nullptr);
+    return 0;
+  } catch (const error_t& e) {
+    std::cerr << e.what() << std::endl;
+  }
+  return 1;
+}
+]]
 
   return out
 end

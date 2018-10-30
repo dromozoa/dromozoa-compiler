@@ -94,15 +94,14 @@ namespace dromozoa {
 
     class function_t {
     public:
-      using closure_t = std::function<array_ptr(array_ptr, array_ptr)>;
-      template <class T>
-      function_t(std::size_t argc, bool vararg, T&& closure)
-        : argc_(argc), vararg_(vararg), closure_(std::forward<T>(closure)) {}
+      function_t(std::size_t argc, bool vararg)
+        : argc_(argc), vararg_(vararg) {}
+      virtual ~function_t() {}
+      virtual array_ptr operator()(array_ptr A, array_ptr V) const = 0;
       array_ptr call(array_ptr array) const;
     private:
       std::size_t argc_;
       bool vararg_;
-      closure_t closure_;
     };
 
     class value_t {
@@ -141,8 +140,7 @@ namespace dromozoa {
       friend value_t string(const std::string& data);
       friend value_t table();
       friend value_t table(table_ptr table);
-      template <class T>
-      friend value_t function(std::size_t argc, bool vararg, T&& closure);
+      friend value_t function(std::shared_ptr<function_t> function);
 
       bool is_nil() const noexcept {
         return type_ == type_t::nil;
@@ -516,11 +514,10 @@ namespace dromozoa {
       return self;
     }
 
-    template <class T>
-    inline value_t function(std::size_t argc, bool vararg, T&& closure) {
+    inline value_t function(std::shared_ptr<function_t> function) {
       value_t self;
       self.type_ = type_t::function;
-      new (&self.function_) function_ptr(std::make_shared<function_t>(argc, vararg, std::forward<T>(closure)));
+      new (&self.function_) function_ptr(function);
       return self;
     }
 
@@ -589,7 +586,7 @@ namespace dromozoa {
           V->push_back(get(array, i));
         }
       }
-      return closure_(A, V);
+      return (*this)(A, V);
     }
 
     table_ptr value_t::getmetatable() const noexcept {
@@ -651,6 +648,11 @@ namespace dromozoa {
       }
     }
 
+    inline value_t env() {
+      return table();
+    }
+
+/*
     inline value_t open_env() {
       value_t env = table();
 
@@ -770,6 +772,7 @@ namespace dromozoa {
 
       return env;
     }
+*/
   }
 }
 
