@@ -20,7 +20,7 @@
 // and a copy of the GCC Runtime Library Exception along with
 // dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-const metatable_key = Symbol("metatabale");
+const METATABLE = Symbol("metatabale");
 
 class Error {
   constructor(message) {
@@ -48,7 +48,7 @@ const type = value => {
 };
 
 const getmetafield = (object, event) => {
-  const metatable = object[metatable_key];
+  const metatable = object[METATABLE];
   if (metatable !== undefined) {
     return metatable.get(event);
   }
@@ -269,7 +269,7 @@ const open_env = () => {
   });
 
   env.set("getmetatable", object => {
-    const metatable = object[metatable_key];
+    const metatable = object[METATABLE];
     if (metatable !== undefined) {
       if (metatable.has("__metatable")) {
         return metatable.get("__metatable");
@@ -335,7 +335,7 @@ const open_env = () => {
     if (getmetafield(table, "__metatable") !== undefined) {
       throw new Error("cannot change a protected metatable");
     }
-    table[metatable_key] = metatable;
+    table[METATABLE] = metatable;
     return table;
   });
 
