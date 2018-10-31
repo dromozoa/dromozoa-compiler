@@ -253,11 +253,11 @@ namespace dromozoa {
     }
 
     bool value_t::is_false() const {
-      return type == type_t::boolean && !boolean;
+      return is_boolean() && !boolean;
     }
 
     bool value_t::is_true() const {
-      return type == type_t::boolean && boolean;
+      return is_boolean() && boolean;
     }
 
     bool value_t::is_nil_or_false() const {
@@ -267,42 +267,73 @@ namespace dromozoa {
     array_t::array_t()
       : size() {}
 
-    array_t::array_t(std::size_t size)
-      : data(new value_t[size], std::default_delete<value_t[]>()),
-        size(size) {}
-
-    array_t::array_t(std::initializer_list<value_t> source) {
-      std::size_t n = source.size();
-      data = std::shared_ptr<value_t>(new value_t[n], std::default_delete<value_t[]>());
-      size = n;
-
-      auto* ptr = data.get();
-      for (const auto& value : source) {
-        *ptr++ = value;
+    array_t::array_t(std::size_t n)
+      : array_t() {
+      if (n > 0) {
+        data = std::shared_ptr<value_t>(new value_t[n], std::default_delete<value_t[]>());
+        size = n;
       }
     }
 
-    array_t::array_t(std::initializer_list<array_t> source) {
-      std::size_t n = 0;
-      for (const auto& array : source) {
-        n += array.size;
-      }
-      data = std::shared_ptr<value_t>(new value_t[n], std::default_delete<value_t[]>());
-      size = n;
-
-      auto* ptr = data.get();
-      for (const auto& array : source) {
-        for (std::size_t i = 0; i < array.size; ++i) {
-          *ptr++ = array.data.get()[i];
+    array_t::array_t(std::initializer_list<value_t> source)
+      : array_t() {
+      const auto n = source.size();
+      if (n > 0) {
+        data = std::shared_ptr<value_t>(new value_t[n], std::default_delete<value_t[]>());
+        size = n;
+        auto* ptr = data.get();
+        for (const auto& value : source) {
+          *ptr++ = value;
         }
       }
     }
 
-    value_t& array_t::operator[](std::size_t index) {
-      if (index < size) {
-        return data.get()[index];
+    array_t::array_t(array_t a, array_t b) {
+      const auto n = a.size + b.size;
+      if (n > 0) {
+        data = std::shared_ptr<value_t>(new value_t[n], std::default_delete<value_t[]>());
+        size = n;
+        auto* ptr = data.get();
+        for (std::size_t i = 0; i < a.size; ++i) {
+          *ptr++ = a.data.get()[i];
+        }
+        for (std::size_t i = 0; i < b.size; ++i) {
+          *ptr++ = b.data.get()[i];
+        }
+      }
+    }
+
+    value_t& array_t::operator[](std::size_t i) const {
+      if (i < size) {
+        return data.get()[i];
       } else {
         return NIL;
+      }
+    }
+
+    array_t array_t::sub(std::size_t begin) const {
+      if (size > begin) {
+        array_t that(size - begin);
+        auto* ptr = that.data.get();
+        for (std::size_t i = begin; i < size; ++i) {
+          *ptr++ = data.get()[i];
+        }
+        return that;
+      } else {
+        return {};
+      }
+    }
+
+    array_t array_t::sub(std::size_t begin, std::size_t end) const {
+      if (end > begin) {
+        array_t that(end - begin);
+        auto* ptr = that.data.get();
+        for (std::size_t i = begin; i < end; ++i) {
+          *ptr++ = (*this)[i];
+        }
+        return that;
+      } else {
+        return {};
       }
     }
 
@@ -397,35 +428,70 @@ int main(int, char*[]) {
   std::cout << sizeof(value_t) << "\n";
 
   std::string s = "bar";
+
   value_t r;
+  r = 42 < 69;
+  std::cout << tostring(r) << "\n";
+  r = 42;
+  std::cout << tostring(r) << "\n";
   r = "foo";
+  std::cout << tostring(r) << "\n";
   r = s;
+  std::cout << tostring(r) << "\n";
   r = std::string("baz");
-  r = NIL;
+  std::cout << tostring(r) << "\n";
+  r = {};
+  std::cout << tostring(r) << "\n";
+  r = type_t::table;
   std::cout << tostring(r) << "\n";
 
-  array_t x;
+  {
+    array_t x;
+    std::cout << "#=" << x.size << "\n";
+    for (std::size_t i = 0; i < x.size; ++i) {
+      std::cout << "[" << i << "]=" << tostring(x[i]) << "\n";
+    }
+  }
 
-  x = array_t(10);
-  x[3] = 42.0;
-  std::cout
-      << x.size << ":"
-      << tostring(x[1]) << " "
-      << tostring(x[2]) << " "
-      << tostring(x[3]) << "\n";
+  {
+    array_t x{};
+    std::cout << "#=" << x.size << "\n";
+    for (std::size_t i = 0; i < x.size; ++i) {
+      std::cout << "[" << i << "]=" << tostring(x[i]) << "\n";
+    }
+  }
 
-  array_t y = { {}, {NIL}, NIL, 3.14 };
-  std::cout
-      << y.size << ":"
-      << tostring(y[1]) << " "
-      << tostring(y[2]) << " "
-      << tostring(y[3]) << "\n";
+  {
+    array_t x(1);
+    std::cout << "#=" << x.size << "\n";
+    for (std::size_t i = 0; i < x.size; ++i) {
+      std::cout << "[" << i << "]=" << tostring(x[i]) << "\n";
+    }
+  }
 
-  // ex01([](const value_t& a)->void{});
+  {
+    array_t x{1};
+    std::cout << "#=" << x.size << "\n";
+    for (std::size_t i = 0; i < x.size; ++i) {
+      std::cout << "[" << i << "]=" << tostring(x[i]) << "\n";
+    }
+  }
 
-  array_t args = { "foo", "bar", "baz", "qux" };
+  {
+    array_t x{1,2};
+    std::cout << "#=" << x.size << "\n";
+    for (std::size_t i = 0; i < x.size; ++i) {
+      std::cout << "[" << i << "]=" << tostring(x[i]) << "\n";
+    }
+  }
 
-  bind(test, 0, make_sequence_t<4>());
+  {
+    array_t x{{1,2},{3,4}};
+    std::cout << "#=" << x.size << "\n";
+    for (std::size_t i = 0; i < x.size; ++i) {
+      std::cout << "[" << i << "]=" << tostring(x[i]) << "\n";
+    }
+  }
 
   return 0;
 }

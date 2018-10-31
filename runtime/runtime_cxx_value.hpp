@@ -25,12 +25,17 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <initializer_list>
 #include <map>
 #include <memory>
 #include <string>
+#include <type_traits>
 
 namespace dromozoa {
   namespace runtime {
+    template <bool T_condition, class T = void>
+    using enable_if_t = typename std::enable_if<T_condition, T>::type;
+
     enum struct mode_t : std::uint8_t {
       variable,
       constant,
@@ -67,6 +72,10 @@ namespace dromozoa {
       value_t(const std::string&);
       value_t(std::string&&);
 
+      template <typename T>
+      value_t(T value, enable_if_t<std::is_integral<T>::value>* = 0)
+        : value_t(static_cast<double>(value)) {}
+
       bool operator<(const value_t&) const;
 
       bool is_nil() const;
@@ -98,9 +107,11 @@ namespace dromozoa {
       array_t();
       array_t(std::size_t);
       array_t(std::initializer_list<value_t>);
-      array_t(std::initializer_list<array_t>);
+      array_t(array_t, array_t);
 
-      value_t& operator[](std::size_t);
+      value_t& operator[](std::size_t) const;
+      array_t sub(std::size_t) const;
+      array_t sub(std::size_t, std::size_t) const;
 
       std::shared_ptr<value_t> data;
       std::size_t size;
@@ -114,16 +125,19 @@ namespace dromozoa {
 
     struct function_t {
       virtual ~function_t();
-      virtual array_t operator()(array_t, array_t) = 0;
+      virtual array_t operator()(array_t) const = 0;
+    };
 
-      array_t operator()(array_t);
-      std::size_t A;
+    template <std::size_t T>
+    struct proto_t : function_t {
+      virtual array_t operator()(array_t, array_t) const = 0;
+      virtual array_t operator()(array_t args) const {
+        return (*this)(args.sub(0, T), args.sub(T));
+      }
     };
 
     const value_t& getmetafield(const value_t&);
     std::string tostring(const value_t&);
-
-
   }
 }
 
