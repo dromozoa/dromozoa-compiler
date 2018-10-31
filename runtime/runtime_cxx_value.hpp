@@ -25,8 +25,8 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <memory>
 #include <map>
+#include <memory>
 #include <string>
 
 namespace dromozoa {
@@ -59,6 +59,7 @@ namespace dromozoa {
       value_t& operator=(const value_t&);
       value_t& operator=(value_t&&);
 
+      value_t(type_t);
       value_t(bool);
       value_t(double);
       value_t(const char*);
@@ -79,11 +80,9 @@ namespace dromozoa {
       };
     };
 
-    struct table_t {
-      using map_t = std::map<value_t, value_t>;
-      map_t map;
-      table_ptr metatable;
-    };
+    static value_t NIL = type_t::nil;
+    static value_t TRUE = true;
+    static value_t FALSE = false;
 
     struct array_t {
       array_t();
@@ -92,6 +91,12 @@ namespace dromozoa {
 
       std::shared_ptr<value_t> data;
       std::size_t size;
+    };
+
+    struct table_t {
+      using map_t = std::map<value_t, value_t>;
+      map_t map;
+      table_ptr metatable;
     };
 
     struct function_t {

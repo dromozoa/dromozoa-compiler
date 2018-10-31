@@ -20,12 +20,12 @@
 // and a copy of the GCC Runtime Library Exception along with
 // dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
+#include <utility>
+#include <stdexcept>
+
 #include "runtime_cxx_value.hpp"
 
-#include <utility>
-
 #include <iostream>
-#include <stdexcept>
 
 namespace dromozoa {
   namespace runtime {
@@ -136,6 +136,31 @@ namespace dromozoa {
       return *this;
     }
 
+    value_t::value_t(type_t type) : mode(mode_t::constant), type(type) {
+      switch (type) {
+        case type_t::nil:
+          break;
+        case type_t::boolean:
+          boolean = false;
+          break;
+        case type_t::number:
+          number = 0;
+          break;
+        case type_t::string:
+          new (&string) string_ptr(std::make_shared<std::string>());
+          break;
+        case type_t::table:
+          new (&table) table_ptr(std::make_shared<table_t>());
+          break;
+        case type_t::function:
+          // TODO function = noop;
+          function = nullptr;
+          break;
+        default:
+          throw std::runtime_error("unreachable code");
+      }
+    }
+
     value_t::value_t(bool boolean) : mode(mode_t::constant), type(type_t::boolean) {
       this->boolean = boolean;
     }
@@ -200,6 +225,7 @@ int main(int, char*[]) {
   r = "foo";
   r = s;
   r = std::string("baz");
+  r = NIL;
   std::cout
     << static_cast<int>(r.mode) << " "
     << static_cast<int>(r.type) << "\n";
