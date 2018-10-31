@@ -69,6 +69,16 @@ namespace dromozoa {
 
       bool operator<(const value_t&) const;
 
+      bool is_nil() const;
+      bool is_boolean() const;
+      bool is_number() const;
+      bool is_string() const;
+      bool is_table() const;
+      bool is_function() const;
+      bool is_false() const;
+      bool is_true() const;
+      bool is_nil_or_false() const;
+
       const mode_t mode;
       type_t type;
       union {
@@ -81,12 +91,15 @@ namespace dromozoa {
     };
 
     static value_t NIL = type_t::nil;
-    static value_t TRUE = true;
     static value_t FALSE = false;
+    static value_t TRUE = true;
 
     struct array_t {
       array_t();
       array_t(std::size_t);
+      array_t(std::initializer_list<value_t>);
+      array_t(std::initializer_list<array_t>);
+
       value_t& operator[](std::size_t);
 
       std::shared_ptr<value_t> data;
@@ -101,11 +114,16 @@ namespace dromozoa {
 
     struct function_t {
       virtual ~function_t();
-      virtual void operator()(array_t A, array_t V, array_t S) = 0;
+      virtual array_t operator()(array_t, array_t) = 0;
 
-      std::size_t argc;
-      bool vararg;
+      array_t operator()(array_t);
+      std::size_t A;
     };
+
+    const value_t& getmetafield(const value_t&);
+    std::string tostring(const value_t&);
+
+
   }
 }
 
