@@ -61,7 +61,6 @@
     $(".active").removeClass("active");
     $(".S" + node_id).addClass("active");
     const $path = $("g.u_paths > path[data-node-id=" + node_id + "]");
-    console.log($path);
     $path.addClass("active");
     const data = [];
     $.each($path.get(0).attributes, function (_, attr) {

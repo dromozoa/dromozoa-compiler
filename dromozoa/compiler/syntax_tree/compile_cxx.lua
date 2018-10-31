@@ -59,6 +59,8 @@ local function encode_var(var)
     elseif key == "U" then
       local index = var:sub(2)
       return "(*std::get<0>((*U)[" .. index .. "]))[std::get<1>((*U)[" .. index .. "])]"
+    elseif key == "K" then
+      return "K->" .. var
     else
       return "(*" .. key .. ")[" .. var:sub(2) .. "]"
     end
@@ -181,32 +183,50 @@ function compile_code(self, out, code)
 end
 
 function compile_proto(self, out, proto)
-  out:write(("struct %s : function_t {\n"):format(proto_name(proto[1])))
-
   local constants = proto.constants
   local upvalues = proto.upvalues
 
   local kn = #constants
   local un = #upvalues
 
-  out:write "array_ptr K;\n"
-  out:write "upvalues_ptr U;\n"
-
-  out:write(("%s(upvalues_ptr S, array_ptr A, array_ptr B)\n"):format(proto_name(proto[1])))
-  out:write((": function_t(%d, %s) {\n"):format(proto.A, proto.V and "true" or "false"))
-
-  if #constants > 0 then
-    out:write(("K = std::make_shared<array_t>(%d);\n"):format(#constants))
-    for i = 1, #constants do
+  if kn > 0 then
+    out:write(("struct %s_constants {\n"):format(proto_name(proto[1])))
+    for i = 1, kn do
+      local constant = constants[i]
+      out:write(("value_t %s;\n"):format(constant[1]))
+    end
+    out:write(("%s_constants() {\n"):format(proto_name(proto[1])))
+    for i = 1, kn do
       local constant = constants[i]
       if constant.type == "string" then
         local source = constant.source
-        out:write(("(*K)[%d] = string(%s, %d);\n"):format(i - 1, encode_string(source), #source))
+        out:write(("%s = string(%s, %d);\n"):format(constant[1], encode_string(source), #source))
       else
-        out:write(("(*K)[%d] = number(%.17g);\n"):format(i - 1, tonumber(constant.source)))
+        out:write(("%s = number(%.17g);\n"):format(constant[1], tonumber(constant.source)))
       end
     end
+    out:write "}\n"
+    out:write(("static %s_constants* get() {\n"):format(proto_name(proto[1])))
+    out:write(("static %s_constants instance;\n"):format(proto_name(proto[1])))
+    out:write "return &instance;\n"
+    out:write "}\n"
+    out:write "};\n"
   end
+
+  out:write(("struct %s : function_t {\n"):format(proto_name(proto[1])))
+
+  if kn > 0 then
+    out:write(("%s_constants* K;\n"):format(proto_name(proto[1])))
+  end
+  out:write "upvalues_ptr U;\n"
+
+  out:write(("%s(upvalues_ptr S, array_ptr A, array_ptr B)\n"):format(proto_name(proto[1])))
+  out:write((": function_t(%d, %s)\n"):format(proto.A, proto.V and "true" or "false"))
+  if kn > 0 then
+    out:write((",K(%s_constants::get())\n"):format(proto_name(proto[1])))
+  end
+  out:write "{\n"
+
   if #upvalues > 0 then
     out:write(("U = std::make_shared<upvalues_t>(%d);\n"):format(#upvalues))
     for i = 1, #upvalues do
