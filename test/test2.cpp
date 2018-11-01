@@ -28,48 +28,6 @@
 
 namespace dromozoa {
   namespace runtime {
-    template <class T>
-    using decay_t = typename std::decay<T>::type;
-
-    template <int... T>
-    struct sequence {};
-
-    template <int T_n, class T = sequence<>>
-    struct make_sequence;
-
-    template <int T_n, class T = sequence<>>
-    using make_sequence_t = typename make_sequence<T_n, T>::type;
-
-    template <int T_n, int... T>
-    struct make_sequence<T_n, sequence<T...>> {
-      using type = make_sequence_t<T_n - 1, sequence<T_n - 1, T...>>;
-    };
-
-    template <int... T>
-    struct make_sequence<0, sequence<T...>> {
-      using type = sequence<T...>;
-    };
-
-    template <int T_i>
-    struct placeholder {};
-
-    template <class T, int T_i, int... T_j>
-    void bind_each(T&& function, const array_t& args, std::size_t i, sequence<T_i, T_j...>) {
-      bind_each(
-          std::bind(
-              std::forward<T>(function),
-              std::cref(args[i]),
-              placeholder<T_j>()...),
-          args,
-          i + 1,
-          sequence<(T_j - 1)...>());
-    }
-
-    template <class T>
-    void bind_each(T function, const array_t&, std::size_t, sequence<>) {
-      function();
-    }
-
     inline void test(int x, int y, int z, int w) {
       std::cout
           << x << " "
@@ -86,135 +44,30 @@ namespace dromozoa {
     }
 
     template <class T>
-    struct function_traits
-      : function_traits<decltype(&T::operator())> {};
-
-    template <class T_result, class... T>
-    struct function_traits<T_result(*)(T...)> {
-      using result_type = T_result;
-      using arguments_type = std::tuple<decay_t<T>...>;
-    };
-
-    template <class T_result, class T_class, class... T>
-    struct function_traits<T_result(T_class::*)(T...)> {
-      using result_type = T_result;
-      using arguments_type = std::tuple<decay_t<T>...>;
-    };
-
-    template <class T_result, class T_class, class... T>
-    struct function_traits<T_result(T_class::*)(T...) const> {
-      using result_type = T_result;
-      using arguments_type = std::tuple<decay_t<T>...>;
-    };
-
-    template <class T>
-    using result_type_t = typename function_traits<T>::result_type;
-
-    template <class T>
-    using arguments_type_t = typename function_traits<T>::arguments_type;
-
-
-    // template <class T>
-    // struct closure_t : function_t {
-    //   closure_t(const T& closure) : closure(closure) {};
-    //   closure_t(T&& closure) : closure(std::move(closure)) {};
-
-    //   virtual array_t operator()(array_t args) const {
-    //     binder<T>::
-    //     return (*this)(args.sub(0, T), args.sub(T));
-    //   }
-
-    //   T closure;
-    // };
-
-    // template <class T>
-    // std::shared_ptr<closure_t<T>> make_closure(T&& closure, result_type_t<T>* = 0) {
-    //   return std::make_shared<closure<T>>(std::forward(T));
-    // }
-
-    template <std::size_t T_i, std::size_t T_n, class = void>
-    struct make_arguments {
-      template <class T>
-      static void each(const array_t&, T&) {}
-    };
-
-    template <std::size_t T_i, std::size_t T_n>
-    struct make_arguments<T_i, T_n, enable_if_t<(T_i + 1 < T_n)>> {
-      template <class T>
-      static void each(const array_t& source, T& target) {
-        convert(source, std::get<T_i>(target));
-        make_arguments<T_i + 1, T_n>::each(source, target);
-      }
-
-      static void convert(const array_t& source, value_t& target) {
-        target = source[T_i];
-      }
-    };
-
-    template <std::size_t T_i, std::size_t T_n>
-    struct make_arguments<T_i, T_n, enable_if_t<(T_i + 1 == T_n)>> {
-      template <class T>
-      static void each(const array_t& source, T& target) {
-        convert(source, std::get<T_i>(target));
-        make_arguments<T_i + 1, T_n>::each(source, target);
-      }
-
-      static void convert(const array_t& source, value_t& target) {
-        target = source[T_i];
-      }
-
-      static void convert(const array_t& source, array_t& target) {
-        target = source.sub(T_i);
-      }
-    };
-
-    template <class T_result>
-    struct invoker;
-
-    template <>
-    struct invoker<void> {
-      template <class T, class T_args, int... T_i>
-      static array_t invoke(T function, T_args args, sequence<T_i...>) {
-        function(std::get<T_i>(args)...);
-        return {};
-      }
-    };
-
-    template <>
-    struct invoker<value_t> {
-      template <class T, class T_args, int... T_i>
-      static array_t invoke(T function, T_args args, sequence<T_i...>) {
-        return { function(std::get<T_i>(args)...) };
-      }
-    };
-
-    template <>
-    struct invoker<array_t> {
-      template <class T, class T_args, int... T_i>
-      static array_t invoke(T function, T_args args, sequence<T_i...>) {
-        return function(std::get<T_i>(args)...);
-      }
-    };
-
-    template <class T>
-    inline array_t invoke(T f, const array_t& source) {
-      arguments_type_t<T> target;
-      static constexpr std::size_t size = std::tuple_size<arguments_type_t<T>>::value;
-      make_arguments<0, size>::each(source, target);
-      return invoker<result_type_t<T>>::invoke(f, target, make_sequence_t<size>());
+    void dump() {
+      std::cout << __PRETTY_FUNCTION__ << "\n";
     }
 
     template <class T>
-    inline void make_function(T, result_type_t<T>* = 0) {
-      std::cout << "#f=" << std::tuple_size<arguments_type_t<T>>::value << "\n";
+    void dump(T) {
+      std::cout << __PRETTY_FUNCTION__ << "\n";
     }
+
+    template <class T>
+    void callable(T) {
+      dump<arguments_type_t<T>>();
+    }
+
+    struct const_callable_t {
+      int operator()(int, double) const { return 0; }
+    };
+
+    struct mutable_callable_t {
+      int operator()(int, double) { return 0; }
+    };
+
+    struct not_callable_t {};
   }
-}
-
-namespace std {
-  template <int T>
-  struct is_placeholder<dromozoa::runtime::placeholder<T>>
-    : std::integral_constant<int, T> {};
 }
 
 int main(int, char*[]) {
@@ -287,10 +140,6 @@ int main(int, char*[]) {
     }
   }
 
-  make_function([](int,int){});
-  make_function(std::function<void(int,int,int,int)>(test));
-  make_function(test);
-
   invoke(test_f, { "foo" });
   invoke(test_f, { "foo", "bar", "baz", "qux" });
   // bind_each(test_f, { "foo", "bar", "baz" }, 0, make_sequence_t<3>());
@@ -302,6 +151,30 @@ int main(int, char*[]) {
     << tostring(x[0]) << " "
     << tostring(x[1]) << " "
     << tostring(x[2]) << "\n";
+
+  int v = 42;
+
+  callable(test);
+  callable([=](int x, int y) -> int {return x + v + y;});
+  auto B = std::bind(test, 1, 2, 3, std::placeholders::_1);
+  dump(B);
+  // callable(B);
+  auto F = std::function<void(int)>(B);
+  dump(F);
+  callable(F);
+  callable(const_callable_t{});
+  callable(mutable_callable_t{});
+  // callable(42);
+  // callable(not_callable_t{});
+
+  {
+    value_t v = [](const value_t& a, const value_t& b, const value_t& c) {
+      std::cout << tostring(a) << tostring(b) << tostring(c) << "\n";
+    };
+    std::cout << tostring(v) << "\n";
+    value_t x = type_t::function;
+    std::cout << tostring(x) << "\n";
+  }
 
   return 0;
 }

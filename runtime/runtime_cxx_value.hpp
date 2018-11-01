@@ -25,10 +25,12 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <initializer_list>
 #include <map>
 #include <memory>
 #include <string>
+#include <tuple>
 #include <type_traits>
 
 namespace dromozoa {
@@ -72,9 +74,12 @@ namespace dromozoa {
       value_t(const std::string&);
       value_t(std::string&&);
 
-      template <typename T>
+      template <class T>
       value_t(T value, enable_if_t<std::is_integral<T>::value>* = 0)
         : value_t(static_cast<double>(value)) {}
+
+      template <class T>
+      value_t(T, enable_if_t<!std::is_integral<T>::value>* = 0);
 
       bool operator<(const value_t&) const;
 
@@ -124,20 +129,165 @@ namespace dromozoa {
     };
 
     struct function_t {
-      virtual ~function_t();
-      virtual array_t operator()(array_t) const = 0;
+      virtual ~function_t() {}
+      virtual array_t operator()(array_t) = 0;
     };
 
     template <std::size_t T>
     struct proto_t : function_t {
-      virtual array_t operator()(array_t, array_t) const = 0;
-      virtual array_t operator()(array_t args) const {
+      virtual array_t operator()(array_t, array_t) = 0;
+      virtual array_t operator()(array_t args) {
         return (*this)(args.sub(0, T), args.sub(T));
       }
     };
 
     const value_t& getmetafield(const value_t&);
     std::string tostring(const value_t&);
+  }
+}
+
+namespace dromozoa {
+  namespace runtime {
+    template <class T>
+    using decay_t = typename std::decay<T>::type;
+
+    template <int...>
+    struct sequence {};
+
+    template <int T_n, class T = sequence<>>
+    struct make_sequence;
+
+    template <int T_n, class T = sequence<>>
+    using make_sequence_t = typename make_sequence<T_n, T>::type;
+
+    template <int T_n, int... T>
+    struct make_sequence<T_n, sequence<T...>> {
+      using type = make_sequence_t<T_n - 1, sequence<T_n - 1, T...>>;
+    };
+
+    template <int... T>
+    struct make_sequence<0, sequence<T...>> {
+      using type = sequence<T...>;
+    };
+
+    template <class T>
+    struct function_traits
+      : function_traits<decltype(&T::operator())> {};
+
+    template <class T_result, class... T>
+    struct function_traits<T_result(*)(T...)> {
+      using result_type = T_result;
+      using arguments_type = std::tuple<decay_t<T>...>;
+      static constexpr std::size_t arity = sizeof...(T);
+    };
+
+    template <class T_result, class T_class, class... T>
+    struct function_traits<T_result(T_class::*)(T...)> {
+      using result_type = T_result;
+      using arguments_type = std::tuple<decay_t<T>...>;
+      static constexpr std::size_t arity = sizeof...(T);
+    };
+
+    template <class T_result, class T_class, class... T>
+    struct function_traits<T_result(T_class::*)(T...) const> {
+      using result_type = T_result;
+      using arguments_type = std::tuple<decay_t<T>...>;
+      static constexpr std::size_t arity = sizeof...(T);
+    };
+
+    template <class T>
+    using result_type_t = typename function_traits<T>::result_type;
+
+    template <class T>
+    using arguments_type_t = typename function_traits<T>::arguments_type;
+
+    template <std::size_t T_i, std::size_t T_n, class = void>
+    struct arguments_builder {
+      template <class T>
+      static void build(const array_t&, T&) {}
+    };
+
+    template <std::size_t T_i, std::size_t T_n>
+    struct arguments_builder<T_i, T_n, enable_if_t<(T_i + 1 < T_n)>> {
+      template <class T>
+      static void build(const array_t& source, T& target) {
+        convert(source, std::get<T_i>(target));
+        arguments_builder<T_i + 1, T_n>::build(source, target);
+      }
+
+      static void convert(const array_t& source, value_t& target) {
+        target = source[T_i];
+      }
+    };
+
+    template <std::size_t T_i, std::size_t T_n>
+    struct arguments_builder<T_i, T_n, enable_if_t<(T_i + 1 == T_n)>> {
+      template <class T>
+      static void build(const array_t& source, T& target) {
+        convert(source, std::get<T_i>(target));
+        arguments_builder<T_i + 1, T_n>::build(source, target);
+      }
+
+      static void convert(const array_t& source, value_t& target) {
+        target = source[T_i];
+      }
+
+      static void convert(const array_t& source, array_t& target) {
+        target = source.sub(T_i);
+      }
+    };
+
+    template <class T_result>
+    struct invoker;
+
+    template <>
+    struct invoker<void> {
+      template <class T, class T_args, int... T_i>
+      static array_t invoke(T function, T_args args, sequence<T_i...>) {
+        function(std::get<T_i>(args)...);
+        return {};
+      }
+    };
+
+    template <>
+    struct invoker<value_t> {
+      template <class T, class T_args, int... T_i>
+      static array_t invoke(T function, T_args args, sequence<T_i...>) {
+        return { function(std::get<T_i>(args)...) };
+      }
+    };
+
+    template <>
+    struct invoker<array_t> {
+      template <class T, class T_args, int... T_i>
+      static array_t invoke(T function, T_args args, sequence<T_i...>) {
+        return function(std::get<T_i>(args)...);
+      }
+    };
+
+    template <class T>
+    inline array_t invoke(T f, const array_t& source) {
+      static constexpr std::size_t arity = function_traits<T>::arity;
+      arguments_type_t<T> target;
+      arguments_builder<0, arity>::build(source, target);
+      return invoker<result_type_t<T>>::invoke(f, target, make_sequence_t<arity>());
+    }
+
+    template <class T>
+    struct closure_t : function_t {
+      closure_t(T function) : function(function) {}
+      virtual array_t operator()(array_t args) {
+        return invoke(function, args);
+      }
+      T function;
+    };
+
+    template <class T>
+    inline value_t::value_t(T function, enable_if_t<!std::is_integral<T>::value>*)
+      : mode(mode_t::constant),
+        type(type_t::function) {
+      new (&this->function) function_ptr(std::make_shared<closure_t<T>>(function));
+    }
   }
 }
 
