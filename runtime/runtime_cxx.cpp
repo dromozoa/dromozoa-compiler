@@ -313,48 +313,6 @@ namespace dromozoa {
       }
     }
 
-    std::string value_t::tostring() const {
-      switch (type) {
-        case type_t::nil:
-          return "nil";
-        case type_t::boolean:
-          if (boolean) {
-            return "true";
-          } else {
-            return "false";
-          }
-        case type_t::number:
-          {
-            std::ostringstream out;
-            out << std::setprecision(17) << number;
-            return out.str();
-          }
-        case type_t::string:
-          return *string;
-        case type_t::table:
-          {
-            // TODO metatable
-            const auto& field = getmetafield("__tostring");
-            if (!field.is_nil()) {
-              // return field.call1(*this);
-              return "__";
-            } else {
-              std::ostringstream out;
-              out << "table: " << table.get();
-              return out.str();
-            }
-          }
-        case type_t::function:
-          {
-            std::ostringstream out;
-            out << "function: " << function.get();
-            return out.str();
-          }
-        default:
-          throw std::runtime_error("unreachable code");
-      }
-    }
-
     array_t::array_t()
       : size() {}
 
@@ -440,6 +398,48 @@ namespace dromozoa {
           return "table";
         case type_t::function:
           return "function";
+        default:
+          throw std::runtime_error("unreachable code");
+      }
+    }
+
+    std::string tostring(const value_t& self) {
+      switch (self.type) {
+        case type_t::nil:
+          return "nil";
+        case type_t::boolean:
+          if (self.boolean) {
+            return "true";
+          } else {
+            return "false";
+          }
+        case type_t::number:
+          {
+            std::ostringstream out;
+            out << std::setprecision(17) << self.number;
+            return out.str();
+          }
+        case type_t::string:
+          return *self.string;
+        case type_t::table:
+          {
+            // TODO metatable
+            const auto& field = self.getmetafield("__tostring");
+            if (!field.is_nil()) {
+              // return field.call1(*this);
+              return "__";
+            } else {
+              std::ostringstream out;
+              out << "table: " << self.table.get();
+              return out.str();
+            }
+          }
+        case type_t::function:
+          {
+            std::ostringstream out;
+            out << "function: " << self.function.get();
+            return out.str();
+          }
         default:
           throw std::runtime_error("unreachable code");
       }

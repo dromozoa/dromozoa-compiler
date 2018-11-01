@@ -38,9 +38,9 @@ namespace dromozoa {
 
     inline void test_f(value_t x, value_t y, value_t z) {
       std::cout
-          << x.tostring() << " "
-          << y.tostring() << " "
-          << z.tostring() << "\n";
+          << tostring(x) << " "
+          << tostring(y) << " "
+          << tostring(z) << "\n";
     }
 
     template <class T>
@@ -78,25 +78,25 @@ int main(int, char*[]) {
 
   value_t r;
   r = 42 < 69;
-  std::cout << r.tostring() << "\n";
+  std::cout << tostring(r) << "\n";
   r = 42;
-  std::cout << r.tostring() << "\n";
+  std::cout << tostring(r) << "\n";
   r = "foo";
-  std::cout << r.tostring() << "\n";
+  std::cout << tostring(r) << "\n";
   r = s;
-  std::cout << r.tostring() << "\n";
+  std::cout << tostring(r) << "\n";
   r = std::string("baz");
-  std::cout << r.tostring() << "\n";
+  std::cout << tostring(r) << "\n";
   r = {};
-  std::cout << r.tostring() << "\n";
+  std::cout << tostring(r) << "\n";
   r = type_t::table;
-  std::cout << r.tostring() << "\n";
+  std::cout << tostring(r) << "\n";
 
   {
     array_t x;
     std::cout << "#=" << x.size << "\n";
     for (std::size_t i = 0; i < x.size; ++i) {
-      std::cout << "[" << i << "]=" << x[i].tostring() << "\n";
+      std::cout << "[" << i << "]=" << tostring(x[i]) << "\n";
     }
   }
 
@@ -104,7 +104,7 @@ int main(int, char*[]) {
     array_t x{};
     std::cout << "#=" << x.size << "\n";
     for (std::size_t i = 0; i < x.size; ++i) {
-      std::cout << "[" << i << "]=" << x[i].tostring() << "\n";
+      std::cout << "[" << i << "]=" << tostring(x[i]) << "\n";
     }
   }
 
@@ -112,7 +112,7 @@ int main(int, char*[]) {
     array_t x(1);
     std::cout << "#=" << x.size << "\n";
     for (std::size_t i = 0; i < x.size; ++i) {
-      std::cout << "[" << i << "]=" << x[i].tostring() << "\n";
+      std::cout << "[" << i << "]=" << tostring(x[i]) << "\n";
     }
   }
 
@@ -120,7 +120,7 @@ int main(int, char*[]) {
     array_t x{1};
     std::cout << "#=" << x.size << "\n";
     for (std::size_t i = 0; i < x.size; ++i) {
-      std::cout << "[" << i << "]=" << x[i].tostring() << "\n";
+      std::cout << "[" << i << "]=" << tostring(x[i]) << "\n";
     }
   }
 
@@ -128,7 +128,7 @@ int main(int, char*[]) {
     array_t x{1,2};
     std::cout << "#=" << x.size << "\n";
     for (std::size_t i = 0; i < x.size; ++i) {
-      std::cout << "[" << i << "]=" << x[i].tostring() << "\n";
+      std::cout << "[" << i << "]=" << tostring(x[i]) << "\n";
     }
   }
 
@@ -136,7 +136,7 @@ int main(int, char*[]) {
     array_t x{1,{2,3}};
     std::cout << "#=" << x.size << "\n";
     for (std::size_t i = 0; i < x.size; ++i) {
-      std::cout << "[" << i << "]=" << x[i].tostring() << "\n";
+      std::cout << "[" << i << "]=" << tostring(x[i]) << "\n";
     }
   }
 
@@ -144,13 +144,13 @@ int main(int, char*[]) {
   invoke(test_f, { "foo", "bar", "baz", "qux" });
   // bind_each(test_f, { "foo", "bar", "baz" }, 0, make_sequence_t<3>());
   auto x = invoke([](const value_t& a, const array_t& v) -> array_t {
-    std::cout << a.tostring() << " " << v.size << "\n";
+    std::cout << tostring(a) << " " << v.size << "\n";
     return { 42, "foo", "bar" };
   }, { "foo", "bar", "baz" });
   std::cout << "R=" << x.size << "\n"
-    << x[0].tostring() << " "
-    << x[1].tostring() << " "
-    << x[2].tostring() << "\n";
+    << tostring(x[0]) << " "
+    << tostring(x[1]) << " "
+    << tostring(x[2]) << "\n";
 
   int v = 42;
 
@@ -169,14 +169,15 @@ int main(int, char*[]) {
 
   {
     value_t v = [](const value_t& a, const value_t& b, const value_t& c) {
-      std::cout << a.tostring() << b.tostring() << c.tostring() << "\n";
+      std::cout << tostring(a) << tostring(b) << tostring(c) << "\n";
     };
-    std::cout << v.tostring() << "\n";
+    std::cout << tostring(v) << "\n";
     value_t x = type_t::function;
-    std::cout << x.tostring() << "\n";
+    std::cout << tostring(x) << "\n";
 
-    call0(v, { "foo", "bar", "baz" });
-    call0(x, { "foo", "bar", "baz" });
+    call0(v, { "foo", "bar", "baz", "qux" });
+    call0(v, { "foo", "bar" });
+    call0(x, { "foo", "bar", "baz", "qux" });
   }
 
   return 0;
