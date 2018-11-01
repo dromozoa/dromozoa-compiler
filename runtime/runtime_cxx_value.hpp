@@ -145,8 +145,13 @@ namespace dromozoa {
     const value_t& rawget(const value_t&, const value_t&);
     const value_t& rawset(const value_t&, const value_t&, const value_t&);
     const value_t& getmetafield(const value_t&, const value_t&);
+
+    const value_t& setmetatable(const value_t&);
+    const value_t& setmetatable(const value_t&, const value_t&);
+
     std::string type(const value_t&);
     std::string tostring(const value_t&);
+
     array_t call(const value_t&, const array_t& args);
     value_t call1(const value_t&, const array_t& args);
     void call0(const value_t&, const array_t& args);

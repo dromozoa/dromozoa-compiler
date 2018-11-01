@@ -370,7 +370,6 @@ namespace dromozoa {
       return self;
     }
 
-
     const value_t& getmetafield(const value_t& self, const value_t& event) {
       value_t metatable;
       if (self.is_string()) {
@@ -424,11 +423,16 @@ namespace dromozoa {
           return *self.string;
         case type_t::table:
           {
-            // TODO metatable
             const auto& field = getmetafield(self, "__tostring");
             if (!field.is_nil()) {
-              // return field.call1(*this);
-              return "__";
+              const auto result = call1(field, { self });
+              if (result.is_number()) {
+                return tostring(result);
+              } else if (result.is_string()) {
+                return *result.string;
+              } else {
+                throw value_t("__tostring must return a string");
+              }
             } else {
               std::ostringstream out;
               out << "table: " << self.table.get();

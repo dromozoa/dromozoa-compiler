@@ -180,5 +180,8 @@ int main(int, char*[]) {
     call0(x, { "foo", "bar", "baz", "qux" });
   }
 
+  {
+  }
+
   return 0;
 }
