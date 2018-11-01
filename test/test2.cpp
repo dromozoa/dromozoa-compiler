@@ -20,10 +20,8 @@
 // and a copy of the GCC Runtime Library Exception along with
 // dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-#include "runtime_cxx.hpp"
+#include "runtime.hpp"
 
-#include <functional>
-#include <tuple>
 #include <iostream>
 
 namespace dromozoa {
