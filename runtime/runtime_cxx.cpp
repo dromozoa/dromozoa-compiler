@@ -26,7 +26,7 @@
 #include <stdexcept>
 #include <utility>
 
-#include "runtime_cxx_value.hpp"
+#include "runtime_cxx.hpp"
 
 namespace dromozoa {
   namespace runtime {

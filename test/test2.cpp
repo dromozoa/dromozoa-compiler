@@ -20,7 +20,7 @@
 // and a copy of the GCC Runtime Library Exception along with
 // dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-#include "runtime_cxx_value.hpp"
+#include "runtime_cxx.hpp"
 
 #include <functional>
 #include <tuple>
