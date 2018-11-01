@@ -93,6 +93,11 @@ namespace dromozoa {
       bool is_true() const;
       bool is_nil_or_false() const;
 
+      const value_t& rawget(const value_t&) const;
+      const value_t& rawset(const value_t&, const value_t&) const;
+      const value_t& getmetafield(const value_t&) const;
+      std::string tostring() const;
+
       const mode_t mode;
       type_t type;
       union {
@@ -104,15 +109,16 @@ namespace dromozoa {
       };
     };
 
-    static value_t NIL = type_t::nil;
-    static value_t FALSE = false;
-    static value_t TRUE = true;
+    extern value_t NIL;
+    extern value_t FALSE;
+    extern value_t TRUE;
+    extern value_t string_metatable;
 
     struct array_t {
       array_t();
       array_t(std::size_t);
       array_t(std::initializer_list<value_t>);
-      array_t(array_t, array_t);
+      array_t(const value_t&, array_t);
 
       value_t& operator[](std::size_t) const;
       array_t sub(std::size_t) const;
@@ -125,7 +131,7 @@ namespace dromozoa {
     struct table_t {
       using map_t = std::map<value_t, value_t>;
       map_t map;
-      table_ptr metatable;
+      value_t metatable;
     };
 
     struct function_t {
@@ -141,8 +147,10 @@ namespace dromozoa {
       }
     };
 
-    const value_t& getmetafield(const value_t&);
-    std::string tostring(const value_t&);
+    std::string type(const value_t&);
+    array_t call(const value_t&, const array_t& args);
+    value_t call1(const value_t&, const array_t& args);
+    void call0(const value_t&, const array_t& args);
   }
 }
 
@@ -266,11 +274,11 @@ namespace dromozoa {
     };
 
     template <class T>
-    inline array_t invoke(T f, const array_t& source) {
+    inline array_t invoke(T function, const array_t& source) {
       static constexpr std::size_t arity = function_traits<T>::arity;
       arguments_type_t<T> target;
       arguments_builder<0, arity>::build(source, target);
-      return invoker<result_type_t<T>>::invoke(f, target, make_sequence_t<arity>());
+      return invoker<result_type_t<T>>::invoke(function, target, make_sequence_t<arity>());
     }
 
     template <class T>

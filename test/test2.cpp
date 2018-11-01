@@ -38,9 +38,9 @@ namespace dromozoa {
 
     inline void test_f(value_t x, value_t y, value_t z) {
       std::cout
-          << tostring(x) << " "
-          << tostring(y) << " "
-          << tostring(z) << "\n";
+          << x.tostring() << " "
+          << y.tostring() << " "
+          << z.tostring() << "\n";
     }
 
     template <class T>
@@ -78,25 +78,25 @@ int main(int, char*[]) {
 
   value_t r;
   r = 42 < 69;
-  std::cout << tostring(r) << "\n";
+  std::cout << r.tostring() << "\n";
   r = 42;
-  std::cout << tostring(r) << "\n";
+  std::cout << r.tostring() << "\n";
   r = "foo";
-  std::cout << tostring(r) << "\n";
+  std::cout << r.tostring() << "\n";
   r = s;
-  std::cout << tostring(r) << "\n";
+  std::cout << r.tostring() << "\n";
   r = std::string("baz");
-  std::cout << tostring(r) << "\n";
+  std::cout << r.tostring() << "\n";
   r = {};
-  std::cout << tostring(r) << "\n";
+  std::cout << r.tostring() << "\n";
   r = type_t::table;
-  std::cout << tostring(r) << "\n";
+  std::cout << r.tostring() << "\n";
 
   {
     array_t x;
     std::cout << "#=" << x.size << "\n";
     for (std::size_t i = 0; i < x.size; ++i) {
-      std::cout << "[" << i << "]=" << tostring(x[i]) << "\n";
+      std::cout << "[" << i << "]=" << x[i].tostring() << "\n";
     }
   }
 
@@ -104,7 +104,7 @@ int main(int, char*[]) {
     array_t x{};
     std::cout << "#=" << x.size << "\n";
     for (std::size_t i = 0; i < x.size; ++i) {
-      std::cout << "[" << i << "]=" << tostring(x[i]) << "\n";
+      std::cout << "[" << i << "]=" << x[i].tostring() << "\n";
     }
   }
 
@@ -112,7 +112,7 @@ int main(int, char*[]) {
     array_t x(1);
     std::cout << "#=" << x.size << "\n";
     for (std::size_t i = 0; i < x.size; ++i) {
-      std::cout << "[" << i << "]=" << tostring(x[i]) << "\n";
+      std::cout << "[" << i << "]=" << x[i].tostring() << "\n";
     }
   }
 
@@ -120,7 +120,7 @@ int main(int, char*[]) {
     array_t x{1};
     std::cout << "#=" << x.size << "\n";
     for (std::size_t i = 0; i < x.size; ++i) {
-      std::cout << "[" << i << "]=" << tostring(x[i]) << "\n";
+      std::cout << "[" << i << "]=" << x[i].tostring() << "\n";
     }
   }
 
@@ -128,15 +128,15 @@ int main(int, char*[]) {
     array_t x{1,2};
     std::cout << "#=" << x.size << "\n";
     for (std::size_t i = 0; i < x.size; ++i) {
-      std::cout << "[" << i << "]=" << tostring(x[i]) << "\n";
+      std::cout << "[" << i << "]=" << x[i].tostring() << "\n";
     }
   }
 
   {
-    array_t x{{1,2},{3,4}};
+    array_t x{1,{2,3}};
     std::cout << "#=" << x.size << "\n";
     for (std::size_t i = 0; i < x.size; ++i) {
-      std::cout << "[" << i << "]=" << tostring(x[i]) << "\n";
+      std::cout << "[" << i << "]=" << x[i].tostring() << "\n";
     }
   }
 
@@ -144,13 +144,13 @@ int main(int, char*[]) {
   invoke(test_f, { "foo", "bar", "baz", "qux" });
   // bind_each(test_f, { "foo", "bar", "baz" }, 0, make_sequence_t<3>());
   auto x = invoke([](const value_t& a, const array_t& v) -> array_t {
-    std::cout << tostring(a) << " " << v.size << "\n";
+    std::cout << a.tostring() << " " << v.size << "\n";
     return { 42, "foo", "bar" };
   }, { "foo", "bar", "baz" });
   std::cout << "R=" << x.size << "\n"
-    << tostring(x[0]) << " "
-    << tostring(x[1]) << " "
-    << tostring(x[2]) << "\n";
+    << x[0].tostring() << " "
+    << x[1].tostring() << " "
+    << x[2].tostring() << "\n";
 
   int v = 42;
 
@@ -169,11 +169,14 @@ int main(int, char*[]) {
 
   {
     value_t v = [](const value_t& a, const value_t& b, const value_t& c) {
-      std::cout << tostring(a) << tostring(b) << tostring(c) << "\n";
+      std::cout << a.tostring() << b.tostring() << c.tostring() << "\n";
     };
-    std::cout << tostring(v) << "\n";
+    std::cout << v.tostring() << "\n";
     value_t x = type_t::function;
-    std::cout << tostring(x) << "\n";
+    std::cout << x.tostring() << "\n";
+
+    call0(v, { "foo", "bar", "baz" });
+    call0(x, { "foo", "bar", "baz" });
   }
 
   return 0;
