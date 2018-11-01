@@ -223,7 +223,7 @@ function compile_proto(self, out, proto)
   out:write(("%s(upvalues_ptr S, array_ptr A, array_ptr B)\n"):format(proto_name(proto[1])))
   out:write((": function_t(%d, %s)\n"):format(proto.A, proto.V and "true" or "false"))
   if kn > 0 then
-    out:write((",K(%s_constants::get())\n"):format(proto_name(proto[1])))
+    out:write((",K(%s_constants::get())\n"):format(proto_name(proto[1])))t
   end
   out:write "{\n"
 

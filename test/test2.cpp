@@ -23,14 +23,14 @@
 #include "runtime_cxx_value.hpp"
 
 #include <functional>
-#include <iomanip>
+#include <tuple>
 #include <iostream>
-#include <sstream>
-#include <stdexcept>
-#include <utility>
 
 namespace dromozoa {
   namespace runtime {
+    template <class T>
+    using decay_t = typename std::decay<T>::type;
+
     template <int... T>
     struct sequence {};
 
@@ -54,19 +54,20 @@ namespace dromozoa {
     struct placeholder {};
 
     template <class T, int T_i, int... T_j>
-    void bind(T f, int index, sequence<T_i, T_j...>) {
-      bind(
+    void bind_each(T&& function, const array_t& args, std::size_t i, sequence<T_i, T_j...>) {
+      bind_each(
           std::bind(
-              f,
-              index,
+              std::forward<T>(function),
+              std::cref(args[i]),
               placeholder<T_j>()...),
-          index + 1,
+          args,
+          i + 1,
           sequence<(T_j - 1)...>());
     }
 
     template <class T>
-    void bind(T f, int index, sequence<>) {
-      f(index);
+    void bind_each(T function, const array_t&, std::size_t, sequence<>) {
+      function();
     }
 
     inline void test(int x, int y, int z, int w) {
@@ -75,6 +76,137 @@ namespace dromozoa {
           << y << " "
           << z << " "
           << w << "\n";
+    }
+
+    inline void test_f(value_t x, value_t y, value_t z) {
+      std::cout
+          << tostring(x) << " "
+          << tostring(y) << " "
+          << tostring(z) << "\n";
+    }
+
+    template <class T>
+    struct function_traits
+      : function_traits<decltype(&T::operator())> {};
+
+    template <class T_result, class... T>
+    struct function_traits<T_result(*)(T...)> {
+      using result_type = T_result;
+      using arguments_type = std::tuple<decay_t<T>...>;
+    };
+
+    template <class T_result, class T_class, class... T>
+    struct function_traits<T_result(T_class::*)(T...)> {
+      using result_type = T_result;
+      using arguments_type = std::tuple<decay_t<T>...>;
+    };
+
+    template <class T_result, class T_class, class... T>
+    struct function_traits<T_result(T_class::*)(T...) const> {
+      using result_type = T_result;
+      using arguments_type = std::tuple<decay_t<T>...>;
+    };
+
+    template <class T>
+    using result_type_t = typename function_traits<T>::result_type;
+
+    template <class T>
+    using arguments_type_t = typename function_traits<T>::arguments_type;
+
+
+    // template <class T>
+    // struct closure_t : function_t {
+    //   closure_t(const T& closure) : closure(closure) {};
+    //   closure_t(T&& closure) : closure(std::move(closure)) {};
+
+    //   virtual array_t operator()(array_t args) const {
+    //     binder<T>::
+    //     return (*this)(args.sub(0, T), args.sub(T));
+    //   }
+
+    //   T closure;
+    // };
+
+    // template <class T>
+    // std::shared_ptr<closure_t<T>> make_closure(T&& closure, result_type_t<T>* = 0) {
+    //   return std::make_shared<closure<T>>(std::forward(T));
+    // }
+
+    template <std::size_t T_i, std::size_t T_n, class = void>
+    struct make_arguments {
+      template <class T>
+      static void each(const array_t&, T&) {}
+    };
+
+    template <std::size_t T_i, std::size_t T_n>
+    struct make_arguments<T_i, T_n, enable_if_t<(T_i + 1 < T_n)>> {
+      template <class T>
+      static void each(const array_t& source, T& target) {
+        convert(source, std::get<T_i>(target));
+        make_arguments<T_i + 1, T_n>::each(source, target);
+      }
+
+      static void convert(const array_t& source, value_t& target) {
+        target = source[T_i];
+      }
+    };
+
+    template <std::size_t T_i, std::size_t T_n>
+    struct make_arguments<T_i, T_n, enable_if_t<(T_i + 1 == T_n)>> {
+      template <class T>
+      static void each(const array_t& source, T& target) {
+        convert(source, std::get<T_i>(target));
+        make_arguments<T_i + 1, T_n>::each(source, target);
+      }
+
+      static void convert(const array_t& source, value_t& target) {
+        target = source[T_i];
+      }
+
+      static void convert(const array_t& source, array_t& target) {
+        target = source.sub(T_i);
+      }
+    };
+
+    template <class T_result>
+    struct invoker;
+
+    template <>
+    struct invoker<void> {
+      template <class T, class T_args, int... T_i>
+      static array_t invoke(T function, T_args args, sequence<T_i...>) {
+        function(std::get<T_i>(args)...);
+        return {};
+      }
+    };
+
+    template <>
+    struct invoker<value_t> {
+      template <class T, class T_args, int... T_i>
+      static array_t invoke(T function, T_args args, sequence<T_i...>) {
+        return { function(std::get<T_i>(args)...) };
+      }
+    };
+
+    template <>
+    struct invoker<array_t> {
+      template <class T, class T_args, int... T_i>
+      static array_t invoke(T function, T_args args, sequence<T_i...>) {
+        return function(std::get<T_i>(args)...);
+      }
+    };
+
+    template <class T>
+    inline array_t invoke(T f, const array_t& source) {
+      arguments_type_t<T> target;
+      static constexpr std::size_t size = std::tuple_size<arguments_type_t<T>>::value;
+      make_arguments<0, size>::each(source, target);
+      return invoker<result_type_t<T>>::invoke(f, target, make_sequence_t<size>());
+    }
+
+    template <class T>
+    inline void make_function(T, result_type_t<T>* = 0) {
+      std::cout << "#f=" << std::tuple_size<arguments_type_t<T>>::value << "\n";
     }
   }
 }
@@ -154,6 +286,22 @@ int main(int, char*[]) {
       std::cout << "[" << i << "]=" << tostring(x[i]) << "\n";
     }
   }
+
+  make_function([](int,int){});
+  make_function(std::function<void(int,int,int,int)>(test));
+  make_function(test);
+
+  invoke(test_f, { "foo" });
+  invoke(test_f, { "foo", "bar", "baz", "qux" });
+  // bind_each(test_f, { "foo", "bar", "baz" }, 0, make_sequence_t<3>());
+  auto x = invoke([](const value_t& a, const array_t& v) -> array_t {
+    std::cout << tostring(a) << " " << v.size << "\n";
+    return { 42, "foo", "bar" };
+  }, { "foo", "bar", "baz" });
+  std::cout << "R=" << x.size << "\n"
+    << tostring(x[0]) << " "
+    << tostring(x[1]) << " "
+    << tostring(x[2]) << "\n";
 
   return 0;
 }
