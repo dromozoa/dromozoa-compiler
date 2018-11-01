@@ -272,47 +272,6 @@ namespace dromozoa {
       return is_nil() || is_false();
     }
 
-    const value_t& value_t::rawget(const value_t& index) const {
-      if (!is_table()) {
-        throw value_t("bad argument #1");
-      }
-      const auto i = table->map.find(index);
-      if (i == table->map.end()) {
-        return NIL;
-      } else {
-        return i->second;
-      }
-    }
-
-    const value_t& value_t::rawset(const value_t& index, const value_t& value) const {
-      if (!is_table()) {
-        throw value_t("bad argument #1");
-      }
-      if (index.is_nil()) {
-        throw value_t("table index is nil");
-      }
-      if (value.is_nil()) {
-        table->map.erase(index);
-      } else {
-        table->map[index] = value;
-      }
-      return *this;
-    }
-
-    const value_t& value_t::getmetafield(const value_t& event) const {
-      value_t metatable;
-      if (is_string()) {
-        metatable = string_metatable;
-      } else if (is_table()) {
-        metatable = table->metatable;
-      }
-      if (metatable.is_table()) {
-        return metatable.rawget(event);
-      } else {
-        return NIL;
-      }
-    }
-
     array_t::array_t()
       : size() {}
 
@@ -384,6 +343,48 @@ namespace dromozoa {
       }
     }
 
+    const value_t& rawget(const value_t& self, const value_t& index) {
+      if (!self.is_table()) {
+        throw value_t("bad argument #1");
+      }
+      const auto i = self.table->map.find(index);
+      if (i == self.table->map.end()) {
+        return NIL;
+      } else {
+        return i->second;
+      }
+    }
+
+    const value_t& rawset(const value_t& self, const value_t& index, const value_t& value) {
+      if (!self.is_table()) {
+        throw value_t("bad argument #1");
+      }
+      if (index.is_nil()) {
+        throw value_t("table index is nil");
+      }
+      if (value.is_nil()) {
+        self.table->map.erase(index);
+      } else {
+        self.table->map[index] = value;
+      }
+      return self;
+    }
+
+
+    const value_t& getmetafield(const value_t& self, const value_t& event) {
+      value_t metatable;
+      if (self.is_string()) {
+        metatable = string_metatable;
+      } else if (self.is_table()) {
+        metatable = self.table->metatable;
+      }
+      if (metatable.is_table()) {
+        return rawget(metatable, event);
+      } else {
+        return NIL;
+      }
+    }
+
     std::string type(const value_t& self) {
       switch (self.type) {
         case type_t::nil:
@@ -424,7 +425,7 @@ namespace dromozoa {
         case type_t::table:
           {
             // TODO metatable
-            const auto& field = self.getmetafield("__tostring");
+            const auto& field = getmetafield(self, "__tostring");
             if (!field.is_nil()) {
               // return field.call1(*this);
               return "__";
@@ -449,7 +450,7 @@ namespace dromozoa {
       if (self.is_function()) {
         return (*self.function)(args);
       } else {
-        const auto& field = self.getmetafield("__call");
+        const auto& field = getmetafield(self, "__call");
         if (field.is_function()) {
           array_t new_args(args.size + 1);
           return (*field.function)(array_t(field, args));

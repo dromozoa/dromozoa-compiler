@@ -93,10 +93,6 @@ namespace dromozoa {
       bool is_true() const;
       bool is_nil_or_false() const;
 
-      const value_t& rawget(const value_t&) const;
-      const value_t& rawset(const value_t&, const value_t&) const;
-      const value_t& getmetafield(const value_t&) const;
-
       const mode_t mode;
       type_t type;
       union {
@@ -146,6 +142,9 @@ namespace dromozoa {
       }
     };
 
+    const value_t& rawget(const value_t&, const value_t&);
+    const value_t& rawset(const value_t&, const value_t&, const value_t&);
+    const value_t& getmetafield(const value_t&, const value_t&);
     std::string type(const value_t&);
     std::string tostring(const value_t&);
     array_t call(const value_t&, const array_t& args);
