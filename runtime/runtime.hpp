@@ -97,6 +97,7 @@ namespace dromozoa {
       double checknumber() const;
       int64_t checkinteger() const;
       std::string checkstring() const;
+      table_ptr checktable() const;
 
       const mode_t mode;
       type_t type;
@@ -129,6 +130,9 @@ namespace dromozoa {
     };
 
     struct table_t {
+      const value_t& get(const value_t&) const;
+      void set(const value_t&, const value_t&);
+
       std::map<value_t, value_t> map;
       value_t metatable;
     };

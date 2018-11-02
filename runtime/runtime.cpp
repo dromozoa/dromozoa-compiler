@@ -402,6 +402,33 @@ namespace dromozoa {
       throw value_t("string expected, got " + dromozoa::runtime::type(*this));
     }
 
+    table_ptr value_t::checktable() const {
+      if (is_table()) {
+        return table;
+      }
+      throw value_t("table expected, got " + dromozoa::runtime::type(*this));
+    }
+
+    const value_t& table_t::get(const value_t& index) const {
+      const auto i = map.find(index);
+      if (i == map.end()) {
+        return NIL;
+      } else {
+        return i->second;
+      }
+    }
+
+    void table_t::set(const value_t& index, const value_t& value) {
+      if (index.is_nil()) {
+        throw value_t("table index is nil");
+      }
+      if (value.is_nil()) {
+        map.erase(index);
+      } else {
+        map[index] = value;
+      }
+    }
+
     array_t::array_t()
       : size() {}
 
@@ -474,29 +501,11 @@ namespace dromozoa {
     }
 
     const value_t& rawget(const value_t& self, const value_t& index) {
-      if (!self.is_table()) {
-        throw value_t("bad argument #1");
-      }
-      const auto i = self.table->map.find(index);
-      if (i == self.table->map.end()) {
-        return NIL;
-      } else {
-        return i->second;
-      }
+      return self.checktable()->get(index);
     }
 
     const value_t& rawset(const value_t& self, const value_t& index, const value_t& value) {
-      if (!self.is_table()) {
-        throw value_t("bad argument #1");
-      }
-      if (index.is_nil()) {
-        throw value_t("table index is nil");
-      }
-      if (value.is_nil()) {
-        self.table->map.erase(index);
-      } else {
-        self.table->map[index] = value;
-      }
+      self.checktable()->set(index, value);
       return self;
     }
 
@@ -520,9 +529,9 @@ namespace dromozoa {
       } else if (self.is_table()) {
         const auto& metatable = self.table->metatable;
         if (metatable.is_table()) {
-          const auto i = metatable.table->map.find("__metatable");
-          if (i != metatable.table->map.end()) {
-            return i->second;
+          const auto& protected_metatable = rawget(metatable, "__metatable");
+          if (!protected_metatable.is_nil()) {
+            return protected_metatable;
           }
         }
         return metatable;
@@ -532,16 +541,13 @@ namespace dromozoa {
     }
 
     const value_t& setmetatable(const value_t& self, const value_t& metatable) {
-      if (!self.is_table()) {
-        throw value_t("bad argument #1");
-      }
       if (!metatable.is_nil() && !metatable.is_table()) {
         throw value_t("nil or table expected");
       }
       if (!getmetafield(self, "__metatable").is_nil()) {
         throw value_t("cannot change a protected metatable");
       }
-      self.table->metatable = metatable;
+      self.checktable()->metatable = metatable;
       return self;
     }
 
@@ -586,14 +592,7 @@ namespace dromozoa {
           {
             const auto& field = getmetafield(self, "__tostring");
             if (!field.is_nil()) {
-              const auto result = call1(field, { self });
-              if (result.is_number()) {
-                return tostring(result);
-              } else if (result.is_string()) {
-                return *result.string;
-              } else {
-                throw value_t("__tostring must return a string");
-              }
+              return call1(field, { self }).checkstring();
             } else {
               std::ostringstream out;
               out << "table: " << self.table.get();
@@ -617,7 +616,6 @@ namespace dromozoa {
       } else {
         const auto& field = getmetafield(self, "__call");
         if (field.is_function()) {
-          array_t new_args(args.size + 1);
           return (*field.function)(array_t(field, args));
         } else {
           throw value_t("attempt to call a " + type(self) + " value");
