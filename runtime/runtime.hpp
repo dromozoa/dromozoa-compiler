@@ -93,6 +93,13 @@ namespace dromozoa {
       bool is_true() const;
       bool is_nil_or_false() const;
 
+      bool tonumber(double&) const;
+      bool tointeger(int64_t&) const;
+      bool tostring(std::string&) const;
+      double checknumber() const;
+      int64_t checkinteger() const;
+      std::string checkstring() const;
+
       const mode_t mode;
       type_t type;
       union {
@@ -145,12 +152,13 @@ namespace dromozoa {
     const value_t& rawget(const value_t&, const value_t&);
     const value_t& rawset(const value_t&, const value_t&, const value_t&);
     const value_t& getmetafield(const value_t&, const value_t&);
-
-    const value_t& setmetatable(const value_t&);
+    const value_t& getmetatable(const value_t&);
     const value_t& setmetatable(const value_t&, const value_t&);
 
     std::string type(const value_t&);
     std::string tostring(const value_t&);
+    const value_t& gettable(const value_t&, const value_t&);
+    void settable(const value_t&, const value_t&, const value_t&);
 
     array_t call(const value_t&, const array_t& args);
     value_t call1(const value_t&, const array_t& args);

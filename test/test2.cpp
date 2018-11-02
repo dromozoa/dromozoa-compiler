@@ -179,6 +179,28 @@ int main(int, char*[]) {
   }
 
   {
+    std::string s = "  0X1.921FB54442D18P+1   ";
+    // std::string s = "+0755.0";
+    // std::string s = "-0755.0";
+    try {
+      std::size_t index = 0;
+      double number = std::stod(s, &index);
+      std::cout << "number " << number << " (" << index << ", " << (index == s.find_last_not_of(" \t\r\n") + 1) << ")" << "\n";
+    } catch (const std::exception& e) {
+      std::cout << "e " << e.what() << "\n";
+    }
+  }
+
+  {
+    double number = 0;
+    bool result = value_t(" 0x7FFFFFFFFFFFFFFF ").tonumber(number);
+    std::cout << result << " " << number << "\n";
+  }
+
+  {
+    int64_t integer = 0;
+    bool result = value_t("0x7FFFFFFFFFFFFFFF ").tointeger(integer);
+    std::cout << result << " " << integer << "\n";
   }
 
   return 0;

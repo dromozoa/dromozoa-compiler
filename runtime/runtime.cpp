@@ -20,6 +20,7 @@
 // and a copy of the GCC Runtime Library Exception along with
 // dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
+#include <cmath>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
@@ -109,6 +110,20 @@ namespace dromozoa {
           return {};
         }
       };
+
+      inline bool is_hexint(const std::string& s) {
+        auto i = s.find("0x");
+        if (i == std::string::npos) {
+          i = s.find("0X");
+          if (i == std::string::npos) {
+            return false;
+          }
+        }
+        if (i == s.find_first_not_of(" \f\r\n\t\v+-")) {
+          return s.find_first_not_of(" \f\r\n\t\v0123456789ABCDEFabcdef", i + 2) == std::string::npos;
+        }
+        return false;
+      }
     }
 
     value_t NIL = type_t::nil;
@@ -272,6 +287,88 @@ namespace dromozoa {
       return is_nil() || is_false();
     }
 
+    bool value_t::tonumber(double& result) const {
+      if (is_number()) {
+        result = number;
+        return true;
+      } else if (is_string()) {
+        auto n = string->find_last_not_of(" \f\n\r\t\v");
+        if (n == std::string::npos) {
+          return false;
+        }
+        ++n;
+        try {
+          std::size_t i = 0;
+          int64_t integer = std::stoll(*string, &i, 10);
+          if (i == n) {
+            result = integer;
+            return true;
+          }
+        } catch (const std::exception& e) {}
+        if (is_hexint(*string)) {
+          try {
+            std::size_t i = 0;
+            int64_t integer = std::stoll(*string, &i, 16);
+            if (i == n) {
+              result = integer;
+              return true;
+            }
+          } catch (const std::exception& e) {}
+        }
+        try {
+          std::size_t i = 0;
+          double number = std::stod(*string, &i);
+          if (i == n) {
+            result = number;
+            return true;
+          }
+        } catch (const std::exception& e) {}
+      }
+      return false;
+    }
+
+    bool value_t::tointeger(int64_t& result) const {
+      if (is_number()) {
+        if (number == std::floor(number)) {
+          result = number;
+          return true;
+        }
+      } else if (is_string()) {
+        auto n = string->find_last_not_of(" \f\n\r\t\v");
+        if (n == std::string::npos) {
+          return false;
+        }
+        ++n;
+        try {
+          std::size_t i = 0;
+          int64_t integer = std::stoll(*string, &i, 10);
+          if (i == n) {
+            result = integer;
+            return true;
+          }
+        } catch (const std::exception& e) {}
+        if (is_hexint(*string)) {
+          try {
+            std::size_t i = 0;
+            int64_t integer = std::stoll(*string, &i, 16);
+            if (i == n) {
+              result = integer;
+              return true;
+            }
+          } catch (const std::exception& e) {}
+        }
+        try {
+          std::size_t i = 0;
+          double number = std::stod(*string, &i);
+          if (i == n && number == std::floor(number)) {
+            result = number;
+            return true;
+          }
+        } catch (const std::exception& e) {}
+      }
+      return false;
+    }
+
     array_t::array_t()
       : size() {}
 
@@ -382,6 +479,37 @@ namespace dromozoa {
       } else {
         return NIL;
       }
+    }
+
+    const value_t& getmetatable(const value_t& self) {
+      if (self.is_string()) {
+        return string_metatable;
+      } else if (self.is_table()) {
+        const auto& metatable = self.table->metatable;
+        if (metatable.is_table()) {
+          const auto i = metatable.table->map.find("__metatable");
+          if (i != metatable.table->map.end()) {
+            return i->second;
+          }
+        }
+        return metatable;
+      } else {
+        return NIL;
+      }
+    }
+
+    const value_t& setmetatable(const value_t& self, const value_t& metatable) {
+      if (!self.is_table()) {
+        throw value_t("bad argument #1");
+      }
+      if (!metatable.is_nil() && !metatable.is_table()) {
+        throw value_t("nil or table expected");
+      }
+      if (!getmetafield(self, "__metatable").is_nil()) {
+        throw value_t("cannot change a protected metatable");
+      }
+      self.table->metatable = metatable;
+      return self;
     }
 
     std::string type(const value_t& self) {
