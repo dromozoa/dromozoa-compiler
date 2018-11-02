@@ -201,7 +201,7 @@ const len = value => {
       }
     }
   } else {
-    throw new Error("attempt to get index of a " + type(value) + " value");
+    throw new Error("attempt to get length of a " + type(value) + " value");
   }
 };
 

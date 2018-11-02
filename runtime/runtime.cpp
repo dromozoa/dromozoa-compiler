@@ -549,6 +549,46 @@ namespace dromozoa {
       return self;
     }
 
+    value_t gettable(const value_t& table, const value_t& index) {
+      if (table.is_string()) {
+        const auto& field = getmetafield(table, "__index");
+        if (!field.is_nil()) {
+          if (field.is_function()) {
+            return call1(field, { table, index });
+          } else {
+            return gettable(field, index);
+          }
+        }
+      }
+      const auto& result = rawget(table, index);
+      if (result.is_nil()) {
+        const auto& field = getmetafield(table, "__index");
+        if (!field.is_nil()) {
+          if (field.is_function()) {
+            return call1(field, { table, index });
+          } else {
+            return gettable(field, index);
+          }
+        }
+      }
+      return result;
+    }
+
+    void settable(const value_t& table, const value_t& index, const value_t& value) {
+      const auto& result = rawget(table, index);
+      if (result.is_nil()) {
+        const auto& field = getmetafield(table, "__newindex");
+        if (!field.is_nil()) {
+          if (field.is_function()) {
+            return call0(field, { table, index, value });
+          } else {
+            return settable(field, index, value);
+          }
+        }
+      }
+      rawset(table, index, value);
+    }
+
     std::string type(const value_t& self) {
       switch (self.type) {
         case type_t::nil:
@@ -606,6 +646,23 @@ namespace dromozoa {
         default:
           throw std::logic_error("unreachable code");
       }
+    }
+
+    int64_t len(const value_t& self) {
+      if (self.is_string()) {
+        return self.string->size();
+      } else if (self.is_table()) {
+        const auto& field = getmetafield(self, "__len");
+        if (!field.is_nil()) {
+          return call1(field, { self }).checkinteger();
+        }
+        for (int64_t i = 1; ; ++i) {
+          if (gettable(self, i).is_nil()) {
+            return i - 1;
+          }
+        }
+      }
+      throw value_t("attempt to get length of a " + type(self) + " value");
     }
 
     array_t call(const value_t& self, const array_t& args) {
