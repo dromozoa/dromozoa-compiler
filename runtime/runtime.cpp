@@ -126,9 +126,50 @@ namespace dromozoa {
       }
 
       void open_base(const value_t& env) {
+        const value_t ipairs_iterator = [](value_t table, value_t index) -> array_t {
+          index = index.checkinteger() + 1;
+          const auto& value = gettable(table, index);
+          if (value.is_nil()) {
+            return {};
+          } else {
+            return { index, value };
+          }
+        };
+
         settable(env, "_G", env);
 
         settable(env, "_VERSION", "Lua 5.3");
+
+        settable(env, "assert", [](array_t args) -> array_t {
+          const auto& value = args[0];
+          if (value.toboolean()) {
+            return args;
+          } else {
+            if (args.size > 1) {
+              throw args[1];
+            } else {
+              throw value_t("assertion failed!");
+            }
+          }
+        });
+
+        settable(env, "error", [](value_t message) {
+          throw message;
+        });
+
+        settable(env, "ipairs", [=](value_t table) -> array_t {
+          return { ipairs_iterator, table, 0 };
+        });
+
+
+        settable(env, "pcall", [](value_t f, array_t args) -> array_t {
+          try {
+            array_t result = call(f, args);
+            return array_t(true, result);
+          } catch (const value_t& e) {
+            return { false, e };
+          }
+        });
 
         settable(env, "print", [](array_t args) {
           for (std::size_t i = 0; i < args.size; ++i) {
@@ -138,6 +179,31 @@ namespace dromozoa {
             std::cout << tostring(args[i]);
           }
           std::cout << "\n";
+        });
+
+        settable(env, "select", [](value_t index, array_t args) -> array_t {
+          if (eq(index, "#")) {
+            return { args.size };
+          }
+          auto i = index.checkinteger();
+          if (i < 0) {
+            i += args.size;
+          } else {
+            --i;
+          }
+          return args.sub(i);
+        });
+
+        settable(env, "getmetatable", [](value_t object) -> value_t {
+          return getmetatable(object);
+        });
+
+        settable(env, "setmetatable", [](value_t table, value_t metatable) -> value_t {
+          return setmetatable(table, metatable);
+        });
+
+        settable(env, "type", [](value_t value) -> value_t {
+          return type(value);
         });
       }
 
@@ -694,7 +760,7 @@ namespace dromozoa {
       } else {
         const auto& field = getmetafield(self, "__call");
         if (field.is_function()) {
-          return (*field.function)(array_t(field, args));
+          return (*field.function)(array_t(self, args));
         } else {
           throw value_t("attempt to call a " + type(self) + " value");
         }
