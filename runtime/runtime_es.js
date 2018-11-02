@@ -209,7 +209,7 @@ const setlist = (table, index, ...args) => {
   for (let i = 0; i < args.length; ++i) {
     const value = args[i];
     if (value !== undefined) {
-      table.set(index + i, args[i]);
+      table.set(index++, args[i]);
     }
   }
 };

@@ -136,6 +136,12 @@ int main(int, char*[]) {
     for (std::size_t i = 0; i < x.size; ++i) {
       std::cout << "[" << i << "]=" << tostring(x[i]) << "\n";
     }
+
+    x = {{1,2},{3,4}};
+    std::cout << "#=" << x.size << "\n";
+    for (std::size_t i = 0; i < x.size; ++i) {
+      std::cout << "[" << i << "]=" << tostring(x[i]) << "\n";
+    }
   }
 
   invoke(test_f, { "foo" });
@@ -226,6 +232,20 @@ int main(int, char*[]) {
     std::cout << "state " << state << "\n";
   }
 
+  {
+    array_t A { "foo", 42, true };
+    uparray_t S {
+      { A, 0 },
+    };
+
+    uparray_t U {
+      S[0],
+      { A, 2 },
+      { A, 1 },
+    };
+
+    std::cout << tostring(*U[0]) << tostring(*U[2]) << "\n";
+  }
 
   return 0;
 }

@@ -23,7 +23,6 @@
 #ifndef DROMOZOA_COMPILER_RUNTIME_CXX_VALUE_HPP
 #define DROMOZOA_COMPILER_RUNTIME_CXX_VALUE_HPP
 
-#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
@@ -74,13 +73,18 @@ namespace dromozoa {
       value_t(const char*, size_t);
       value_t(const std::string&);
       value_t(std::string&&);
+      value_t(function_ptr);
 
       template <class T>
       value_t(T value, enable_if_t<std::is_integral<T>::value>* = 0)
         : value_t(static_cast<double>(value)) {}
 
       template <class T>
-      value_t(T, enable_if_t<!std::is_integral<T>::value>* = 0);
+      value_t(T value, enable_if_t<std::is_convertible<T, function_ptr>::value>* = 0)
+        : value_t(static_cast<function_ptr>(value)) {}
+
+      template <class T>
+      value_t(T, enable_if_t<(!std::is_integral<T>::value && !std::is_convertible<T, function_ptr>::value)>* = 0);
 
       bool operator<(const value_t&) const;
 
@@ -121,13 +125,31 @@ namespace dromozoa {
       array_t();
       array_t(std::size_t);
       array_t(std::initializer_list<value_t>);
+      array_t(std::initializer_list<value_t>, array_t);
       array_t(const value_t&, array_t);
-
       value_t& operator[](std::size_t) const;
       array_t sub(std::size_t) const;
       array_t sub(std::size_t, std::size_t) const;
 
       std::shared_ptr<value_t> data;
+      std::size_t size;
+    };
+
+    struct upvalue_t {
+      upvalue_t();
+      upvalue_t(array_t array, std::size_t index);
+      value_t& operator*() const;
+
+      array_t array;
+      std::size_t index;
+    };
+
+    struct uparray_t {
+      uparray_t();
+      uparray_t(std::initializer_list<upvalue_t>);
+      upvalue_t& operator[](std::size_t) const;
+
+      std::shared_ptr<upvalue_t> data;
       std::size_t size;
     };
 
@@ -146,7 +168,7 @@ namespace dromozoa {
 
     template <std::size_t T>
     struct proto_t : function_t {
-      virtual array_t operator()(array_t, array_t) = 0;
+      virtual array_t operator()(array_t, array_t) const = 0;
       virtual array_t operator()(array_t args) {
         return (*this)(args.sub(0, T), args.sub(T));
       }
@@ -159,6 +181,8 @@ namespace dromozoa {
     const value_t& setmetatable(const value_t&, const value_t&);
     value_t gettable(const value_t&, const value_t&);
     void settable(const value_t&, const value_t&, const value_t&);
+    void setlist(const value_t&, std::size_t, const value_t&);
+    void setlist(const value_t&, std::size_t, const array_t&);
 
     array_t call(const value_t&, const array_t& args);
     value_t call1(const value_t&, const array_t& args);
@@ -310,7 +334,7 @@ namespace dromozoa {
     };
 
     template <class T>
-    inline value_t::value_t(T function, enable_if_t<!std::is_integral<T>::value>*)
+    inline value_t::value_t(T function, enable_if_t<(!std::is_integral<T>::value && !std::is_convertible<T, function_ptr>::value)>*)
       : mode(mode_t::constant),
         type(type_t::function) {
       new (&this->function) function_ptr(std::make_shared<closure_t<T>>(function));

@@ -22,6 +22,7 @@
 
 #include "runtime.hpp"
 
+#include <cmath>
 #include <iomanip>
 #include <sstream>
 #include <stdexcept>
@@ -246,6 +247,12 @@ namespace dromozoa {
       : mode(mode_t::constant),
         type(type_t::string) {
       new (&this->string) string_ptr(std::make_shared<std::string>(std::move(string)));
+    }
+
+    value_t::value_t(function_ptr function)
+      : mode(mode_t::constant),
+        type(type_t::function) {
+      new (&this->function) function_ptr(function);
     }
 
     bool value_t::operator<(const value_t& that) const {
@@ -473,6 +480,22 @@ namespace dromozoa {
       }
     }
 
+    array_t::array_t(std::initializer_list<value_t> source, array_t array)
+      : array_t() {
+      const auto n = source.size() + array.size;
+      if (n > 0) {
+        data = std::shared_ptr<value_t>(new value_t[n], std::default_delete<value_t[]>());
+        size = n;
+        auto* ptr = data.get();
+        for (const auto& value : source) {
+          *ptr++ = value;
+        }
+        for (std::size_t i = 0; i < array.size; ++i) {
+          *ptr++ = array.data.get()[i];
+        }
+      }
+    }
+
     array_t::array_t(const value_t& value, array_t array) {
       const auto n = array.size + 1;
       data = std::shared_ptr<value_t>(new value_t[n], std::default_delete<value_t[]>());
@@ -515,6 +538,41 @@ namespace dromozoa {
         return that;
       } else {
         return {};
+      }
+    }
+
+    upvalue_t::upvalue_t()
+      : index() {}
+
+    upvalue_t::upvalue_t(array_t array, std::size_t index)
+      : array(array),
+        index(index) {}
+
+    value_t& upvalue_t::operator*() const {
+      return array[index];
+    }
+
+    uparray_t::uparray_t()
+      : size() {}
+
+    uparray_t::uparray_t(std::initializer_list<upvalue_t> source)
+      : uparray_t() {
+      const auto n = source.size();
+      if (n > 0) {
+        data = std::shared_ptr<upvalue_t>(new upvalue_t[n], std::default_delete<upvalue_t[]>());
+        size = n;
+        auto* ptr = data.get();
+        for (const auto& upvalue : source) {
+          *ptr++ = upvalue;
+        }
+      }
+    }
+
+    upvalue_t& uparray_t::operator[](std::size_t i) const {
+      if (i < size) {
+        return data.get()[i];
+      } else {
+        throw std::out_of_range("invalid uparray index");
       }
     }
 
@@ -607,6 +665,16 @@ namespace dromozoa {
         }
       }
       rawset(table, index, value);
+    }
+
+    void setlist(const value_t& table, std::size_t index, const value_t& value) {
+      rawset(table, index, value);
+    }
+
+    void setlist(const value_t& table, std::size_t index, const array_t& array) {
+      for (size_t i = 0; i < array.size; ++i) {
+        rawset(table, index++, array[i]);
+      }
     }
 
     array_t call(const value_t& self, const array_t& args) {
