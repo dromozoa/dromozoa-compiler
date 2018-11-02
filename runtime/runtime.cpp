@@ -295,30 +295,30 @@ namespace dromozoa {
         ++n;
         try {
           std::size_t i = 0;
-          int64_t integer = std::stoll(*string, &i, 10);
+          const int64_t integer = std::stoll(*string, &i, 10);
           if (i == n) {
             result = integer;
             return true;
           }
-        } catch (const std::exception& e) {}
+        } catch (const std::exception&) {}
         if (is_hexint(*string)) {
           try {
             std::size_t i = 0;
-            int64_t integer = std::stoll(*string, &i, 16);
+            const int64_t integer = std::stoll(*string, &i, 16);
             if (i == n) {
               result = integer;
               return true;
             }
-          } catch (const std::exception& e) {}
+          } catch (const std::exception&) {}
         }
         try {
           std::size_t i = 0;
-          double number = std::stod(*string, &i);
+          const double number = std::stod(*string, &i);
           if (i == n) {
             result = number;
             return true;
           }
-        } catch (const std::exception& e) {}
+        } catch (const std::exception&) {}
       }
       return false;
     }
@@ -337,30 +337,30 @@ namespace dromozoa {
         ++n;
         try {
           std::size_t i = 0;
-          int64_t integer = std::stoll(*string, &i, 10);
+          const int64_t integer = std::stoll(*string, &i, 10);
           if (i == n) {
             result = integer;
             return true;
           }
-        } catch (const std::exception& e) {}
+        } catch (const std::exception&) {}
         if (is_hexint(*string)) {
           try {
             std::size_t i = 0;
-            int64_t integer = std::stoll(*string, &i, 16);
+            const int64_t integer = std::stoll(*string, &i, 16);
             if (i == n) {
               result = integer;
               return true;
             }
-          } catch (const std::exception& e) {}
+          } catch (const std::exception&) {}
         }
         try {
           std::size_t i = 0;
-          double number = std::stod(*string, &i);
+          const double number = std::stod(*string, &i);
           if (i == n && number == std::floor(number)) {
             result = number;
             return true;
           }
-        } catch (const std::exception& e) {}
+        } catch (const std::exception&) {}
       }
       return false;
     }
@@ -454,15 +454,13 @@ namespace dromozoa {
     }
 
     array_t::array_t(const value_t& value, array_t array) {
-      const auto n = 1 + array.size;
-      if (n > 0) {
-        data = std::shared_ptr<value_t>(new value_t[n], std::default_delete<value_t[]>());
-        size = n;
-        auto* ptr = data.get();
-        *ptr++ = value;
-        for (std::size_t i = 0; i < array.size; ++i) {
-          *ptr++ = array.data.get()[i];
-        }
+      const auto n = array.size + 1;
+      data = std::shared_ptr<value_t>(new value_t[n], std::default_delete<value_t[]>());
+      size = n;
+      auto* ptr = data.get();
+      *ptr++ = value;
+      for (std::size_t i = 0; i < array.size; ++i) {
+        *ptr++ = array.data.get()[i];
       }
     }
 
