@@ -23,6 +23,7 @@
 #ifndef DROMOZOA_COMPILER_RUNTIME_CXX_VALUE_HPP
 #define DROMOZOA_COMPILER_RUNTIME_CXX_VALUE_HPP
 
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
@@ -114,6 +115,7 @@ namespace dromozoa {
     extern value_t FALSE;
     extern value_t TRUE;
     extern value_t string_metatable;
+    extern value_t env;
 
     struct array_t {
       array_t();
@@ -158,13 +160,16 @@ namespace dromozoa {
     value_t gettable(const value_t&, const value_t&);
     void settable(const value_t&, const value_t&, const value_t&);
 
-    std::string type(const value_t&);
-    std::string tostring(const value_t&);
-    int64_t len(const value_t&);
-
     array_t call(const value_t&, const array_t& args);
     value_t call1(const value_t&, const array_t& args);
     void call0(const value_t&, const array_t& args);
+
+    std::string type(const value_t&);
+    std::string tostring(const value_t&);
+    int64_t len(const value_t&);
+    bool eq(const value_t&, const value_t&);
+    bool lt(const value_t&, const value_t&);
+    bool le(const value_t&, const value_t&);
   }
 }
 

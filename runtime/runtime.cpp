@@ -20,13 +20,12 @@
 // and a copy of the GCC Runtime Library Exception along with
 // dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-#include <cmath>
+#include "runtime.hpp"
+
 #include <iomanip>
 #include <sstream>
 #include <stdexcept>
 #include <utility>
-
-#include "runtime.hpp"
 
 namespace dromozoa {
   namespace runtime {
@@ -110,7 +109,7 @@ namespace dromozoa {
         }
       };
 
-      inline bool is_hexint(const std::string& s) {
+      bool is_hexint(const std::string& s) {
         auto i = s.find("0x");
         if (i == std::string::npos) {
           i = s.find("0X");
@@ -123,12 +122,33 @@ namespace dromozoa {
         }
         return false;
       }
+
+      void open_base(const value_t& env) {
+        settable(env, "_G", env);
+
+        settable(env, "_VERSION", "Lua 5.3");
+      }
+
+      void open_string(const value_t& env, const value_t& string_metatable) {
+        value_t module = type_t::table;
+
+        settable(env, "string", module);
+        settable(string_metatable, "__index", module);
+      }
+
+      value_t open(const value_t& string_metatable) {
+        value_t env = type_t::table;
+        open_base(env);
+        open_string(env, string_metatable);
+        return env;
+      }
     }
 
     value_t NIL = type_t::nil;
     value_t FALSE = false;
     value_t TRUE = true;
     value_t string_metatable = type_t::table;
+    value_t env = open(string_metatable);
 
     value_t::value_t()
       : mode(mode_t::variable),
@@ -589,6 +609,27 @@ namespace dromozoa {
       rawset(table, index, value);
     }
 
+    array_t call(const value_t& self, const array_t& args) {
+      if (self.is_function()) {
+        return (*self.function)(args);
+      } else {
+        const auto& field = getmetafield(self, "__call");
+        if (field.is_function()) {
+          return (*field.function)(array_t(field, args));
+        } else {
+          throw value_t("attempt to call a " + type(self) + " value");
+        }
+      }
+    }
+
+    value_t call1(const value_t& self, const array_t& args) {
+      return call(self, args)[0];
+    }
+
+    void call0(const value_t& self, const array_t& args) {
+      call(self, args);
+    }
+
     std::string type(const value_t& self) {
       switch (self.type) {
         case type_t::nil:
@@ -665,25 +706,78 @@ namespace dromozoa {
       throw value_t("attempt to get length of a " + type(self) + " value");
     }
 
-    array_t call(const value_t& self, const array_t& args) {
-      if (self.is_function()) {
-        return (*self.function)(args);
-      } else {
-        const auto& field = getmetafield(self, "__call");
-        if (field.is_function()) {
-          return (*field.function)(array_t(field, args));
-        } else {
-          throw value_t("attempt to call a " + type(self) + " value");
-        }
+    bool eq(const value_t& self, const value_t& that) {
+      if (self.type != that.type) {
+        return false;
+      }
+      switch (self.type) {
+        case type_t::nil:
+          return true;
+        case type_t::boolean:
+          return self.boolean == that.boolean;
+        case type_t::number:
+          return self.number == that.number;
+        case type_t::string:
+          return *self.string == *that.string;
+        case type_t::table:
+          if (self.table == that.table) {
+            return true;
+          } else {
+            auto field = getmetafield(self, "__eq");
+            if (field.is_nil()) {
+              field = getmetafield(that, "__eq");
+            }
+            if (!field.is_nil()) {
+              return call1(field, { self, that }).toboolean();
+            }
+            return false;
+          }
+        case type_t::function:
+          return self.function == that.function;
+        default:
+          throw std::logic_error("unreachable code");
       }
     }
 
-    value_t call1(const value_t& self, const array_t& args) {
-      return call(self, args)[0];
+    bool lt(const value_t& self, const value_t& that) {
+      if (self.is_number() && that.is_number()) {
+        return self.number < that.number;
+      } else if (self.is_string() && that.is_string()) {
+        return *self.string < *that.string;
+      } else {
+        auto field = getmetafield(self, "__lt");
+        if (field.is_nil()) {
+          field = getmetafield(that, "__lt");
+        }
+        if (!field.is_nil()) {
+          return call1(field, { self, that }).toboolean();
+        }
+      }
+      throw value_t("attempt to compare " + type(self) + " with " + type(that));
     }
 
-    void call0(const value_t& self, const array_t& args) {
-      call(self, args);
+    bool le(const value_t& self, const value_t& that) {
+      if (self.is_number() && that.is_number()) {
+        return self.number <= that.number;
+      } else if (self.is_string() && that.is_string()) {
+        return *self.string <= *that.string;
+      } else {
+        auto field = getmetafield(self, "__le");
+        if (field.is_nil()) {
+          field = getmetafield(that, "__le");
+        }
+        if (!field.is_nil()) {
+          return call1(field, { self, that }).toboolean();
+        }
+        field = getmetafield(that, "__lt");
+        if (field.is_nil()) {
+          field = getmetafield(self, "__lt");
+        }
+        if (!field.is_nil()) {
+          return !call1(field, { that, self }).toboolean();
+        }
+      }
+      throw value_t("attempt to compare " + type(self) + " with " + type(that));
     }
   }
 }
