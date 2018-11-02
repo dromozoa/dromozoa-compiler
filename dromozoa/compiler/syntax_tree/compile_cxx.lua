@@ -55,7 +55,7 @@ local function encode_var(var)
     if key == "P" or key == "L" then
       return var
     elseif key == "U" then
-      return "*U[" .. var:sub(2) .. "]"
+      return "(*U[" .. var:sub(2) .. "])"
     elseif key == "K" then
       return "K->" .. var
     else
@@ -81,7 +81,7 @@ local function encode_vars(source, i, j)
     if #result == 0 then
       return var
     else
-      return "{ { " .. table.concat(result, ", ") .. " }, " .. var .. " }"
+      return "array_t({ " .. table.concat(result, ", ") .. " }, " .. var .. ")"
     end
   else
     if #result == 0 then

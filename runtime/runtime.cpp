@@ -24,6 +24,7 @@
 
 #include <cmath>
 #include <iomanip>
+#include <iostream>
 #include <sstream>
 #include <stdexcept>
 #include <utility>
@@ -128,6 +129,16 @@ namespace dromozoa {
         settable(env, "_G", env);
 
         settable(env, "_VERSION", "Lua 5.3");
+
+        settable(env, "print", [](array_t args) {
+          for (std::size_t i = 0; i < args.size; ++i) {
+            if (i > 0) {
+              std::cout << "\t";
+            }
+            std::cout << tostring(args[i]);
+          }
+          std::cout << "\n";
+        });
       }
 
       void open_string(const value_t& env, const value_t& string_metatable) {
@@ -267,7 +278,7 @@ namespace dromozoa {
         case type_t::number:
           return number < that.number;
         case type_t::string:
-          return string < that.string;
+          return *string < *that.string;
         case type_t::table:
           return table < that.table;
         case type_t::function:

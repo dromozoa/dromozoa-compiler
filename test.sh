@@ -38,7 +38,6 @@ ng() {
   fi
 }
 
-
 mkdir -p result/execute
 cp docs/dromozoa-compiler.* result/execute
 
@@ -67,6 +66,15 @@ cat <<EOH >result/index.html
 <h1>dromozoa-compiler test</h1>
 EOH
 
+printf 'compiling runtime... '
+if clang++ -Iruntime -std=c++11 -Wall -W $CXXFLAGS runtime/runtime.cpp -c -o result/execute/runtime.o >result/execute/runtime-compile.txt 2>&1
+then
+  ok
+else
+  ng
+  exit 1
+fi
+
 echo "<h2>execute</h2><ul>" >>result/index.html
 for i in test/execute/*.lua
 do
@@ -93,7 +101,7 @@ do
   if test "X$NO_CXX_TEST" = "X"
   then
     printf 'compiling %s (cxx)... ' "$i"
-    if clang++ -std=c++11 -Wall -W -Iruntime "result/$n.cpp" -g -O3 -o "result/$n.exe" >"result/$n-compile.txt" 2>&1
+    if clang++ -Iruntime -std=c++11 -Wall -W $CXXFLAGS "result/$n.cpp" result/execute/runtime.o -o "result/$n.exe" >"result/$n-compile.txt" 2>&1
     then
       ok
     else
@@ -102,7 +110,7 @@ do
     fi
 
     printf 'executing %s (cxx)... ' "$i"
-    "result/$n.exe" >"result/$n-cxx.txt" 2>&1
+    "result/$n.exe" >"result/$n-cxx.txt" 2>&1 || :
     if diff "result/$n-expected.txt" "result/$n-cxx.txt" >/dev/null 2>&1
     then
       ok
