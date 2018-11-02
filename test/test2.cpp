@@ -203,5 +203,17 @@ int main(int, char*[]) {
     std::cout << result << " " << integer << "\n";
   }
 
+  {
+    std::string string;
+    bool result = value_t(1025).tostring(string);
+    std::cout << result << " " << string << "\n";
+  }
+
+  try {
+    std::cout << value_t(true).checkstring() << "\n";
+  } catch (const value_t& e) {
+    std::cout << "e " << e.checkstring() << "\n";
+  }
+
   return 0;
 }

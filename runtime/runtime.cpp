@@ -53,7 +53,7 @@ namespace dromozoa {
             new (&self.function) function_ptr(that.function);
             break;
           default:
-            throw std::runtime_error("unreachable code");
+            throw std::logic_error("unreachable code");
         }
       }
 
@@ -79,7 +79,7 @@ namespace dromozoa {
             new (&self.function) function_ptr(std::move(that.function));
             break;
           default:
-            throw std::runtime_error("unreachable code");
+            throw std::logic_error("unreachable code");
         }
       }
 
@@ -101,7 +101,7 @@ namespace dromozoa {
             self.function.~shared_ptr();
             break;
           default:
-            throw std::runtime_error("unreachable code");
+            throw std::logic_error("unreachable code");
         }
       }
 
@@ -151,7 +151,7 @@ namespace dromozoa {
 
     value_t& value_t::operator=(const value_t& that) {
       if (mode == mode_t::constant) {
-        throw std::runtime_error("cannot assign to constant value");
+        throw std::logic_error("cannot assign to constant value");
       }
       destruct(*this);
       copy_construct(*this, that);
@@ -160,7 +160,7 @@ namespace dromozoa {
 
     value_t& value_t::operator=(value_t&& that) {
       if (mode == mode_t::constant) {
-        throw std::runtime_error("cannot assign to constant value");
+        throw std::logic_error("cannot assign to constant value");
       }
       destruct(*this);
       move_construct(*this, std::move(that));
@@ -189,7 +189,7 @@ namespace dromozoa {
           new (&function) function_ptr(std::make_shared<noop_t>());
           break;
         default:
-          throw std::runtime_error("unreachable code");
+          throw std::logic_error("unreachable code");
       }
     }
 
@@ -247,7 +247,7 @@ namespace dromozoa {
         case type_t::function:
           return function < that.function;
         default:
-          throw std::runtime_error("unreachable code");
+          throw std::logic_error("unreachable code");
       }
     }
 
@@ -367,6 +367,43 @@ namespace dromozoa {
         } catch (const std::exception& e) {}
       }
       return false;
+    }
+
+    bool value_t::tostring(std::string& result) const {
+      if (is_string()) {
+        result = *string;
+        return true;
+      } else if (is_number()) {
+        std::ostringstream out;
+        out << std::setprecision(17) << number;
+        result = out.str();
+        return true;
+      }
+      return false;
+    }
+
+    double value_t::checknumber() const {
+      double result = 0;
+      if (tonumber(result)) {
+        return result;
+      }
+      throw value_t("number expected, got " + dromozoa::runtime::type(*this));
+    }
+
+    int64_t value_t::checkinteger() const {
+      int64_t result = 0;
+      if (tointeger(result)) {
+        return result;
+      }
+      throw value_t("integer expected, got " + dromozoa::runtime::type(*this));
+    }
+
+    std::string value_t::checkstring() const {
+      std::string result;
+      if (tostring(result)) {
+        return result;
+      }
+      throw value_t("string expected, got " + dromozoa::runtime::type(*this));
     }
 
     array_t::array_t()
@@ -527,7 +564,7 @@ namespace dromozoa {
         case type_t::function:
           return "function";
         default:
-          throw std::runtime_error("unreachable code");
+          throw std::logic_error("unreachable code");
       }
     }
 
@@ -574,7 +611,7 @@ namespace dromozoa {
             return out.str();
           }
         default:
-          throw std::runtime_error("unreachable code");
+          throw std::logic_error("unreachable code");
       }
     }
 
