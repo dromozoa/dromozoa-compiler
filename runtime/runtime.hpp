@@ -89,10 +89,8 @@ namespace dromozoa {
       bool is_string() const;
       bool is_table() const;
       bool is_function() const;
-      bool is_false() const;
-      bool is_true() const;
-      bool is_nil_or_false() const;
 
+      bool toboolean() const;
       bool tonumber(double&) const;
       bool tointeger(int64_t&) const;
       bool tostring(std::string&) const;
@@ -131,8 +129,7 @@ namespace dromozoa {
     };
 
     struct table_t {
-      using map_t = std::map<value_t, value_t>;
-      map_t map;
+      std::map<value_t, value_t> map;
       value_t metatable;
     };
 
@@ -263,7 +260,7 @@ namespace dromozoa {
     template <>
     struct invoker<void> {
       template <class T, class T_args, int... T_i>
-      static array_t invoke(T function, T_args args, sequence<T_i...>) {
+      static array_t invoke(T function, const T_args& args, sequence<T_i...>) {
         function(std::get<T_i>(args)...);
         return {};
       }
@@ -272,7 +269,7 @@ namespace dromozoa {
     template <>
     struct invoker<value_t> {
       template <class T, class T_args, int... T_i>
-      static array_t invoke(T function, T_args args, sequence<T_i...>) {
+      static array_t invoke(T function, const T_args& args, sequence<T_i...>) {
         return { function(std::get<T_i>(args)...) };
       }
     };
@@ -280,7 +277,7 @@ namespace dromozoa {
     template <>
     struct invoker<array_t> {
       template <class T, class T_args, int... T_i>
-      static array_t invoke(T function, T_args args, sequence<T_i...>) {
+      static array_t invoke(T function, const T_args& args, sequence<T_i...>) {
         return function(std::get<T_i>(args)...);
       }
     };

@@ -215,5 +215,17 @@ int main(int, char*[]) {
     std::cout << "e " << e.checkstring() << "\n";
   }
 
+  int state = 0;
+
+  {
+    value_t fn = [&](value_t x) { state += x.checkinteger(); };
+    std::cout << "state " << state << "\n";
+    call0(fn, { 1 });
+    std::cout << "state " << state << "\n";
+    call1(fn, { 2 });
+    std::cout << "state " << state << "\n";
+  }
+
+
   return 0;
 }

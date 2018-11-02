@@ -22,7 +22,6 @@
 
 #include <cmath>
 #include <iomanip>
-#include <iostream>
 #include <sstream>
 #include <stdexcept>
 #include <utility>
@@ -275,16 +274,13 @@ namespace dromozoa {
       return type == type_t::function;
     }
 
-    bool value_t::is_false() const {
-      return is_boolean() && !boolean;
-    }
-
-    bool value_t::is_true() const {
-      return is_boolean() && boolean;
-    }
-
-    bool value_t::is_nil_or_false() const {
-      return is_nil() || is_false();
+    bool value_t::toboolean() const {
+      if (is_nil()) {
+        return false;
+      } else if (is_boolean()) {
+        return boolean;
+      }
+      return true;
     }
 
     bool value_t::tonumber(double& result) const {
