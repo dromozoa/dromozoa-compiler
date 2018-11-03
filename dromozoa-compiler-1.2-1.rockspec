@@ -1,9 +1,9 @@
 rockspec_format = "3.0"
 package = "dromozoa-compiler"
-version = "1.1-1"
+version = "1.2-1"
 source = {
-  url = "https://github.com/dromozoa/dromozoa-compiler/archive/v1.1.tar.gz";
-  file = "dromozoa-compiler-1.1.tar.gz";
+  url = "https://github.com/dromozoa/dromozoa-compiler/archive/v1.2.tar.gz";
+  file = "dromozoa-compiler-1.2.tar.gz";
 }
 description = {
   summary = "Lua compiler toolkit";
