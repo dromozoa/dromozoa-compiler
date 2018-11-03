@@ -234,6 +234,50 @@ namespace dromozoa {
       void open_string(const value_t& env, const value_t& string_metatable) {
         value_t module = type_t::table;
 
+        settable(module, "byte", [](value_t s, value_t i, value_t j) -> array_t {
+          const auto& string = s.checkstring();
+          const auto index = i.optinteger(1);
+          const auto begin = range_i(index, string.size());
+          const auto end = range_j(j.optinteger(index), string.size());
+          if (begin < end) {
+            array_t result(end - begin);
+            for (std::size_t i = begin; i < end; ++i) {
+              result[i - begin] = static_cast<std::uint8_t>(string[i]);
+            }
+            return result;
+          } else {
+            return {};
+          }
+        });
+
+        settable(module, "char", [](array_t args) -> value_t {
+          std::string result;
+          for (std::size_t i = 0; i < args.size; ++i) {
+            const auto v = args[i].checkinteger();
+            if (0x00 <= v && v <= 0xFF) {
+              result += static_cast<char>(v);
+            } else {
+              throw value_t("out of range");
+            }
+          }
+          return result;
+        });
+
+        settable(module, "len", [](value_t s) -> value_t {
+          return s.checkstring().size();
+        });
+
+        settable(module, "sub", [](value_t s, value_t i, value_t j) -> value_t {
+          const auto& string = s.checkstring();
+          const auto begin = range_i(i.optinteger(1), string.size());
+          const auto end = range_j(j.optinteger(string.size()), string.size());
+          if (begin < end) {
+            return string.substr(begin, end - begin);
+          } else {
+            return "";
+          }
+        });
+
         settable(env, "string", module);
         settable(string_metatable, "__index", module);
       }
