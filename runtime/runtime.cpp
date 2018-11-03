@@ -125,6 +125,36 @@ namespace dromozoa {
         return false;
       }
 
+      std::size_t range_i(std::int64_t i, std::size_t size) {
+        if (i < 0) {
+          i += size;
+          if (i < 0) {
+            return 0;
+          } else {
+            return i;
+          }
+        } else if (i > 0) {
+          return i - 1;
+        } else {
+          return 0;
+        }
+      }
+
+      std::size_t range_j(std::int64_t j, std::size_t size) {
+        if (j < 0) {
+          j += size + 1;
+          if (j < 0) {
+            return 0;
+          } else {
+            return j;
+          }
+        } else if (j > static_cast<std::int64_t>(size)) {
+          return size;
+        } else {
+          return j;
+        }
+      }
+
       void open_base(const value_t& env) {
         const value_t ipairs_iterator = [](value_t table, value_t index) -> array_t {
           index = index.checkinteger() + 1;
@@ -185,13 +215,7 @@ namespace dromozoa {
           if (eq(index, "#")) {
             return { args.size };
           }
-          auto i = index.checkinteger();
-          if (i < 0) {
-            i += args.size;
-          } else {
-            --i;
-          }
-          return args.sub(i);
+          return args.sub(range_i(index.checkinteger(), args.size));
         });
 
         settable(env, "getmetatable", [](value_t object) -> value_t {
@@ -399,7 +423,7 @@ namespace dromozoa {
         ++n;
         try {
           std::size_t i = 0;
-          const int64_t integer = std::stoll(*string, &i, 10);
+          const std::int64_t integer = std::stoll(*string, &i, 10);
           if (i == n) {
             result = integer;
             return true;
@@ -408,7 +432,7 @@ namespace dromozoa {
         if (is_hexint(*string)) {
           try {
             std::size_t i = 0;
-            const int64_t integer = std::stoll(*string, &i, 16);
+            const std::int64_t integer = std::stoll(*string, &i, 16);
             if (i == n) {
               result = integer;
               return true;
@@ -427,7 +451,7 @@ namespace dromozoa {
       return false;
     }
 
-    bool value_t::tointeger(int64_t& result) const {
+    bool value_t::tointeger(std::int64_t& result) const {
       if (is_number()) {
         if (number == std::floor(number)) {
           result = number;
@@ -441,7 +465,7 @@ namespace dromozoa {
         ++n;
         try {
           std::size_t i = 0;
-          const int64_t integer = std::stoll(*string, &i, 10);
+          const std::int64_t integer = std::stoll(*string, &i, 10);
           if (i == n) {
             result = integer;
             return true;
@@ -450,7 +474,7 @@ namespace dromozoa {
         if (is_hexint(*string)) {
           try {
             std::size_t i = 0;
-            const int64_t integer = std::stoll(*string, &i, 16);
+            const std::int64_t integer = std::stoll(*string, &i, 16);
             if (i == n) {
               result = integer;
               return true;
@@ -490,8 +514,8 @@ namespace dromozoa {
       throw value_t("number expected, got " + dromozoa::runtime::type(*this));
     }
 
-    int64_t value_t::checkinteger() const {
-      int64_t result = 0;
+    std::int64_t value_t::checkinteger() const {
+      std::int64_t result = 0;
       if (tointeger(result)) {
         return result;
       }
@@ -511,6 +535,22 @@ namespace dromozoa {
         return table;
       }
       throw value_t("table expected, got " + dromozoa::runtime::type(*this));
+    }
+
+    double value_t::optnumber(double d) const {
+      if (is_nil()) {
+        return d;
+      } else {
+        return checknumber();
+      }
+    }
+
+    std::int64_t value_t::optinteger(std::int64_t d) const {
+      if (is_nil()) {
+        return d;
+      } else {
+        return checkinteger();
+      }
     }
 
     const value_t& table_t::get(const value_t& index) const {
@@ -834,7 +874,7 @@ namespace dromozoa {
       }
     }
 
-    int64_t len(const value_t& self) {
+    std::int64_t len(const value_t& self) {
       if (self.is_string()) {
         return self.string->size();
       } else if (self.is_table()) {
@@ -842,7 +882,7 @@ namespace dromozoa {
         if (!field.is_nil()) {
           return call1(field, { self }).checkinteger();
         }
-        for (int64_t i = 1; ; ++i) {
+        for (std::int64_t i = 1; ; ++i) {
           if (gettable(self, i).is_nil()) {
             return i - 1;
           }

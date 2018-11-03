@@ -97,12 +97,14 @@ namespace dromozoa {
 
       bool toboolean() const;
       bool tonumber(double&) const;
-      bool tointeger(int64_t&) const;
+      bool tointeger(std::int64_t&) const;
       bool tostring(std::string&) const;
       double checknumber() const;
-      int64_t checkinteger() const;
+      std::int64_t checkinteger() const;
       std::string checkstring() const;
       table_ptr checktable() const;
+      double optnumber(double) const;
+      std::int64_t optinteger(std::int64_t) const;
 
       const mode_t mode;
       type_t type;
@@ -190,7 +192,7 @@ namespace dromozoa {
 
     std::string type(const value_t&);
     std::string tostring(const value_t&);
-    int64_t len(const value_t&);
+    std::int64_t len(const value_t&);
     bool eq(const value_t&, const value_t&);
     bool lt(const value_t&, const value_t&);
     bool le(const value_t&, const value_t&);
