@@ -517,6 +517,7 @@ local function resolve_names(self, node, symbol_table)
     if not proto.vararg then
       return nil, "cannot use '...' outside a vararg function", node.i
     end
+    proto.V = true
     local adjust = node.adjust
     if adjust then
       if adjust ~= 0 then

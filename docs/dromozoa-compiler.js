@@ -1,4 +1,4 @@
-(() => {
+(function () {
   "use strict";
 
   const pow = Math.pow;
@@ -57,13 +57,13 @@
     }
   }
 
-  const click = node_id => {
+  const click = function (node_id) {
     $(".active").removeClass("active");
     $(".S" + node_id).addClass("active");
     const $path = $("g.u_paths > path[data-node-id=" + node_id + "]");
     $path.addClass("active");
     const data = [];
-    $.each($path.get(0).attributes, (_, attr) => {
+    $.each($path.get(0).attributes, function (_, attr) {
       const name = attr.name;
       if (name.startsWith("data-")) {
         data.push([ name.substr(5), attr.value ]);
@@ -72,7 +72,7 @@
     console.log(data);
   };
 
-  $(() => {
+  $(function () {
     const $svg = $("svg");
     const hw = parseFloat($svg.attr("width")) * 0.5;
     const hh = parseFloat($svg.attr("height")) * 0.5;
@@ -83,7 +83,7 @@
       a: new Transform(),
       b: new Transform(),
     };
-    const animation_step = t => {
+    const animation_step = function (t) {
       if (!animation.t) {
         animation.t = t;
       }
@@ -105,7 +105,7 @@
       y: 0,
     };
 
-    $(".S").on("click", () => {
+    $(".S").on("click", function () {
       const node_id = $(this).attr("data-node-id");
       if (node_id) {
         const $text = $("g.u_texts > text[data-node-id=" + node_id + "]");
@@ -125,23 +125,23 @@
       }
     });
 
-    $("g.u_texts > text").on("click", () => {
+    $("g.u_texts > text").on("click", function () {
       click($(this).attr("data-node-id"));
     });
 
-    $svg.on("wheel", $ev => {
+    $svg.on("wheel", function ($ev) {
       $ev.preventDefault();
       const ev = $ev.originalEvent;
       transform.scale(ev.offsetX, ev.offsetY, -ev.deltaY);
       $view.attr("transform", transform.toString());
     });
 
-    $("rect.viewport").on("mousedown", $ev => {
+    $("rect.viewport").on("mousedown", function ($ev) {
       const ev = $ev.originalEvent;
       mouse.active = true;
       mouse.x = ev.offsetX;
       mouse.y = ev.offsetY;
-    }).on("mousemove", $ev => {
+    }).on("mousemove", function ($ev) {
       if (mouse.active) {
         const ev = $ev.originalEvent;
         const x = ev.offsetX;
@@ -151,7 +151,7 @@
         mouse.y = y;
         $view.attr("transform", transform.toString());
       }
-    }).on("mouseup", $ev => {
+    }).on("mouseup", function($ev) {
       const ev = $ev.originalEvent;
       mouse.active = false;
       mouse.x = ev.offsetX;

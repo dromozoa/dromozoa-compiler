@@ -15,7 +15,7 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-local runtime_cxx = require "dromozoa.compiler.runtime.runtime_cxx"
+local template = require "dromozoa.compiler.syntax_tree.template"
 
 local char_table = {
   ["\""] = [[\"]];
@@ -23,7 +23,7 @@ local char_table = {
   ["\n"] = [[\n]];
 }
 
-for byte = 0x00, 0xFF do
+for byte = 0x00, 0x7F do
   local char = string.char(byte)
   if not char_table[char] then
     char_table[char] = ([[\x02X]]):format(byte)
@@ -33,13 +33,17 @@ end
 local var_table = {
   V = "V";
   T = "T";
-  NIL = "nil()";
-  FALSE = "false_()";
-  TRUE = "true_()";
+  NIL = "NIL";
+  FALSE = "FALSE";
+  TRUE = "TRUE";
 }
 
 local function encode_string(s)
   return "\"" .. s:gsub("[%z\1-\31\127]", char_table) .. "\""
+end
+
+local function proto_name(var)
+  return var .. "_t"
 end
 
 local function encode_var(var)
@@ -48,15 +52,14 @@ local function encode_var(var)
     return result
   else
     local key = var:sub(1, 1)
-    if key == "P" then
+    if key == "P" or key == "L" then
       return var
-    elseif key == "V" or key == "T" then
-      return "get(" .. key .. ", " .. var:sub(2) .. ")"
     elseif key == "U" then
-      local index = var:sub(2)
-      return "(*std::get<0>((*U)[" .. index .. "]))[std::get<1>((*U)[" .. index .. "])]"
+      return "(*U[" .. var:sub(2) .. "])"
+    elseif key == "K" then
+      return "K->" .. var
     else
-      return "(*" .. key .. ")[" .. var:sub(2) .. "]"
+      return key .. "[" .. var:sub(2) .. "]"
     end
   end
 end
@@ -75,66 +78,50 @@ local function encode_vars(source, i, j)
   local var = result[#result]
   if var == "V" or var == "T" then
     result[#result] = nil
-    return "{" .. table.concat(result, ", ") .. "}, " ..var
+    if #result == 0 then
+      return var
+    else
+      return "array_t({ " .. table.concat(result, ", ") .. " }, " .. var .. ")"
+    end
   else
-    return "{" .. table.concat(result, ", ") .. "}"
+    if #result == 0 then
+      return "{}"
+    else
+      return "{ " .. table.concat(result, ", ") .. " }"
+    end
   end
 end
 
-local function _1(template)
-  return function (out, code)
-    out:write(template:format(encode_var(code[1])), ";\n")
-  end
-end
-
-local function _12(template)
-  return function (out, code)
-    out:write(template:format(encode_var(code[1]), encode_var(code[2])), ";\n")
-  end
-end
-
-local function _122(template)
-  return function (out, code)
-    local a = encode_var(code[1])
-    local b = encode_var(code[2])
-    out:write(template:format(a, b, b), ";\n")
-  end
-end
-
-local function _123(template)
-  return function (out, code)
-    out:write(template:format(encode_var(code[1]), encode_var(code[2]), encode_var(code[3])), ";\n")
-  end
-end
-
-local templates = {
-  MOVE     = _12  "%s = %s";
-  GETTABLE = _123 "%s = %s.gettable(%s)";
-  SETTABLE = _123 "%s.settable(%s, %s)";
-  NEWTABLE = _1   "%s = table()";
-  ADD      = _123 "%s = number(%s.tonumber() + %s.tonumber())";
-  SUB      = _123 "%s = number(%s.tonumber() - %s.tonumber())";
-  MUL      = _123 "%s = number(%s.tonumber() * %s.tonumber())";
-  MOD      = _123 "%s = number(%s.tointeger() %% %s.tointeger())";
-  POW      = _123 "%s = number(std::pow(%s.tonumber(), %s.tonumber()))";
-  DIV      = _123 "%s = number(%s.tonumber() / %s.tonumber())";
-  IDIV     = _123 "%s = number(std::floor(%s.tonumber() / %s.tonumber()))";
-  BAND     = _123 "%s = number(%s.tointeger() & %s.tointeger())";
-  BOR      = _123 "%s = number(%s.tointeger() | %s.tointeger())";
-  BXOR     = _123 "%s = number(%s.tointeger() ^ %s.tointeger())";
-  SHL      = _123 "%s = number(%s.tointeger() << %s.tointeger())";
-  SHR      = _123 "%s = number(%s.tointeger() >> %s.tointeger())";
-  UNM      = _12  "%s = number(-%s.tonumber())";
-  BNOT     = _12  "%s = number(~%s.tointeger())";
-  NOT      = _122 "%s = boolean(%s == nil() || %s == false_())";
-  LEN      = _12  "%s = %s.len()";
-  CONCAT   = _123 "%s = string(%s.tostring() + %s.tostring())";
-  EQ       = _123 "%s = boolean(%s == %s)";
-  NE       = _123 "%s = boolean(%s != %s)";
-  LT       = _123 "%s = boolean(%s.lt(%s))";
-  LE       = _123 "%s = boolean(%s.le(%s))";
-  TONUMBER = _12  "%s = number(%s.tonumber())";
-}
+local tmpl = template(encode_var, {
+  MOVE     = "%1 = %2";
+  GETTABLE = "%1 = gettable(%2, %3)";
+  SETTABLE = "settable(%1, %2, %3)";
+  NEWTABLE = "%1 = type_t::table";
+  ADD      = "%1 = %2.checknumber() + %3.checknumber()";
+  SUB      = "%1 = %2.checknumber() - %3.checknumber()";
+  MUL      = "%1 = %2.checknumber() * %3.checknumber()";
+  MOD      = "%1 = std::fmod(%2.checknumber(), %3.checknumber())";
+  POW      = "%1 = std::pow(%2.checknumber(), %3.checknumber())";
+  DIV      = "%1 = %2.checknumber() / %3.checknumber()";
+  IDIV     = "%1 = std::floor(%2.checknumber() / %3.checknumber())";
+  BAND     = "%1 = %2.checkinteger() & %3.checkinteger()";
+  BOR      = "%1 = %2.checkinteger() | %3.checkinteger()";
+  BXOR     = "%1 = %2.checkinteger() ^ %3.checkinteger()";
+  SHL      = "%1 = %2.checkinteger() << %3.checkinteger()";
+  SHR      = "%1 = %2.checkinteger() >> %3.checkinteger()";
+  UNM      = "%1 = -%2.checknumber()";
+  BNOT     = "%1 = ~%2.checkinteger()";
+  NOT      = "%1 = !%2.toboolean()";
+  LEN      = "%1 = len(%2)";
+  CONCAT   = "%1 = %2.checkstring() + %3.checkstring()";
+  EQ       = "%1 = eq(%2, %3)";
+  NE       = "%1 = !eq(%2, %3)";
+  LT       = "%1 = lt(%2, %3)";
+  LE       = "%1 = le(%2, %3)";
+  BREAK    = "break";
+  GOTO     = "goto %1";
+  TONUMBER = "%1 = %2.checknumber()";
+})
 
 local compile_proto
 local compile_code
@@ -154,11 +141,10 @@ function compile_code(self, out, code)
       out:write "}\n"
     elseif name == "COND" then
       local cond = code[1]
-      local a = encode_var(cond[1])
       if cond[2] == "TRUE" then
-        out:write(("if (%s != nil() && %s != false_()) {\n"):format(a, a))
+        out:write(("if (%s.toboolean()) {\n"):format(encode_var(cond[1])))
       else
-        out:write(("if (%s == nil() || %s == false_()) {\n"):format(a, a))
+        out:write(("if (!%s.toboolean()) {\n"):format(encode_var(cond[1])))
       end
       compile_code(self, out, code[2])
       if #code == 2 then
@@ -175,164 +161,167 @@ function compile_code(self, out, code)
     if name == "CALL" then
       local var = code[1]
       if var == "NIL" then
-        out:write(("%s.call0(newarray(%s));\n"):format(encode_var(code[2]), encode_vars(code, 3)))
+        out:write(("call0(%s, %s);\n"):format(encode_var(code[2]), encode_vars(code, 3)))
       elseif var == "T" then
-        out:write(("T = %s.call(newarray(%s));\n"):format(encode_var(code[2]), encode_vars(code, 3)))
+        out:write(("T = call(%s, %s);\n"):format(encode_var(code[2]), encode_vars(code, 3)))
       else
-        out:write(("%s = %s.call1(newarray(%s));\n"):format(encode_var(var), encode_var(code[2]), encode_vars(code, 3)))
+        out:write(("%s = call1(%s, %s);\n"):format(encode_var(var), encode_var(code[2]), encode_vars(code, 3)))
       end
     elseif name == "RETURN" then
       local n = #code
       if n == 0 then
         out:write "return nullptr;\n"
       else
-        out:write(("return newarray(%s);\n"):format(encode_vars(code)))
+        out:write(("return %s;\n"):format(encode_vars(code)))
       end
     elseif name == "SETLIST" then
-      out:write(("%s.setlist(%d, %s);\n"):format(encode_var(code[1]), code[2], encode_var(code[3])))
+      out:write(("setlist(%s, %d, %s);\n"):format(encode_var(code[1]), code[2], encode_var(code[3])))
     elseif name == "CLOSURE" then
-      compile_proto(self, out, code[1])
+      out:write(("value_t %s = std::make_shared<%s_t>(U, A, B);\n"):format(code[1], code[1]))
     elseif name == "LABEL" then
       out:write(("%s:\n"):format(code[1]))
-    elseif name == "BREAK" then
-      out:write "break;\n"
-    elseif name == "GOTO" then
-      out:write(("goto %s;\n"):format(code[1]))
     else
-      local t = templates[name]
-      if t then
-        t(out, code)
-      end
+      out:write(tmpl:eval(name, code), ";\n")
     end
   end
 end
 
-function compile_proto(self, out, name)
-  local protos = self.protos
-  local proto
-  for i = 1, #protos do
-    proto = protos[i]
-    if proto[1] == name then
-      break
-    end
-    proto = nil
-  end
-
-  local A = proto.A
-  local B = proto.B
-  local C = proto.C
-
-  local param_A = "array_ptr"
-  local param_V = "array_ptr"
-  local vararg = "false"
-  if A > 0 then
-    param_A = "array_ptr args"
-  end
-  if proto.vararg then
-    param_V = "array_ptr V"
-    vararg = "true"
-  end
-  out:write(("value_t %s = function(%d, %s, [=](%s, %s) -> array_ptr {\n"):format(proto[1], A, vararg, param_A, param_V))
+function compile_proto(self, out, proto)
+  local name = proto[1]
 
   local constants = proto.constants
-  local n = #constants
-  if n > 0 then
-    out:write(("array_ptr K = std::make_shared<array_t>(%d);\n"):format(n))
-    for i = 1, n do
+  local upvalues = proto.upvalues
+
+  local kn = #constants
+  local un = #upvalues
+
+  if kn > 0 then
+    out:write(("struct %s_k {\n"):format(name))
+    for i = 1, kn do
+      out:write(("const value_t %s;\n"):format(constants[i][1]))
+    end
+    out:write(("%s_k()\n"):format(name))
+    for i = 1, kn do
+      if i == 1 then
+        out:write ": "
+      else
+        out:write ",\n  "
+      end
+
       local constant = constants[i]
       if constant.type == "string" then
         local source = constant.source
-        out:write(("(*K)[%d] = string(%s, %d);\n"):format(i - 1, encode_string(source), #source))
+        out:write(("%s(%s, %d)"):format(constant[1], encode_string(source), #source))
       else
-        out:write(("(*K)[%d] = number(%.17g);\n"):format(i - 1, tonumber(constant.source)))
+        out:write(("%s(%.17g)"):format(constant[1], tonumber(constant.source)))
       end
     end
+    out:write " {}\n"
+    out:write(([[
+static const %s_k* get() {
+  static const %s_k instance;
+  return &instance;
+}
+]]):format(name, name))
+    out:write "};\n"
   end
 
-  local upvalues = proto.upvalues
-  local n = #upvalues
-  for i = 1, n do
-    local upvalue = upvalues[i]
-    if upvalue[2]:find "^U" then
-      out:write "auto S = U;\n"
-      break
+  out:write(("struct %s_t : proto_t<%d> {\n"):format(name, proto.A))
+
+  if kn > 0 then
+    out:write(("const %s_k* K;\n"):format(name))
+  end
+  if un > 0 then
+    out:write "uparray_t U;\n"
+  end
+
+  out:write(("%s_t(uparray_t S, array_t A, array_t B)\n"):format(name))
+  local first = true
+  if kn > 0 then
+    first = false
+    out:write((": K(%s_k::get())"):format(name))
+  end
+  if un > 0 then
+    if first then
+      first = false
+      out:write ": "
+    else
+      out:write ",\n  "
     end
-  end
-
-  out:write "{\n"
-
-  if n > 0 then
-    out:write(("upvalues_ptr U = std::make_shared<upvalues_t>(%d);\n"):format(n))
-    for i = 1, n do
+    out:write "U {\n"
+    for i = 1, #upvalues do
       local upvalue = upvalues[i]
       local var = upvalue[2]
       local key = var:sub(1, 1)
       if key == "U" then
-        local index = var:sub(2)
-        out:write(("(*U)[%d] = (*S)[%d];\n"):format(i - 1, index))
+        out:write(("    S[%d],\n"):format(var:sub(2)))
       else
-        out:write(("(*U)[%d] = std::make_tuple(%s, %d);\n"):format(i - 1, key, var:sub(2)))
+        out:write(("    { %s, %d },\n"):format(key, var:sub(2)))
       end
     end
+    out:write "  }"
   end
+  out:write " {}\n"
 
-  out:write "{\n"
-
-  if A > 0 then
-    out:write "auto A = args;\n"
-  end
-  if B > 0 then
-    out:write(("array_ptr B = std::make_shared<array_t>(%d);\n"):format(B))
-  end
-  if C > 0 then
-    out:write(("array_ptr C = std::make_shared<array_t>(%d);\n"):format(C))
-  end
+  out:write(([[
+array_t operator()(array_t A, array_t V) const {
+array_t B(%d);
+array_t C(%d);
+]]):format(proto.B, proto.C))
   if proto.T then
-    out:write "array_ptr T;\n"
+    out:write "array_t T;\n"
   end
-
   compile_code(self, out, proto.code)
+  out:write "return {};\n}\n"
 
-  out:write "}}\n"
-  out:write "return nullptr;\n"
-  out:write "});\n"
+  out:write "};\n"
 end
 
 
 return function (self, out, name)
-  out:write(runtime_cxx);
-
-  if name then
-    out:write(("%s = "):format(name))
-  else
-    out:write "int main(int, char*[]) { ("
-  end
-
   out:write [[
-[=](dromozoa::runtime::value_t env) -> dromozoa::runtime::value_t {
-using namespace dromozoa::runtime;
-if (env.is_nil()) {
-  env = open_env();
-}
-array_ptr B = std::make_shared<array_t>(1);
-(*B)[0] = env;
+#include <cmath>
+#include <iostream>
+#include "runtime.hpp"
 ]]
 
-  out:write "try {\n";
-  compile_proto(self, out, "P0")
-  out:write "return P0.call1(newarray({}));\n"
-  out:write "} catch (const error_t& e) {\n"
-  out:write "std::cerr << e.what() << std::endl;\n"
-  out:write "return nil();\n"
+  out:write "namespace"
+  if name then
+    out:write(" ", name)
+  end
+  out:write "{\n"
+  out:write "using namespace dromozoa::runtime;\n"
+
+  local protos = self.protos
+  for i = #protos, 1, -1 do
+    compile_proto(self, out, protos[i])
+  end
+
   out:write "}\n"
 
   if name then
-    out:write "};\n"
-  else
-    out:write "})(dromozoa::runtime::nil());\n"
-    out:write "return 0;\n"
-    out:write "}\n"
+    return out
   end
+
+  out:write [[
+int main(int, char*[]) {
+  using namespace dromozoa::runtime;
+
+  uparray_t S;
+  array_t A;
+  array_t B = { env };
+  try {
+    value_t P0 = std::make_shared<P0_t>(S, A, B);
+    call0(P0, {});
+    return 0;
+  } catch (const value_t& e) {
+    std::cerr << tostring(e) << std::endl;
+  } catch (const std::exception& e) {
+    std::cerr << e.what() << std::endl;
+  }
+  return 1;
+}
+]]
 
   return out
 end

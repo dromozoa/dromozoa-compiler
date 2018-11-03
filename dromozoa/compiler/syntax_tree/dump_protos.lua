@@ -63,6 +63,9 @@ local function dump_proto(out, proto)
   out:write(("  A %d\n"):format(proto.A))
   out:write(("  B %d\n"):format(proto.B))
   out:write(("  C %d\n"):format(proto.C))
+  if proto.V then
+    out:write "  V\n"
+  end
   if proto.T then
     out:write "  T\n"
   end

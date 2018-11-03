@@ -15,40 +15,24 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-local metatable = {
-  name = "metatable";
+local class = {}
+local metatable = { __index = class }
 
-  __call = function (self, ...)
-    print(self, ...)
-    -- return ...
+function class:eval(name, code)
+  local encode = self.encode
+  local rule = self.rules[name]
+  if rule then
+    return rule:gsub("%%(%d)", function (index)
+      return encode(code[tonumber(index)])
+    end)
+  end
+end
+
+return setmetatable(class, {
+  __call = function (_, encode, rules)
+    return setmetatable({
+      encode = encode;
+      rules = rules;
+    }, metatable)
   end;
-
-  __tostring = function (self)
-    return "self is " .. type(self)
-  end;
-
-  __len = function ()
-    print "__len"
-    return 42
-  end;
-}
-
-local t = setmetatable({}, metatable)
-t(1, 2, 3, 4)
-print(#t)
-print(getmetatable(t).name)
-
-local metatable2 = {
-  name = "metatable2";
-
-  __metatable = metatable;
-
-  __len = function ()
-    print "__len2"
-    return 666
-  end;
-}
-
-local t2 = setmetatable({}, metatable2)
-print(#t2)
-print(getmetatable(t2).name)
+})
