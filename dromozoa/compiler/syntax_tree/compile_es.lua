@@ -16,6 +16,7 @@
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
 local runtime_es = require "dromozoa.compiler.runtime.runtime_es"
+local template = require "dromozoa.compiler.syntax_tree.template"
 
 local char_table = {
   ["\n"] = [[\n]];
@@ -26,7 +27,7 @@ local char_table = {
   [string.char(0xE2, 0x80, 0xA9)] = [[\u2029]]; -- PARAGRAPH SEPARATOR
 }
 
-for byte = 0x00, 0xFF do
+for byte = 0x00, 0x7F do
   local char = string.char(byte)
   if not char_table[char] then
     char_table[char] = ([[\u04X]]):format(byte)
@@ -51,7 +52,7 @@ local function encode_var(var)
     return result
   else
     local key = var:sub(1, 1)
-    if key == "P" then
+    if key == "P" or key == "L" then
       return var
     elseif key == "U" then
       local index = var:sub(2)
@@ -59,14 +60,6 @@ local function encode_var(var)
     else
       return key .. "[" .. var:sub(2) .. "]"
     end
-  end
-end
-
-local function encode_var_not_spread(var)
-  if var == "V" or var == "T" then
-    return var
-  else
-    return encode_var(var)
   end
 end
 
@@ -84,60 +77,36 @@ local function encode_vars(source, i, j)
   return table.concat(result, ", ")
 end
 
-local function _1(template)
-  return function (out, code)
-    out:write(template:format(encode_var(code[1])), ";\n")
-  end
-end
-
-local function _12(template)
-  return function (out, code)
-    out:write(template:format(encode_var(code[1]), encode_var(code[2])), ";\n")
-  end
-end
-
-local function _122(template)
-  return function (out, code)
-    local a = encode_var(code[1])
-    local b = encode_var(code[2])
-    out:write(template:format(a, b, b), ";\n")
-  end
-end
-
-local function _123(template)
-  return function (out, code)
-    out:write(template:format(encode_var(code[1]), encode_var(code[2]), encode_var(code[3])), ";\n")
-  end
-end
-
-local templates = {
-  MOVE     = _12  "%s = %s";
-  GETTABLE = _123 "%s = GETTABLE(%s, %s)";
-  SETTABLE = _123 "SETTABLE(%s, %s, %s)";
-  NEWTABLE = _1   "%s = new Map()";
-  ADD      = _123 "%s = %s + %s";
-  SUB      = _123 "%s = %s - %s";
-  MUL      = _123 "%s = %s * %s";
-  MOD      = _123 "%s = %s %% %s";
-  POW      = _123 "%s = %s ** %s";
-  DIV      = _123 "%s = %s / %s";
-  IDIV     = _123 "%s = Math.floor(%s / %s)";
-  BAND     = _123 "%s = %s & %s";
-  BOR      = _123 "%s = %s | %s";
-  BXOR     = _123 "%s = %s ^ %s";
-  SHL      = _123 "%s = %s << %s";
-  SHR      = _123 "%s = %s >>> %s";
-  UNM      = _12  "%s = -%s";
-  BNOT     = _12  "%s = ~%s";
-  NOT      = _122 "%s = %s === undefined || %s === false";
-  LEN      = _12  "%s = LEN(%s)";
-  CONCAT   = _123 "%s = tostring(%s) + tostring(%s)";
-  EQ       = _123 "%s = %s === %s";
-  NE       = _123 "%s = %s !== %s";
-  LT       = _123 "%s = %s < %s";
-  LE       = _123 "%s = %s <= %s";
-  TONUMBER = _12  "%s = tonumber(%s)";
-}
+local tmpl = template(encode_var, {
+  MOVE     = "%1 = %2";
+  GETTABLE = "%1 = gettable(%2, %3)";
+  SETTABLE = "settable(%1, %2, %3)";
+  NEWTABLE = "%1 = new Map()";
+  ADD      = "%1 = %2 + %3";
+  SUB      = "%1 = %2 - %3";
+  MUL      = "%1 = %2 * %3";
+  MOD      = "%1 = %2 % %3";
+  POW      = "%1 = %2 ** %3";
+  DIV      = "%1 = %2 / %3";
+  IDIV     = "%1 = Math.floor(%2 / %3)";
+  BAND     = "%1 = %2 & %3";
+  BOR      = "%1 = %2 | %3";
+  BXOR     = "%1 = %2 ^ %3";
+  SHL      = "%1 = %2 << %3";
+  SHR      = "%1 = %2 >>> %3";
+  UNM      = "%1 = -%2";
+  BNOT     = "%1 = ~%2";
+  NOT      = "%1 = %2 === undefined || %2 === false";
+  LEN      = "%1 = len(%2)";
+  CONCAT   = "%1 = tostring(%2) + tostring(%3)";
+  EQ       = "%1 = %2 === %3";
+  NE       = "%1 = %2 !== %3";
+  LT       = "%1 = %2 < %3";
+  LE       = "%1 = %2 <= %3";
+  BREAK    = "break";
+  GOTO     = "L = %1; continue";
+  TONUMBER = "%1 = tonumber(%2)";
+})
 
 local compile_proto
 local compile_code
@@ -157,11 +126,11 @@ function compile_code(self, out, code)
       out:write "}\n"
     elseif name == "COND" then
       local cond = code[1]
-      local a = encode_var(cond[1])
+      local var = encode_var(cond[1])
       if cond[2] == "TRUE" then
-        out:write(("if (%s !== undefined && %s !== false) {\n"):format(a, a))
+        out:write(("if (%s !== undefined && %s !== false) {\n"):format(var, var))
       else
-        out:write(("if (%s === undefined || %s === false) {\n"):format(a, a))
+        out:write(("if (%s === undefined || %s === false) {\n"):format(var, var))
       end
       compile_code(self, out, code[2])
       if #code == 2 then
@@ -178,33 +147,34 @@ function compile_code(self, out, code)
     if name == "CALL" then
       local var = code[1]
       if var == "NIL" then
-        out:write(("CALL0(%s);\n"):format(encode_vars(code, 2)))
+        out:write(("call0(%s);\n"):format(encode_vars(code, 2)))
       elseif var == "T" then
-        out:write(("T = CALL(%s);\n"):format(encode_vars(code, 2)))
+        out:write(("T = call(%s);\n"):format(encode_vars(code, 2)))
       else
-        out:write(("%s = CALL1(%s);\n"):format(encode_var_not_spread(var), encode_vars(code, 2)))
+        out:write(("%s = call1(%s);\n"):format(encode_var(var), encode_vars(code, 2)))
       end
     elseif name == "RETURN" then
       local n = #code
       if n == 0 then
         out:write "return;\n"
       elseif n == 1 then
-        out:write(("return %s;\n"):format(encode_var_not_spread(code[1])))
+        local var = code[1]
+        if var == "V" or var == "T" then
+          out:write(("return %s;\n"):format(var))
+        else
+          out:write(("return %s;\n"):format(encode_var(var)))
+        end
       else
         out:write(("return [%s];\n"):format(encode_vars(code)))
       end
     elseif name == "SETLIST" then
-      out:write(("SETLIST(%s, %d, %s);\n"):format(encode_var(code[1]), code[2], encode_var(code[3])))
+      out:write(("setlist(%s, %d, %s);\n"):format(encode_var(code[1]), code[2], encode_var(code[3])))
     elseif name == "CLOSURE" then
       compile_proto(self, out, code[1])
     elseif name == "LABEL" then
-      out:write(("case %s:\n"):format(code[1]))
-    elseif name == "BREAK" then
-      out:write "break;\n"
-    elseif name == "GOTO" then
-      out:write(("L = %s; continue;\n"):format(code[1]))
+      out:write(("case %s:\n"):format(encode_var(code[1])))
     else
-      templates[name](out, code)
+      out:write(tmpl:eval(name, code), ";\n")
     end
   end
 end
@@ -228,7 +198,7 @@ function compile_proto(self, out, name)
   for i = 0, A - 1 do
     pars[#pars + 1] = "A" .. i
   end
-  if proto.vararg then
+  if proto.V then
     pars[#pars + 1] = "...V"
   end
   out:write(("const %s = (%s) => {\n"):format(proto[1], table.concat(pars, ", ")))
@@ -268,7 +238,7 @@ function compile_proto(self, out, name)
       local key = var:sub(1, 1)
       if key == "U" then
         local index = var:sub(2)
-        out:write(("/* %s */ [S[%d][0], S[%d][1]],\n"):format(upvalue[1], index, index))
+        out:write(("/* %s */ S[%d],\n"):format(upvalue[1], index))
       else
         out:write(("/* %s */ [%s, %d],\n"):format(upvalue[1], key, var:sub(2)))
       end
@@ -292,7 +262,7 @@ function compile_proto(self, out, name)
     out:write(("const C = []; /* %d */\n"):format(C))
   end
   if proto.T then
-    out:write "let T;\n"
+    out:write "let T = undefined;\n"
   end
 
   local emulate_goto = proto["goto"]
@@ -324,24 +294,15 @@ return function (self, out, name)
   else
     out:write "("
   end
-
-  out:write "env => {\n"
+  out:write "() => {\n"
   out:write(runtime_es);
-  out:write [[
-if (env === undefined) {
-  env = open_env();
-}
-const B = [env];
-]]
-
+  out:write "const B = [env];\n"
   compile_proto(self, out, "P0")
   out:write "P0();\n"
-
   if name then
     out:write "};\n"
   else
     out:write "})();\n"
   end
-
   return out
 end

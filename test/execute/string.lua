@@ -15,40 +15,37 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-local metatable = {
-  name = "metatable";
+local print = print
 
-  __call = function (self, ...)
-    print(self, ...)
-    -- return ...
-  end;
+local s1 = "abc"
+local s2 = "あいうえお"
+print(#s1)
+print(#s2)
 
-  __tostring = function (self)
-    return "self is " .. type(self)
-  end;
+print(string.byte(s1))
+print(s1:byte())
+for i = -4, 4 do
+  print(s1:byte(i))
+  for j = -4, 4 do
+    print(s1:byte(i, j))
+  end
+end
+print(s2:byte(1, -1))
 
-  __len = function ()
-    print "__len"
-    return 42
-  end;
-}
+print(string.char())
+print(string.char(0x41, 0xE2, 0x89, 0xA2, 0xCE, 0x91, 0x2E))
+print(string.char(0xED, 0x95, 0x9C, 0xEA, 0xB5, 0xAD, 0xEC, 0x96, 0xB4))
+print(string.char(0xE6, 0x97, 0xA5, 0xE6, 0x9C, 0xAC, 0xE8, 0xAA, 0x9E))
+print(string.char(0xEF, 0xBB, 0xBF, 0xF0, 0xA3, 0x8E, 0xB4))
 
-local t = setmetatable({}, metatable)
-t(1, 2, 3, 4)
-print(#t)
-print(getmetatable(t).name)
+print(s1:len())
+print(s2:len())
 
-local metatable2 = {
-  name = "metatable2";
+for i = -4, 4 do
+  print(s1:sub(i))
+  for j = -4, 4 do
+    print(s1:sub(i, j))
+  end
+end
 
-  __metatable = metatable;
-
-  __len = function ()
-    print "__len2"
-    return 666
-  end;
-}
-
-local t2 = setmetatable({}, metatable2)
-print(#t2)
-print(getmetatable(t2).name)
+print(getmetatable("foo").__index == string)
