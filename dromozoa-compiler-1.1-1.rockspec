@@ -26,7 +26,6 @@ build = {
   modules = {
     ["dromozoa.compiler.lua53_lexer"] = "dromozoa/compiler/lua53_lexer.lua";
     ["dromozoa.compiler.lua53_parser"] = "dromozoa/compiler/lua53_parser.lua";
-    ["dromozoa.compiler.runtime.runtime_cxx"] = "dromozoa/compiler/runtime/runtime_cxx.lua";
     ["dromozoa.compiler.runtime.runtime_es"] = "dromozoa/compiler/runtime/runtime_es.lua";
     ["dromozoa.compiler.syntax_tree"] = "dromozoa/compiler/syntax_tree.lua";
     ["dromozoa.compiler.syntax_tree.analyze"] = "dromozoa/compiler/syntax_tree/analyze.lua";
@@ -36,5 +35,6 @@ build = {
     ["dromozoa.compiler.syntax_tree.dump_protos"] = "dromozoa/compiler/syntax_tree/dump_protos.lua";
     ["dromozoa.compiler.syntax_tree.dump_tree"] = "dromozoa/compiler/syntax_tree/dump_tree.lua";
     ["dromozoa.compiler.syntax_tree.generate"] = "dromozoa/compiler/syntax_tree/generate.lua";
+    ["dromozoa.compiler.syntax_tree.template"] = "dromozoa/compiler/syntax_tree/template.lua";
   };
 }
