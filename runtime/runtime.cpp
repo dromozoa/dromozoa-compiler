@@ -235,6 +235,10 @@ namespace dromozoa {
           }
         });
 
+        settable(env, "tostring", [](value_t v) -> value_t {
+          return tostring(v);
+        });
+
         settable(env, "type", [](value_t v) -> value_t {
           return type(v);
         });

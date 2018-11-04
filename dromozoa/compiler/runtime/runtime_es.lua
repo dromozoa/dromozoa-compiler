@@ -93,7 +93,7 @@ const toboolean = (v) => {
   return true;
 };
 
-const checknumber = (v) => {
+const tonumber = v => {
   if (is_number(v)) {
     return v;
   } else if (is_string(v)) {
@@ -107,6 +107,14 @@ const checknumber = (v) => {
     if ((match = decflt_pattern.exec(v))) {
       return parseFloat(match[0]);
     }
+  }
+};
+
+
+const checknumber = (v) => {
+  const result = tonumber(v);
+  if (is_number(result)) {
+    return result;
   }
   throw new runtime_error("number expected, got " + type(v));
 };
@@ -308,25 +316,6 @@ const len = v => {
     }
   }
   throw new runtime_error("attempt to get length of a " + type(v) + " value");
-};
-
-const tonumber = v => {
-  if (is_number(v)) {
-    return v;
-  } else if (is_string(v)) {
-    let match = decint_pattern.exec(v);
-    if (match) {
-      return parseInt(match[0], 10);
-    }
-    match = hexint_pattern.exec(v);
-    if (match) {
-      return parseInt(match[0], 16);
-    }
-    match = decflt_pattern.exec(v);
-    if (match) {
-      return parseFloat(match[0]);
-    }
-  }
 };
 
 const tostring = v => {
