@@ -422,6 +422,36 @@ const le = (self, that) => {
   throw new runtime_error("attempt to compare " + type(self) + " with " + type(that));
 };
 
+const range_i = (i, size) => {
+  if (i < 0) {
+    i += size;
+    if (i < 0) {
+      return 0;
+    } else {
+      return i;
+    }
+  } else if (i > 0) {
+    return i - 1;
+  } else {
+    return 0;
+  }
+};
+
+const range_j = (j, size) => {
+  if (j < 0) {
+    j += size + 1;
+    if (j < 0) {
+      return 0;
+    } else {
+      return j;
+    }
+  } else if (j > size) {
+    return size;
+  } else {
+    return j;
+  }
+};
+
 const suppress_no_unsed = () => {};
 suppress_no_unsed(len);
 suppress_no_unsed(setlist);
@@ -493,14 +523,9 @@ const open_base = env => {
     if (eq(index, "#")) {
       return args.length;
     }
-    index = checkinteger(index);
-    if (index < 0) {
-      index += args.length;
-    } else {
-      --index;
-    }
+    const min = range_i(checkinteger(index), args.length);
     const result = [];
-    for (let i = index; i < args.length; ++i) {
+    for (let i = min; i < args.length; ++i) {
       result.push(args[i]);
     }
     return result;
