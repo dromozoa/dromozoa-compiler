@@ -99,10 +99,10 @@ local tmpl = template(encode_var, {
   NOT      = "%1 = !toboolean(%2)";
   LEN      = "%1 = len(%2)";
   CONCAT   = "%1 = checkstring(%2) + checkstring(%3)";
-  EQ       = "%1 = %2 === %3";
-  NE       = "%1 = %2 !== %3";
-  LT       = "%1 = %2 < %3";
-  LE       = "%1 = %2 <= %3";
+  EQ       = "%1 = eq(%2, %3)";
+  NE       = "%1 = !eq(%2, %3)";
+  LT       = "%1 = lt(%2, %3)";
+  LE       = "%1 = le(%2, %3)";
   BREAK    = "break";
   GOTO     = "L = %1; continue";
   TONUMBER = "%1 = checknumber(%2)";

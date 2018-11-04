@@ -344,6 +344,63 @@ const len = v => {
   throw new runtime_error("attempt to get length of a " + type(v) + " value");
 };
 
+const eq = (self, that) => {
+  if (self === that) {
+    return true;
+  }
+  if (is_table(self) && is_table(that)) {
+    let field = getmetafield(self, "__eq");
+    if (is_nil(field)) {
+      field = getmetafield(that, "__eq");
+    }
+    if (!is_nil(field)) {
+      return toboolean(call1(field, self, that));
+    }
+  }
+  return false;
+};
+
+const lt = (self, that) => {
+  if (is_number(self) && is_number(that)) {
+    return self < that;
+  } else if (is_string(self) && is_string(that)) {
+    return self < that;
+  } else {
+    let field = getmetafield(self, "__lt");
+    if (is_nil(field)) {
+      field = getmetafield(self, "__lt");
+    }
+    if (!is_nil(field)) {
+      return toboolean(call1(field, self, that));
+    }
+  }
+  throw new runtime_error("attempt to compare " + type(self) + " with " + type(that));
+}
+
+const le = (self, that) => {
+  if (is_number(self) && is_number(that)) {
+    return self <= that;
+  } else if (is_string(self) && is_string(that)) {
+    return self <= that;
+  } else {
+    let field = getmetafield(self, "__le");
+    if (is_nil(field)) {
+      field = getmetafield(self, "__le");
+    }
+    if (!is_nil(field)) {
+      return toboolean(call1(field, self, that));
+    }
+    field = getmetafield(that, "__lt");
+    if (is_nil(field)) {
+      field = getmetafield(self, "__lt");
+    }
+    if (!is_nil(field)) {
+      return !toboolean(call1(field, that, self));
+    }
+  }
+  throw new runtime_error("attempt to compare " + type(self) + " with " + type(that));
+}
+
 const suppress_no_unsed = () => {};
 suppress_no_unsed(len);
 suppress_no_unsed(setlist);
