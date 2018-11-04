@@ -43,6 +43,23 @@ const string_buffer = s => {
   return buffer;
 };
 
+const type = value => {
+  if (is_nil(value)) {
+    return "nil";
+  } else if (is_boolean(value)) {
+    return "boolean";
+  } else if (is_number(value)) {
+    return "number";
+  } else if (is_string(value)) {
+    return "string";
+  } else if (is_table(value)) {
+    return "table";
+  } else if (is_function(value)) {
+    return "function";
+  }
+  throw new logic_error("unreachable code");
+};
+
 const is_nil = (value) => {
   return value === undefined;
 };
@@ -65,23 +82,6 @@ const is_table = (value) => {
 
 const is_function = (value) => {
   return typeof value === "function";
-};
-
-const type = value => {
-  if (is_nil(value)) {
-    return "nil";
-  } else if (is_boolean(value)) {
-    return "boolean";
-  } else if (is_number(value)) {
-    return "number";
-  } else if (is_string(value)) {
-    return "string";
-  } else if (is_table(value)) {
-    return "table";
-  } else if (is_function(value)) {
-    return "function";
-  }
-  throw new logic_error("unreachable code");
 };
 
 const toboolean = (v) => {
