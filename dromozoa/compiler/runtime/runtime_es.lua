@@ -4,7 +4,7 @@ const METATABLE = Symbol("metatabale");
 const string_buffers = new Map();
 const string_metatable = new Map();
 
-class Error {
+class error_t {
   constructor(message) {
     this.message = message;
   }
@@ -20,7 +20,7 @@ const string_buffer = s => {
     } else if (typeof Buffer !== "undefined") {
       buffer = Buffer.from(s);
     } else {
-      throw new Error("no UTF-8 encoder");
+      throw new error_t("no UTF-8 encoder");
     }
   }
   string_buffers.set(s, buffer);
@@ -70,7 +70,7 @@ const call0 = (f, ...args) => {
     if (typeof field == "function") {
       field(f, ...args);
     } else {
-      throw new Error("attempt to call a " + type(f) + " value");
+      throw new error_t("attempt to call a " + type(f) + " value");
     }
   }
 };
@@ -84,7 +84,7 @@ const call1 = (f, ...args) => {
     if (typeof field == "function") {
       result = field(f, ...args);
     } else {
-      throw new Error("attempt to call a " + type(f) + " value");
+      throw new error_t("attempt to call a " + type(f) + " value");
     }
   }
   if (Array.prototype.isPrototypeOf(result)) {
@@ -103,7 +103,7 @@ const call = (f, ...args) => {
     if (typeof field == "function") {
       result = field(f, ...args);
     } else {
-      throw new Error("attempt to call a " + type(f) + " value");
+      throw new error_t("attempt to call a " + type(f) + " value");
     }
   }
   if (Array.prototype.isPrototypeOf(result)) {
@@ -125,7 +125,7 @@ const gettable = (table, index) => {
     }
   }
   if (!Map.prototype.isPrototypeOf(table)) {
-    throw new Error("attempt to index a " + type(table) + " value");
+    throw new error_t("attempt to index a " + type(table) + " value");
   }
   const result = table.get(index);
   if (result === undefined) {
@@ -143,10 +143,10 @@ const gettable = (table, index) => {
 
 const settable = (table, index, value) => {
   if (!Map.prototype.isPrototypeOf(table)) {
-    throw new Error("attempt to index a " + type(table) + " value");
+    throw new error_t("attempt to index a " + type(table) + " value");
   }
   if (index === undefined) {
-    throw new Error("table index is nil");
+    throw new error_t("table index is nil");
   }
   const result = table.get(index);
   if (result === undefined) {
@@ -180,7 +180,7 @@ const len = value => {
       }
     }
   } else {
-    throw new Error("attempt to get length of a " + type(value) + " value");
+    throw new error_t("attempt to get length of a " + type(value) + " value");
   }
 };
 
@@ -273,16 +273,16 @@ const open_base = env => {
     const value = args[0];
     if (value === undefined || value === false) {
       if (args.length > 1) {
-        throw new Error(args[1]);
+        throw new error_t(args[1]);
       } else {
-        throw new Error("assertion failed!");
+        throw new error_t("assertion failed!");
       }
     }
     return args;
   });
 
   env.set("error", message => {
-    throw new Error(message);
+    throw new error_t(message);
   });
 
   env.set("getmetatable", object => {
@@ -307,7 +307,7 @@ const open_base = env => {
       const result = call(f, ...args);
       return [true, ...result];
     } catch (e) {
-      if (Error.prototype.isPrototypeOf(e)) {
+      if (error_t.prototype.isPrototypeOf(e)) {
         return [false, e.message];
       } else {
         throw e;
@@ -335,7 +335,7 @@ const open_base = env => {
     }
     index = tointeger(index);
     if (index === undefined) {
-      throw new Error("bad argument #1");
+      throw new error_t("bad argument #1");
     }
     if (index < 0) {
       index += args.length;
@@ -351,13 +351,13 @@ const open_base = env => {
 
   env.set("setmetatable", (table, metatable) => {
     if (!Map.prototype.isPrototypeOf(table)) {
-      throw new Error("bad argument #1");
+      throw new error_t("bad argument #1");
     }
     if (metatable !== undefined && !Map.prototype.isPrototypeOf(metatable)) {
-      throw new Error("nil or table expected");
+      throw new error_t("nil or table expected");
     }
     if (getmetafield(table, "__metatable") !== undefined) {
-      throw new Error("cannot change a protected metatable");
+      throw new error_t("cannot change a protected metatable");
     }
     table[METATABLE] = metatable;
     return table;
@@ -379,7 +379,7 @@ const open_string = env => {
     } else {
       i = tointeger(i);
       if (i === undefined) {
-        throw new Error("bad argument #" + arg);
+        throw new error_t("bad argument #" + arg);
       }
     }
     if (i === 0) {
@@ -406,7 +406,7 @@ const open_string = env => {
     } else {
       j = tointeger(j);
       if (j === undefined) {
-        throw new Error("bad argument #" + arg);
+        throw new error_t("bad argument #" + arg);
       }
     }
     if (j < 0) {
@@ -440,7 +440,7 @@ const open_string = env => {
     } else if (typeof Buffer !== "undefined") {
       return Buffer.from(args).toString();
     } else {
-      throw new Error("no UTF-8 decoder");
+      throw new error_t("no UTF-8 decoder");
     }
   });
 
@@ -463,7 +463,7 @@ const open_string = env => {
     } else if (typeof Buffer !== "undefined") {
       return buffer.slice(min, max + 1).toString();
     } else {
-      throw new Error("no UTF-8 decoder");
+      throw new error_t("no UTF-8 decoder");
     }
   });
 

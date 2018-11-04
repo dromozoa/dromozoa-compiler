@@ -66,13 +66,16 @@ cat <<EOH >result/index.html
 <h1>dromozoa-compiler test</h1>
 EOH
 
-printf 'compiling runtime... '
-if clang++ -Iruntime -std=c++11 -Wall -W $CXXFLAGS runtime/runtime.cpp -c -o result/execute/runtime.o >result/execute/runtime-compile.txt 2>&1
+if test "X$NO_CXX_TEST" = "X"
 then
-  ok
-else
-  ng
-  exit 1
+  printf 'compiling runtime... '
+  if clang++ -Iruntime -std=c++11 -Wall -W $CXXFLAGS runtime/runtime.cpp -c -o result/execute/runtime.o >result/execute/runtime-compile.txt 2>&1
+  then
+    ok
+  else
+    ng
+    exit 1
+  fi
 fi
 
 echo "<h2>execute</h2><ul>" >>result/index.html
