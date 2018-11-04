@@ -375,7 +375,7 @@ const lt = (self, that) => {
     }
   }
   throw new runtime_error("attempt to compare " + type(self) + " with " + type(that));
-}
+};
 
 const le = (self, that) => {
   if (is_number(self) && is_number(that)) {
@@ -399,7 +399,7 @@ const le = (self, that) => {
     }
   }
   throw new runtime_error("attempt to compare " + type(self) + " with " + type(that));
-}
+};
 
 const suppress_no_unsed = () => {};
 suppress_no_unsed(len);
@@ -407,18 +407,18 @@ suppress_no_unsed(setlist);
 
 const open_base = env => {
   const ipairs_iterator = (table, index) => {
-    ++index;
+    index = checkinteger(index) + 1;
     const value = gettable(table, index);
-    if (value !== undefined) {
-      return [index, value];
+    if (!is_nil(value)) {
+      return [ index, value ];
     }
   };
 
-  env.set("_G", env);
+  settable(env, "_G", env);
 
-  env.set("_VERSION", "Lua 5.3");
+  settable(env, "_VERSION", "Lua 5.3");
 
-  env.set("assert", (...args) => {
+  settable(env, "assert", (...args) => {
     const value = args[0];
     if (value === undefined || value === false) {
       if (args.length > 1) {
@@ -430,17 +430,17 @@ const open_base = env => {
     return args;
   });
 
-  env.set("error", message => {
+  settable(env, "error", message => {
     throw new runtime_error(message);
   });
 
-  env.set("getmetatable", getmetatable);
+  settable(env, "getmetatable", getmetatable);
 
-  env.set("ipairs", table => {
+  settable(env, "ipairs", table => {
     return [ipairs_iterator, table, 0];
   });
 
-  env.set("pcall", (f, ...args) => {
+  settable(env, "pcall", (f, ...args) => {
     try {
       const result = call(f, ...args);
       return [true, ...result];
@@ -453,7 +453,7 @@ const open_base = env => {
     }
   });
 
-  env.set("print", (...args) => {
+  settable(env, "print", (...args) => {
     if (typeof process !== "undefined") {
       for (let i = 0; i < args.length; ++i) {
         if (i > 0) {
@@ -468,7 +468,7 @@ const open_base = env => {
     }
   });
 
-  env.set("select", (index, ...args) => {
+  settable(env, "select", (index, ...args) => {
     if (index === "#") {
       return args.length;
     }
@@ -485,13 +485,13 @@ const open_base = env => {
     return result;
   });
 
-  env.set("setmetatable", setmetatable);
+  settable(env, "setmetatable", setmetatable);
 
-  env.set("tonumber", tonumber);
+  settable(env, "tonumber", tonumber);
 
-  env.set("tostring", tostring);
+  settable(env, "tostring", tostring);
 
-  env.set("type", type);
+  settable(env, "type", type);
 };
 
 const open_string = env => {
@@ -585,7 +585,7 @@ const open_string = env => {
     }
   });
 
-  env.set("string", module);
+  settable(env, "string", module);
   string_metatable.set("__index", module);
 };
 
