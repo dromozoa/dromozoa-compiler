@@ -329,13 +329,6 @@ const tonumber = v => {
   }
 };
 
-const tointeger = v => {
-  const result = tonumber(v);
-  if (Number.isInteger(result)) {
-    return result;
-  }
-};
-
 const tostring = v => {
   const t = typeof v;
   if (t === "undefined") {
@@ -435,10 +428,7 @@ const open_base = env => {
     if (index === "#") {
       return args.length;
     }
-    index = tointeger(index);
-    if (index === undefined) {
-      throw new runtime_error("bad argument #1");
-    }
+    index = checkinteger(index);
     if (index < 0) {
       index += args.length;
     } else {
@@ -467,10 +457,7 @@ const open_string = env => {
     if (i === undefined) {
       return 0;
     } else {
-      i = tointeger(i);
-      if (i === undefined) {
-        throw new runtime_error("bad argument #" + arg);
-      }
+      i = checkinteger(i);
     }
     if (i === 0) {
       return 0;
@@ -494,10 +481,7 @@ const open_string = env => {
         j = d;
       }
     } else {
-      j = tointeger(j);
-      if (j === undefined) {
-        throw new runtime_error("bad argument #" + arg);
-      }
+      j = checkinteger(j);
     }
     if (j < 0) {
       return j + buffer.byteLength;

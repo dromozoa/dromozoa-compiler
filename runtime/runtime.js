@@ -331,32 +331,6 @@ const len = v => {
   throw new runtime_error("attempt to get length of a " + type(v) + " value");
 };
 
-const tonumber = v => {
-  if (is_number(v)) {
-    return v;
-  } else if (is_string(v)) {
-    let match = decint_pattern.exec(v);
-    if (match) {
-      return parseInt(match[0], 10);
-    }
-    match = hexint_pattern.exec(v);
-    if (match) {
-      return parseInt(match[0], 16);
-    }
-    match = decflt_pattern.exec(v);
-    if (match) {
-      return parseFloat(match[0]);
-    }
-  }
-};
-
-const tointeger = v => {
-  const result = tonumber(v);
-  if (Number.isInteger(result)) {
-    return result;
-  }
-};
-
 const tostring = v => {
   const t = typeof v;
   if (t === "undefined") {
@@ -456,10 +430,7 @@ const open_base = env => {
     if (index === "#") {
       return args.length;
     }
-    index = tointeger(index);
-    if (index === undefined) {
-      throw new runtime_error("bad argument #1");
-    }
+    index = checkinteger(index);
     if (index < 0) {
       index += args.length;
     } else {
@@ -474,7 +445,13 @@ const open_base = env => {
 
   env.set("setmetatable", setmetatable);
 
-  env.set("tonumber", tonumber);
+  env.set("tonumber", (v) => {
+    try {
+      return checknumber(v);
+    } catch (e) {
+      // ignore
+    }
+  });
 
   env.set("tostring", tostring);
 
@@ -488,10 +465,7 @@ const open_string = env => {
     if (i === undefined) {
       return 0;
     } else {
-      i = tointeger(i);
-      if (i === undefined) {
-        throw new runtime_error("bad argument #" + arg);
-      }
+      i = checkinteger(i);
     }
     if (i === 0) {
       return 0;
@@ -515,10 +489,7 @@ const open_string = env => {
         j = d;
       }
     } else {
-      j = tointeger(j);
-      if (j === undefined) {
-        throw new runtime_error("bad argument #" + arg);
-      }
+      j = checkinteger(j);
     }
     if (j < 0) {
       return j + buffer.byteLength;
