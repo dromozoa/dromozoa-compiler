@@ -724,25 +724,6 @@ namespace dromozoa {
       }
     }
 
-    std::string type(const value_t& v) {
-      switch (v.type) {
-        case type_t::nil:
-          return "nil";
-        case type_t::boolean:
-          return "boolean";
-        case type_t::number:
-          return "number";
-        case type_t::string:
-          return "string";
-        case type_t::table:
-          return "table";
-        case type_t::function:
-          return "function";
-        default:
-          throw std::logic_error("unreachable code");
-      }
-    }
-
     const value_t& rawget(const value_t& table, const value_t& index) {
       return table.checktable()->get(index);
     }
@@ -863,6 +844,25 @@ namespace dromozoa {
 
     void call0(const value_t& f, const array_t& args) {
       call(f, args);
+    }
+
+    std::string type(const value_t& v) {
+      switch (v.type) {
+        case type_t::nil:
+          return "nil";
+        case type_t::boolean:
+          return "boolean";
+        case type_t::number:
+          return "number";
+        case type_t::string:
+          return "string";
+        case type_t::table:
+          return "table";
+        case type_t::function:
+          return "function";
+        default:
+          throw std::logic_error("unreachable code");
+      }
     }
 
     std::string tostring(const value_t& v) {

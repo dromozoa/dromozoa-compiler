@@ -64,23 +64,6 @@ const string_buffer = s => {
   return buffer;
 };
 
-const type = value => {
-  if (is_nil(value)) {
-    return "nil";
-  } else if (is_boolean(value)) {
-    return "boolean";
-  } else if (is_number(value)) {
-    return "number";
-  } else if (is_string(value)) {
-    return "string";
-  } else if (is_table(value)) {
-    return "table";
-  } else if (is_function(value)) {
-    return "function";
-  }
-  throw new logic_error("unreachable code");
-};
-
 const is_nil = (value) => {
   return value === undefined;
 };
@@ -130,7 +113,6 @@ const tonumber = v => {
     }
   }
 };
-
 
 const checknumber = (v) => {
   const result = tonumber(v);
@@ -196,57 +178,6 @@ const getmetafield = (object, event) => {
   }
   if (is_table(metatable)) {
     return rawget(metatable, event);
-  }
-};
-
-const call0 = (f, ...args) => {
-  if (is_function(f)) {
-    f(...args);
-  } else {
-    const field = getmetafield(f, "__call");
-    if (is_function(field)) {
-      field(f, ...args);
-    } else {
-      throw new runtime_error("attempt to call a " + type(f) + " value");
-    }
-  }
-};
-
-const call1 = (f, ...args) => {
-  let result;
-  if (is_function(f)) {
-    result = f(...args);
-  } else {
-    const field = getmetafield(f, "__call");
-    if (is_function(field)) {
-      result = field(f, ...args);
-    } else {
-      throw new runtime_error("attempt to call a " + type(f) + " value");
-    }
-  }
-  if (Array.prototype.isPrototypeOf(result)) {
-    return result[0];
-  } else {
-    return result;
-  }
-};
-
-const call = (f, ...args) => {
-  let result;
-  if (is_function(f)) {
-    result = f(...args);
-  } else {
-    const field = getmetafield(f, "__call");
-    if (is_function(field)) {
-      result = field(f, ...args);
-    } else {
-      throw new runtime_error("attempt to call a " + type(f) + " value");
-    }
-  }
-  if (Array.prototype.isPrototypeOf(result)) {
-    return result;
-  } else {
-    return [ result ];
   }
 };
 
@@ -320,6 +251,74 @@ const setlist = (table, index, ...args) => {
   for (let i = 0; i < args.length; ++i) {
     rawset(table, index++, args[i]);
   }
+};
+
+const call = (f, ...args) => {
+  let result;
+  if (is_function(f)) {
+    result = f(...args);
+  } else {
+    const field = getmetafield(f, "__call");
+    if (is_function(field)) {
+      result = field(f, ...args);
+    } else {
+      throw new runtime_error("attempt to call a " + type(f) + " value");
+    }
+  }
+  if (Array.prototype.isPrototypeOf(result)) {
+    return result;
+  } else {
+    return [ result ];
+  }
+};
+
+const call0 = (f, ...args) => {
+  if (is_function(f)) {
+    f(...args);
+  } else {
+    const field = getmetafield(f, "__call");
+    if (is_function(field)) {
+      field(f, ...args);
+    } else {
+      throw new runtime_error("attempt to call a " + type(f) + " value");
+    }
+  }
+};
+
+const call1 = (f, ...args) => {
+  let result;
+  if (is_function(f)) {
+    result = f(...args);
+  } else {
+    const field = getmetafield(f, "__call");
+    if (is_function(field)) {
+      result = field(f, ...args);
+    } else {
+      throw new runtime_error("attempt to call a " + type(f) + " value");
+    }
+  }
+  if (Array.prototype.isPrototypeOf(result)) {
+    return result[0];
+  } else {
+    return result;
+  }
+};
+
+const type = value => {
+  if (is_nil(value)) {
+    return "nil";
+  } else if (is_boolean(value)) {
+    return "boolean";
+  } else if (is_number(value)) {
+    return "number";
+  } else if (is_string(value)) {
+    return "string";
+  } else if (is_table(value)) {
+    return "table";
+  } else if (is_function(value)) {
+    return "function";
+  }
+  throw new logic_error("unreachable code");
 };
 
 const tostring = v => {
@@ -453,8 +452,8 @@ const range_j = (j, size) => {
 };
 
 const suppress_no_unsed = () => {};
-suppress_no_unsed(len);
 suppress_no_unsed(setlist);
+suppress_no_unsed(len);
 suppress_no_unsed(lt);
 suppress_no_unsed(le);
 
