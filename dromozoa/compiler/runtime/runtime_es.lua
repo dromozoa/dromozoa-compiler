@@ -301,6 +301,32 @@ const setlist = (table, index, ...args) => {
   }
 };
 
+const tostring = v => {
+  if (is_nil(v)) {
+    return "nil";
+  } else if (is_boolean(v)) {
+    if (v) {
+      return "true";
+    } else {
+      return "false";
+    }
+  } else if (is_number(v)) {
+    return v.toString();
+  } else if (is_string(v)) {
+    return v;
+  } else if (is_table(v)) {
+    const field = getmetafield(v, "__tostring");
+    if (!is_nil(field)) {
+      return call1(field, v);
+    } else {
+      return "table";
+    }
+  } else if (t === "function") {
+    return "function";
+  }
+  throw logic_error("unreachable code");
+};
+
 const len = v => {
   if (is_string(v)) {
     return string_buffer(v).byteLength;
@@ -316,34 +342,6 @@ const len = v => {
     }
   }
   throw new runtime_error("attempt to get length of a " + type(v) + " value");
-};
-
-const tostring = v => {
-  const t = typeof v;
-  if (t === "undefined") {
-    return "nil";
-  } else if (t === "number") {
-    return v.toString();
-  } else if (t === "string" || String.prototype.isPrototypeOf(v)) {
-    return v;
-  } else if (t === "boolean") {
-    if (v) {
-      return "true";
-    } else {
-      return "false";
-    }
-  } else if (t === "function") {
-    return "function";
-  } else if (Map.prototype.isPrototypeOf(v)) {
-    const field = getmetafield(v, "__tostring");
-    if (field !== undefined) {
-      return call1(field, v);
-    } else {
-      return "table";
-    }
-  } else {
-    return "userdata";
-  }
 };
 
 const suppress_no_unsed = () => {};
