@@ -1,6 +1,9 @@
 return [[
 const METATABLE = Symbol("metatabale");
-const TEST = true;
+
+const decint_pattern = /^\s*([+-]?\d+)\s*$/;
+const hexint_pattern = /^\s*([+-]?0[xX][0-9A-Fa-f]+)\s*$/;
+const decflt_pattern = /^\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)\s*$/;
 
 const string_buffers = new Map();
 const string_metatable = new Map();
@@ -9,7 +12,7 @@ class logic_error {
   constructor(message) {
     this.message = message;
   }
-};
+}
 
 class runtime_error {
   constructor(message) {
@@ -77,16 +80,67 @@ const type = value => {
     return "table";
   } else if (is_function(value)) {
     return "function";
-  } else {
-    throw new logic_error("unreachable code");
   }
+  throw new logic_error("unreachable code");
 };
 
-const checktable = (value) => {
-  if (is_table(value)) {
-    return value;
+const toboolean = (v) => {
+  if (is_nil(v)) {
+    return false;
+  } else if (is_boolean(v)) {
+    return v;
   }
-  throw new runtime_error("table expected, got " + type(value));
+  return true;
+};
+
+const checknumber = (v) => {
+  if (is_number(v)) {
+    return v;
+  } else if (is_string(v)) {
+    let match;
+    if ((match = decint_pattern.exec(v))) {
+      return parseInt(match[0], 10);
+    }
+    if ((match = hexint_pattern.exec(v))) {
+      return parseInt(match[0], 16);
+    }
+    if ((match = decflt_pattern.exec(v))) {
+      return parseFloat(match[0]);
+    }
+  }
+  throw new runtime_error("number expected, got " + type(v));
+};
+
+const checkinteger = (v) => {
+  const result = checknumber(v);
+  if (Number.isInteger(result)) {
+    return result;
+  }
+  throw new runtime_error("number has no integer representation");
+};
+
+const checkstring = (v) => {
+  if (is_string(v)) {
+    return v;
+  } else if (is_number(v)) {
+    return v.toString();
+  }
+  throw new runtime_error("string expected, got " + type(v));
+};
+
+const checktable = (v) => {
+  if (is_table(v)) {
+    return v;
+  }
+  throw new runtime_error("table expected, got " + type(v));
+};
+
+const optinteger = (v, d) => {
+  if (is_nil(v)) {
+    return d;
+  } else {
+    return checkinteger(v);
+  }
 };
 
 const rawget = (table, index) => {
@@ -175,7 +229,7 @@ const getmetatable = object => {
     if (is_table(metatable)) {
       const protected_metatable = rawget(metatable, "__metatable");
       if (!is_nil(protected_metatable)) {
-        return protected_metatable
+        return protected_metatable;
       }
     }
     return metatable;
@@ -255,10 +309,6 @@ const len = v => {
   }
   throw new runtime_error("attempt to get length of a " + type(v) + " value");
 };
-
-const decint_pattern = /^\s*([+-]?\d+)\s*$/;
-const hexint_pattern = /^\s*([+-]?0[xX][0-9A-Fa-f]+)\s*$/;
-const decflt_pattern = /^\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)\s*$/;
 
 const tonumber = v => {
   if (is_number(v)) {

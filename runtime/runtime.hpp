@@ -100,7 +100,6 @@ namespace dromozoa {
       std::int64_t checkinteger() const;
       std::string checkstring() const;
       table_ptr checktable() const;
-      double optnumber(double) const;
       std::int64_t optinteger(std::int64_t) const;
 
       const mode_t mode;

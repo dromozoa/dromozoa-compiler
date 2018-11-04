@@ -551,14 +551,6 @@ namespace dromozoa {
       throw value_t("table expected, got " + dromozoa::runtime::type(*this));
     }
 
-    double value_t::optnumber(double d) const {
-      if (is_nil()) {
-        return d;
-      } else {
-        return checknumber();
-      }
-    }
-
     std::int64_t value_t::optinteger(std::int64_t d) const {
       if (is_nil()) {
         return d;
