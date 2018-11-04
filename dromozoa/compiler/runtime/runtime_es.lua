@@ -34,32 +34,66 @@ const string_buffer = s => {
   return buffer;
 };
 
+const is_nil = (self) => {
+  return self === undefined;
+};
+
+const is_boolean = (self) => {
+  return typeof self === "boolean";
+};
+
+const is_number = (self) => {
+  return typeof self === "number";
+};
+
+const is_string = (self) => {
+  return typeof self === "string" || String.prototype.isPrototypeOf(self);
+};
+
+const is_table = (self) => {
+  return Map.prototype.isPrototypeOf(self);
+};
+
+const is_function = (self) => {
+  return typeof self === "function";
+};
+
 const type = value => {
-  const t = typeof value;
-  if (t === "undefined") {
+  if (is_nil(value)) {
     return "nil";
-  } else if (t === "number") {
-    return "number";
-  } else if (t === "string" || String.prototype.isPrototypeOf(value)) {
-    return "string";
-  } else if (t === "boolean") {
+  } else if (is_boolean(value)) {
     return "boolean";
-  } else if (t === "function") {
-    return "function";
-  } else if (Map.prototype.isPrototypeOf(value)) {
+  } else if (is_number(value)) {
+    return "number";
+  } else if (is_string(value)) {
+    return "string";
+  } else if (is_table(value)) {
     return "table";
+  } else if (is_function(value)) {
+    return "function";
   } else {
-    return "userdata";
+    throw "unreachable code";
   }
 };
 
+const checktable = (self) => {
+  if (is_table(self)) {
+    return self;
+  }
+  throw new error_t("table expected, got " + type(self));
+};
+
+const rawget = (table, index) => {
+  return checktable(table).get(index);
+};
+
 const getmetafield = (object, event) => {
-  if (typeof object === "string" || String.prototype.isPrototypeOf(object)) {
-    return string_metatable.get(event);
+  if (is_string(object)) {
+    return rawget(string_metatable, event);
   }
   const metatable = object[METATABLE];
   if (metatable !== undefined) {
-    return metatable.get(event);
+    return rawget(metatable, event);
   }
 };
 

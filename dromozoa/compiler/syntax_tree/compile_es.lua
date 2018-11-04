@@ -98,7 +98,7 @@ local tmpl = template(encode_var, {
   BNOT     = "%1 = ~%2";
   NOT      = "%1 = %2 === undefined || %2 === false";
   LEN      = "%1 = len(%2)";
-  CONCAT   = "%1 = new String(tostring(%2) + tostring(%3))";
+  CONCAT   = "%1 = tostring(%2) + tostring(%3)";
   EQ       = "%1 = %2 === %3";
   NE       = "%1 = %2 !== %3";
   LT       = "%1 = %2 < %3";
