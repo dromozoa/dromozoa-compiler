@@ -114,7 +114,7 @@ const toboolean = (v) => {
   return true;
 };
 
-const checknumber = (v) => {
+const tonumber = v => {
   if (is_number(v)) {
     return v;
   } else if (is_string(v)) {
@@ -128,6 +128,14 @@ const checknumber = (v) => {
     if ((match = decflt_pattern.exec(v))) {
       return parseFloat(match[0]);
     }
+  }
+};
+
+
+const checknumber = (v) => {
+  const result = tonumber(v);
+  if (is_number(result)) {
+    return result;
   }
   throw new runtime_error("number expected, got " + type(v));
 };
@@ -445,13 +453,7 @@ const open_base = env => {
 
   env.set("setmetatable", setmetatable);
 
-  env.set("tonumber", (v) => {
-    try {
-      return checknumber(v);
-    } catch (e) {
-      // ignore
-    }
-  });
+  env.set("tonumber", tonumber);
 
   env.set("tostring", tostring);
 

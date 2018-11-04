@@ -226,6 +226,15 @@ namespace dromozoa {
           return setmetatable(table, metatable);
         });
 
+        settable(env, "tonumber", [](value_t v) -> value_t {
+          double result = 0;
+          if (v.tonumber(result)) {
+            return result;
+          } else {
+            return NIL;
+          }
+        });
+
         settable(env, "type", [](value_t v) -> value_t {
           return type(v);
         });
@@ -455,9 +464,10 @@ namespace dromozoa {
       return true;
     }
 
-    double value_t::checknumber() const {
+    bool value_t::tonumber(double& result) const {
       if (is_number()) {
-        return number;
+        result = number;
+        return true;
       } else if (is_string()) {
         auto n = string->find_last_not_of(" \f\n\r\t\v");
         if (n != std::string::npos) {
@@ -466,7 +476,8 @@ namespace dromozoa {
             std::size_t i = 0;
             const std::int64_t integer = std::stoll(*string, &i, 10);
             if (i == n) {
-              return integer;
+              result = integer;
+              return true;
             }
           } catch (const std::exception&) {}
           if (is_hexint(*string)) {
@@ -474,7 +485,8 @@ namespace dromozoa {
               std::size_t i = 0;
               const std::int64_t integer = std::stoll(*string, &i, 16);
               if (i == n) {
-                return integer;
+                result = integer;
+                return true;
               }
             } catch (const std::exception&) {}
           }
@@ -482,10 +494,19 @@ namespace dromozoa {
             std::size_t i = 0;
             const double number = std::stod(*string, &i);
             if (i == n) {
-              return number;
+              result = number;
+              return true;
             }
           } catch (const std::exception&) {}
         }
+      }
+      return false;
+    }
+
+    double value_t::checknumber() const {
+      double result = 0;
+      if (tonumber(result)) {
+        return result;
       }
       throw value_t("number expected, got " + dromozoa::runtime::type(*this));
     }
