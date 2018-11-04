@@ -543,56 +543,13 @@ const open_base = env => {
 const open_string = env => {
   const module = new Map();
 
-  const range_i = (buffer, arg, i) => {
-    if (i === undefined) {
-      return 0;
-    } else {
-      i = checkinteger(i);
-    }
-    if (i === 0) {
-      return 0;
-    } else if (i < 0) {
-      i += buffer.byteLength;
-      if (i < 0) {
-        return 0;
-      } else {
-        return i;
-      }
-    } else {
-      return i - 1;
-    }
-  };
-
-  const range_j = (buffer, arg, j, d) => {
-    if (j === undefined) {
-      if (d === undefined) {
-        return buffer.byteLength - 1;
-      } else {
-        j = d;
-      }
-    } else {
-      j = checkinteger(j);
-    }
-    if (j < 0) {
-      return j + buffer.byteLength;
-    } else {
-      if (j >= buffer.byteLength) {
-        return buffer.byteLength - 1;
-      } else {
-        return j - 1;
-      }
-    }
-  };
-
   settable(module, "byte", (s, i, j) => {
     const buffer = string_buffer(s);
-    if (i === undefined) {
-      i = 1;
-    }
-    const min = range_i(buffer, 2, i);
-    const max = range_j(buffer, 3, j, i);
+    const index = optinteger(i, 1);
+    const min = range_i(index, buffer.byteLength);
+    const max = range_j(optinteger(j, index), buffer.byteLength);
     const result = [];
-    for (let i = min; i <= max; ++i) {
+    for (let i = min; i < max; ++i) {
       result.push(buffer[i]);
     }
     return result;
@@ -613,21 +570,19 @@ const open_string = env => {
   });
 
   settable(module, "sub", (s, i, j) => {
-    const buffer = string_buffer(s);
-    if (i === undefined) {
-      i = 1;
-    }
-    const min = range_i(buffer, 2, i);
-    const max = range_j(buffer, 3, j);
-    if (min > max) {
-      return "";
-    }
-    if (typeof TextDecoder !== "undefined") {
-      return new TextDecoder().decode(buffer.slice(min, max + 1));
-    } else if (typeof Buffer !== "undefined") {
-      return buffer.slice(min, max + 1).toString();
+    const buffer = string_buffer(checkstring(s));
+    const min = range_i(optinteger(i, 1), buffer.byteLength);
+    const max = range_j(optinteger(j, buffer.byteLength), buffer.byteLength);
+    if (min < max) {
+      if (typeof TextDecoder !== "undefined") {
+        return new TextDecoder().decode(buffer.slice(min, max));
+      } else if (typeof Buffer !== "undefined") {
+        return buffer.slice(min, max).toString();
+      } else {
+        throw new runtime_error("no UTF-8 decoder");
+      }
     } else {
-      throw new runtime_error("no UTF-8 decoder");
+      return "";
     }
   });
 
