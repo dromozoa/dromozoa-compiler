@@ -20,32 +20,38 @@ class runtime_error {
   }
 }
 
-const make_buffer = size => {
-  if (typeof Buffer !== "undefined") {
+let make_buffer;
+let string_to_buffer;
+let buffer_to_string;
+
+if (typeof Buffer !== "undefined") {
+  make_buffer = size => {
     return Buffer.alloc(size);
-  } else if (typeof Uint8Array !== "undefined") {
-    return new Uint8Array(size);
-  }
-  throw new logic_error("not implemented");
-};
+  };
 
-const string_to_buffer = string => {
-  if (typeof TextEncoder !== "undefined") {
-    return new TextEncoder().encode(string);
-  } else if (typeof Buffer !== "undefined") {
+  string_to_buffer = string => {
     return Buffer.from(string);
-  }
-  throw new logic_error("not implemented");
-};
+  };
 
-const buffer_to_string = buffer => {
-  if (typeof TextDecoder !== "undefined") {
-    return new TextDecoder().decode(buffer);
-  } else if (typeof Buffer !== "undefined") {
+  buffer_to_string = buffer => {
     return buffer.toString();
-  }
-  throw new logic_error("not implemented");
-};
+  };
+} else {
+  const encoder = new TextEncoder();
+  const decoder = new TextDecoder();
+
+  make_buffer = size => {
+    return new Uint8Array(size);
+  };
+
+  string_to_buffer = string => {
+    return encoder.encode(string);
+  };
+
+  buffer_to_string = buffer => {
+    return decoder.decode(buffer);
+  };
+}
 
 const string_buffer = s => {
   let buffer = string_buffers.get(s);
