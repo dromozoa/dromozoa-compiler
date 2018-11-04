@@ -187,6 +187,10 @@ namespace dromozoa {
           throw message;
         });
 
+        settable(env, "getmetatable", [](value_t object) -> value_t {
+          return getmetatable(object);
+        });
+
         settable(env, "ipairs", [=](value_t table) -> array_t {
           return { ipairs_iterator, table, 0 };
         });
@@ -218,16 +222,25 @@ namespace dromozoa {
           return args.sub(range_i(index.checkinteger(), args.size));
         });
 
-        settable(env, "getmetatable", [](value_t object) -> value_t {
-          return getmetatable(object);
-        });
-
         settable(env, "setmetatable", [](value_t table, value_t metatable) -> value_t {
           return setmetatable(table, metatable);
         });
 
-        settable(env, "type", [](value_t value) -> value_t {
-          return type(value);
+        settable(env, "tonumber", [](value_t v) -> value_t {
+          double result = 0;
+          if (v.tonumber(result)) {
+            return result;
+          } else {
+            return NIL;
+          }
+        });
+
+        settable(env, "tostring", [](value_t v) -> value_t {
+          return tostring(v);
+        });
+
+        settable(env, "type", [](value_t v) -> value_t {
+          return type(v);
         });
       }
 
@@ -237,12 +250,12 @@ namespace dromozoa {
         settable(module, "byte", [](value_t s, value_t i, value_t j) -> array_t {
           const auto& string = s.checkstring();
           const auto index = i.optinteger(1);
-          const auto begin = range_i(index, string.size());
-          const auto end = range_j(j.optinteger(index), string.size());
-          if (begin < end) {
-            array_t result(end - begin);
-            for (std::size_t i = begin; i < end; ++i) {
-              result[i - begin] = static_cast<std::uint8_t>(string[i]);
+          const auto min = range_i(index, string.size());
+          const auto max = range_j(j.optinteger(index), string.size());
+          if (min < max) {
+            array_t result(max - min);
+            for (std::size_t i = min; i < max; ++i) {
+              result[i - min] = static_cast<std::uint8_t>(string[i]);
             }
             return result;
           } else {
@@ -269,10 +282,10 @@ namespace dromozoa {
 
         settable(module, "sub", [](value_t s, value_t i, value_t j) -> value_t {
           const auto& string = s.checkstring();
-          const auto begin = range_i(i.optinteger(1), string.size());
-          const auto end = range_j(j.optinteger(string.size()), string.size());
-          if (begin < end) {
-            return string.substr(begin, end - begin);
+          const auto min = range_i(i.optinteger(1), string.size());
+          const auto max = range_j(j.optinteger(string.size()), string.size());
+          if (min < max) {
+            return string.substr(min, max - min);
           } else {
             return "";
           }
@@ -461,91 +474,35 @@ namespace dromozoa {
         return true;
       } else if (is_string()) {
         auto n = string->find_last_not_of(" \f\n\r\t\v");
-        if (n == std::string::npos) {
-          return false;
-        }
-        ++n;
-        try {
-          std::size_t i = 0;
-          const std::int64_t integer = std::stoll(*string, &i, 10);
-          if (i == n) {
-            result = integer;
-            return true;
-          }
-        } catch (const std::exception&) {}
-        if (is_hexint(*string)) {
+        if (n != std::string::npos) {
+          ++n;
           try {
             std::size_t i = 0;
-            const std::int64_t integer = std::stoll(*string, &i, 16);
+            const std::int64_t integer = std::stoll(*string, &i, 10);
             if (i == n) {
               result = integer;
               return true;
             }
           } catch (const std::exception&) {}
-        }
-        try {
-          std::size_t i = 0;
-          const double number = std::stod(*string, &i);
-          if (i == n) {
-            result = number;
-            return true;
+          if (is_hexint(*string)) {
+            try {
+              std::size_t i = 0;
+              const std::int64_t integer = std::stoll(*string, &i, 16);
+              if (i == n) {
+                result = integer;
+                return true;
+              }
+            } catch (const std::exception&) {}
           }
-        } catch (const std::exception&) {}
-      }
-      return false;
-    }
-
-    bool value_t::tointeger(std::int64_t& result) const {
-      if (is_number()) {
-        if (number == std::floor(number)) {
-          result = number;
-          return true;
-        }
-      } else if (is_string()) {
-        auto n = string->find_last_not_of(" \f\n\r\t\v");
-        if (n == std::string::npos) {
-          return false;
-        }
-        ++n;
-        try {
-          std::size_t i = 0;
-          const std::int64_t integer = std::stoll(*string, &i, 10);
-          if (i == n) {
-            result = integer;
-            return true;
-          }
-        } catch (const std::exception&) {}
-        if (is_hexint(*string)) {
           try {
             std::size_t i = 0;
-            const std::int64_t integer = std::stoll(*string, &i, 16);
+            const double number = std::stod(*string, &i);
             if (i == n) {
-              result = integer;
+              result = number;
               return true;
             }
           } catch (const std::exception&) {}
         }
-        try {
-          std::size_t i = 0;
-          const double number = std::stod(*string, &i);
-          if (i == n && number == std::floor(number)) {
-            result = number;
-            return true;
-          }
-        } catch (const std::exception&) {}
-      }
-      return false;
-    }
-
-    bool value_t::tostring(std::string& result) const {
-      if (is_string()) {
-        result = *string;
-        return true;
-      } else if (is_number()) {
-        std::ostringstream out;
-        out << std::setprecision(17) << number;
-        result = out.str();
-        return true;
       }
       return false;
     }
@@ -559,17 +516,55 @@ namespace dromozoa {
     }
 
     std::int64_t value_t::checkinteger() const {
-      std::int64_t result = 0;
-      if (tointeger(result)) {
-        return result;
+      if (is_number()) {
+        if (std::isfinite(number) && number == std::floor(number)) {
+          return number;
+        } else {
+          throw value_t("number has no integer representation");
+        }
+      } else if (is_string()) {
+        auto n = string->find_last_not_of(" \f\n\r\t\v");
+        if (n != std::string::npos) {
+          ++n;
+          try {
+            std::size_t i = 0;
+            const std::int64_t integer = std::stoll(*string, &i, 10);
+            if (i == n) {
+              return integer;
+            }
+          } catch (const std::exception&) {}
+          if (is_hexint(*string)) {
+            try {
+              std::size_t i = 0;
+              const std::int64_t integer = std::stoll(*string, &i, 16);
+              if (i == n) {
+                return integer;
+              }
+            } catch (const std::exception&) {}
+          }
+          try {
+            std::size_t i = 0;
+            const double number = std::stod(*string, &i);
+            if (i == n) {
+              if (std::isfinite(number) && number == std::floor(number)) {
+                return number;
+              } else {
+                throw value_t("number has no integer representation");
+              }
+            }
+          } catch (const std::exception&) {}
+        }
       }
       throw value_t("integer expected, got " + dromozoa::runtime::type(*this));
     }
 
     std::string value_t::checkstring() const {
-      std::string result;
-      if (tostring(result)) {
-        return result;
+      if (is_string()) {
+        return *string;
+      } else if (is_number()) {
+        std::ostringstream out;
+        out << std::setprecision(17) << number;
+        return out.str();
       }
       throw value_t("string expected, got " + dromozoa::runtime::type(*this));
     }
@@ -579,14 +574,6 @@ namespace dromozoa {
         return table;
       }
       throw value_t("table expected, got " + dromozoa::runtime::type(*this));
-    }
-
-    double value_t::optnumber(double d) const {
-      if (is_nil()) {
-        return d;
-      } else {
-        return checknumber();
-      }
     }
 
     std::int64_t value_t::optinteger(std::int64_t d) const {
@@ -737,21 +724,21 @@ namespace dromozoa {
       }
     }
 
-    const value_t& rawget(const value_t& self, const value_t& index) {
-      return self.checktable()->get(index);
+    const value_t& rawget(const value_t& table, const value_t& index) {
+      return table.checktable()->get(index);
     }
 
-    const value_t& rawset(const value_t& self, const value_t& index, const value_t& value) {
-      self.checktable()->set(index, value);
-      return self;
+    const value_t& rawset(const value_t& table, const value_t& index, const value_t& value) {
+      table.checktable()->set(index, value);
+      return table;
     }
 
-    const value_t& getmetafield(const value_t& self, const value_t& event) {
+    const value_t& getmetafield(const value_t& object, const value_t& event) {
       value_t metatable;
-      if (self.is_string()) {
+      if (object.is_string()) {
         metatable = string_metatable;
-      } else if (self.is_table()) {
-        metatable = self.table->metatable;
+      } else if (object.is_table()) {
+        metatable = object.table->metatable;
       }
       if (metatable.is_table()) {
         return rawget(metatable, event);
@@ -760,11 +747,11 @@ namespace dromozoa {
       }
     }
 
-    const value_t& getmetatable(const value_t& self) {
-      if (self.is_string()) {
+    const value_t& getmetatable(const value_t& object) {
+      if (object.is_string()) {
         return string_metatable;
-      } else if (self.is_table()) {
-        const auto& metatable = self.table->metatable;
+      } else if (object.is_table()) {
+        const auto& metatable = object.table->metatable;
         if (metatable.is_table()) {
           const auto& protected_metatable = rawget(metatable, "__metatable");
           if (!protected_metatable.is_nil()) {
@@ -777,15 +764,15 @@ namespace dromozoa {
       }
     }
 
-    const value_t& setmetatable(const value_t& self, const value_t& metatable) {
+    const value_t& setmetatable(const value_t& table, const value_t& metatable) {
       if (!metatable.is_nil() && !metatable.is_table()) {
         throw value_t("nil or table expected");
       }
-      if (!getmetafield(self, "__metatable").is_nil()) {
+      if (!getmetafield(table, "__metatable").is_nil()) {
         throw value_t("cannot change a protected metatable");
       }
-      self.checktable()->metatable = metatable;
-      return self;
+      table.checktable()->metatable = metatable;
+      return table;
     }
 
     value_t gettable(const value_t& table, const value_t& index) {
@@ -838,29 +825,29 @@ namespace dromozoa {
       }
     }
 
-    array_t call(const value_t& self, const array_t& args) {
-      if (self.is_function()) {
-        return (*self.function)(args);
+    array_t call(const value_t& f, const array_t& args) {
+      if (f.is_function()) {
+        return (*f.function)(args);
       } else {
-        const auto& field = getmetafield(self, "__call");
+        const auto& field = getmetafield(f, "__call");
         if (field.is_function()) {
-          return (*field.function)(array_t(self, args));
+          return (*field.function)(array_t(f, args));
         } else {
-          throw value_t("attempt to call a " + type(self) + " value");
+          throw value_t("attempt to call a " + type(f) + " value");
         }
       }
     }
 
-    value_t call1(const value_t& self, const array_t& args) {
-      return call(self, args)[0];
+    value_t call1(const value_t& f, const array_t& args) {
+      return call(f, args)[0];
     }
 
-    void call0(const value_t& self, const array_t& args) {
-      call(self, args);
+    void call0(const value_t& f, const array_t& args) {
+      call(f, args);
     }
 
-    std::string type(const value_t& self) {
-      switch (self.type) {
+    std::string type(const value_t& v) {
+      switch (v.type) {
         case type_t::nil:
           return "nil";
         case type_t::boolean:
@@ -878,12 +865,12 @@ namespace dromozoa {
       }
     }
 
-    std::string tostring(const value_t& self) {
-      switch (self.type) {
+    std::string tostring(const value_t& v) {
+      switch (v.type) {
         case type_t::nil:
           return "nil";
         case type_t::boolean:
-          if (self.boolean) {
+          if (v.boolean) {
             return "true";
           } else {
             return "false";
@@ -891,26 +878,26 @@ namespace dromozoa {
         case type_t::number:
           {
             std::ostringstream out;
-            out << std::setprecision(17) << self.number;
+            out << std::setprecision(17) << v.number;
             return out.str();
           }
         case type_t::string:
-          return *self.string;
+          return *v.string;
         case type_t::table:
           {
-            const auto& field = getmetafield(self, "__tostring");
+            const auto& field = getmetafield(v, "__tostring");
             if (!field.is_nil()) {
-              return call1(field, { self }).checkstring();
+              return call1(field, { v }).checkstring();
             } else {
               std::ostringstream out;
-              out << "table: " << self.table.get();
+              out << "table: " << v.table.get();
               return out.str();
             }
           }
         case type_t::function:
           {
             std::ostringstream out;
-            out << "function: " << self.function.get();
+            out << "function: " << v.function.get();
             return out.str();
           }
         default:
@@ -918,21 +905,21 @@ namespace dromozoa {
       }
     }
 
-    std::int64_t len(const value_t& self) {
-      if (self.is_string()) {
-        return self.string->size();
-      } else if (self.is_table()) {
-        const auto& field = getmetafield(self, "__len");
+    std::int64_t len(const value_t& v) {
+      if (v.is_string()) {
+        return v.string->size();
+      } else if (v.is_table()) {
+        const auto& field = getmetafield(v, "__len");
         if (!field.is_nil()) {
-          return call1(field, { self }).checkinteger();
+          return call1(field, { v }).checkinteger();
         }
         for (std::int64_t i = 1; ; ++i) {
-          if (gettable(self, i).is_nil()) {
+          if (gettable(v, i).is_nil()) {
             return i - 1;
           }
         }
       }
-      throw value_t("attempt to get length of a " + type(self) + " value");
+      throw value_t("attempt to get length of a " + type(v) + " value");
     }
 
     bool eq(const value_t& self, const value_t& that) {

@@ -197,23 +197,23 @@ int main(int, char*[]) {
     }
   }
 
-  {
-    double number = 0;
-    bool result = value_t(" 0x7FFFFFFFFFFFFFFF ").tonumber(number);
-    std::cout << result << " " << number << "\n";
-  }
-
-  {
-    int64_t integer = 0;
-    bool result = value_t("0x7FFFFFFFFFFFFFFF ").tointeger(integer);
-    std::cout << result << " " << integer << "\n";
-  }
-
-  {
-    std::string string;
-    bool result = value_t(1025).tostring(string);
-    std::cout << result << " " << string << "\n";
-  }
+//  {
+//    double number = 0;
+//    bool result = value_t(" 0x7FFFFFFFFFFFFFFF ").tonumber(number);
+//    std::cout << result << " " << number << "\n";
+//  }
+//
+//  {
+//    int64_t integer = 0;
+//    bool result = value_t("0x7FFFFFFFFFFFFFFF ").tointeger(integer);
+//    std::cout << result << " " << integer << "\n";
+//  }
+//
+//  {
+//    std::string string;
+//    bool result = value_t(1025).tostring(string);
+//    std::cout << result << " " << string << "\n";
+//  }
 
   try {
     std::cout << value_t(true).checkstring() << "\n";
