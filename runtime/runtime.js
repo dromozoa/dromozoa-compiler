@@ -342,7 +342,7 @@ const tostring = v => {
     } else {
       return "table";
     }
-  } else if (t === "function") {
+  } else if (is_function(v)) {
     return "function";
   }
   throw logic_error("unreachable code");
