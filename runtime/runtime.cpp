@@ -226,8 +226,8 @@ namespace dromozoa {
           return setmetatable(table, metatable);
         });
 
-        settable(env, "type", [](value_t value) -> value_t {
-          return type(value);
+        settable(env, "type", [](value_t v) -> value_t {
+          return type(v);
         });
       }
 
@@ -237,12 +237,12 @@ namespace dromozoa {
         settable(module, "byte", [](value_t s, value_t i, value_t j) -> array_t {
           const auto& string = s.checkstring();
           const auto index = i.optinteger(1);
-          const auto begin = range_i(index, string.size());
-          const auto end = range_j(j.optinteger(index), string.size());
-          if (begin < end) {
-            array_t result(end - begin);
-            for (std::size_t i = begin; i < end; ++i) {
-              result[i - begin] = static_cast<std::uint8_t>(string[i]);
+          const auto min = range_i(index, string.size());
+          const auto max = range_j(j.optinteger(index), string.size());
+          if (min < max) {
+            array_t result(max - min);
+            for (std::size_t i = min; i < max; ++i) {
+              result[i - min] = static_cast<std::uint8_t>(string[i]);
             }
             return result;
           } else {
@@ -269,10 +269,10 @@ namespace dromozoa {
 
         settable(module, "sub", [](value_t s, value_t i, value_t j) -> value_t {
           const auto& string = s.checkstring();
-          const auto begin = range_i(i.optinteger(1), string.size());
-          const auto end = range_j(j.optinteger(string.size()), string.size());
-          if (begin < end) {
-            return string.substr(begin, end - begin);
+          const auto min = range_i(i.optinteger(1), string.size());
+          const auto max = range_j(j.optinteger(string.size()), string.size());
+          if (min < max) {
+            return string.substr(min, max - min);
           } else {
             return "";
           }
