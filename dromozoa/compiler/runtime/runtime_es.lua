@@ -5,7 +5,13 @@ const TEST = true;
 const string_buffers = new Map();
 const string_metatable = new Map();
 
-class error_t {
+class logic_error {
+  constructor(message) {
+    this.message = message;
+  }
+};
+
+class runtime_error {
   constructor(message) {
     this.message = message;
   }
@@ -21,7 +27,7 @@ const string_buffer = s => {
     } else if (typeof Buffer !== "undefined") {
       buffer = Buffer.from(s);
     } else {
-      throw new error_t("no UTF-8 encoder");
+      throw new runtime_error("no UTF-8 encoder");
     }
   }
   string_buffers.set(s, buffer);
@@ -72,7 +78,7 @@ const type = value => {
   } else if (is_function(value)) {
     return "function";
   } else {
-    throw "unreachable code";
+    throw new logic_error("unreachable code");
   }
 };
 
@@ -80,46 +86,59 @@ const checktable = (self) => {
   if (is_table(self)) {
     return self;
   }
-  throw new error_t("table expected, got " + type(self));
+  throw new runtime_error("table expected, got " + type(self));
 };
 
 const rawget = (table, index) => {
   return checktable(table).get(index);
 };
 
-const getmetafield = (object, event) => {
-  if (is_string(object)) {
-    return rawget(string_metatable, event);
+const rawset = (table, index, value) => {
+  if (is_nil(index)) {
+    throw new runtime_error("table index is nil");
   }
-  const metatable = object[METATABLE];
-  if (metatable !== undefined) {
+  if (is_nil(value)) {
+    checktable(table).delete(index);
+  } else {
+    checktable(table).set(index, value);
+  }
+};
+
+const getmetafield = (object, event) => {
+  let metatable;
+  if (is_string(object)) {
+    metatable = string_metatable;
+  } else if (is_table(object)) {
+    metatable = object[METATABLE];
+  }
+  if (is_table(metatable)) {
     return rawget(metatable, event);
   }
 };
 
-const call0 = (f, ...args) => {
-  if (typeof f === "function") {
-    f(...args);
+const call0 = (self, ...args) => {
+  if (is_function(self)) {
+    self(...args);
   } else {
-    const field = getmetafield(f, "__call");
-    if (typeof field == "function") {
-      field(f, ...args);
+    const field = getmetafield(self, "__call");
+    if (is_function(field)) {
+      field(self, ...args);
     } else {
-      throw new error_t("attempt to call a " + type(f) + " value");
+      throw new runtime_error("attempt to call a " + type(f) + " value");
     }
   }
 };
 
-const call1 = (f, ...args) => {
+const call1 = (self, ...args) => {
   let result;
-  if (typeof f === "function") {
-    result = f(...args);
+  if (is_function(self)) {
+    result = self(...args);
   } else {
-    const field = getmetafield(f, "__call");
-    if (typeof field == "function") {
-      result = field(f, ...args);
+    const field = getmetafield(self, "__call");
+    if (is_function(field)) {
+      result = field(self, ...args);
     } else {
-      throw new error_t("attempt to call a " + type(f) + " value");
+      throw new runtime_error("attempt to call a " + type(f) + " value");
     }
   }
   if (Array.prototype.isPrototypeOf(result)) {
@@ -129,44 +148,41 @@ const call1 = (f, ...args) => {
   }
 };
 
-const call = (f, ...args) => {
+const call = (self, ...args) => {
   let result;
-  if (typeof f === "function") {
-    result = f(...args);
+  if (is_function(self)) {
+    result = self(...args);
   } else {
-    const field = getmetafield(f, "__call");
-    if (typeof field == "function") {
-      result = field(f, ...args);
+    const field = getmetafield(self, "__call");
+    if (is_function(field)) {
+      result = field(self, ...args);
     } else {
-      throw new error_t("attempt to call a " + type(f) + " value");
+      throw new runtime_error("attempt to call a " + type(f) + " value");
     }
   }
   if (Array.prototype.isPrototypeOf(result)) {
     return result;
   } else {
-    return [result];
+    return [ result ];
   }
 };
 
 const gettable = (table, index) => {
-  if (typeof table === "string" || String.prototype.isPrototypeOf(table)) {
+  if (is_string(table)) {
     const field = getmetafield(table, "__index");
-    if (field !== undefined) {
-      if (typeof field === "function") {
+    if (!is_nil(field)) {
+      if (is_function(field)) {
         return call1(field, table, index);
       } else {
         return gettable(field, index);
       }
     }
   }
-  if (!Map.prototype.isPrototypeOf(table)) {
-    throw new error_t("attempt to index a " + type(table) + " value");
-  }
-  const result = table.get(index);
-  if (result === undefined) {
+  const result = rawget(table, index);
+  if (is_nil(result)) {
     const field = getmetafield(table, "__index");
-    if (field !== undefined) {
-      if (typeof field === "function") {
+    if (!is_nil(field)) {
+      if (is_function(field)) {
         return call1(field, table, index);
       } else {
         return gettable(field, index);
@@ -177,46 +193,36 @@ const gettable = (table, index) => {
 };
 
 const settable = (table, index, value) => {
-  if (!Map.prototype.isPrototypeOf(table)) {
-    throw new error_t("attempt to index a " + type(table) + " value");
-  }
-  if (index === undefined) {
-    throw new error_t("table index is nil");
-  }
-  const result = table.get(index);
-  if (result === undefined) {
+  const result = rawget(table, index);
+  if (is_nil(result)) {
     const field = getmetafield(table, "__newindex");
-    if (field !== undefined) {
-      if (typeof field === "function") {
+    if (!is_nil(field)) {
+      if (is_function(field)) {
         return call0(field, table, index, value);
       } else {
         return settable(field, index, value);
       }
     }
   }
-  if (value === undefined) {
-    table.delete(index);
-  } else {
-    table.set(index, value);
-  }
+  rawset(table, index, value);
 };
 
 const len = value => {
-  if (typeof value === "string" || String.prototype.isPrototypeOf(value)) {
+  if (is_string(value)) {
+    // TODO fix me
     return string_buffer(value).byteLength;
-  } else if (Map.prototype.isPrototypeOf(value)) {
+  } else if (is_table(value)) {
     const field = getmetafield(value, "__len");
-    if (field !== undefined) {
+    if (!is_nil(field)) {
       return call1(field, value);
     }
     for (let i = 1; ; ++i) {
-      if (value.get(i) === undefined) {
+      if (is_nil(gettable(value, i))) {
         return i - 1;
       }
     }
-  } else {
-    throw new error_t("attempt to get length of a " + type(value) + " value");
   }
+  throw new runtime_error("attempt to get length of a " + type(value) + " value");
 };
 
 const setlist = (table, index, ...args) => {
@@ -308,16 +314,16 @@ const open_base = env => {
     const value = args[0];
     if (value === undefined || value === false) {
       if (args.length > 1) {
-        throw new error_t(args[1]);
+        throw new runtime_error(args[1]);
       } else {
-        throw new error_t("assertion failed!");
+        throw new runtime_error("assertion failed!");
       }
     }
     return args;
   });
 
   env.set("error", message => {
-    throw new error_t(message);
+    throw new runtime_error(message);
   });
 
   env.set("getmetatable", object => {
@@ -342,7 +348,7 @@ const open_base = env => {
       const result = call(f, ...args);
       return [true, ...result];
     } catch (e) {
-      if (error_t.prototype.isPrototypeOf(e)) {
+      if (runtime_error.prototype.isPrototypeOf(e)) {
         return [false, e.message];
       } else {
         throw e;
@@ -371,7 +377,7 @@ const open_base = env => {
     }
     index = tointeger(index);
     if (index === undefined) {
-      throw new error_t("bad argument #1");
+      throw new runtime_error("bad argument #1");
     }
     if (index < 0) {
       index += args.length;
@@ -387,13 +393,13 @@ const open_base = env => {
 
   env.set("setmetatable", (table, metatable) => {
     if (!Map.prototype.isPrototypeOf(table)) {
-      throw new error_t("bad argument #1");
+      throw new runtime_error("bad argument #1");
     }
     if (metatable !== undefined && !Map.prototype.isPrototypeOf(metatable)) {
-      throw new error_t("nil or table expected");
+      throw new runtime_error("nil or table expected");
     }
     if (getmetafield(table, "__metatable") !== undefined) {
-      throw new error_t("cannot change a protected metatable");
+      throw new runtime_error("cannot change a protected metatable");
     }
     table[METATABLE] = metatable;
     return table;
@@ -415,7 +421,7 @@ const open_string = env => {
     } else {
       i = tointeger(i);
       if (i === undefined) {
-        throw new error_t("bad argument #" + arg);
+        throw new runtime_error("bad argument #" + arg);
       }
     }
     if (i === 0) {
@@ -442,7 +448,7 @@ const open_string = env => {
     } else {
       j = tointeger(j);
       if (j === undefined) {
-        throw new error_t("bad argument #" + arg);
+        throw new runtime_error("bad argument #" + arg);
       }
     }
     if (j < 0) {
@@ -476,7 +482,7 @@ const open_string = env => {
     } else if (typeof Buffer !== "undefined") {
       return Buffer.from(args).toString();
     } else {
-      throw new error_t("no UTF-8 decoder");
+      throw new runtime_error("no UTF-8 decoder");
     }
   });
 
@@ -499,7 +505,7 @@ const open_string = env => {
     } else if (typeof Buffer !== "undefined") {
       return buffer.slice(min, max + 1).toString();
     } else {
-      throw new error_t("no UTF-8 decoder");
+      throw new runtime_error("no UTF-8 decoder");
     }
   });
 
