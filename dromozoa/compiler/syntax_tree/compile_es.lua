@@ -82,30 +82,30 @@ local tmpl = template(encode_var, {
   GETTABLE = "%1 = gettable(%2, %3)";
   SETTABLE = "settable(%1, %2, %3)";
   NEWTABLE = "%1 = new Map()";
-  ADD      = "%1 = %2 + %3";
-  SUB      = "%1 = %2 - %3";
-  MUL      = "%1 = %2 * %3";
-  MOD      = "%1 = %2 % %3";
-  POW      = "%1 = %2 ** %3";
-  DIV      = "%1 = %2 / %3";
-  IDIV     = "%1 = Math.floor(%2 / %3)";
-  BAND     = "%1 = %2 & %3";
-  BOR      = "%1 = %2 | %3";
-  BXOR     = "%1 = %2 ^ %3";
-  SHL      = "%1 = %2 << %3";
-  SHR      = "%1 = %2 >>> %3";
-  UNM      = "%1 = -%2";
-  BNOT     = "%1 = ~%2";
-  NOT      = "%1 = %2 === undefined || %2 === false";
+  ADD      = "%1 = checknumber(%2) + checknumber(%3)";
+  SUB      = "%1 = checknumber(%2) - checknumber(%3)";
+  MUL      = "%1 = checknumber(%2) * checknumber(%3)";
+  MOD      = "%1 = checknumber(%2) % checknumber(%3)";
+  POW      = "%1 = checknumber(%2) ** checknumber(%3)";
+  DIV      = "%1 = checknumber(%2) / checknumber(%3)";
+  IDIV     = "%1 = Math.floor(checknumber(%2) / checknumber(%3))";
+  BAND     = "%1 = checkinteger(%2) & checkinteger(%3)";
+  BOR      = "%1 = checkinteger(%2) | checkinteger(%3)";
+  BXOR     = "%1 = checkinteger(%2) ^ checkinteger(%3)";
+  SHL      = "%1 = checkinteger(%2) << checkinteger(%3)";
+  SHR      = "%1 = checkinteger(%2) >>> checkinteger(%3)";
+  UNM      = "%1 = -checknumber(%2)";
+  BNOT     = "%1 = ~checkinteger(%2)";
+  NOT      = "%1 = !toboolean(%2)";
   LEN      = "%1 = len(%2)";
-  CONCAT   = "%1 = tostring(%2) + tostring(%3)";
+  CONCAT   = "%1 = checkstring(%2) + checkstring(%3)";
   EQ       = "%1 = %2 === %3";
   NE       = "%1 = %2 !== %3";
   LT       = "%1 = %2 < %3";
   LE       = "%1 = %2 <= %3";
   BREAK    = "break";
   GOTO     = "L = %1; continue";
-  TONUMBER = "%1 = tonumber(%2)";
+  TONUMBER = "%1 = checknumber(%2)";
 })
 
 local compile_proto
