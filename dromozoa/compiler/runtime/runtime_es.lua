@@ -40,28 +40,28 @@ const string_buffer = s => {
   return buffer;
 };
 
-const is_nil = (self) => {
-  return self === undefined;
+const is_nil = (value) => {
+  return value === undefined;
 };
 
-const is_boolean = (self) => {
-  return typeof self === "boolean";
+const is_boolean = (value) => {
+  return typeof value === "boolean";
 };
 
-const is_number = (self) => {
-  return typeof self === "number";
+const is_number = (value) => {
+  return typeof value === "number";
 };
 
-const is_string = (self) => {
-  return typeof self === "string" || String.prototype.isPrototypeOf(self);
+const is_string = (value) => {
+  return typeof value === "string" || String.prototype.isPrototypeOf(value);
 };
 
-const is_table = (self) => {
-  return Map.prototype.isPrototypeOf(self);
+const is_table = (value) => {
+  return Map.prototype.isPrototypeOf(value);
 };
 
-const is_function = (self) => {
-  return typeof self === "function";
+const is_function = (value) => {
+  return typeof value === "function";
 };
 
 const type = value => {
@@ -82,11 +82,11 @@ const type = value => {
   }
 };
 
-const checktable = (self) => {
-  if (is_table(self)) {
-    return self;
+const checktable = (value) => {
+  if (is_table(value)) {
+    return value;
   }
-  throw new runtime_error("table expected, got " + type(self));
+  throw new runtime_error("table expected, got " + type(value));
 };
 
 const rawget = (table, index) => {
@@ -116,27 +116,27 @@ const getmetafield = (object, event) => {
   }
 };
 
-const call0 = (self, ...args) => {
-  if (is_function(self)) {
-    self(...args);
+const call0 = (value, ...args) => {
+  if (is_function(value)) {
+    value(...args);
   } else {
-    const field = getmetafield(self, "__call");
+    const field = getmetafield(value, "__call");
     if (is_function(field)) {
-      field(self, ...args);
+      field(value, ...args);
     } else {
       throw new runtime_error("attempt to call a " + type(f) + " value");
     }
   }
 };
 
-const call1 = (self, ...args) => {
+const call1 = (value, ...args) => {
   let result;
-  if (is_function(self)) {
-    result = self(...args);
+  if (is_function(value)) {
+    result = value(...args);
   } else {
-    const field = getmetafield(self, "__call");
+    const field = getmetafield(value, "__call");
     if (is_function(field)) {
-      result = field(self, ...args);
+      result = field(value, ...args);
     } else {
       throw new runtime_error("attempt to call a " + type(f) + " value");
     }
@@ -148,14 +148,14 @@ const call1 = (self, ...args) => {
   }
 };
 
-const call = (self, ...args) => {
+const call = (value, ...args) => {
   let result;
-  if (is_function(self)) {
-    result = self(...args);
+  if (is_function(value)) {
+    result = value(...args);
   } else {
-    const field = getmetafield(self, "__call");
+    const field = getmetafield(value, "__call");
     if (is_function(field)) {
-      result = field(self, ...args);
+      result = field(value, ...args);
     } else {
       throw new runtime_error("attempt to call a " + type(f) + " value");
     }
@@ -235,10 +235,9 @@ const hexint_pattern = /^\s*([+-]?0[xX][0-9A-Fa-f]+)\s*$/;
 const decflt_pattern = /^\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)\s*$/;
 
 const tonumber = value => {
-  const t = typeof value;
-  if (t == "number") {
+  if (is_number(value)) {
     return value;
-  } else if (t == "string" || String.prototype.isPrototypeOf(value)) {
+  } else if (is_string(value)) {
     let match = decint_pattern.exec(value);
     if (match) {
       return parseInt(match[0], 10);
