@@ -41,18 +41,39 @@ class runtime_error {
   }
 }
 
+const make_buffer = size => {
+  if (typeof Buffer !== "undefined") {
+    return Buffer.alloc(size);
+  } else if (typeof Uint8Array !== "undefined") {
+    return new Uint8Array(size);
+  }
+  throw new logic_error("not implemented");
+};
+
+const string_to_buffer = string => {
+  if (typeof TextEncoder !== "undefined") {
+    return new TextEncoder().encode(string);
+  } else if (typeof Buffer !== "undefined") {
+    return Buffer.from(string);
+  }
+  throw new logic_error("not implemented");
+};
+
+const buffer_to_string = buffer => {
+  if (typeof TextDecoder !== "undefined") {
+    return new TextDecoder().decode(buffer);
+  } else if (typeof Buffer !== "undefined") {
+    return buffer.toString();
+  }
+  throw new logic_error("not implemented");
+};
+
 const string_buffer = s => {
   let buffer = string_buffers.get(s);
   if (buffer !== undefined) {
     string_buffers.delete(s);
   } else {
-    if (typeof TextEncoder !== "undefined") {
-      buffer = new TextEncoder().encode(s);
-    } else if (typeof Buffer !== "undefined") {
-      buffer = Buffer.from(s);
-    } else {
-      throw new runtime_error("no UTF-8 encoder");
-    }
+    buffer = string_to_buffer(s);
   }
   string_buffers.set(s, buffer);
   if (string_buffers.size > 16) {
@@ -77,7 +98,7 @@ const is_number = (value) => {
 };
 
 const is_string = (value) => {
-  return typeof value === "string"
+  return typeof value === "string";
 };
 
 const is_table = (value) => {
@@ -563,13 +584,11 @@ const open_string = env => {
   });
 
   settable(module, "char", (...args) => {
-    if (typeof TextDecoder !== "undefined") {
-      return new TextDecoder().decode(new Uint8Array(args));
-    } else if (typeof Buffer !== "undefined") {
-      return Buffer.from(args).toString();
-    } else {
-      throw new runtime_error("no UTF-8 decoder");
+    const buffer = make_buffer(args.length);
+    for (let i = 0; i < args.length; ++i) {
+      buffer[i] = args[i];
     }
+    return buffer_to_string(buffer);
   });
 
   settable(module, "len", s => {
