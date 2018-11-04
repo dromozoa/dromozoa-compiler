@@ -96,9 +96,6 @@ namespace dromozoa {
       bool is_function() const;
 
       bool toboolean() const;
-      bool tonumber(double&) const;
-      bool tointeger(std::int64_t&) const;
-      bool tostring(std::string&) const;
       double checknumber() const;
       std::int64_t checkinteger() const;
       std::string checkstring() const;

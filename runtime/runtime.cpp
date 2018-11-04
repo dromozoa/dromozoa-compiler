@@ -455,121 +455,91 @@ namespace dromozoa {
       return true;
     }
 
-    bool value_t::tonumber(double& result) const {
-      if (is_number()) {
-        result = number;
-        return true;
-      } else if (is_string()) {
-        auto n = string->find_last_not_of(" \f\n\r\t\v");
-        if (n == std::string::npos) {
-          return false;
-        }
-        ++n;
-        try {
-          std::size_t i = 0;
-          const std::int64_t integer = std::stoll(*string, &i, 10);
-          if (i == n) {
-            result = integer;
-            return true;
-          }
-        } catch (const std::exception&) {}
-        if (is_hexint(*string)) {
-          try {
-            std::size_t i = 0;
-            const std::int64_t integer = std::stoll(*string, &i, 16);
-            if (i == n) {
-              result = integer;
-              return true;
-            }
-          } catch (const std::exception&) {}
-        }
-        try {
-          std::size_t i = 0;
-          const double number = std::stod(*string, &i);
-          if (i == n) {
-            result = number;
-            return true;
-          }
-        } catch (const std::exception&) {}
-      }
-      return false;
-    }
-
-    bool value_t::tointeger(std::int64_t& result) const {
-      if (is_number()) {
-        if (number == std::floor(number)) {
-          result = number;
-          return true;
-        }
-      } else if (is_string()) {
-        auto n = string->find_last_not_of(" \f\n\r\t\v");
-        if (n == std::string::npos) {
-          return false;
-        }
-        ++n;
-        try {
-          std::size_t i = 0;
-          const std::int64_t integer = std::stoll(*string, &i, 10);
-          if (i == n) {
-            result = integer;
-            return true;
-          }
-        } catch (const std::exception&) {}
-        if (is_hexint(*string)) {
-          try {
-            std::size_t i = 0;
-            const std::int64_t integer = std::stoll(*string, &i, 16);
-            if (i == n) {
-              result = integer;
-              return true;
-            }
-          } catch (const std::exception&) {}
-        }
-        try {
-          std::size_t i = 0;
-          const double number = std::stod(*string, &i);
-          if (i == n && number == std::floor(number)) {
-            result = number;
-            return true;
-          }
-        } catch (const std::exception&) {}
-      }
-      return false;
-    }
-
-    bool value_t::tostring(std::string& result) const {
-      if (is_string()) {
-        result = *string;
-        return true;
-      } else if (is_number()) {
-        std::ostringstream out;
-        out << std::setprecision(17) << number;
-        result = out.str();
-        return true;
-      }
-      return false;
-    }
-
     double value_t::checknumber() const {
-      double result = 0;
-      if (tonumber(result)) {
-        return result;
+      if (is_number()) {
+        return number;
+      } else if (is_string()) {
+        auto n = string->find_last_not_of(" \f\n\r\t\v");
+        if (n != std::string::npos) {
+          ++n;
+          try {
+            std::size_t i = 0;
+            const std::int64_t integer = std::stoll(*string, &i, 10);
+            if (i == n) {
+              return integer;
+            }
+          } catch (const std::exception&) {}
+          if (is_hexint(*string)) {
+            try {
+              std::size_t i = 0;
+              const std::int64_t integer = std::stoll(*string, &i, 16);
+              if (i == n) {
+                return integer;
+              }
+            } catch (const std::exception&) {}
+          }
+          try {
+            std::size_t i = 0;
+            const double number = std::stod(*string, &i);
+            if (i == n) {
+              return number;
+            }
+          } catch (const std::exception&) {}
+        }
       }
       throw value_t("number expected, got " + dromozoa::runtime::type(*this));
     }
 
     std::int64_t value_t::checkinteger() const {
-      std::int64_t result = 0;
-      if (tointeger(result)) {
-        return result;
+      if (is_number()) {
+        if (std::isfinite(number) && number == std::floor(number)) {
+          return number;
+        } else {
+          throw value_t("number has no integer representation");
+        }
+      } else if (is_string()) {
+        auto n = string->find_last_not_of(" \f\n\r\t\v");
+        if (n != std::string::npos) {
+          ++n;
+          try {
+            std::size_t i = 0;
+            const std::int64_t integer = std::stoll(*string, &i, 10);
+            if (i == n) {
+              return integer;
+            }
+          } catch (const std::exception&) {}
+          if (is_hexint(*string)) {
+            try {
+              std::size_t i = 0;
+              const std::int64_t integer = std::stoll(*string, &i, 16);
+              if (i == n) {
+                return integer;
+              }
+            } catch (const std::exception&) {}
+          }
+          try {
+            std::size_t i = 0;
+            const double number = std::stod(*string, &i);
+            if (i == n) {
+              if (std::isfinite(number) && number == std::floor(number)) {
+                return number;
+              } else {
+                throw value_t("number has no integer representation");
+              }
+            }
+          } catch (const std::exception&) {}
+        }
       }
       throw value_t("integer expected, got " + dromozoa::runtime::type(*this));
     }
 
     std::string value_t::checkstring() const {
-      std::string result;
-      if (tostring(result)) {
-        return result;
+      if (is_string()) {
+        return *string;
+      } else if (is_number()) {
+        std::ostringstream out;
+        out << std::setprecision(17) << number;
+        return out.str();
       }
       throw value_t("string expected, got " + dromozoa::runtime::type(*this));
     }

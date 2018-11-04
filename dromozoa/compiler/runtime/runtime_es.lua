@@ -167,6 +167,32 @@ const call = (f, ...args) => {
   }
 };
 
+const getmetatable = object => {
+  if (is_string(object)) {
+    return string_metatable;
+  } else if (is_table(object)) {
+    const metatable = object[METATABLE];
+    if (is_table(metatable)) {
+      const protected_metatable = rawget(metatable, "__metatable");
+      if (!is_nil(protected_metatable)) {
+        return protected_metatable
+      }
+    }
+    return metatable;
+  }
+};
+
+const setmetatable = (table, metatable) => {
+  if (!is_nil(metatable) && !is_table(metatable)) {
+    throw new runtime_error("nil or table expected");
+  }
+  if (!is_nil(getmetafield(table, "__metatable"))) {
+    throw new runtime_error("cannot change a protected metatable");
+  }
+  checktable(table)[METATABLE] = metatable;
+  return table;
+};
+
 const gettable = (table, index) => {
   if (is_string(table)) {
     const field = getmetafield(table, "__index");
@@ -207,6 +233,12 @@ const settable = (table, index, value) => {
   rawset(table, index, value);
 };
 
+const setlist = (table, index, ...args) => {
+  for (let i = 0; i < args.length; ++i) {
+    rawset(table, index++, args[i]);
+  }
+};
+
 const len = v => {
   if (is_string(v)) {
     return string_buffer(v).byteLength;
@@ -222,12 +254,6 @@ const len = v => {
     }
   }
   throw new runtime_error("attempt to get length of a " + type(v) + " value");
-};
-
-const setlist = (table, index, ...args) => {
-  for (let i = 0; i < args.length; ++i) {
-    rawset(table, index++, args[i]);
-  }
 };
 
 const decint_pattern = /^\s*([+-]?\d+)\s*$/;
@@ -321,18 +347,7 @@ const open_base = env => {
     throw new runtime_error(message);
   });
 
-  env.set("getmetatable", object => {
-    if (typeof object === "string" || String.prototype.isPrototypeOf(object)) {
-      return string_metatable;
-    }
-    const metatable = object[METATABLE];
-    if (metatable !== undefined) {
-      if (metatable.has("__metatable")) {
-        return metatable.get("__metatable");
-      }
-    }
-    return metatable;
-  });
+  env.set("getmetatable", getmetatable);
 
   env.set("ipairs", table => {
     return [ipairs_iterator, table, 0];
@@ -386,19 +401,7 @@ const open_base = env => {
     return result;
   });
 
-  env.set("setmetatable", (table, metatable) => {
-    if (!Map.prototype.isPrototypeOf(table)) {
-      throw new runtime_error("bad argument #1");
-    }
-    if (metatable !== undefined && !Map.prototype.isPrototypeOf(metatable)) {
-      throw new runtime_error("nil or table expected");
-    }
-    if (getmetafield(table, "__metatable") !== undefined) {
-      throw new runtime_error("cannot change a protected metatable");
-    }
-    table[METATABLE] = metatable;
-    return table;
-  });
+  env.set("setmetatable", setmetatable);
 
   env.set("tonumber", tonumber);
 
