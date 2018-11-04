@@ -838,25 +838,25 @@ namespace dromozoa {
       }
     }
 
-    array_t call(const value_t& self, const array_t& args) {
-      if (self.is_function()) {
-        return (*self.function)(args);
+    array_t call(const value_t& f, const array_t& args) {
+      if (f.is_function()) {
+        return (*f.function)(args);
       } else {
-        const auto& field = getmetafield(self, "__call");
+        const auto& field = getmetafield(f, "__call");
         if (field.is_function()) {
-          return (*field.function)(array_t(self, args));
+          return (*field.function)(array_t(f, args));
         } else {
-          throw value_t("attempt to call a " + type(self) + " value");
+          throw value_t("attempt to call a " + type(f) + " value");
         }
       }
     }
 
-    value_t call1(const value_t& self, const array_t& args) {
-      return call(self, args)[0];
+    value_t call1(const value_t& f, const array_t& args) {
+      return call(f, args)[0];
     }
 
-    void call0(const value_t& self, const array_t& args) {
-      call(self, args);
+    void call0(const value_t& f, const array_t& args) {
+      call(f, args);
     }
 
     std::string type(const value_t& self) {

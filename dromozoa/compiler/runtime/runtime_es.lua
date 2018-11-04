@@ -116,27 +116,27 @@ const getmetafield = (object, event) => {
   }
 };
 
-const call0 = (value, ...args) => {
-  if (is_function(value)) {
-    value(...args);
+const call0 = (f, ...args) => {
+  if (is_function(f)) {
+    f(...args);
   } else {
-    const field = getmetafield(value, "__call");
+    const field = getmetafield(f, "__call");
     if (is_function(field)) {
-      field(value, ...args);
+      field(f, ...args);
     } else {
       throw new runtime_error("attempt to call a " + type(f) + " value");
     }
   }
 };
 
-const call1 = (value, ...args) => {
+const call1 = (f, ...args) => {
   let result;
-  if (is_function(value)) {
-    result = value(...args);
+  if (is_function(f)) {
+    result = f(...args);
   } else {
-    const field = getmetafield(value, "__call");
+    const field = getmetafield(f, "__call");
     if (is_function(field)) {
-      result = field(value, ...args);
+      result = field(f, ...args);
     } else {
       throw new runtime_error("attempt to call a " + type(f) + " value");
     }
@@ -148,14 +148,14 @@ const call1 = (value, ...args) => {
   }
 };
 
-const call = (value, ...args) => {
+const call = (f, ...args) => {
   let result;
-  if (is_function(value)) {
-    result = value(...args);
+  if (is_function(f)) {
+    result = f(...args);
   } else {
-    const field = getmetafield(value, "__call");
+    const field = getmetafield(f, "__call");
     if (is_function(field)) {
-      result = field(value, ...args);
+      result = field(f, ...args);
     } else {
       throw new runtime_error("attempt to call a " + type(f) + " value");
     }
