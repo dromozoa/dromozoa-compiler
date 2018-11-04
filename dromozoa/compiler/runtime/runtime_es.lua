@@ -1,5 +1,6 @@
 return [[
 const METATABLE = Symbol("metatabale");
+const TEST = true;
 
 const string_buffers = new Map();
 const string_metatable = new Map();
@@ -39,7 +40,7 @@ const type = value => {
     return "nil";
   } else if (t === "number") {
     return "number";
-  } else if (t === "string") {
+  } else if (t === "string" || String.prototype.isPrototypeOf(value)) {
     return "string";
   } else if (t === "boolean") {
     return "boolean";
@@ -53,7 +54,7 @@ const type = value => {
 };
 
 const getmetafield = (object, event) => {
-  if (typeof object === "string") {
+  if (typeof object === "string" || String.prototype.isPrototypeOf(object)) {
     return string_metatable.get(event);
   }
   const metatable = object[METATABLE];
@@ -114,7 +115,7 @@ const call = (f, ...args) => {
 };
 
 const gettable = (table, index) => {
-  if (typeof table === "string") {
+  if (typeof table === "string" || String.prototype.isPrototypeOf(table)) {
     const field = getmetafield(table, "__index");
     if (field !== undefined) {
       if (typeof field === "function") {
@@ -167,7 +168,7 @@ const settable = (table, index, value) => {
 };
 
 const len = value => {
-  if (typeof value === "string") {
+  if (typeof value === "string" || String.prototype.isPrototypeOf(value)) {
     return string_buffer(value).byteLength;
   } else if (Map.prototype.isPrototypeOf(value)) {
     const field = getmetafield(value, "__len");
@@ -201,7 +202,7 @@ const tonumber = value => {
   const t = typeof value;
   if (t == "number") {
     return value;
-  } else if (t == "string") {
+  } else if (t == "string" || String.prototype.isPrototypeOf(value)) {
     let match = decint_pattern.exec(value);
     if (match) {
       return parseInt(match[0], 10);
@@ -230,7 +231,7 @@ const tostring = value => {
     return "nil";
   } else if (t === "number") {
     return value.toString();
-  } else if (t === "string") {
+  } else if (t === "string" || String.prototype.isPrototypeOf(value)) {
     return value;
   } else if (t === "boolean") {
     if (value) {
@@ -286,7 +287,7 @@ const open_base = env => {
   });
 
   env.set("getmetatable", object => {
-    if (typeof object === "string") {
+    if (typeof object === "string" || String.prototype.isPrototypeOf(object)) {
       return string_metatable;
     }
     const metatable = object[METATABLE];
@@ -321,7 +322,8 @@ const open_base = env => {
         if (i > 0) {
           process.stdout.write("\t");
         }
-        process.stdout.write(tostring(args[i]));
+        // convert String object to string
+        process.stdout.write(tostring(args[i]).toString());
       }
       process.stdout.write("\n");
     } else {
