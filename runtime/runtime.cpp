@@ -737,21 +737,21 @@ namespace dromozoa {
       }
     }
 
-    const value_t& rawget(const value_t& self, const value_t& index) {
-      return self.checktable()->get(index);
+    const value_t& rawget(const value_t& table, const value_t& index) {
+      return table.checktable()->get(index);
     }
 
-    const value_t& rawset(const value_t& self, const value_t& index, const value_t& value) {
-      self.checktable()->set(index, value);
-      return self;
+    const value_t& rawset(const value_t& table, const value_t& index, const value_t& value) {
+      table.checktable()->set(index, value);
+      return table;
     }
 
-    const value_t& getmetafield(const value_t& self, const value_t& event) {
+    const value_t& getmetafield(const value_t& object, const value_t& event) {
       value_t metatable;
-      if (self.is_string()) {
+      if (object.is_string()) {
         metatable = string_metatable;
-      } else if (self.is_table()) {
-        metatable = self.table->metatable;
+      } else if (object.is_table()) {
+        metatable = object.table->metatable;
       }
       if (metatable.is_table()) {
         return rawget(metatable, event);
@@ -760,11 +760,11 @@ namespace dromozoa {
       }
     }
 
-    const value_t& getmetatable(const value_t& self) {
-      if (self.is_string()) {
+    const value_t& getmetatable(const value_t& object) {
+      if (object.is_string()) {
         return string_metatable;
-      } else if (self.is_table()) {
-        const auto& metatable = self.table->metatable;
+      } else if (object.is_table()) {
+        const auto& metatable = object.table->metatable;
         if (metatable.is_table()) {
           const auto& protected_metatable = rawget(metatable, "__metatable");
           if (!protected_metatable.is_nil()) {
@@ -777,15 +777,15 @@ namespace dromozoa {
       }
     }
 
-    const value_t& setmetatable(const value_t& self, const value_t& metatable) {
+    const value_t& setmetatable(const value_t& table, const value_t& metatable) {
       if (!metatable.is_nil() && !metatable.is_table()) {
         throw value_t("nil or table expected");
       }
-      if (!getmetafield(self, "__metatable").is_nil()) {
+      if (!getmetafield(table, "__metatable").is_nil()) {
         throw value_t("cannot change a protected metatable");
       }
-      self.checktable()->metatable = metatable;
-      return self;
+      table.checktable()->metatable = metatable;
+      return table;
     }
 
     value_t gettable(const value_t& table, const value_t& index) {
