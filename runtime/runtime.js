@@ -228,21 +228,21 @@ const settable = (table, index, value) => {
   rawset(table, index, value);
 };
 
-const len = value => {
-  if (is_string(value)) {
-    return string_buffer(value).byteLength;
-  } else if (is_table(value)) {
-    const field = getmetafield(value, "__len");
+const len = v => {
+  if (is_string(v)) {
+    return string_buffer(v).byteLength;
+  } else if (is_table(v)) {
+    const field = getmetafield(v, "__len");
     if (!is_nil(field)) {
-      return call1(field, value);
+      return call1(field, v);
     }
     for (let i = 1; ; ++i) {
-      if (is_nil(gettable(value, i))) {
+      if (is_nil(gettable(v, i))) {
         return i - 1;
       }
     }
   }
-  throw new runtime_error("attempt to get length of a " + type(value) + " value");
+  throw new runtime_error("attempt to get length of a " + type(v) + " value");
 };
 
 const setlist = (table, index, ...args) => {
@@ -255,52 +255,52 @@ const decint_pattern = /^\s*([+-]?\d+)\s*$/;
 const hexint_pattern = /^\s*([+-]?0[xX][0-9A-Fa-f]+)\s*$/;
 const decflt_pattern = /^\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)\s*$/;
 
-const tonumber = value => {
-  if (is_number(value)) {
-    return value;
-  } else if (is_string(value)) {
-    let match = decint_pattern.exec(value);
+const tonumber = v => {
+  if (is_number(v)) {
+    return v;
+  } else if (is_string(v)) {
+    let match = decint_pattern.exec(v);
     if (match) {
       return parseInt(match[0], 10);
     }
-    match = hexint_pattern.exec(value);
+    match = hexint_pattern.exec(v);
     if (match) {
       return parseInt(match[0], 16);
     }
-    match = decflt_pattern.exec(value);
+    match = decflt_pattern.exec(v);
     if (match) {
       return parseFloat(match[0]);
     }
   }
 };
 
-const tointeger = value => {
-  const result = tonumber(value);
+const tointeger = v => {
+  const result = tonumber(v);
   if (Number.isInteger(result)) {
     return result;
   }
 };
 
-const tostring = value => {
-  const t = typeof value;
+const tostring = v => {
+  const t = typeof v;
   if (t === "undefined") {
     return "nil";
   } else if (t === "number") {
-    return value.toString();
-  } else if (t === "string" || String.prototype.isPrototypeOf(value)) {
-    return value;
+    return v.toString();
+  } else if (t === "string" || String.prototype.isPrototypeOf(v)) {
+    return v;
   } else if (t === "boolean") {
-    if (value) {
+    if (v) {
       return "true";
     } else {
       return "false";
     }
   } else if (t === "function") {
     return "function";
-  } else if (Map.prototype.isPrototypeOf(value)) {
-    const field = getmetafield(value, "__tostring");
+  } else if (Map.prototype.isPrototypeOf(v)) {
+    const field = getmetafield(v, "__tostring");
     if (field !== undefined) {
-      return call1(field, value);
+      return call1(field, v);
     } else {
       return "table";
     }

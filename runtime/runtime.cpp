@@ -859,8 +859,8 @@ namespace dromozoa {
       call(f, args);
     }
 
-    std::string type(const value_t& self) {
-      switch (self.type) {
+    std::string type(const value_t& v) {
+      switch (v.type) {
         case type_t::nil:
           return "nil";
         case type_t::boolean:
@@ -878,12 +878,12 @@ namespace dromozoa {
       }
     }
 
-    std::string tostring(const value_t& self) {
-      switch (self.type) {
+    std::string tostring(const value_t& v) {
+      switch (v.type) {
         case type_t::nil:
           return "nil";
         case type_t::boolean:
-          if (self.boolean) {
+          if (v.boolean) {
             return "true";
           } else {
             return "false";
@@ -891,26 +891,26 @@ namespace dromozoa {
         case type_t::number:
           {
             std::ostringstream out;
-            out << std::setprecision(17) << self.number;
+            out << std::setprecision(17) << v.number;
             return out.str();
           }
         case type_t::string:
-          return *self.string;
+          return *v.string;
         case type_t::table:
           {
-            const auto& field = getmetafield(self, "__tostring");
+            const auto& field = getmetafield(v, "__tostring");
             if (!field.is_nil()) {
-              return call1(field, { self }).checkstring();
+              return call1(field, { v }).checkstring();
             } else {
               std::ostringstream out;
-              out << "table: " << self.table.get();
+              out << "table: " << v.table.get();
               return out.str();
             }
           }
         case type_t::function:
           {
             std::ostringstream out;
-            out << "function: " << self.function.get();
+            out << "function: " << v.function.get();
             return out.str();
           }
         default:
@@ -918,21 +918,21 @@ namespace dromozoa {
       }
     }
 
-    std::int64_t len(const value_t& self) {
-      if (self.is_string()) {
-        return self.string->size();
-      } else if (self.is_table()) {
-        const auto& field = getmetafield(self, "__len");
+    std::int64_t len(const value_t& v) {
+      if (v.is_string()) {
+        return v.string->size();
+      } else if (v.is_table()) {
+        const auto& field = getmetafield(v, "__len");
         if (!field.is_nil()) {
-          return call1(field, { self }).checkinteger();
+          return call1(field, { v }).checkinteger();
         }
         for (std::int64_t i = 1; ; ++i) {
-          if (gettable(self, i).is_nil()) {
+          if (gettable(v, i).is_nil()) {
             return i - 1;
           }
         }
       }
-      throw value_t("attempt to get length of a " + type(self) + " value");
+      throw value_t("attempt to get length of a " + type(v) + " value");
     }
 
     bool eq(const value_t& self, const value_t& that) {
