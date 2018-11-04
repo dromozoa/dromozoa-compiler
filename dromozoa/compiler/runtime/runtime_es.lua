@@ -434,6 +434,8 @@ const range_j = (j, size) => {
 const suppress_no_unsed = () => {};
 suppress_no_unsed(len);
 suppress_no_unsed(setlist);
+suppress_no_unsed(lt);
+suppress_no_unsed(le);
 
 const open_base = env => {
   const ipairs_iterator = (table, index) => {
