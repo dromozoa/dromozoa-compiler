@@ -20,14 +20,11 @@
 // and a copy of the GCC Runtime Library Exception along with
 // dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-const METATABLE = Symbol("metatabale");
-
 const decint_pattern = /^\s*([+-]?\d+)\s*$/;
 const hexint_pattern = /^\s*([+-]?0[xX][0-9A-Fa-f]+)\s*$/;
 const decflt_pattern = /^\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)\s*$/;
 
 const string_buffers = new Map();
-const string_metatable = new Map();
 
 class logic_error {
   constructor(message) {
@@ -74,6 +71,28 @@ if (typeof Buffer !== "undefined") {
   };
 }
 
+class table_t {
+  constructor() {
+    this.map = new Map();
+    this.metatable = undefined;
+  }
+
+  get(index) {
+    return this.map.get(index);
+  }
+
+  set(index, value) {
+    if (is_nil(index)) {
+      throw new runtime_error("table index is nil");
+    }
+    if (is_nil(value)) {
+      this.map.delete(index);
+    } else {
+      this.map.set(index, value);
+    }
+  }
+}
+
 const string_buffer = s => {
   let buffer = string_buffers.get(s);
   if (buffer !== undefined) {
@@ -108,7 +127,7 @@ const is_string = (value) => {
 };
 
 const is_table = (value) => {
-  return Map.prototype.isPrototypeOf(value);
+  return table_t.prototype.isPrototypeOf(value);
 };
 
 const is_function = (value) => {
@@ -201,7 +220,7 @@ const getmetafield = (object, event) => {
   if (is_string(object)) {
     metatable = string_metatable;
   } else if (is_table(object)) {
-    metatable = object[METATABLE];
+    metatable = object.metatable;
   }
   if (is_table(metatable)) {
     return rawget(metatable, event);
@@ -212,7 +231,7 @@ const getmetatable = object => {
   if (is_string(object)) {
     return string_metatable;
   } else if (is_table(object)) {
-    const metatable = object[METATABLE];
+    const metatable = object.metatable;
     if (is_table(metatable)) {
       const protected_metatable = rawget(metatable, "__metatable");
       if (!is_nil(protected_metatable)) {
@@ -230,7 +249,7 @@ const setmetatable = (table, metatable) => {
   if (!is_nil(getmetafield(table, "__metatable"))) {
     throw new runtime_error("cannot change a protected metatable");
   }
-  checktable(table)[METATABLE] = metatable;
+  checktable(table).metatable = metatable;
   return table;
 };
 
@@ -571,7 +590,7 @@ const open_base = env => {
 };
 
 const open_string = env => {
-  const module = new Map();
+  const module = new table_t();
 
   settable(module, "byte", (s, i, j) => {
     const buffer = string_buffer(s);
@@ -619,9 +638,10 @@ const open_string = env => {
   });
 
   settable(env, "string", module);
-  string_metatable.set("__index", module);
+  settable(string_metatable, "__index", module);
 };
 
-const env = new Map();
+const string_metatable = new table_t();
+const env = new table_t();
 open_base(env);
 open_string(env);

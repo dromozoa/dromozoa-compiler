@@ -81,7 +81,7 @@ local tmpl = template(encode_var, {
   MOVE     = "%1 = %2";
   GETTABLE = "%1 = gettable(%2, %3)";
   SETTABLE = "settable(%1, %2, %3)";
-  NEWTABLE = "%1 = new Map()";
+  NEWTABLE = "%1 = new table_t()";
   ADD      = "%1 = checknumber(%2) + checknumber(%3)";
   SUB      = "%1 = checknumber(%2) - checknumber(%3)";
   MUL      = "%1 = checknumber(%2) * checknumber(%3)";
