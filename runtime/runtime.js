@@ -230,7 +230,6 @@ const settable = (table, index, value) => {
 
 const len = value => {
   if (is_string(value)) {
-    // TODO fix me
     return string_buffer(value).byteLength;
   } else if (is_table(value)) {
     const field = getmetafield(value, "__len");
@@ -248,10 +247,7 @@ const len = value => {
 
 const setlist = (table, index, ...args) => {
   for (let i = 0; i < args.length; ++i) {
-    const value = args[i];
-    if (value !== undefined) {
-      table.set(index++, args[i]);
-    }
+    rawset(table, index++, args[i]);
   }
 };
 
@@ -260,10 +256,9 @@ const hexint_pattern = /^\s*([+-]?0[xX][0-9A-Fa-f]+)\s*$/;
 const decflt_pattern = /^\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)\s*$/;
 
 const tonumber = value => {
-  const t = typeof value;
-  if (t == "number") {
+  if (is_number(value)) {
     return value;
-  } else if (t == "string" || String.prototype.isPrototypeOf(value)) {
+  } else if (is_string(value)) {
     let match = decint_pattern.exec(value);
     if (match) {
       return parseInt(match[0], 10);
