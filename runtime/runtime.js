@@ -77,7 +77,7 @@ const is_number = (value) => {
 };
 
 const is_string = (value) => {
-  return typeof value === "string" || String.prototype.isPrototypeOf(value);
+  return typeof value === "string"
 };
 
 const is_table = (value) => {
@@ -317,8 +317,9 @@ const type = value => {
     return "table";
   } else if (is_function(value)) {
     return "function";
+  } else {
+    throw new logic_error("unreachable code");
   }
-  throw new logic_error("unreachable code");
 };
 
 const tostring = v => {
@@ -337,14 +338,15 @@ const tostring = v => {
   } else if (is_table(v)) {
     const field = getmetafield(v, "__tostring");
     if (!is_nil(field)) {
-      return call1(field, v);
+      return checkstring(call1(field, v));
     } else {
       return "table";
     }
   } else if (is_function(v)) {
     return "function";
+  } else {
+    throw logic_error("unreachable code");
   }
-  throw logic_error("unreachable code");
 };
 
 const len = v => {
@@ -549,11 +551,15 @@ const open_string = env => {
     const index = optinteger(i, 1);
     const min = range_i(index, buffer.byteLength);
     const max = range_j(optinteger(j, index), buffer.byteLength);
-    const result = [];
-    for (let i = min; i < max; ++i) {
-      result.push(buffer[i]);
+    if (min < max) {
+      const result = [];
+      for (let i = min; i < max; ++i) {
+        result.push(buffer[i]);
+      }
+      return result;
+    } else {
+      return [];
     }
-    return result;
   });
 
   settable(module, "char", (...args) => {

@@ -198,8 +198,7 @@ namespace dromozoa {
 
         settable(env, "pcall", [](value_t f, array_t args) -> array_t {
           try {
-            array_t result = call(f, args);
-            return array_t(true, result);
+            return array_t(true, call(f, args));
           } catch (const value_t& e) {
             return { false, e };
           }
