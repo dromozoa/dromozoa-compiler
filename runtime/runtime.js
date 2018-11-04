@@ -441,14 +441,15 @@ const open_base = env => {
 
   settable(env, "assert", (...args) => {
     const value = args[0];
-    if (value === undefined || value === false) {
+    if (toboolean(value)) {
+      return args;
+    } else {
       if (args.length > 1) {
         throw new runtime_error(args[1]);
       } else {
         throw new runtime_error("assertion failed!");
       }
     }
-    return args;
   });
 
   settable(env, "error", message => {
@@ -458,16 +459,16 @@ const open_base = env => {
   settable(env, "getmetatable", getmetatable);
 
   settable(env, "ipairs", table => {
-    return [ipairs_iterator, table, 0];
+    return [ ipairs_iterator, table, 0 ];
   });
 
   settable(env, "pcall", (f, ...args) => {
     try {
       const result = call(f, ...args);
-      return [true, ...result];
+      return [ true, ...result ];
     } catch (e) {
       if (runtime_error.prototype.isPrototypeOf(e)) {
-        return [false, e.message];
+        return [ false, e.message ];
       } else {
         throw e;
       }
@@ -480,8 +481,7 @@ const open_base = env => {
         if (i > 0) {
           process.stdout.write("\t");
         }
-        // convert String object to string
-        process.stdout.write(tostring(args[i]).toString());
+        process.stdout.write(tostring(args[i]));
       }
       process.stdout.write("\n");
     } else {
@@ -490,7 +490,7 @@ const open_base = env => {
   });
 
   settable(env, "select", (index, ...args) => {
-    if (index === "#") {
+    if (eq(index, "#")) {
       return args.length;
     }
     index = checkinteger(index);
@@ -559,7 +559,7 @@ const open_string = env => {
     }
   };
 
-  module.set("byte", (s, i, j) => {
+  settable(module, "byte", (s, i, j) => {
     const buffer = string_buffer(s);
     if (i === undefined) {
       i = 1;
@@ -573,7 +573,7 @@ const open_string = env => {
     return result;
   });
 
-  module.set("char", (...args) => {
+  settable(module, "char", (...args) => {
     if (typeof TextDecoder !== "undefined") {
       return new TextDecoder().decode(new Uint8Array(args));
     } else if (typeof Buffer !== "undefined") {
@@ -583,11 +583,11 @@ const open_string = env => {
     }
   });
 
-  module.set("len", s => {
+  settable(module, "len", s => {
     return string_buffer(s).byteLength;
   });
 
-  module.set("sub", (s, i, j) => {
+  settable(module, "sub", (s, i, j) => {
     const buffer = string_buffer(s);
     if (i === undefined) {
       i = 1;

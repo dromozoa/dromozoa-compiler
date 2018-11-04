@@ -187,6 +187,10 @@ namespace dromozoa {
           throw message;
         });
 
+        settable(env, "getmetatable", [](value_t object) -> value_t {
+          return getmetatable(object);
+        });
+
         settable(env, "ipairs", [=](value_t table) -> array_t {
           return { ipairs_iterator, table, 0 };
         });
@@ -216,10 +220,6 @@ namespace dromozoa {
             return { args.size };
           }
           return args.sub(range_i(index.checkinteger(), args.size));
-        });
-
-        settable(env, "getmetatable", [](value_t object) -> value_t {
-          return getmetatable(object);
         });
 
         settable(env, "setmetatable", [](value_t table, value_t metatable) -> value_t {
