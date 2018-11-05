@@ -208,6 +208,7 @@ constructor(U, A, V, B) {
   this.A = A;
   this.V = V;
   this.B = B;
+  this.C = [];
 }
 Q0() {
 const K = %s_K;
@@ -215,7 +216,7 @@ const U = this.U;
 const A = this.A;
 const V = this.V;
 const B = this.B;
-const C = [];
+const C = this.C;
 ]]):format(name, name))
   if proto.T then
     out:write "let T = undefined;\n"
