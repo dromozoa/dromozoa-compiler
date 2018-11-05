@@ -455,13 +455,21 @@ const len = v => {
   throw new runtime_error(concat("attempt to get length of a ", type(v), " value"));
 };
 
-const eq = (self, that) => {
+const rawequal = (self, that) => {
   if (self === that) {
     return true;
   }
   if (is_string(self) && is_string(that)) {
     return unwrap(self) === unwrap(that);
-  } else if (is_table(self) && is_table(that)) {
+  }
+  return false;
+}
+
+const eq = (self, that) => {
+  if (rawequal(self, that)) {
+    return true;
+  }
+  if (is_table(self) && is_table(that)) {
     let field = getmetafield(self, "__eq");
     if (is_nil(field)) {
       field = getmetafield(that, "__eq");
@@ -622,8 +630,14 @@ const open_base = env => {
 
   settable(env, "print", print);
 
+  settable(env, "rawequal", rawequal);
+
+  settable(env, "rawget", rawget);
+
+  settable(env, "rawset", rawset);
+
   settable(env, "select", (index, ...args) => {
-    if (eq(index, "#")) {
+    if (rawequal(index, "#")) {
       return args.length;
     }
     const min = range_i(checkinteger(index), args.length);
