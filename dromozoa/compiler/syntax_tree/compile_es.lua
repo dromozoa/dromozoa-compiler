@@ -98,7 +98,7 @@ local tmpl = template(encode_var, {
   BNOT     = "%1 = ~checkinteger(%2)";
   NOT      = "%1 = !toboolean(%2)";
   LEN      = "%1 = len(%2)";
-  CONCAT   = "%1 = checkstring(%2) + checkstring(%3)";
+  CONCAT   = "%1 = concat(checkstring(%2), checkstring(%3))";
   EQ       = "%1 = eq(%2, %3)";
   NE       = "%1 = !eq(%2, %3)";
   LT       = "%1 = lt(%2, %3)";
@@ -210,7 +210,7 @@ function compile_proto(self, out, name)
     for i = 1, n do
       local constant = constants[i]
       if constant.type == "string" then
-        out:write(("/* %s */ %s,\n"):format(constant[1], encode_string(constant.source)))
+        out:write(("/* %s */ wrap(%s),\n"):format(constant[1], encode_string(constant.source)))
       else
         out:write(("/* %s */ %.17g,\n"):format(constant[1], tonumber(constant.source)))
       end

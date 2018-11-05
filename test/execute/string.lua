@@ -39,7 +39,15 @@ print(string.char(0xE6, 0x97, 0xA5, 0xE6, 0x9C, 0xAC, 0xE8, 0xAA, 0x9E))
 print(string.char(0xEF, 0xBB, 0xBF, 0xF0, 0xA3, 0x8E, 0xB4))
 
 print(s1:len())
+print(s1:len())
+print(s1:len())
+print(s1:len())
 print(s2:len())
+
+print(_VERSION:len());
+print(_VERSION:len());
+print(_VERSION:len());
+print(_VERSION:len());
 
 for i = -4, 4 do
   print(s1:sub(i))
