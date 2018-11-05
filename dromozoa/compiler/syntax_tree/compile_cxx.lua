@@ -42,10 +42,6 @@ local function encode_string(s)
   return "\"" .. s:gsub("[%z\1-\31\127]", char_table) .. "\""
 end
 
-local function proto_name(var)
-  return var .. "_t"
-end
-
 local function encode_var(var)
   local result = var_table[var]
   if result then
@@ -177,7 +173,7 @@ function compile_code(self, out, code)
     elseif name == "SETLIST" then
       out:write(("setlist(%s, %d, %s);\n"):format(encode_var(code[1]), code[2], encode_var(code[3])))
     elseif name == "CLOSURE" then
-      out:write(("value_t %s = std::make_shared<%s_t>(U, A, B);\n"):format(code[1], code[1]))
+      out:write(("value_t %s = std::make_shared<%s_T>(U, A, B);\n"):format(code[1], code[1]))
     elseif name == "LABEL" then
       out:write(("%s:\n"):format(code[1]))
     else
@@ -226,7 +222,7 @@ static const %s_K* get() {
     out:write "};\n"
   end
 
-  out:write(("struct %s_t : proto_t<%d> {\n"):format(name, proto.A))
+  out:write(("struct %s_T : proto_t<%d> {\n"):format(name, proto.A))
 
   if kn > 0 then
     out:write(("const %s_K* K;\n"):format(name))
@@ -235,7 +231,7 @@ static const %s_K* get() {
     out:write "uparray_t U;\n"
   end
 
-  out:write(("%s_t(uparray_t S, array_t A, array_t B)\n"):format(name))
+  out:write(("%s_T(uparray_t S, array_t A, array_t B)\n"):format(name))
   local first = true
   if kn > 0 then
     first = false
@@ -310,7 +306,7 @@ int main(int, char*[]) {
   array_t A;
   array_t B = { env };
   try {
-    value_t P0 = std::make_shared<P0_t>(S, A, B);
+    value_t P0 = std::make_shared<P0_T>(S, A, B);
     call0(P0, {});
     return 0;
   } catch (const value_t& e) {

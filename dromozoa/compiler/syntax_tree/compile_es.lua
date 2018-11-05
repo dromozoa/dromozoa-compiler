@@ -168,7 +168,7 @@ function compile_code(self, out, code)
     elseif name == "SETLIST" then
       out:write(("setlist(%s, %d, %s);\n"):format(encode_var(code[1]), code[2], encode_var(code[3])))
     elseif name == "CLOSURE" then
-      out:write(("const %s = new %s_t(U, A, B);\n"):format(code[1], code[1]))
+      out:write(("const %s = new %s_T(U, A, B);\n"):format(code[1], code[1]))
     elseif name == "LABEL" then
       out:write(("case %s:\n"):format(encode_var(code[1])))
     else
@@ -201,57 +201,22 @@ function compile_proto(self, out, proto)
   end
 
   out:write(([[
-class %s_t extends proto_t {
-constructor(S, A, B) {
-super();
-]]):format(name))
-
-  if kn > 0 then
-    out:write(("this.K = %s_K;\n"):format(name))
-  end
-  if un > 0 then
-    out:write "this.U = [\n"
-    for i = 1, un do
-      local var = upvalues[i][2]
-      local key = var:sub(1, 1)
-      if key == "U" then
-        out:write(("  S[%d],\n"):format(var:sub(2)))
-      else
-        out:write(("  new upvalue_t(%s, %d),\n"):format(key, var:sub(2)))
-      end
-    end
-    out:write "];\n"
-  end
-
-  out:write "}\n"
-
-  local params = {}
-  for i = 1, an do
-    params[i] = "A" .. i - 1
-  end
-  if proto.V then
-    params[#params + 1] = "...V"
-  end
-  out:write(("call(%s) {\n"):format(table.concat(params, ", ")))
-
-  out:write [[
+class %s_Q {
+constructor(P, A, V, B) {
+  this.K = P.K;
+  this.U = P.U;
+  this.A = A;
+  this.V = V;
+  this.B = B;
+}
+Q0() {
 const K = this.K;
 const U = this.U;
-]]
-
-  if an == 0 then
-    out:write "const A = [];\n"
-  else
-    out:write "const A = [\n"
-    for i = 1, an do
-      out:write("  A", i - 1, ",\n")
-    end
-    out:write "];\n"
-  end
-  out:write [[
-const B = [];
+const A = this.A;
+const V = this.V;
+const B = this.B;
 const C = [];
-]]
+]]):format(name))
   if proto.T then
     out:write "let T = undefined;\n"
   end
@@ -276,6 +241,55 @@ const C = [];
     out:write "}\n"
   end
 
+  out:write [[
+}
+}
+]]
+
+  out:write(([[
+class %s_T extends proto_t {
+constructor(S, A, B) {
+super();
+]]):format(name))
+  if kn > 0 then
+    out:write(("this.K = %s_K;\n"):format(name))
+  end
+  if un > 0 then
+    out:write "this.U = [\n"
+    for i = 1, un do
+      local var = upvalues[i][2]
+      local key = var:sub(1, 1)
+      if key == "U" then
+        out:write(("  S[%d],\n"):format(var:sub(2)))
+      else
+        out:write(("  new upvalue_t(%s, %d),\n"):format(key, var:sub(2)))
+      end
+    end
+    out:write "];\n"
+  end
+  out:write "}\n"
+
+  local params = {}
+  for i = 1, an do
+    params[i] = "A" .. i - 1
+  end
+  params[#params + 1] = "...V"
+  out:write(("call(%s) {\n"):format(table.concat(params, ", ")))
+
+  if an == 0 then
+    out:write "const A = [];\n"
+  else
+    out:write "const A = [\n"
+    for i = 1, an do
+      out:write("  A", i - 1, ",\n")
+    end
+    out:write "];\n"
+  end
+  out:write(([[
+const B = [];
+return (new %s_Q(this, A, V, B)).Q0();
+]]):format(name))
+
   out:write "}\n"
   out:write "}\n"
 end
@@ -298,7 +312,7 @@ return function (self, out, name)
 const S = [];
 const A = [];
 const B = [ env ];
-const P0 = new P0_t(S, A, B);
+const P0 = new P0_T(S, A, B);
 call0(P0);
 ]]
 
