@@ -203,15 +203,16 @@ function compile_proto(self, out, proto)
 
   out:write(([[
 class %s_Q {
-constructor(U, A, V, B) {
+constructor(U, A, V) {
+  this.K = %s_K;
   this.U = U;
   this.A = A;
   this.V = V;
-  this.B = B;
+  this.B = [];
   this.C = [];
 }
 Q0() {
-const K = %s_K;
+const K = this.K;
 const U = this.U;
 const A = this.A;
 const V = this.V;
@@ -287,7 +288,7 @@ super();
     out:write "];\n"
   end
   out:write(([[
-return new %s_Q(this.U, A, V, []).Q0();
+return new %s_Q(this.U, A, V).Q0();
 }
 }
 ]]):format(name))
