@@ -264,14 +264,12 @@ struct %s_T : proto_t<%d> {
       local var = upvalues[i][2]
       local key = var:sub(1, 1)
       if key == "U" then
-        out:write(("      S[%d],\n"):format(var:sub(2)))
+        out:write(("        S[%d],\n"):format(var:sub(2)))
       else
-        out:write(("      { %s, %d },\n"):format(key, var:sub(2)))
+        out:write(("        { %s, %d },\n"):format(key, var:sub(2)))
       end
     end
-    out:write [[
-    } {}
-]]
+    out:write "      } {}\n"
   end
 
   out:write(([[
@@ -289,9 +287,7 @@ return function (self, out, name)
 #include <iostream>
 #include "runtime.hpp"
 
-]]
-
-  out:write "namespace "
+namespace ]]
   if name then
     out:write(name, " ")
   end
@@ -314,7 +310,7 @@ value_t chunk() {
   return std::make_shared<P0_T>(S, A, B);
 }
 
-} // namespace
+}
 ]]
 
   if name then
