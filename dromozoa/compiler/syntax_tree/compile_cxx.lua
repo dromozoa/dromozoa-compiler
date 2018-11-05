@@ -191,8 +191,8 @@ function compile_proto(self, out, proto)
   local kn = #constants
   local un = #upvalues
 
+  out:write(("struct %s_K {\n"):format(name))
   if kn > 0 then
-    out:write(("struct %s_K {\n"):format(name))
     for i = 1, kn do
       out:write(("const value_t %s;\n"):format(constants[i][1]))
     end
@@ -213,38 +213,53 @@ function compile_proto(self, out, proto)
       end
     end
     out:write " {}\n"
-    out:write(([[
+  end
+  out:write(([[
 static const %s_K* get() {
   static const %s_K instance;
   return &instance;
 }
 ]]):format(name, name))
-    out:write "};\n"
-  end
+  out:write "};\n"
 
-  out:write(("struct %s_T : proto_t<%d> {\n"):format(name, proto.A))
+  out:write(([[
+struct %s_Q {
+const %s_K* K;
+uparray_t U;
+array_t A;
+array_t V;
+array_t B;
+array_t C;
+%s_Q(uparray_t U, array_t A, array_t V)
+  : K(%s_K::get()),
+    U(U),
+    A(A),
+    V(V),
+    B(%d),
+    C(%d) {}
+array_t Q0() const {
+]]):format(name, name, name, name, proto.B, proto.C))
+  if proto.T then
+    out:write "array_t T;\n"
+  end
+  compile_code(self, out, proto.code)
+  out:write [[
+return {};
+}
+};
+]]
 
-  if kn > 0 then
-    out:write(("const %s_K* K;\n"):format(name))
-  end
-  if un > 0 then
-    out:write "uparray_t U;\n"
-  end
-
-  out:write(("%s_T(uparray_t S, array_t A, array_t B)\n"):format(name))
-  local first = true
-  if kn > 0 then
-    first = false
-    out:write((": K(%s_K::get())"):format(name))
-  end
-  if un > 0 then
-    if first then
-      first = false
-      out:write ": "
-    else
-      out:write ",\n  "
-    end
-    out:write "U {\n"
+  out:write(([[
+struct %s_T : proto_t<%d> {
+uparray_t U;
+%s_T(uparray_t S, array_t A, array_t B)
+]]):format(name, proto.A, name))
+  if un == 0 then
+    out:write " {}\n"
+  else
+    out:write [[
+: U {
+]]
     for i = 1, #upvalues do
       local var = upvalues[i][2]
       local key = var:sub(1, 1)
@@ -254,20 +269,18 @@ static const %s_K* get() {
         out:write(("    { %s, %d },\n"):format(key, var:sub(2)))
       end
     end
-    out:write "  }"
+    out:write [[
+  } {}
+]]
   end
-  out:write " {}\n"
 
   out:write(([[
 array_t operator()(array_t A, array_t V) const {
-array_t B(%d);
-array_t C(%d);
-]]):format(proto.B, proto.C))
-  if proto.T then
-    out:write "array_t T;\n"
-  end
-  compile_code(self, out, proto.code)
-  out:write "return {};\n}\n"
+  return std::make_shared<%s_Q>(U, A, V)->Q0();
+}
+]]):format(name))
+
+
 
   out:write "};\n"
 end
