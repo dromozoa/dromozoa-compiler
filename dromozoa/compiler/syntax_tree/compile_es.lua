@@ -307,7 +307,7 @@ return function (self, out, name)
   end
   out:write "return new P0_T([], [], [ env ]);\n"
   if name then
-    out:write "})();\n"
+    out:write "});\n"
   else
     out:write "})().call();\n"
   end

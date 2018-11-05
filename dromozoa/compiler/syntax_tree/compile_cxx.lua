@@ -292,7 +292,15 @@ return function (self, out, name)
     compile_proto(self, out, protos[i])
   end
 
-  out:write "}\n"
+  out:write [[
+value_t chunk() {
+  uparray_t S;
+  array_t A;
+  array_t B = { env };
+  return std::make_shared<P0_T>(S, A, B);
+}
+}
+]]
 
   if name then
     return out
@@ -301,13 +309,8 @@ return function (self, out, name)
   out:write [[
 int main(int, char*[]) {
   using namespace dromozoa::runtime;
-
-  uparray_t S;
-  array_t A;
-  array_t B = { env };
   try {
-    value_t P0 = std::make_shared<P0_T>(S, A, B);
-    call0(P0, {});
+    call0(chunk(), {});
     return 0;
   } catch (const value_t& e) {
     std::cerr << tostring(e) << std::endl;
