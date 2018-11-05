@@ -125,11 +125,10 @@ function compile_code(self, out, code)
       out:write "}\n"
     elseif name == "COND" then
       local cond = code[1]
-      local var = encode_var(cond[1])
       if cond[2] == "TRUE" then
-        out:write(("if (%s !== undefined && %s !== false) {\n"):format(var, var))
+        out:write(("if (toboolean(%s)) {\n"):format(encode_var(cond[1])))
       else
-        out:write(("if (%s === undefined || %s === false) {\n"):format(var, var))
+        out:write(("if (!toboolean(%s)) {\n"):format(encode_var(cond[1])))
       end
       compile_code(self, out, code[2])
       if #code == 2 then
@@ -164,7 +163,7 @@ function compile_code(self, out, code)
           out:write(("return %s;\n"):format(encode_var(var)))
         end
       else
-        out:write(("return [%s];\n"):format(encode_vars(code)))
+        out:write(("return [ %s ];\n"):format(encode_vars(code)))
       end
     elseif name == "SETLIST" then
       out:write(("setlist(%s, %d, %s);\n"):format(encode_var(code[1]), code[2], encode_var(code[3])))

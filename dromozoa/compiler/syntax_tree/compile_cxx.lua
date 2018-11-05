@@ -170,7 +170,7 @@ function compile_code(self, out, code)
     elseif name == "RETURN" then
       local n = #code
       if n == 0 then
-        out:write "return nullptr;\n"
+        out:write "return {};\n"
       else
         out:write(("return %s;\n"):format(encode_vars(code)))
       end
