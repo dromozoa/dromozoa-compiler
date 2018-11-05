@@ -276,7 +276,7 @@ super();
     params[i] = "A" .. i - 1
   end
   params[#params + 1] = "...V"
-  out:write(("call(%s) {\n"):format(table.concat(params, ", ")))
+  out:write(("enter(%s) {\n"):format(table.concat(params, ", ")))
 
   if an == 0 then
     out:write "const A = [];\n"
@@ -310,7 +310,7 @@ return function (self, out, name)
   if name then
     out:write "});\n"
   else
-    out:write "})().call();\n"
+    out:write "})().enter();\n"
   end
   return out
 end
