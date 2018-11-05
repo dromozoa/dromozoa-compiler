@@ -231,6 +231,7 @@ struct %s_Q {
   array_t V;
   array_t B;
   array_t C;
+  array_t T;
   %s_Q(uparray_t U, array_t A, array_t V)
     : K(%s_K::get()),
       U(U),
@@ -238,11 +239,8 @@ struct %s_Q {
       V(V),
       B(%d),
       C(%d) {}
-  array_t Q0() const {
+  array_t Q0() {
 ]]):format(name, name, name, name, proto.B, proto.C))
-  if proto.T then
-    out:write "    array_t T;\n"
-  end
   compile_code(self, out, proto.code, "    ")
   out:write [[
     return {};
