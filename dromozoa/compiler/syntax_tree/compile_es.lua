@@ -179,7 +179,6 @@ end
 
 function compile_proto(self, out, proto)
   local name = proto[1]
-
   local constants = proto.constants
   local upvalues = proto.upvalues
 
@@ -187,7 +186,9 @@ function compile_proto(self, out, proto)
   local un = #upvalues
   local an = proto.A
 
-  if kn > 0 then
+  if kn == 0 then
+    out:write(("const %s_K = [];\n"):format(name))
+  else
     out:write(("const %s_K = [\n"):format(name))
     for i = 1, kn do
       local constant = constants[i]
@@ -202,21 +203,20 @@ function compile_proto(self, out, proto)
 
   out:write(([[
 class %s_Q {
-constructor(P, A, V, B) {
-  this.K = P.K;
-  this.U = P.U;
+constructor(U, A, V, B) {
+  this.U = U;
   this.A = A;
   this.V = V;
   this.B = B;
 }
 Q0() {
-const K = this.K;
+const K = %s_K;
 const U = this.U;
 const A = this.A;
 const V = this.V;
 const B = this.B;
 const C = [];
-]]):format(name))
+]]):format(name, name))
   if proto.T then
     out:write "let T = undefined;\n"
   end
@@ -227,34 +227,33 @@ const C = [];
     for i = 1, #labels do
       out:write(("const %s = %d;\n"):format(labels[i][1], i))
     end
-    out:write "let L = 0;\n"
-    out:write "for (;;) {\n"
-    out:write "switch (L) {\n"
-    out:write "case 0:\n"
+    out:write [[
+let L = 0;
+for (;;) {
+switch (L) {
+case 0:
+]]
   end
-
   compile_code(self, out, proto.code)
-
   if emulate_goto then
-    out:write "}\n"
-    out:write "return;\n"
-    out:write "}\n"
-  end
-
-  out:write [[
+    out:write [[
 }
+return;
 }
 ]]
+  end
 
   out:write(([[
+}
+}
 class %s_T extends proto_t {
 constructor(S, A, B) {
 super();
 ]]):format(name))
-  if kn > 0 then
-    out:write(("this.K = %s_K;\n"):format(name))
-  end
-  if un > 0 then
+
+  if un == 0 then
+    out:write "this.U = [];\n"
+  else
     out:write "this.U = [\n"
     for i = 1, un do
       local var = upvalues[i][2]
@@ -267,6 +266,7 @@ super();
     end
     out:write "];\n"
   end
+
   out:write "}\n"
 
   local params = {}
@@ -286,40 +286,29 @@ super();
     out:write "];\n"
   end
   out:write(([[
-const B = [];
-return (new %s_Q(this, A, V, B)).Q0();
+return new %s_Q(this.U, A, V, []).Q0();
+}
+}
 ]]):format(name))
-
-  out:write "}\n"
-  out:write "}\n"
 end
 
 return function (self, out, name)
   if name then
-    out:write(("%s = "):format(name))
+    out:write(("%s = ("):format(name))
   else
     out:write "("
   end
   out:write "() => {\n"
   out:write(runtime_es);
-
   local protos = self.protos
   for i = #protos, 1, -1 do
     compile_proto(self, out, protos[i])
   end
-
-  out:write [[
-const S = [];
-const A = [];
-const B = [ env ];
-const P0 = new P0_T(S, A, B);
-call0(P0);
-]]
-
+  out:write "return new P0_T([], [], [ env ]);\n"
   if name then
-    out:write "};\n"
-  else
     out:write "})();\n"
+  else
+    out:write "})().call();\n"
   end
   return out
 end
