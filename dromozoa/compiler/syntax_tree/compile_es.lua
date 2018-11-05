@@ -55,8 +55,7 @@ local function encode_var(var)
     if key == "P" or key == "L" then
       return var
     elseif key == "U" then
-      local index = var:sub(2)
-      return "U[" .. index .. "][0][U[" .. index .. "][1]]"
+      return "U[" .. var:sub(2) .. "].value"
     else
       return key .. "[" .. var:sub(2) .. "]"
     end
@@ -170,7 +169,7 @@ function compile_code(self, out, code)
     elseif name == "SETLIST" then
       out:write(("setlist(%s, %d, %s);\n"):format(encode_var(code[1]), code[2], encode_var(code[3])))
     elseif name == "CLOSURE" then
-      compile_proto(self, out, code[1])
+      out:write(("const %s = new %s_t(U, A, B);\n"):format(code[1], code[1]))
     elseif name == "LABEL" then
       out:write(("case %s:\n"):format(encode_var(code[1])))
     else
@@ -179,88 +178,83 @@ function compile_code(self, out, code)
   end
 end
 
-function compile_proto(self, out, name)
-  local protos = self.protos
-  local proto
-  for i = 1, #protos do
-    proto = protos[i]
-    if proto[1] == name then
-      break
-    end
-    proto = nil
-  end
+function compile_proto(self, out, proto)
+  local name = proto[1]
 
+  local constants = proto.constants
+  local upvalues = proto.upvalues
+
+  local kn = #constants
+  local un = #upvalues
   local A = proto.A
   local B = proto.B
   local C = proto.C
 
-  local pars = {}
-  for i = 0, A - 1 do
-    pars[#pars + 1] = "A" .. i
-  end
-  if proto.V then
-    pars[#pars + 1] = "...V"
-  end
-  out:write(("const %s = (%s) => {\n"):format(proto[1], table.concat(pars, ", ")))
-
-  local constants = proto.constants
-  local n = #constants
-  if n > 0 then
-    out:write "const K = [\n"
-    for i = 1, n do
+  if kn > 0 then
+    out:write(("const %s_K = [\n"):format(name))
+    for i = 1, kn do
       local constant = constants[i]
       if constant.type == "string" then
-        out:write(("/* %s */ wrap(%s),\n"):format(constant[1], encode_string(constant.source)))
+        out:write(("  wrap(%s),\n"):format(encode_string(constant.source)))
       else
-        out:write(("/* %s */ %.17g,\n"):format(constant[1], tonumber(constant.source)))
+        out:write(("  %.17g,\n"):format(tonumber(constant.source)))
       end
     end
     out:write "];\n"
   end
 
-  local upvalues = proto.upvalues
-  local n = #upvalues
-  for i = 1, n do
-    local upvalue = upvalues[i]
-    if upvalue[2]:find "^U" then
-      out:write "const S = U;\n"
-      break
-    end
+  out:write(([[
+class %s_t extends proto_t {
+constructor(S, A, B) {
+super();
+]]):format(name))
+
+  if kn > 0 then
+    out:write(("this.K = %s_K;\n"):format(name))
   end
-
-  out:write "{\n"
-
-  if n > 0 then
-    out:write "const U = [\n"
-    for i = 1, n do
-      local upvalue = upvalues[i]
-      local var = upvalue[2]
+  if un > 0 then
+    out:write "this.U = [\n"
+    for i = 1, un do
+      local var = upvalues[i][2]
       local key = var:sub(1, 1)
       if key == "U" then
-        local index = var:sub(2)
-        out:write(("/* %s */ S[%d],\n"):format(upvalue[1], index))
+        out:write(("  S[%d],\n"):format(var:sub(2)))
       else
-        out:write(("/* %s */ [%s, %d],\n"):format(upvalue[1], key, var:sub(2)))
+        out:write(("  new upvalue_t(%s, %d),\n"):format(key, var:sub(2)))
       end
     end
     out:write "];\n"
   end
 
-  out:write "{\n"
+  out:write "}\n"
 
-  if A > 0 then
+  local params = {}
+  for i = 1, A do
+    params[i] = "A" .. i - 1
+  end
+  if proto.V then
+    params[#params + 1] = "...V"
+  end
+  out:write(("call(%s) {\n"):format(table.concat(params, ", ")))
+
+  out:write [[
+const K = this.K;
+const U = this.U;
+]]
+
+  if A == 0 then
+    out:write "const A = [];\n"
+  else
     out:write "const A = [\n"
-    for i = 0, A - 1 do
-      out:write("A", i, ",\n")
+    for i = 1, A do
+      out:write("  A", i - 1, ",\n")
     end
     out:write "];\n"
   end
-  if B > 0 then
-    out:write(("const B = []; /* %d */\n"):format(B))
-  end
-  if C > 0 then
-    out:write(("const C = []; /* %d */\n"):format(C))
-  end
+  out:write [[
+const B = [];
+const C = [];
+]]
   if proto.T then
     out:write "let T = undefined;\n"
   end
@@ -285,7 +279,8 @@ function compile_proto(self, out, name)
     out:write "}\n"
   end
 
-  out:write "}}};\n"
+  out:write "}\n"
+  out:write "}\n"
 end
 
 return function (self, out, name)
@@ -296,9 +291,20 @@ return function (self, out, name)
   end
   out:write "() => {\n"
   out:write(runtime_es);
-  out:write "const B = [env];\n"
-  compile_proto(self, out, "P0")
-  out:write "P0();\n"
+
+  local protos = self.protos
+  for i = #protos, 1, -1 do
+    compile_proto(self, out, protos[i])
+  end
+
+  out:write [[
+const S = [];
+const A = [];
+const B = [ env ];
+const P0 = new P0_t(S, A, B);
+call0(P0);
+]]
+
   if name then
     out:write "};\n"
   else

@@ -32,6 +32,25 @@ class runtime_error {
   }
 }
 
+class proto_t {
+  constructor() {}
+}
+
+class upvalue_t {
+  constructor(array, index) {
+    this.array = array;
+    this.index = index;
+  }
+
+  get value() {
+    return this.array[this.index];
+  }
+
+  set value(value) {
+    this.array[this.index] = value;
+  }
+}
+
 let make_buffer;
 let string_to_buffer;
 let buffer_to_string;
@@ -173,7 +192,7 @@ const is_table = (value) => {
 };
 
 const is_function = (value) => {
-  return typeof value === "function";
+  return typeof value === "function" || proto_t.prototype.isPrototypeOf(value);
 };
 
 const toboolean = (v) => {
@@ -340,17 +359,7 @@ const setlist = (table, index, ...args) => {
 };
 
 const call = (f, ...args) => {
-  let result;
-  if (is_function(f)) {
-    result = f(...args);
-  } else {
-    const field = getmetafield(f, "__call");
-    if (is_function(field)) {
-      result = field(f, ...args);
-    } else {
-      throw new runtime_error(concat("attempt to call a ", type(f), " value"));
-    }
-  }
+  const result = call0(f, ...args);
   if (Array.prototype.isPrototypeOf(result)) {
     return result;
   } else {
@@ -359,12 +368,16 @@ const call = (f, ...args) => {
 };
 
 const call0 = (f, ...args) => {
-  if (is_function(f)) {
-    f(...args);
+  if (typeof f === "function") {
+    return f(...args);
+  } else if (proto_t.prototype.isPrototypeOf(f)) {
+    return f.call(...args);
   } else {
     const field = getmetafield(f, "__call");
-    if (is_function(field)) {
-      field(f, ...args);
+    if (typeof field === "function") {
+      return field(f, ...args);
+    } else if (proto_t.prototype.isPrototypeOf(field)) {
+      return field.call(f, ...args);
     } else {
       throw new runtime_error(concat("attempt to call a ", type(f), " value"));
     }
@@ -372,17 +385,7 @@ const call0 = (f, ...args) => {
 };
 
 const call1 = (f, ...args) => {
-  let result;
-  if (is_function(f)) {
-    result = f(...args);
-  } else {
-    const field = getmetafield(f, "__call");
-    if (is_function(field)) {
-      result = field(f, ...args);
-    } else {
-      throw new runtime_error(concat("attempt to call a ", type(f), " value"));
-    }
-  }
+  const result = call0(f, ...args);
   if (Array.prototype.isPrototypeOf(result)) {
     return result[0];
   } else {
@@ -562,6 +565,7 @@ const range_j = (j, size) => {
 };
 
 const suppress_no_unsed = () => {};
+suppress_no_unsed(upvalue_t);
 suppress_no_unsed(setlist);
 suppress_no_unsed(len);
 suppress_no_unsed(lt);

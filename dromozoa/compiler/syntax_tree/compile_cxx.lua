@@ -250,8 +250,7 @@ static const %s_k* get() {
     end
     out:write "U {\n"
     for i = 1, #upvalues do
-      local upvalue = upvalues[i]
-      local var = upvalue[2]
+      local var = upvalues[i][2]
       local key = var:sub(1, 1)
       if key == "U" then
         out:write(("    S[%d],\n"):format(var:sub(2)))
@@ -289,7 +288,7 @@ return function (self, out, name)
   if name then
     out:write(" ", name)
   end
-  out:write "{\n"
+  out:write " {\n"
   out:write "using namespace dromozoa::runtime;\n"
 
   local protos = self.protos
