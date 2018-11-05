@@ -5,6 +5,12 @@ class logic_error {
   }
 }
 
+class runtime_error {
+  constructor(message) {
+    this.message = wrap(message);
+  }
+}
+
 let make_buffer;
 let string_to_buffer;
 let buffer_to_string;
@@ -56,36 +62,6 @@ class string_t {
   }
 }
 
-const wrap = object => {
-  if (typeof object === "string") {
-    return new string_t(object);
-  } else {
-    return object;
-  }
-};
-
-const unwrap = object => {
-  if (string_t.prototype.isPrototypeOf(object)) {
-    return object.string;
-  } else {
-    return object;
-  }
-};
-
-const concat = (...args) => {
-  const result = [];
-  for (let i = 0; i < args.length; ++i) {
-    result.push(unwrap(checkstring(args[i])));
-  }
-  return wrap(result.join(""));
-};
-
-class runtime_error {
-  constructor(message) {
-    this.message = wrap(message);
-  }
-}
-
 class table_t {
   constructor() {
     this.map = new Map();
@@ -130,6 +106,30 @@ class table_t {
     }
   }
 }
+
+const wrap = object => {
+  if (typeof object === "string") {
+    return new string_t(object);
+  } else {
+    return object;
+  }
+};
+
+const unwrap = object => {
+  if (string_t.prototype.isPrototypeOf(object)) {
+    return object.string;
+  } else {
+    return object;
+  }
+};
+
+const concat = (...args) => {
+  const result = [];
+  for (let i = 0; i < args.length; ++i) {
+    result.push(unwrap(checkstring(args[i])));
+  }
+  return wrap(result.join(""));
+};
 
 const is_nil = (value) => {
   return value === undefined;
