@@ -196,11 +196,11 @@ function compile_proto(self, out, proto)
   local un = #upvalues
 
   if kn > 0 then
-    out:write(("struct %s_k {\n"):format(name))
+    out:write(("struct %s_K {\n"):format(name))
     for i = 1, kn do
       out:write(("const value_t %s;\n"):format(constants[i][1]))
     end
-    out:write(("%s_k()\n"):format(name))
+    out:write(("%s_K()\n"):format(name))
     for i = 1, kn do
       if i == 1 then
         out:write ": "
@@ -218,8 +218,8 @@ function compile_proto(self, out, proto)
     end
     out:write " {}\n"
     out:write(([[
-static const %s_k* get() {
-  static const %s_k instance;
+static const %s_K* get() {
+  static const %s_K instance;
   return &instance;
 }
 ]]):format(name, name))
@@ -229,7 +229,7 @@ static const %s_k* get() {
   out:write(("struct %s_t : proto_t<%d> {\n"):format(name, proto.A))
 
   if kn > 0 then
-    out:write(("const %s_k* K;\n"):format(name))
+    out:write(("const %s_K* K;\n"):format(name))
   end
   if un > 0 then
     out:write "uparray_t U;\n"
@@ -239,7 +239,7 @@ static const %s_k* get() {
   local first = true
   if kn > 0 then
     first = false
-    out:write((": K(%s_k::get())"):format(name))
+    out:write((": K(%s_K::get())"):format(name))
   end
   if un > 0 then
     if first then
