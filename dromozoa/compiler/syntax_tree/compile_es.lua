@@ -185,9 +185,7 @@ function compile_proto(self, out, proto)
 
   local kn = #constants
   local un = #upvalues
-  local A = proto.A
-  local B = proto.B
-  local C = proto.C
+  local an = proto.A
 
   if kn > 0 then
     out:write(("const %s_K = [\n"):format(name))
@@ -228,7 +226,7 @@ super();
   out:write "}\n"
 
   local params = {}
-  for i = 1, A do
+  for i = 1, an do
     params[i] = "A" .. i - 1
   end
   if proto.V then
@@ -241,11 +239,11 @@ const K = this.K;
 const U = this.U;
 ]]
 
-  if A == 0 then
+  if an == 0 then
     out:write "const A = [];\n"
   else
     out:write "const A = [\n"
-    for i = 1, A do
+    for i = 1, an do
       out:write("  A", i - 1, ",\n")
     end
     out:write "];\n"
