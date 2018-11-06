@@ -186,6 +186,19 @@ local function compile_constants(self, out, proto)
   local constants = proto.constants
   local n = #constants
 
+  if n == 0 then
+    out:write(([[
+
+struct %s_K {
+  static const %s_K* get() {
+    static const %s_K instance;
+    return &instance;
+  }
+};
+]]):format(name, name, name))
+    return
+  end
+
   local decls = {}
   local inits = {}
   for i = 1, n do
@@ -203,25 +216,23 @@ local function compile_constants(self, out, proto)
   out:write(([[
 
 struct %s_K {
-]]):format(name))
-
-  if n > 0 then
-    out:write(([[
   %s;
 
   %s_K()
     : %s {}
 
-]]):format(table.concat(decls, ";\n  "), name, table.concat(inits, ",\n      ")))
-  end
-
-  out:write(([[
   static const %s_K* get() {
     static const %s_K instance;
     return &instance;
   }
 };
-]]):format(name, name))
+]]):format(
+    name,
+    template.concat(decls, ";\n  "),
+    name,
+    template.concat(inits, ",\n      "),
+    name,
+    name))
 end
 
 local function compile_blocks(self, out, proto)
