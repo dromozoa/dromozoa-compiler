@@ -170,7 +170,7 @@ function compile_code(self, out, code, indent, opts)
     elseif name == "SETLIST" then
       out:write(indent, ("setlist(%s, %d, %s);\n"):format(encode_var(code[1]), code[2], encode_var(code[3])))
     elseif name == "CLOSURE" then
-      out:write(indent, ("value_t %s = std::make_shared<%s_T>(U, A, B);\n"):format(code[1], code[1]))
+      out:write(indent, ("%s = std::make_shared<%s_T>(U, A, B);\n"):format(encode_var(code[1]), code[2]))
     elseif name == "LABEL" then
       out:write(("  %s:\n"):format(code[1]))
     elseif name == "COND" then

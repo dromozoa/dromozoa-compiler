@@ -335,7 +335,6 @@ local function prepare_protos(node, symbol_table, protos)
       "P0";
     }
     node.proto = proto
-    node.var = "P0"
     protos[1] = proto
 
     node.scope = {
@@ -360,7 +359,6 @@ local function prepare_protos(node, symbol_table, protos)
         var;
       }
       node.proto = proto
-      node.var = var
       protos[n + 1] = proto
     end
 
@@ -663,7 +661,7 @@ local function resolve_vars(self, node, symbol_table)
     if node.self then
       node.self = node[1][1].var
     end
-  elseif symbol == symbol_table.fieldlist or node.binop or node.unop then
+  elseif symbol == symbol_table.fieldlist or node.proto or node.binop or node.unop then
     node.var = assign_var(node)
   end
 end

@@ -169,7 +169,7 @@ function compile_code(self, out, code, indent, opts)
     elseif name == "SETLIST" then
       out:write(indent, ("setlist(%s, %d, %s);\n"):format(encode_var(code[1]), code[2], encode_var(code[3])))
     elseif name == "CLOSURE" then
-      out:write(indent, ("const %s = new %s_T(U, A, B);\n"):format(code[1], code[1]))
+      out:write(indent, ("%s = new %s_T(U, A, B);\n"):format(encode_var(code[1]), code[2]))
     elseif name == "LABEL" then
       out:write(("      case %s:\n"):format(encode_var(code[1])))
     elseif name == "COND" then
