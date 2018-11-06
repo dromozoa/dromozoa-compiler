@@ -30,11 +30,6 @@ local keys = {
   "self";
   "vararg";
   "parlist";
-
-  "while";
-  "for2";
-  "for3";
-  "for";
   "inorder";
 
   "param";
