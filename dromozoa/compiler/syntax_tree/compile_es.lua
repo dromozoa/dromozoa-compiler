@@ -254,7 +254,7 @@ class %s_Q {
     this.C = [];
   }
 
-  Q0() {
+  enter() {
     const K = this.K;
     const U = this.U;
     const A = this.A;
@@ -320,7 +320,7 @@ class %s_T extends proto_t {
 
   enter(%s) {
     const A = [%s];
-    return new %s_Q(this.U, A, V).Q0();
+    return new %s_Q(this.U, A, V).enter();
   }
 }
 ]]):format(

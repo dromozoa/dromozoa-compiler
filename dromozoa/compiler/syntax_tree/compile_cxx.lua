@@ -261,7 +261,7 @@ struct %s_Q {
       B(%d),
       C(%d) {}
 
-  array_t Q0() {
+  array_t enter() {
 ]]):format(name, name, name, name, proto.B, proto.C))
 
   if opts.mode == "flat_code" then
@@ -305,7 +305,7 @@ struct %s_T : proto_t<%d> {
     : U {%s} {}
 
   array_t operator()(array_t A, array_t V) const {
-    return std::make_shared<%s_Q>(U, A, V)->Q0();
+    return std::make_shared<%s_Q>(U, A, V)->enter();
   }
 };
 ]]):format(
