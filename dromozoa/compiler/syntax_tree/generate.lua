@@ -338,6 +338,7 @@ local function generate_basic_blocks(proto)
     g = g;
     entry_uid = entry_uid;
     exit_uid = exit_uid;
+    blocks = blocks;
     jumps = jumps;
   }
 end

@@ -18,6 +18,7 @@
 local analyze = require "dromozoa.compiler.syntax_tree.analyze"
 local compile_cxx = require "dromozoa.compiler.syntax_tree.compile_cxx"
 local compile_es = require "dromozoa.compiler.syntax_tree.compile_es"
+local dump_basic_blocks = require "dromozoa.compiler.syntax_tree.dump_basic_blocks"
 local dump_protos = require "dromozoa.compiler.syntax_tree.dump_protos"
 local dump_tree = require "dromozoa.compiler.syntax_tree.dump_tree"
 local generate = require "dromozoa.compiler.syntax_tree.generate"
@@ -57,6 +58,14 @@ function class:dump_tree(out)
     return dump_tree(self, assert(io.open(out, "w"))):close()
   else
     return dump_tree(self, out)
+  end
+end
+
+function class:dump_basic_blocks(out)
+  if type(out) == "string" then
+    return dump_basic_blocks(self, assert(io.open(out, "w"))):close()
+  else
+    return dump_basic_blocks(self, out)
   end
 end
 

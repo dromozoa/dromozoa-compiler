@@ -129,6 +129,7 @@ do
   <a href="$n.cpp">cxx</a>,
   <a href="$n.html">tree</a>,
   <a href="$n.txt">protos</a>,
+  <a href="$n-bb.html">bb</a>,
   result:
   <a href="$n-expected.txt">lua</a>,
   <a href="$n-es.txt">es</a>,

@@ -57,7 +57,6 @@ local head = _"head" {
   _"script" { src = "dromozoa-compiler.js" };
 }
 
-
 local function prepare_paths(node, parent_path)
   local path = {}
   local n = #parent_path
@@ -248,7 +247,6 @@ end
 
 return function (self, out)
   prepare(self)
-
   local doc = html5_document(_"html" {
     head;
     _"body" {
@@ -256,7 +254,6 @@ return function (self, out)
       to_graph(self, 800, 640);
     };
   })
-
   doc:serialize(out)
   out:write "\n"
   return out
