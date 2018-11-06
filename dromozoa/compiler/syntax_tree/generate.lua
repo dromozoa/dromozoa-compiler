@@ -15,6 +15,7 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
+local graph = require "dromozoa.graph"
 local code_builder = require "dromozoa.compiler.syntax_tree.code_builder"
 
 local unpack = table.unpack or unpack
@@ -215,9 +216,8 @@ local function generate_tree_code(stack, node, symbol_table)
   end
 end
 
-local function generate_flat_code(proto, code, break_label)
+local function generate_flat_code(proto, flat_code, code, break_label)
   local name = code[0]
-  local flat_code = proto.flat_code
 
   if code.block then
     if name == "LOOP" then
@@ -227,7 +227,7 @@ local function generate_flat_code(proto, code, break_label)
       proto.M = n + 2
       flat_code[#flat_code + 1] = { [0] = "LABEL", x }
       for i = 1, #code do
-        generate_flat_code(proto, code[i], y)
+        generate_flat_code(proto, flat_code, code[i], y)
       end
       flat_code[#flat_code + 1] = { [0] = "GOTO", x }
       flat_code[#flat_code + 1] = { [0] = "LABEL", y }
@@ -240,7 +240,7 @@ local function generate_flat_code(proto, code, break_label)
         proto.M = n + 2
         flat_code[#flat_code + 1] = { [0] = "COND", cond[1], cond[2], x, y }
         flat_code[#flat_code + 1] = { [0] = "LABEL", x }
-        generate_flat_code(proto, code[2], break_label)
+        generate_flat_code(proto, flat_code, code[2], break_label)
         flat_code[#flat_code + 1] = { [0] = "LABEL", y }
       else
         local n = proto.M
@@ -250,15 +250,15 @@ local function generate_flat_code(proto, code, break_label)
         proto.M = n + 3
         flat_code[#flat_code + 1] = { [0] = "COND", cond[1], cond[2], x, y }
         flat_code[#flat_code + 1] = { [0] = "LABEL", x }
-        generate_flat_code(proto, code[2], break_label)
+        generate_flat_code(proto, flat_code, code[2], break_label)
         flat_code[#flat_code + 1] = { [0] = "GOTO", z }
         flat_code[#flat_code + 1] = { [0] = "LABEL", y }
-        generate_flat_code(proto, code[3], break_label)
+        generate_flat_code(proto, flat_code, code[3], break_label)
         flat_code[#flat_code + 1] = { [0] = "LABEL", z }
       end
     else
       for i = 1, #code do
-        generate_flat_code(proto, code[i], break_label)
+        generate_flat_code(proto, flat_code, code[i], break_label)
       end
     end
   else
@@ -271,7 +271,27 @@ local function generate_flat_code(proto, code, break_label)
 end
 
 local function generate_basic_blocks(proto)
+  local flat_code = proto.flat_code
 
+  local g = graph()
+  local labels = {}
+  local blocks = {}
+
+  local entry_uid = g:add_vertex()
+  labels[entry_uid] = "entry"
+  blocks[entry_uid] = {}
+
+  local exit_uid = g:add_vertex()
+  labels[exit_uid] = "exit"
+  blocks[exit_uid] = {}
+
+  local this_uid
+  for i = 1, #flat_code do
+    if not this_uid then
+      this_uid = g:add_vertex()
+      labels[this_uid] = "BB" .. i
+    end
+  end
 end
 
 return function (self)
@@ -281,9 +301,10 @@ return function (self)
   local n = #protos
   for i = 1, n do
     local proto = protos[i]
+    local flat_code = { block = true }
     proto.M = 0
-    proto.flat_code = { block = true }
-    generate_flat_code(proto, proto.tree_code)
+    proto.flat_code = flat_code
+    generate_flat_code(proto, flat_code, proto.tree_code)
   end
 
   for i = 1, n do
