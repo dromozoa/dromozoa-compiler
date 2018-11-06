@@ -198,8 +198,7 @@ namespace dromozoa {
 
         settable(env, "pcall", [](value_t f, array_t args) -> array_t {
           try {
-            array_t result = call(f, args);
-            return array_t(true, result);
+            return array_t(true, call(f, args));
           } catch (const value_t& e) {
             return { false, e };
           }
@@ -215,8 +214,20 @@ namespace dromozoa {
           std::cout << "\n";
         });
 
+        settable(env, "rawequal", [](value_t self, value_t that) -> value_t {
+          return rawequal(self, that);
+        });
+
+        settable(env, "rawget", [](value_t table, value_t index) -> value_t {
+          return rawget(table, index);
+        });
+
+        settable(env, "rawset", [](value_t table, value_t index, value_t value) -> value_t {
+          return rawset(table, index, value);
+        });
+
         settable(env, "select", [](value_t index, array_t args) -> array_t {
-          if (eq(index, "#")) {
+          if (rawequal(index, "#")) {
             return { args.size };
           }
           return args.sub(range_i(index.checkinteger(), args.size));
@@ -922,7 +933,7 @@ namespace dromozoa {
       throw value_t("attempt to get length of a " + type(v) + " value");
     }
 
-    bool eq(const value_t& self, const value_t& that) {
+    bool rawequal(const value_t& self, const value_t& that) {
       if (self.type != that.type) {
         return false;
       }
@@ -936,23 +947,28 @@ namespace dromozoa {
         case type_t::string:
           return *self.string == *that.string;
         case type_t::table:
-          if (self.table == that.table) {
-            return true;
-          } else {
-            auto field = getmetafield(self, "__eq");
-            if (field.is_nil()) {
-              field = getmetafield(that, "__eq");
-            }
-            if (!field.is_nil()) {
-              return call1(field, { self, that }).toboolean();
-            }
-            return false;
-          }
+          return self.table == that.table;
         case type_t::function:
           return self.function == that.function;
         default:
           throw std::logic_error("unreachable code");
       }
+    }
+
+    bool eq(const value_t& self, const value_t& that) {
+      if (rawequal(self, that)) {
+        return true;
+      }
+      if (self.is_table() && that.is_table()) {
+        auto field = getmetafield(self, "__eq");
+        if (field.is_nil()) {
+          field = getmetafield(that, "__eq");
+        }
+        if (!field.is_nil()) {
+          return call1(field, { self, that }).toboolean();
+        }
+      }
+      return false;
     }
 
     bool lt(const value_t& self, const value_t& that) {

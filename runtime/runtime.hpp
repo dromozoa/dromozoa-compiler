@@ -190,6 +190,7 @@ namespace dromozoa {
     std::string type(const value_t&);
     std::string tostring(const value_t&);
     std::int64_t len(const value_t&);
+    bool rawequal(const value_t&, const value_t&);
     bool eq(const value_t&, const value_t&);
     bool lt(const value_t&, const value_t&);
     bool le(const value_t&, const value_t&);

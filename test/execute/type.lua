@@ -15,38 +15,10 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-local class = {}
-local metatable = { __index = class }
-
-function class.concat(items, sep, prologue, epilogue)
-  if not prologue then
-    prologue = ""
-  end
-  if not epilogue then
-    epilogue = ""
-  end
-  if #items == 0 then
-    return ""
-  else
-    return prologue .. table.concat(items, sep) .. epilogue
-  end
-end
-
-function class:eval(name, code)
-  local encode = self.encode
-  local rule = self.rules[name]
-  if rule then
-    return rule:gsub("%%(%d)", function (index)
-      return encode(code[tonumber(index)])
-    end)
-  end
-end
-
-return setmetatable(class, {
-  __call = function (_, encode, rules)
-    return setmetatable({
-      encode = encode;
-      rules = rules;
-    }, metatable)
-  end;
-})
+print(type(nil))
+print(type(false))
+print(type(true))
+print(type(42))
+print(type "42")
+print(type {})
+print(type(function () end))
