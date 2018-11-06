@@ -1,13 +1,4 @@
 return [[
-const METATABLE = Symbol("metatabale");
-
-const decint_pattern = /^\s*([+-]?\d+)\s*$/;
-const hexint_pattern = /^\s*([+-]?0[xX][0-9A-Fa-f]+)\s*$/;
-const decflt_pattern = /^\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)\s*$/;
-
-const string_buffers = new Map();
-const string_metatable = new Map();
-
 class logic_error {
   constructor(message) {
     this.message = message;
@@ -16,31 +7,147 @@ class logic_error {
 
 class runtime_error {
   constructor(message) {
-    this.message = message;
+    this.message = wrap(message);
   }
 }
 
-const string_buffer = s => {
-  let buffer = string_buffers.get(s);
-  if (buffer !== undefined) {
-    string_buffers.delete(s);
-  } else {
-    if (typeof TextEncoder !== "undefined") {
-      buffer = new TextEncoder().encode(s);
-    } else if (typeof Buffer !== "undefined") {
-      buffer = Buffer.from(s);
+class proto_t {
+  constructor() {}
+}
+
+class upvalue_t {
+  constructor(array, index) {
+    this.array = array;
+    this.index = index;
+  }
+
+  get value() {
+    return this.array[this.index];
+  }
+
+  set value(value) {
+    this.array[this.index] = value;
+  }
+}
+
+let make_buffer;
+let string_to_buffer;
+let buffer_to_string;
+
+if (typeof Buffer !== "undefined") {
+  make_buffer = size => {
+    return Buffer.alloc(size);
+  };
+
+  string_to_buffer = string => {
+    return Buffer.from(string);
+  };
+
+  buffer_to_string = buffer => {
+    return buffer.toString();
+  };
+} else {
+  const encoder = new TextEncoder();
+  const decoder = new TextDecoder();
+
+  make_buffer = size => {
+    return new Uint8Array(size);
+  };
+
+  string_to_buffer = string => {
+    return encoder.encode(string);
+  };
+
+  buffer_to_string = buffer => {
+    return decoder.decode(buffer);
+  };
+}
+
+class string_t {
+  constructor(string, buffer) {
+    this.string_ = string;
+    this.buffer_ = buffer;
+  }
+
+  get string() {
+    return this.string_;
+  }
+
+  get buffer() {
+    if (this.buffer_ === undefined) {
+      this.buffer_ = string_to_buffer(this.string_);
+    }
+    return this.buffer_;
+  }
+}
+
+class table_t {
+  constructor() {
+    this.map = new Map();
+    this.index = new Map();
+    this.metatable = undefined;
+  }
+
+  get(index) {
+    if (is_string(index)) {
+      return this.map.get(this.index.get(unwrap(index)));
     } else {
-      throw new runtime_error("no UTF-8 encoder");
+      return this.map.get(index);
     }
   }
-  string_buffers.set(s, buffer);
-  if (string_buffers.size > 16) {
-    for (const entry of string_buffers) {
-      string_buffers.delete(entry[0]);
-      break;
+
+  set(index, value) {
+    if (is_nil(index)) {
+      throw new runtime_error("table index is nil");
+    } else if (is_string(index)) {
+      if (is_nil(value)) {
+        const string = unwrap(index);
+        if (this.index.has(string)) {
+          this.map.delete(this.index.get(string));
+          this.index.delete(string);
+        }
+      } else {
+        const string = unwrap(index);
+        if (this.index.has(string)) {
+          index = this.index.get(string);
+        } else {
+          index = wrap(index);
+          this.index.set(string, index);
+        }
+        this.map.set(index, wrap(value));
+      }
+    } else {
+      if (is_nil(value)) {
+        this.map.delete(index);
+      } else {
+        this.map.set(index, wrap(value));
+      }
     }
   }
-  return buffer;
+}
+
+const wrap = object => {
+  if (typeof object === "string") {
+    return new string_t(object);
+  } else {
+    return object;
+  }
+};
+
+const unwrap = object => {
+  if (string_t.prototype.isPrototypeOf(object)) {
+    return object.string;
+  } else {
+    return object;
+  }
+};
+
+const concat = (...args) => {
+  const result = [];
+  for (let i = 0; i < args.length; ++i) {
+    result.push(unwrap(checkstring(args[i])));
+  }
+  return wrap(result.join(""));
 };
 
 const is_nil = (value) => {
@@ -56,32 +163,15 @@ const is_number = (value) => {
 };
 
 const is_string = (value) => {
-  return typeof value === "string" || String.prototype.isPrototypeOf(value);
+  return typeof value === "string" || string_t.prototype.isPrototypeOf(value);
 };
 
 const is_table = (value) => {
-  return Map.prototype.isPrototypeOf(value);
+  return table_t.prototype.isPrototypeOf(value);
 };
 
 const is_function = (value) => {
-  return typeof value === "function";
-};
-
-const type = value => {
-  if (is_nil(value)) {
-    return "nil";
-  } else if (is_boolean(value)) {
-    return "boolean";
-  } else if (is_number(value)) {
-    return "number";
-  } else if (is_string(value)) {
-    return "string";
-  } else if (is_table(value)) {
-    return "table";
-  } else if (is_function(value)) {
-    return "function";
-  }
-  throw new logic_error("unreachable code");
+  return typeof value === "function" || proto_t.prototype.isPrototypeOf(value);
 };
 
 const toboolean = (v) => {
@@ -93,30 +183,33 @@ const toboolean = (v) => {
   return true;
 };
 
+const decint_pattern = /^\s*([+-]?\d+)\s*$/;
+const hexint_pattern = /^\s*([+-]?0[xX][0-9A-Fa-f]+)\s*$/;
+const decflt_pattern = /^\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)\s*$/;
+
 const tonumber = v => {
   if (is_number(v)) {
     return v;
   } else if (is_string(v)) {
     let match;
-    if ((match = decint_pattern.exec(v))) {
+    if ((match = decint_pattern.exec(unwrap(v)))) {
       return parseInt(match[0], 10);
     }
-    if ((match = hexint_pattern.exec(v))) {
+    if ((match = hexint_pattern.exec(unwrap(v)))) {
       return parseInt(match[0], 16);
     }
-    if ((match = decflt_pattern.exec(v))) {
+    if ((match = decflt_pattern.exec(unwrap(v)))) {
       return parseFloat(match[0]);
     }
   }
 };
-
 
 const checknumber = (v) => {
   const result = tonumber(v);
   if (is_number(result)) {
     return result;
   }
-  throw new runtime_error("number expected, got " + type(v));
+  throw new runtime_error(concat("number expected, got ", type(v)));
 };
 
 const checkinteger = (v) => {
@@ -129,18 +222,18 @@ const checkinteger = (v) => {
 
 const checkstring = (v) => {
   if (is_string(v)) {
-    return v;
+    return wrap(v);
   } else if (is_number(v)) {
-    return v.toString();
+    return wrap(v.toString());
   }
-  throw new runtime_error("string expected, got " + type(v));
+  throw new runtime_error(concat("string expected, got ", type(v)));
 };
 
 const checktable = (v) => {
   if (is_table(v)) {
     return v;
   }
-  throw new runtime_error("table expected, got " + type(v));
+  throw new runtime_error(concat("table expected, got ", type(v)));
 };
 
 const optinteger = (v, d) => {
@@ -156,14 +249,8 @@ const rawget = (table, index) => {
 };
 
 const rawset = (table, index, value) => {
-  if (is_nil(index)) {
-    throw new runtime_error("table index is nil");
-  }
-  if (is_nil(value)) {
-    checktable(table).delete(index);
-  } else {
-    checktable(table).set(index, value);
-  }
+  checktable(table).set(index, value);
+  return table;
 };
 
 const getmetafield = (object, event) => {
@@ -171,61 +258,10 @@ const getmetafield = (object, event) => {
   if (is_string(object)) {
     metatable = string_metatable;
   } else if (is_table(object)) {
-    metatable = object[METATABLE];
+    metatable = object.metatable;
   }
   if (is_table(metatable)) {
     return rawget(metatable, event);
-  }
-};
-
-const call0 = (f, ...args) => {
-  if (is_function(f)) {
-    f(...args);
-  } else {
-    const field = getmetafield(f, "__call");
-    if (is_function(field)) {
-      field(f, ...args);
-    } else {
-      throw new runtime_error("attempt to call a " + type(f) + " value");
-    }
-  }
-};
-
-const call1 = (f, ...args) => {
-  let result;
-  if (is_function(f)) {
-    result = f(...args);
-  } else {
-    const field = getmetafield(f, "__call");
-    if (is_function(field)) {
-      result = field(f, ...args);
-    } else {
-      throw new runtime_error("attempt to call a " + type(f) + " value");
-    }
-  }
-  if (Array.prototype.isPrototypeOf(result)) {
-    return result[0];
-  } else {
-    return result;
-  }
-};
-
-const call = (f, ...args) => {
-  let result;
-  if (is_function(f)) {
-    result = f(...args);
-  } else {
-    const field = getmetafield(f, "__call");
-    if (is_function(field)) {
-      result = field(f, ...args);
-    } else {
-      throw new runtime_error("attempt to call a " + type(f) + " value");
-    }
-  }
-  if (Array.prototype.isPrototypeOf(result)) {
-    return result;
-  } else {
-    return [ result ];
   }
 };
 
@@ -233,7 +269,7 @@ const getmetatable = object => {
   if (is_string(object)) {
     return string_metatable;
   } else if (is_table(object)) {
-    const metatable = object[METATABLE];
+    const metatable = object.metatable;
     if (is_table(metatable)) {
       const protected_metatable = rawget(metatable, "__metatable");
       if (!is_nil(protected_metatable)) {
@@ -251,7 +287,7 @@ const setmetatable = (table, metatable) => {
   if (!is_nil(getmetafield(table, "__metatable"))) {
     throw new runtime_error("cannot change a protected metatable");
   }
-  checktable(table)[METATABLE] = metatable;
+  checktable(table).metatable = metatable;
   return table;
 };
 
@@ -301,35 +337,89 @@ const setlist = (table, index, ...args) => {
   }
 };
 
+const call = (f, ...args) => {
+  const result = call0(f, ...args);
+  if (Array.prototype.isPrototypeOf(result)) {
+    return result;
+  } else {
+    return [ result ];
+  }
+};
+
+const call0 = (f, ...args) => {
+  if (typeof f === "function") {
+    return f(...args);
+  } else if (proto_t.prototype.isPrototypeOf(f)) {
+    return f.enter(...args);
+  } else {
+    const field = getmetafield(f, "__call");
+    if (typeof field === "function") {
+      return field(f, ...args);
+    } else if (proto_t.prototype.isPrototypeOf(field)) {
+      return field.enter(f, ...args);
+    } else {
+      throw new runtime_error(concat("attempt to call a ", type(f), " value"));
+    }
+  }
+};
+
+const call1 = (f, ...args) => {
+  const result = call0(f, ...args);
+  if (Array.prototype.isPrototypeOf(result)) {
+    return result[0];
+  } else {
+    return result;
+  }
+};
+
+const type = value => {
+  if (is_nil(value)) {
+    return wrap("nil");
+  } else if (is_boolean(value)) {
+    return wrap("boolean");
+  } else if (is_number(value)) {
+    return wrap("number");
+  } else if (is_string(value)) {
+    return wrap("string");
+  } else if (is_table(value)) {
+    return wrap("table");
+  } else if (is_function(value)) {
+    return wrap("function");
+  } else {
+    throw new logic_error("unreachable code");
+  }
+};
+
 const tostring = v => {
   if (is_nil(v)) {
-    return "nil";
+    return wrap("nil");
   } else if (is_boolean(v)) {
     if (v) {
-      return "true";
+      return wrap("true");
     } else {
-      return "false";
+      return wrap("false");
     }
   } else if (is_number(v)) {
-    return v.toString();
+    return wrap(v.toString());
   } else if (is_string(v)) {
-    return v;
+    return wrap(v);
   } else if (is_table(v)) {
     const field = getmetafield(v, "__tostring");
     if (!is_nil(field)) {
-      return call1(field, v);
+      return checkstring(call1(field, v));
     } else {
-      return "table";
+      return wrap("table");
     }
   } else if (is_function(v)) {
-    return "function";
+    return wrap("function");
+  } else {
+    throw logic_error("unreachable code");
   }
-  throw logic_error("unreachable code");
 };
 
 const len = v => {
   if (is_string(v)) {
-    return string_buffer(v).byteLength;
+    return wrap(v).buffer.byteLength;
   } else if (is_table(v)) {
     const field = getmetafield(v, "__len");
     if (!is_nil(field)) {
@@ -341,11 +431,21 @@ const len = v => {
       }
     }
   }
-  throw new runtime_error("attempt to get length of a " + type(v) + " value");
+  throw new runtime_error(concat("attempt to get length of a ", type(v), " value"));
+};
+
+const rawequal = (self, that) => {
+  if (self === that) {
+    return true;
+  }
+  if (is_string(self) && is_string(that)) {
+    return unwrap(self) === unwrap(that);
+  }
+  return false;
 };
 
 const eq = (self, that) => {
-  if (self === that) {
+  if (rawequal(self, that)) {
     return true;
   }
   if (is_table(self) && is_table(that)) {
@@ -364,7 +464,7 @@ const lt = (self, that) => {
   if (is_number(self) && is_number(that)) {
     return self < that;
   } else if (is_string(self) && is_string(that)) {
-    return self < that;
+    return unwrap(self) < unwrap(that);
   } else {
     let field = getmetafield(self, "__lt");
     if (is_nil(field)) {
@@ -374,14 +474,14 @@ const lt = (self, that) => {
       return toboolean(call1(field, self, that));
     }
   }
-  throw new runtime_error("attempt to compare " + type(self) + " with " + type(that));
+  throw new runtime_error(concat("attempt to compare ", type(self), " with ", type(that)));
 };
 
 const le = (self, that) => {
   if (is_number(self) && is_number(that)) {
     return self <= that;
   } else if (is_string(self) && is_string(that)) {
-    return self <= that;
+    return unwrap(self) <= unwrap(that);
   } else {
     let field = getmetafield(self, "__le");
     if (is_nil(field)) {
@@ -398,8 +498,28 @@ const le = (self, that) => {
       return !toboolean(call1(field, that, self));
     }
   }
-  throw new runtime_error("attempt to compare " + type(self) + " with " + type(that));
+  throw new runtime_error(concat("attempt to compare ", type(self), " with ", type(that)));
 };
+
+let print;
+if (typeof process !== "undefined") {
+  print = (...args) => {
+    const result = [];
+    for (let i = 0; i < args.length; ++i) {
+      result.push(unwrap(tostring(args[i])));
+    }
+    process.stdout.write(result.join("\t"));
+    process.stdout.write("\n");
+  };
+} else {
+  print = (...args) => {
+    const result = [];
+    for (let i = 0; i < args.length; ++i) {
+      result.push(unwrap(tostring(args[i])));
+    }
+    console.log(result.join("\t"));
+  };
+}
 
 const range_i = (i, size) => {
   if (i < 0) {
@@ -432,8 +552,12 @@ const range_j = (j, size) => {
 };
 
 const suppress_no_unsed = () => {};
-suppress_no_unsed(len);
+suppress_no_unsed(upvalue_t);
 suppress_no_unsed(setlist);
+suppress_no_unsed(len);
+suppress_no_unsed(eq);
+suppress_no_unsed(lt);
+suppress_no_unsed(le);
 
 const open_base = env => {
   const ipairs_iterator = (table, index) => {
@@ -484,22 +608,16 @@ const open_base = env => {
     }
   });
 
-  settable(env, "print", (...args) => {
-    if (typeof process !== "undefined") {
-      for (let i = 0; i < args.length; ++i) {
-        if (i > 0) {
-          process.stdout.write("\t");
-        }
-        process.stdout.write(tostring(args[i]));
-      }
-      process.stdout.write("\n");
-    } else {
-      console.log(...args);
-    }
-  });
+  settable(env, "print", print);
+
+  settable(env, "rawequal", rawequal);
+
+  settable(env, "rawget", rawget);
+
+  settable(env, "rawset", rawset);
 
   settable(env, "select", (index, ...args) => {
-    if (eq(index, "#")) {
+    if (rawequal(index, "#")) {
       return args.length;
     }
     const min = range_i(checkinteger(index), args.length);
@@ -519,57 +637,55 @@ const open_base = env => {
   settable(env, "type", type);
 };
 
-const open_string = env => {
-  const module = new Map();
+const open_string = (env, string_metatable) => {
+  const module = new table_t();
 
   settable(module, "byte", (s, i, j) => {
-    const buffer = string_buffer(s);
+    const buffer = checkstring(s).buffer;
     const index = optinteger(i, 1);
     const min = range_i(index, buffer.byteLength);
     const max = range_j(optinteger(j, index), buffer.byteLength);
-    const result = [];
-    for (let i = min; i < max; ++i) {
-      result.push(buffer[i]);
+    if (min < max) {
+      const result = [];
+      for (let i = min; i < max; ++i) {
+        result.push(buffer[i]);
+      }
+      return result;
+    } else {
+      return [];
     }
-    return result;
   });
 
   settable(module, "char", (...args) => {
-    if (typeof TextDecoder !== "undefined") {
-      return new TextDecoder().decode(new Uint8Array(args));
-    } else if (typeof Buffer !== "undefined") {
-      return Buffer.from(args).toString();
-    } else {
-      throw new runtime_error("no UTF-8 decoder");
+    const buffer = make_buffer(args.length);
+    for (let i = 0; i < buffer.byteLength; ++i) {
+      buffer[i] = args[i];
     }
+    return new string_t(buffer_to_string(buffer), buffer);
   });
 
   settable(module, "len", s => {
-    return string_buffer(s).byteLength;
+    return checkstring(s).buffer.byteLength;
   });
 
   settable(module, "sub", (s, i, j) => {
-    const buffer = string_buffer(checkstring(s));
+    let buffer = checkstring(s).buffer;
     const min = range_i(optinteger(i, 1), buffer.byteLength);
     const max = range_j(optinteger(j, buffer.byteLength), buffer.byteLength);
     if (min < max) {
-      if (typeof TextDecoder !== "undefined") {
-        return new TextDecoder().decode(buffer.slice(min, max));
-      } else if (typeof Buffer !== "undefined") {
-        return buffer.slice(min, max).toString();
-      } else {
-        throw new runtime_error("no UTF-8 decoder");
-      }
+      buffer = buffer.slice(min, max);
+      return new string_t(buffer_to_string(buffer), buffer);
     } else {
-      return "";
+      return wrap("");
     }
   });
 
   settable(env, "string", module);
-  string_metatable.set("__index", module);
+  settable(string_metatable, "__index", module);
 };
 
-const env = new Map();
+const string_metatable = new table_t();
+const env = new table_t();
 open_base(env);
-open_string(env);
+open_string(env, string_metatable);
 ]]

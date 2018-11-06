@@ -42,10 +42,6 @@ local function encode_string(s)
   return "\"" .. s:gsub("[%z\1-\31\127]", char_table) .. "\""
 end
 
-local function proto_name(var)
-  return var .. "_t"
-end
-
 local function encode_var(var)
   local result = var_table[var]
   if result then
@@ -123,196 +119,236 @@ local tmpl = template(encode_var, {
   TONUMBER = "%1 = %2.checknumber()";
 })
 
-local compile_proto
 local compile_code
 
-local function write_block(self, out, code)
+local function write_block(self, out, code, indent)
   for i = 1, #code do
-    compile_code(self, out, code[i])
+    compile_code(self, out, code[i], indent)
   end
 end
 
-function compile_code(self, out, code)
+function compile_code(self, out, code, indent)
   local name = code[0]
   if code.block then
     if name == "LOOP" then
-      out:write "for (;;) {\n"
-      write_block(self, out, code)
-      out:write "}\n"
+      out:write(indent, "for (;;) {\n")
+      write_block(self, out, code, indent .. "  ")
+      out:write(indent, "}\n")
     elseif name == "COND" then
       local cond = code[1]
       if cond[2] == "TRUE" then
-        out:write(("if (%s.toboolean()) {\n"):format(encode_var(cond[1])))
+        out:write(indent, ("if (%s.toboolean()) {\n"):format(encode_var(cond[1])))
       else
-        out:write(("if (!%s.toboolean()) {\n"):format(encode_var(cond[1])))
+        out:write(indent, ("if (!%s.toboolean()) {\n"):format(encode_var(cond[1])))
       end
-      compile_code(self, out, code[2])
+      write_block(self, out, code[2], indent .. "  ")
       if #code == 2 then
-        out:write "}\n"
+        out:write(indent, "}\n")
       else
-        out:write "} else {\n"
-        compile_code(self, out, code[3])
-        out:write "}\n"
+        out:write(indent, "} else {\n")
+        write_block(self, out, code[3], indent .. "  ")
+        out:write(indent, "}\n")
       end
     else
-      write_block(self, out, code)
+      write_block(self, out, code, indent)
     end
   else
     if name == "CALL" then
       local var = code[1]
       if var == "NIL" then
-        out:write(("call0(%s, %s);\n"):format(encode_var(code[2]), encode_vars(code, 3)))
+        out:write(indent, ("call0(%s, %s);\n"):format(encode_var(code[2]), encode_vars(code, 3)))
       elseif var == "T" then
-        out:write(("T = call(%s, %s);\n"):format(encode_var(code[2]), encode_vars(code, 3)))
+        out:write(indent, ("T = call(%s, %s);\n"):format(encode_var(code[2]), encode_vars(code, 3)))
       else
-        out:write(("%s = call1(%s, %s);\n"):format(encode_var(var), encode_var(code[2]), encode_vars(code, 3)))
+        out:write(indent, ("%s = call1(%s, %s);\n"):format(encode_var(var), encode_var(code[2]), encode_vars(code, 3)))
       end
     elseif name == "RETURN" then
       local n = #code
       if n == 0 then
-        out:write "return nullptr;\n"
+        out:write(indent, "return {};\n")
       else
-        out:write(("return %s;\n"):format(encode_vars(code)))
+        out:write(indent, ("return %s;\n"):format(encode_vars(code)))
       end
     elseif name == "SETLIST" then
-      out:write(("setlist(%s, %d, %s);\n"):format(encode_var(code[1]), code[2], encode_var(code[3])))
+      out:write(indent, ("setlist(%s, %d, %s);\n"):format(encode_var(code[1]), code[2], encode_var(code[3])))
     elseif name == "CLOSURE" then
-      out:write(("value_t %s = std::make_shared<%s_t>(U, A, B);\n"):format(code[1], code[1]))
+      out:write(indent, ("value_t %s = std::make_shared<%s_T>(U, A, B);\n"):format(code[1], code[1]))
     elseif name == "LABEL" then
-      out:write(("%s:\n"):format(code[1]))
+      out:write(("  %s:\n"):format(code[1]))
     else
-      out:write(tmpl:eval(name, code), ";\n")
+      out:write(indent, tmpl:eval(name, code), ";\n")
     end
   end
 end
 
-function compile_proto(self, out, proto)
+local function compile_constants(self, out, proto)
   local name = proto[1]
-
   local constants = proto.constants
-  local upvalues = proto.upvalues
+  local n = #constants
 
-  local kn = #constants
-  local un = #upvalues
-
-  if kn > 0 then
-    out:write(("struct %s_k {\n"):format(name))
-    for i = 1, kn do
-      out:write(("const value_t %s;\n"):format(constants[i][1]))
-    end
-    out:write(("%s_k()\n"):format(name))
-    for i = 1, kn do
-      if i == 1 then
-        out:write ": "
-      else
-        out:write ",\n  "
-      end
-
-      local constant = constants[i]
-      if constant.type == "string" then
-        local source = constant.source
-        out:write(("%s(%s, %d)"):format(constant[1], encode_string(source), #source))
-      else
-        out:write(("%s(%.17g)"):format(constant[1], tonumber(constant.source)))
-      end
-    end
-    out:write " {}\n"
+  if n == 0 then
     out:write(([[
-static const %s_k* get() {
-  static const %s_k instance;
-  return &instance;
-}
-]]):format(name, name))
-    out:write "};\n"
+
+struct %s_K {
+  static const %s_K* get() {
+    static const %s_K instance;
+    return &instance;
+  }
+};
+]]):format(name, name, name))
+    return
   end
 
-  out:write(("struct %s_t : proto_t<%d> {\n"):format(name, proto.A))
-
-  if kn > 0 then
-    out:write(("const %s_k* K;\n"):format(name))
-  end
-  if un > 0 then
-    out:write "uparray_t U;\n"
-  end
-
-  out:write(("%s_t(uparray_t S, array_t A, array_t B)\n"):format(name))
-  local first = true
-  if kn > 0 then
-    first = false
-    out:write((": K(%s_k::get())"):format(name))
-  end
-  if un > 0 then
-    if first then
-      first = false
-      out:write ": "
+  local decls = {}
+  local inits = {}
+  for i = 1, n do
+    local constant = constants[i]
+    local name = constant[1]
+    decls[i] = ("const value_t %s"):format(name)
+    if constant.type == "string" then
+      local source = constant.source
+      inits[i] = ("%s(%s, %d)"):format(name, encode_string(source), #source)
     else
-      out:write ",\n  "
+      inits[i] = ("%s(%.17g)"):format(name, tonumber(constant.source))
     end
-    out:write "U {\n"
-    for i = 1, #upvalues do
-      local upvalue = upvalues[i]
-      local var = upvalue[2]
-      local key = var:sub(1, 1)
-      if key == "U" then
-        out:write(("    S[%d],\n"):format(var:sub(2)))
-      else
-        out:write(("    { %s, %d },\n"):format(key, var:sub(2)))
-      end
-    end
-    out:write "  }"
   end
-  out:write " {}\n"
 
   out:write(([[
-array_t operator()(array_t A, array_t V) const {
-array_t B(%d);
-array_t C(%d);
-]]):format(proto.B, proto.C))
-  if proto.T then
-    out:write "array_t T;\n"
-  end
-  compile_code(self, out, proto.code)
-  out:write "return {};\n}\n"
 
-  out:write "};\n"
+struct %s_K {
+  %s;
+
+  %s_K()
+    : %s {}
+
+  static const %s_K* get() {
+    static const %s_K instance;
+    return &instance;
+  }
+};
+]]):format(
+    name,
+    template.concat(decls, ";\n  "),
+    name,
+    template.concat(inits, ",\n      "),
+    name,
+    name))
 end
 
+local function compile_blocks(self, out, proto)
+  local name = proto[1]
+
+  out:write(([[
+
+struct %s_Q {
+  const %s_K* K;
+  uparray_t U;
+  array_t A;
+  array_t V;
+  array_t B;
+  array_t C;
+  array_t T;
+
+  %s_Q(uparray_t U, array_t A, array_t V)
+    : K(%s_K::get()),
+      U(U),
+      A(A),
+      V(V),
+      B(%d),
+      C(%d) {}
+
+  array_t Q0() {
+]]):format(name, name, name, name, proto.B, proto.C))
+
+  compile_code(self, out, proto.code, "    ")
+
+  out:write [[
+    return {};
+  }
+};
+]]
+end
+
+local function compile_proto(self, out, proto)
+  local name = proto[1]
+  local upvalues = proto.upvalues
+  local n = #upvalues
+
+  local inits = {}
+  for i = 1, n do
+    local var = upvalues[i][2]
+    local key = var:sub(1, 1)
+    if key == "U" then
+      inits[i] = ("S[%d]"):format(var:sub(2))
+    else
+      inits[i] = ("{ %s, %d }"):format(key, var:sub(2))
+    end
+  end
+
+  compile_constants(self, out, proto)
+  compile_blocks(self, out, proto)
+
+  out:write(([[
+
+struct %s_T : proto_t<%d> {
+  uparray_t U;
+
+  %s_T(uparray_t S, array_t A, array_t B)
+    : U {%s} {}
+
+  array_t operator()(array_t A, array_t V) const {
+    return std::make_shared<%s_Q>(U, A, V)->Q0();
+  }
+};
+]]):format(
+    name,
+    proto.A,
+    name,
+    template.concat(inits, ",\n        ", "\n        ", ",\n      "),
+    name))
+end
 
 return function (self, out, name)
-  out:write [[
+  local namespace
+  if name then
+    namespace = "namespace " .. name
+  else
+    namespace = "namespace"
+  end
+
+  out:write(([[
 #include <cmath>
 #include <iostream>
 #include "runtime.hpp"
-]]
 
-  out:write "namespace"
-  if name then
-    out:write(" ", name)
-  end
-  out:write "{\n"
-  out:write "using namespace dromozoa::runtime;\n"
+%s {
+using namespace dromozoa::runtime;
+]]):format(namespace))
 
   local protos = self.protos
   for i = #protos, 1, -1 do
     compile_proto(self, out, protos[i])
   end
 
-  out:write "}\n"
-
-  if name then
-    return out
-  end
-
   out:write [[
-int main(int, char*[]) {
-  using namespace dromozoa::runtime;
 
+value_t chunk() {
   uparray_t S;
   array_t A;
   array_t B = { env };
+  return std::make_shared<P0_T>(S, A, B);
+}
+
+}
+]]
+
+  if not name then
+    out:write [[
+
+int main(int, char*[]) {
+  using namespace dromozoa::runtime;
   try {
-    value_t P0 = std::make_shared<P0_t>(S, A, B);
-    call0(P0, {});
+    call0(chunk(), {});
     return 0;
   } catch (const value_t& e) {
     std::cerr << tostring(e) << std::endl;
@@ -322,6 +358,7 @@ int main(int, char*[]) {
   return 1;
 }
 ]]
+  end
 
   return out
 end
