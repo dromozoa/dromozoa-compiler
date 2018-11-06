@@ -216,10 +216,10 @@ local function generate_tree_code(stack, node, symbol_table)
 end
 
 local function generate_flat_code(proto, code, break_label)
+  local name = code[0]
   local flat_code = proto.flat_code
 
   if code.block then
-    local name = code[0]
     if name == "LOOP" then
       local n = proto.M
       local x = "M" .. n
@@ -262,7 +262,11 @@ local function generate_flat_code(proto, code, break_label)
       end
     end
   else
-    flat_code[#flat_code + 1] = code
+    if name == "BREAK" then
+      flat_code[#flat_code + 1] = { [0] = "GOTO", break_label }
+    else
+      flat_code[#flat_code + 1] = code
+    end
   end
 end
 

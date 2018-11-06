@@ -48,7 +48,7 @@ local function encode_var(var)
     return result
   else
     local key = var:sub(1, 1)
-    if key == "P" or key == "L" then
+    if key == "P" or key == "L" or key == "M" then
       return var
     elseif key == "U" then
       return "(*U[" .. var:sub(2) .. "])"
@@ -175,6 +175,12 @@ function compile_code(self, out, code, indent)
       out:write(indent, ("value_t %s = std::make_shared<%s_T>(U, A, B);\n"):format(code[1], code[1]))
     elseif name == "LABEL" then
       out:write(("  %s:\n"):format(code[1]))
+    elseif name == "COND" then
+      if code[2] == "TRUE" then
+        out:write(indent, ("if (%s.toboolean()) { goto %s; } else { goto %s; }"):format(encode_var(code[1]), code[3], code[4]))
+      else
+        out:write(indent, ("if (!%s.toboolean()) { goto %s; } else { goto %s; }"):format(encode_var(code[1]), code[3], code[4]))
+      end
     else
       out:write(indent, tmpl:eval(name, code), ";\n")
     end
@@ -260,7 +266,7 @@ struct %s_Q {
   array_t Q0() {
 ]]):format(name, name, name, name, proto.B, proto.C))
 
-  compile_code(self, out, proto.tree_code, "    ")
+  compile_code(self, out, proto.flat_code, "    ")
 
   out:write [[
     return {};
