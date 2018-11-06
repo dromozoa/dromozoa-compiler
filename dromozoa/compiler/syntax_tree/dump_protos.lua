@@ -113,7 +113,7 @@ local function dump_proto(out, proto)
     end
   end
 
-  dump_code(out, proto.code, "  ")
+  dump_code(out, proto.flat_code, "  ")
 
   out:write "\n"
 end

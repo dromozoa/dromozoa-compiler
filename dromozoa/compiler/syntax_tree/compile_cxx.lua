@@ -260,7 +260,7 @@ struct %s_Q {
   array_t Q0() {
 ]]):format(name, name, name, name, proto.B, proto.C))
 
-  compile_code(self, out, proto.code, "    ")
+  compile_code(self, out, proto.tree_code, "    ")
 
   out:write [[
     return {};

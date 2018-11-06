@@ -215,7 +215,7 @@ local function compile_emulated_goto(self, out, proto, indent)
       switch (L) {
       case 0:
 ]]):format(template.concat(decls, ";\n    ")))
-  compile_code(self, out, proto.code, "        ")
+  compile_code(self, out, proto.tree_code, "        ")
   out:write [[
       }
       return;
@@ -250,7 +250,7 @@ class %s_Q {
   if proto["goto"] then
     compile_emulated_goto(self, out, proto, "    ")
   else
-    compile_code(self, out, proto.code, "    ")
+    compile_code(self, out, proto.tree_code, "    ")
   end
 
   out:write [[

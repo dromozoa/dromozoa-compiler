@@ -19,12 +19,12 @@ local code_builder = require "dromozoa.compiler.syntax_tree.code_builder"
 
 local unpack = table.unpack or unpack
 
-local function generate_code(stack, node, symbol_table)
+local function generate_tree_code(stack, node, symbol_table)
   local proto = node.proto
   if proto then
     code_builder(stack, node):CLOSURE(proto[1])
     local code = { block = true }
-    proto.code = code
+    proto.tree_code = code
     stack = { code }
   end
 
@@ -40,7 +40,7 @@ local function generate_code(stack, node, symbol_table)
   end
 
   for i = 1, n do
-    generate_code(stack, node[i], symbol_table)
+    generate_tree_code(stack, node[i], symbol_table)
     if i == inorder then
       if symbol == symbol_table["while"] then
         _:COND_IF(node[1].var, "FALSE")
@@ -215,7 +215,68 @@ local function generate_code(stack, node, symbol_table)
   end
 end
 
+local function generate_flat_code(proto, code, break_label)
+  local flat_code = proto.flat_code
+
+  if code.block then
+    local name = code[0]
+    if name == "LOOP" then
+      local n = proto.M
+      local x = "M" .. n
+      local y = "M" .. n + 1
+      proto.M = n + 2
+      flat_code[#flat_code + 1] = { [0] = "LABEL", x }
+      for i = 1, #code do
+        generate_flat_code(proto, code[i], y)
+      end
+      flat_code[#flat_code + 1] = { [0] = "GOTO", x }
+      flat_code[#flat_code + 1] = { [0] = "LABEL", y }
+    elseif name == "COND" then
+      local cond = code[1]
+      if #code == 2 then
+        local n = proto.M
+        local x = "M" .. n
+        local y = "M" .. n + 1
+        proto.M = n + 2
+        flat_code[#flat_code + 1] = { [0] = "COND", cond[1], cond[2], x, y }
+        flat_code[#flat_code + 1] = { [0] = "LABEL", x }
+        generate_flat_code(proto, code[2], break_label)
+        flat_code[#flat_code + 1] = { [0] = "LABEL", y }
+      else
+        local n = proto.M
+        local x = "M" .. n
+        local y = "M" .. n + 1
+        local z = "M" .. n + 2
+        proto.M = n + 3
+        flat_code[#flat_code + 1] = { [0] = "COND", cond[1], cond[2], x, y }
+        flat_code[#flat_code + 1] = { [0] = "LABEL", x }
+        generate_flat_code(proto, code[2], break_label)
+        flat_code[#flat_code + 1] = { [0] = "GOTO", z }
+        flat_code[#flat_code + 1] = { [0] = "LABEL", y }
+        generate_flat_code(proto, code[3], break_label)
+        flat_code[#flat_code + 1] = { [0] = "LABEL", z }
+      end
+    else
+      for i = 1, #code do
+        generate_flat_code(proto, code[i], break_label)
+      end
+    end
+  else
+    flat_code[#flat_code + 1] = code
+  end
+end
+
 return function (self)
-  generate_code({ { block = true } }, self.accepted_node, self.symbol_table)
+  generate_tree_code({ { block = true } }, self.accepted_node, self.symbol_table)
+
+  local protos = self.protos
+  local n = #protos
+  for i = 1, n do
+    local proto = protos[i]
+    proto.M = 0
+    proto.flat_code = { block = true }
+    generate_flat_code(proto, proto.tree_code)
+  end
+
   return self
 end
