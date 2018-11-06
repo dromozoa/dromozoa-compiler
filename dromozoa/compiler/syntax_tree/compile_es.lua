@@ -52,7 +52,7 @@ local function encode_var(var)
     return result
   else
     local key = var:sub(1, 1)
-    if key == "P" or key == "L" then
+    if key == "P" or key == "L" or key == "M" then
       return var
     elseif key == "U" then
       return "U[" .. var:sub(2) .. "].value"
@@ -174,6 +174,12 @@ function compile_code(self, out, code, indent)
       out:write(indent, ("const %s = new %s_T(U, A, B);\n"):format(code[1], code[1]))
     elseif name == "LABEL" then
       out:write(("      case %s:\n"):format(encode_var(code[1])))
+    elseif name == "COND" then
+      if code[2] == "TRUE" then
+        out:write(indent, ("if (toboolean(%s)) { L = %s; continue; } else { L = %s; continue }\n"):format(encode_var(code[1]), code[3], code[4]))
+      else
+        out:write(indent, ("if (!toboolean(%s)) { L = %s; continue; } else { L = %s; continue }\n"):format(encode_var(code[1]), code[3], code[4]))
+      end
     else
       out:write(indent, tmpl:eval(name, code), ";\n")
     end
@@ -207,6 +213,10 @@ local function compile_emulated_goto(self, out, proto, indent)
   for i = 1, #labels do
     decls[i] = ("const %s = %d"):format(labels[i][1], i)
   end
+  for i = 0, proto.M - 1 do
+    local n = #decls + 1
+    decls[n] = ("const M%d = %d"):format(i, n)
+  end
 
   out:write(([[
     %s;
@@ -215,7 +225,10 @@ local function compile_emulated_goto(self, out, proto, indent)
       switch (L) {
       case 0:
 ]]):format(template.concat(decls, ";\n    ")))
-  compile_code(self, out, proto.tree_code, "        ")
+
+  -- compile_code(self, out, proto.tree_code, "        ")
+  compile_code(self, out, proto.flat_code, "        ")
+
   out:write [[
       }
       return;
@@ -247,11 +260,12 @@ class %s_Q {
     const C = this.C;
 ]]):format(name, name))
 
-  if proto["goto"] then
-    compile_emulated_goto(self, out, proto, "    ")
-  else
-    compile_code(self, out, proto.tree_code, "    ")
-  end
+  -- if proto["goto"] then
+  --   compile_emulated_goto(self, out, proto, "    ")
+  -- else
+  --   compile_code(self, out, proto.tree_code, "    ")
+  -- end
+  compile_emulated_goto(self, out, proto, "    ")
 
   out:write [[
   }
