@@ -19,7 +19,7 @@ local code_builder = require "dromozoa.compiler.syntax_tree.code_builder"
 
 local unpack = table.unpack or unpack
 
-local function generate(stack, node, symbol_table)
+local function generate_code(stack, node, symbol_table)
   local proto = node.proto
   if proto then
     code_builder(stack, node):CLOSURE(proto[1])
@@ -40,7 +40,7 @@ local function generate(stack, node, symbol_table)
   end
 
   for i = 1, n do
-    generate(stack, node[i], symbol_table)
+    generate_code(stack, node[i], symbol_table)
     if i == inorder then
       if symbol == symbol_table["while"] then
         _:COND_IF(node[1].var, "FALSE")
@@ -216,6 +216,6 @@ local function generate(stack, node, symbol_table)
 end
 
 return function (self)
-  generate({ { block = true } }, self.accepted_node, self.symbol_table)
+  generate_code({ { block = true } }, self.accepted_node, self.symbol_table)
   return self
 end
