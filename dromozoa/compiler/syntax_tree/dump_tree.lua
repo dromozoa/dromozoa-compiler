@@ -186,7 +186,7 @@ local function add_edges(node, that, nid_to_uid)
   end
 end
 
-local function to_graph(self, tree_width, tree_height)
+local function to_graph(self, width, height)
   local symbol_names = self.symbol_names
   local accepted_node = self.accepted_node
 
@@ -226,15 +226,15 @@ local function to_graph(self, tree_width, tree_height)
   end
 
   return _"div" {
-    class = "tree";
+    class = "graph";
     _"svg" {
       version = "1.1";
-      width = tree_width;
-      height = tree_height;
+      width = width;
+      height = height;
       _"rect" {
         class = "viewport";
-        width = tree_width;
-        height = tree_height;
+        width = width;
+        height = height;
         fill = "transparent";
         stroke = "none";
       };

@@ -25,13 +25,13 @@ text {
   transition: background-color 400ms;
 }
 
-.tree {
+.graph {
   background-color: rgba(0,0,0,0.125);
   position: fixed;
   right: 0;
 }
 
-.tree svg {
+.graph svg {
   display: block;
 }
 
