@@ -272,26 +272,74 @@ end
 
 local function generate_basic_blocks(proto)
   local flat_code = proto.flat_code
-
+  local n = #flat_code
   local g = graph()
-  local labels = {}
-  local blocks = {}
 
   local entry_uid = g:add_vertex()
-  labels[entry_uid] = "entry"
-  blocks[entry_uid] = {}
+  local uid
+  local uids = { entry_uid }
+  local block
+  local blocks = { [entry_uid] = {} }
+  local labels = {}
 
-  local exit_uid = g:add_vertex()
-  labels[exit_uid] = "exit"
-  blocks[exit_uid] = {}
-
-  local this_uid
-  for i = 1, #flat_code do
-    if not this_uid then
-      this_uid = g:add_vertex()
-      labels[this_uid] = "BB" .. i
+  for i = 1, n do
+    local code = flat_code[i]
+    local name = code[0]
+    if name == "LABEL" then
+      uid = g:add_vertex()
+      uids[#uids + 1] = uid
+      block = {}
+      blocks[uid] = block
+      labels[code[1]] = uid
+    else
+      if not uid then
+        uid = g:add_vertex()
+        uids[#uids + 1] = uid
+        block = {}
+        blocks[uid] = block
+      end
+      block[#block + 1] = code
+      if name == "CALL" or name == "RETURN" or name == "GOTO" or name == "COND" then
+        uid = nil
+      end
     end
   end
+
+  local exit_uid = g:add_vertex()
+  uids[#uids + 1] = exit_uid
+  blocks[exit_uid] = {}
+  local jumps = {}
+
+  local this_uid = uids[1]
+  for i = 2, #uids do
+    local next_uid = uids[i]
+    local block = blocks[this_uid]
+    local code = block[#block]
+    local name
+    if code then
+      name = code[0]
+    end
+    if name == "GOTO" then
+      g:add_edge(this_uid, labels[code[1]])
+    elseif name == "RETURN" then
+      g:add_edge(this_uid, exit_uid)
+    elseif name == "COND" then
+      local then_eid = g:add_edge(this_uid, labels[code[3]])
+      local else_eid = g:add_edge(this_uid, labels[code[4]])
+      jumps[then_eid] = "THEN"
+      jumps[else_eid] = "ELSE"
+    else
+      g:add_edge(this_uid, next_uid)
+    end
+    this_uid = next_uid
+  end
+
+  proto.basic_blocks = {
+    g = g;
+    entry_uid = entry_uid;
+    exit_uid = exit_uid;
+    jumps = jumps;
+  }
 end
 
 return function (self)
