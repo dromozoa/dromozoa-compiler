@@ -200,6 +200,29 @@ const %s_K = [%s];
 ]]):format(name, template.concat(inits, ",\n  ", "\n  ", ",\n")))
 end
 
+local function compile_emulated_goto(self, out, proto, indent)
+  local labels = proto.labels
+
+  local decls = {}
+  for i = 1, #labels do
+    decls[i] = ("const %s = %d"):format(labels[i][1], i)
+  end
+
+  out:write(([[
+    %s;
+    let L = 0;
+    for (;;) {
+      switch (L) {
+      case 0:
+]]):format(template.concat(decls, ";\n    ")))
+  compile_code(self, out, proto.code, "        ")
+  out:write [[
+      }
+      return;
+    }
+]]
+end
+
 local function compile_blocks(self, out, proto)
   local name = proto[1]
 
@@ -226,23 +249,7 @@ class %s_Q {
 ]]):format(name, name))
 
   if proto["goto"] then
-    local labels = proto.labels
-    for i = 1, #labels do
-      out:write(("    const %s = %d;\n"):format(labels[i][1], i))
-    end
-
-    out:write [[
-    let L = 0;
-    for (;;) {
-      switch (L) {
-      case 0:
-]]
-    compile_code(self, out, proto.code, "        ")
-    out:write [[
-      }
-      return;
-    }
-]]
+    compile_emulated_goto(self, out, proto, "    ")
   else
     compile_code(self, out, proto.code, "    ")
   end
@@ -257,25 +264,25 @@ local function compile_proto(self, out, proto)
   local name = proto[1]
   local upvalues = proto.upvalues
 
-  local inits = {}
+  local uinits = {}
   for i = 1, #upvalues do
     local var = upvalues[i][2]
     local key = var:sub(1, 1)
     if key == "U" then
-      inits[i] = ("S[%d]"):format(var:sub(2))
+      uinits[i] = ("S[%d]"):format(var:sub(2))
     else
-      inits[i] = ("new upvalue_t(%s, %d)"):format(key, var:sub(2))
+      uinits[i] = ("new upvalue_t(%s, %d)"):format(key, var:sub(2))
     end
   end
 
-  local pars = {}
-  local args = {}
+  local params = {}
+  local ainits = {}
   for i = 1, proto.A do
     local name = "A" .. i - 1
-    pars[i] = name
-    args[i] = name
+    params[i] = name
+    ainits[i] = name
   end
-  pars[#pars + 1] = "...V"
+  params[#params + 1] = "...V"
 
   compile_constants(self, out, proto)
   compile_blocks(self, out, proto)
@@ -295,9 +302,9 @@ class %s_T extends proto_t {
 }
 ]]):format(
     name,
-    template.concat(inits, ",\n      ", "\n      ", ",\n    "),
-    template.concat(pars, ", "),
-    template.concat(args, ",\n      ", "\n      ", ",\n    "),
+    template.concat(uinits, ",\n      ", "\n      ", ",\n    "),
+    template.concat(params, ", "),
+    template.concat(ainits, ",\n      ", "\n      ", ",\n    "),
     name))
 end
 
