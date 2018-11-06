@@ -463,7 +463,7 @@ const rawequal = (self, that) => {
     return unwrap(self) === unwrap(that);
   }
   return false;
-}
+};
 
 const eq = (self, that) => {
   if (rawequal(self, that)) {
@@ -576,6 +576,7 @@ const suppress_no_unsed = () => {};
 suppress_no_unsed(upvalue_t);
 suppress_no_unsed(setlist);
 suppress_no_unsed(len);
+suppress_no_unsed(eq);
 suppress_no_unsed(lt);
 suppress_no_unsed(le);
 
