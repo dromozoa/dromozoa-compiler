@@ -186,9 +186,8 @@ local function compile_constants(self, out, proto)
   local constants = proto.constants
   local n = #constants
 
-  local decls = {};
-  local inits = {};
-
+  local decls = {}
+  local inits = {}
   for i = 1, n do
     local constant = constants[i]
     local name = constant[1]

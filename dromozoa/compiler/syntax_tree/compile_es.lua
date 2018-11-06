@@ -180,30 +180,39 @@ function compile_code(self, out, code, indent)
   end
 end
 
-local function compile_proto(self, out, proto)
+local function compile_constants(self, out, proto)
   local name = proto[1]
   local constants = proto.constants
-  local upvalues = proto.upvalues
+  local n = #constants
 
-  local kn = #constants
-  local un = #upvalues
-  local an = proto.A
+  local inits = {}
 
-  out:write(("\nconst %s_K = ["):format(name))
-  if kn == 0 then
-    out:write "];\n"
-  else
-    out:write "\n"
-    for i = 1, kn do
-      local constant = constants[i]
-      if constant.type == "string" then
-        out:write(("  wrap(%s),\n"):format(encode_string(constant.source)))
-      else
-        out:write(("  %.17g,\n"):format(tonumber(constant.source)))
-      end
+  for i = 1, n do
+    local constant = constants[i]
+    if constant.type == "string" then
+      inits[i] = ("wrap(%s)"):format(encode_string(constant.source))
+    else
+      inits[i] = ("%.17g"):format(tonumber(constant.source))
     end
-    out:write "];\n"
   end
+
+  if n == 0 then
+    out:write(([[
+
+const %s_K = [];
+]]):format(name))
+  else
+    out:write(([[
+
+const %s_K = [
+  %s,
+];
+]]):format(name, table.concat(inits, ",\n  ")))
+  end
+end
+
+local function compile_blocks(self, out, proto)
+  local name = proto[1]
 
   out:write(([[
 
@@ -232,6 +241,7 @@ class %s_Q {
     for i = 1, #labels do
       out:write(("    const %s = %d;\n"):format(labels[i][1], i))
     end
+
     out:write [[
     let L = 0;
     for (;;) {
@@ -253,49 +263,73 @@ class %s_Q {
 }
 ]]
 
+
+end
+
+local function compile_proto(self, out, proto)
+  local name = proto[1]
+
+  local upvalues = proto.upvalues
+  local m = #upvalues
+  local n = proto.A
+
+  local inits = {}
+  for i = 1, m do
+    local var = upvalues[i][2]
+    local key = var:sub(1, 1)
+    if key == "U" then
+      inits[i] = ("S[%d]"):format(var:sub(2))
+    else
+      inits[i] = ("new upvalue_t(%s, %d)"):format(key, var:sub(2))
+    end
+  end
+
+  local pars = {}
+  local args = {}
+  for i = 1, n do
+    local name = "A" .. i - 1
+    pars[i] = name
+    args[i] = name
+  end
+  pars[#pars + 1] = "...V"
+
+  compile_constants(self, out, proto)
+  compile_blocks(self, out, proto)
+
   out:write(([[
 
 class %s_T extends proto_t {
   constructor(S, A, B) {
     super();
 ]]):format(name))
-  if un == 0 then
-    out:write "    this.U = [];\n"
+  if m == 0 then
+    out:write [[
+    this.U = [];
+]]
   else
-    out:write "    this.U = [\n"
-    for i = 1, un do
-      local var = upvalues[i][2]
-      local key = var:sub(1, 1)
-      if key == "U" then
-        out:write(("      S[%d],\n"):format(var:sub(2)))
-      else
-        out:write(("      new upvalue_t(%s, %d),\n"):format(key, var:sub(2)))
-      end
-    end
-    out:write "    ];\n"
+    out:write(([[
+    this.U = [
+      %s,
+    ];
+]]):format(table.concat(inits, ",\n      ")))
   end
-
-  out:write "  }\n"
-
-  local params = {}
-  for i = 1, an do
-    params[i] = "A" .. i - 1
-  end
-  params[#params + 1] = "...V"
 
   out:write(([[
+  }
 
   enter(%s) {
-]]):format(table.concat(params, ", ")))
+]]):format(table.concat(pars, ", ")))
 
-  if an == 0 then
-    out:write "    const A = [];\n"
+  if n == 0 then
+    out:write [[
+    const A = [];
+]]
   else
-    out:write "    const A = [\n"
-    for i = 1, an do
-      out:write("       A", i - 1, ",\n")
-    end
-    out:write "     ];\n"
+    out:write(([[
+    const A = [
+      %s,
+    ];
+]]):format(table.concat(args, ",\n      ")))
   end
 
   out:write(([[
@@ -307,26 +341,35 @@ end
 
 return function (self, out, name)
   if name then
-    out:write(("%s = ("):format(name))
+    out:write(([[
+%s = () => {
+]]):format(name))
   else
-    out:write "("
+    out:write [[
+(() => {
+]]
   end
-  out:write "() => {\n"
   out:write(runtime_es);
 
   local protos = self.protos
   for i = #protos, 1, -1 do
     compile_proto(self, out, protos[i])
   end
+
   out:write [[
 
 return new P0_T([], [], [ env ]);
 ]]
 
   if name then
-    out:write "});\n"
+    out:write [[
+};
+]]
   else
-    out:write "})().enter();\n"
+    out:write [[
+})().enter();
+]]
   end
+
   return out
 end
