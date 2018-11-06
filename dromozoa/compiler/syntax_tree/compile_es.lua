@@ -236,7 +236,6 @@ class %s_Q {
     this.V = V;
     this.B = [];
     this.C = [];
-    this.T = undefined;
   }
 
   Q0() {
@@ -304,7 +303,7 @@ class %s_T extends proto_t {
     name,
     template.concat(uinits, ",\n      ", "\n      ", ",\n    "),
     template.concat(params, ", "),
-    template.concat(ainits, ",\n      ", "\n      ", ",\n    "),
+    template.concat(ainits, ", ", " ", " "),
     name))
 end
 
