@@ -60,19 +60,19 @@ function class:dump_tree(out)
   end
 end
 
-function class:compile_es(out, name)
+function class:compile_es(out, ...)
   if type(out) == "string" then
-    return compile_es(self, assert(io.open(out, "w")), name):close()
+    return compile_es(self, assert(io.open(out, "w")), ...):close()
   else
-    return compile_es(self, out, name)
+    return compile_es(self, out, ...)
   end
 end
 
-function class:compile_cxx(out, name)
+function class:compile_cxx(out, ...)
   if type(out) == "string" then
-    return compile_cxx(self, assert(io.open(out, "w")), name):close()
+    return compile_cxx(self, assert(io.open(out, "w")), ...):close()
   else
-    return compile_cxx(self, out, name)
+    return compile_cxx(self, out, ...)
   end
 end
 

@@ -111,13 +111,13 @@ local tmpl = template(encode_var, {
 
 local compile_code
 
-local function write_block(self, out, code, indent)
+local function write_block(self, out, code, indent, opts)
   for i = 1, #code do
-    compile_code(self, out, code[i], indent)
+    compile_code(self, out, code[i], indent, opts)
   end
 end
 
-function compile_code(self, out, code, indent)
+function compile_code(self, out, code, indent, opts)
   local name = code[0]
   if code.block then
     if name == "LOOP" then
@@ -126,11 +126,9 @@ function compile_code(self, out, code, indent)
       out:write(indent, "}\n")
     elseif name == "COND" then
       local cond = code[1]
-      if cond[2] == "TRUE" then
-        out:write(indent, ("if (toboolean(%s)) {\n"):format(encode_var(cond[1])))
-      else
-        out:write(indent, ("if (!toboolean(%s)) {\n"):format(encode_var(cond[1])))
-      end
+      out:write(indent, ("if (%stoboolean(%s)) {\n"):format(
+          cond[2] == "TRUE" and "" or "!",
+          encode_var(cond[1])))
       write_block(self, out, code[2], indent .. "  ")
       if #code == 2 then
         out:write(indent, "}\n")
@@ -175,18 +173,18 @@ function compile_code(self, out, code, indent)
     elseif name == "LABEL" then
       out:write(("      case %s:\n"):format(encode_var(code[1])))
     elseif name == "COND" then
-      if code[2] == "TRUE" then
-        out:write(indent, ("if (toboolean(%s)) { L = %s; continue; } else { L = %s; continue }\n"):format(encode_var(code[1]), code[3], code[4]))
-      else
-        out:write(indent, ("if (!toboolean(%s)) { L = %s; continue; } else { L = %s; continue }\n"):format(encode_var(code[1]), code[3], code[4]))
-      end
+      out:write(indent, ("if (%stoboolean(%s)) L = %s; else L = %s; continue;\n"):format(
+          code[2] == "TRUE" and "" or "!",
+          encode_var(code[1]),
+          code[3],
+          code[4]))
     else
       out:write(indent, tmpl:eval(name, code), ";\n")
     end
   end
 end
 
-local function compile_constants(self, out, proto)
+local function compile_constants(self, out, proto, opts)
   local name = proto[1]
   local constants = proto.constants
 
@@ -206,16 +204,18 @@ const %s_K = [%s];
 ]]):format(name, template.concat(inits, ",\n  ", "\n  ", ",\n")))
 end
 
-local function compile_emulated_goto(self, out, proto, indent)
+local function compile_emulated_goto(self, out, proto, indent, opts)
   local labels = proto.labels
 
   local decls = {}
   for i = 1, #labels do
     decls[i] = ("const %s = %d"):format(labels[i][1], i)
   end
-  for i = 0, proto.M - 1 do
-    local n = #decls + 1
-    decls[n] = ("const M%d = %d"):format(i, n)
+  if opts.mode == "flat_code" then
+    for i = 0, proto.M - 1 do
+      local n = #decls + 1
+      decls[n] = ("const M%d = %d"):format(i, n)
+    end
   end
 
   out:write(([[
@@ -226,8 +226,11 @@ local function compile_emulated_goto(self, out, proto, indent)
       case 0:
 ]]):format(template.concat(decls, ";\n    ")))
 
-  -- compile_code(self, out, proto.tree_code, "        ")
-  compile_code(self, out, proto.flat_code, "        ")
+  if opts.mode == "flat_code" then
+    compile_code(self, out, proto.flat_code, "        ", opts)
+  else
+    compile_code(self, out, proto.tree_code, "        ", opts)
+  end
 
   out:write [[
       }
@@ -236,7 +239,7 @@ local function compile_emulated_goto(self, out, proto, indent)
 ]]
 end
 
-local function compile_blocks(self, out, proto)
+local function compile_blocks(self, out, proto, opts)
   local name = proto[1]
 
   out:write(([[
@@ -260,12 +263,19 @@ class %s_Q {
     const C = this.C;
 ]]):format(name, name))
 
-  -- if proto["goto"] then
-  --   compile_emulated_goto(self, out, proto, "    ")
-  -- else
-  --   compile_code(self, out, proto.tree_code, "    ")
-  -- end
-  compile_emulated_goto(self, out, proto, "    ")
+  if opts.mode == "flat_code" then
+    if proto["goto"] or proto.M > 0 then
+      compile_emulated_goto(self, out, proto, "    ", opts)
+    else
+      compile_code(self, out, proto.flat_code, "    ", opts)
+    end
+  else
+    if proto["goto"] then
+      compile_emulated_goto(self, out, proto, "    ", opts)
+    else
+      compile_code(self, out, proto.tree_code, "    ", opts)
+    end
+  end
 
   out:write [[
   }
@@ -273,7 +283,7 @@ class %s_Q {
 ]]
 end
 
-local function compile_proto(self, out, proto)
+local function compile_proto(self, out, proto, opts)
   local name = proto[1]
   local upvalues = proto.upvalues
 
@@ -297,8 +307,8 @@ local function compile_proto(self, out, proto)
   end
   params[#params + 1] = "...V"
 
-  compile_constants(self, out, proto)
-  compile_blocks(self, out, proto)
+  compile_constants(self, out, proto, opts)
+  compile_blocks(self, out, proto, opts)
 
   out:write(([[
 
@@ -321,7 +331,11 @@ class %s_T extends proto_t {
     name))
 end
 
-return function (self, out, name)
+return function (self, out, name, opts)
+  if not opts then
+    opts = {}
+  end
+
   if name then
     out:write(([[
 %s = () => {
@@ -335,7 +349,7 @@ return function (self, out, name)
 
   local protos = self.protos
   for i = #protos, 1, -1 do
-    compile_proto(self, out, protos[i])
+    compile_proto(self, out, protos[i], opts)
   end
 
   out:write [[
