@@ -131,12 +131,12 @@ function compile_code(self, out, code, indent)
       else
         out:write(indent, ("if (!toboolean(%s)) {\n"):format(encode_var(cond[1])))
       end
-      compile_code(self, out, code[2], indent .. "  ")
+      write_block(self, out, code[2], indent .. "  ")
       if #code == 2 then
         out:write(indent, "}\n")
       else
         out:write(indent, "} else {\n")
-        compile_code(self, out, code[3], indent .. "  ")
+        write_block(self, out, code[3], indent .. "  ")
         out:write(indent, "}\n")
       end
     else

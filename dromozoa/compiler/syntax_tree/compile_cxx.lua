@@ -141,12 +141,12 @@ function compile_code(self, out, code, indent)
       else
         out:write(indent, ("if (!%s.toboolean()) {\n"):format(encode_var(cond[1])))
       end
-      compile_code(self, out, code[2], indent .. "  ")
+      write_block(self, out, code[2], indent .. "  ")
       if #code == 2 then
         out:write(indent, "}\n")
       else
         out:write(indent, "} else {\n")
-        compile_code(self, out, code[3], indent .. "  ")
+        write_block(self, out, code[3], indent .. "  ")
         out:write(indent, "}\n")
       end
     else
@@ -181,37 +181,41 @@ function compile_code(self, out, code, indent)
   end
 end
 
-local function compile_proto(self, out, proto)
+local function compile_constants(self, out, proto)
   local name = proto[1]
   local constants = proto.constants
-  local upvalues = proto.upvalues
+  local n = #constants
 
-  local kn = #constants
-  local un = #upvalues
+  local decls = {};
+  local inits = {};
 
-  out:write(("\nstruct %s_K {\n"):format(name))
-  if kn > 0 then
-    for i = 1, kn do
-      out:write(("  const value_t %s;\n"):format(constants[i][1]))
+  for i = 1, n do
+    local constant = constants[i]
+    local name = constant[1]
+    decls[i] = ("const value_t %s"):format(name)
+    if constant.type == "string" then
+      local source = constant.source
+      inits[i] = ("%s(%s, %d)"):format(name, encode_string(source), #source)
+    else
+      inits[i] = ("%s(%.17g)"):format(name, tonumber(constant.source))
     end
-    out:write(("  %s_K()\n"):format(name))
-    for i = 1, kn do
-      if i == 1 then
-        out:write "    : "
-      else
-        out:write ",\n      "
-      end
-
-      local constant = constants[i]
-      if constant.type == "string" then
-        local source = constant.source
-        out:write(("%s(%s, %d)"):format(constant[1], encode_string(source), #source))
-      else
-        out:write(("%s(%.17g)"):format(constant[1], tonumber(constant.source)))
-      end
-    end
-    out:write " {}\n"
   end
+
+  out:write(([[
+
+struct %s_K {
+]]):format(name))
+
+  if n > 0 then
+    out:write(([[
+  %s;
+
+  %s_K()
+    : %s {}
+
+]]):format(table.concat(decls, ";\n  "), name, table.concat(inits, ",\n      ")))
+  end
+
   out:write(([[
   static const %s_K* get() {
     static const %s_K instance;
@@ -219,6 +223,10 @@ local function compile_proto(self, out, proto)
   }
 };
 ]]):format(name, name))
+end
+
+local function compile_blocks(self, out, proto)
+  local name = proto[1]
 
   out:write(([[
 
@@ -230,6 +238,7 @@ struct %s_Q {
   array_t B;
   array_t C;
   array_t T;
+
   %s_Q(uparray_t U, array_t A, array_t V)
     : K(%s_K::get()),
       U(U),
@@ -237,40 +246,60 @@ struct %s_Q {
       V(V),
       B(%d),
       C(%d) {}
+
   array_t Q0() {
 ]]):format(name, name, name, name, proto.B, proto.C))
+
   compile_code(self, out, proto.code, "    ")
+
   out:write [[
     return {};
   }
 };
 ]]
+end
+
+local function compile_proto(self, out, proto)
+  local name = proto[1]
+  local upvalues = proto.upvalues
+  local n = #upvalues
+
+  local inits = {}
+  for i = 1, n do
+    local var = upvalues[i][2]
+    local key = var:sub(1, 1)
+    if key == "U" then
+      inits[i] = ("S[%d]"):format(var:sub(2))
+    else
+      inits[i] = ("{ %s, %d }"):format(key, var:sub(2))
+    end
+  end
+
+  compile_constants(self, out, proto)
+  compile_blocks(self, out, proto)
 
   out:write(([[
 
 struct %s_T : proto_t<%d> {
   uparray_t U;
+
 ]]):format(name, proto.A))
-  if un == 0 then
-    out:write(("  %s_T(uparray_t, array_t, array_t) {}\n"):format(name))
+
+  if n == 0 then
+    out:write(([[
+  %s_T(uparray_t, array_t, array_t) {}
+]]):format(name))
   else
     out:write(([[
   %s_T(uparray_t S, array_t A, array_t B)
     : U {
-]]):format(name))
-    for i = 1, #upvalues do
-      local var = upvalues[i][2]
-      local key = var:sub(1, 1)
-      if key == "U" then
-        out:write(("        S[%d],\n"):format(var:sub(2)))
-      else
-        out:write(("        { %s, %d },\n"):format(key, var:sub(2)))
-      end
-    end
-    out:write "      } {}\n"
+        %s,
+      } {}
+]]):format(name, table.concat(inits, ",\n        ")))
   end
 
   out:write(([[
+
   array_t operator()(array_t A, array_t V) const {
     return std::make_shared<%s_Q>(U, A, V)->Q0();
   }
@@ -280,19 +309,21 @@ end
 
 
 return function (self, out, name)
-  out:write [[
+  local namespace
+  if name then
+    namespace = "namespace " .. name
+  else
+    namespace = "namespace"
+  end
+
+  out:write(([[
 #include <cmath>
 #include <iostream>
 #include "runtime.hpp"
 
-namespace ]]
-  if name then
-    out:write(name, " ")
-  end
-  out:write [[
-{
+%s {
 using namespace dromozoa::runtime;
-]]
+]]):format(namespace))
 
   local protos = self.protos
   for i = #protos, 1, -1 do
@@ -311,11 +342,8 @@ value_t chunk() {
 }
 ]]
 
-  if name then
-    return out
-  end
-
-  out:write [[
+  if not name then
+    out:write [[
 
 int main(int, char*[]) {
   using namespace dromozoa::runtime;
@@ -330,6 +358,7 @@ int main(int, char*[]) {
   return 1;
 }
 ]]
+  end
 
   return out
 end
