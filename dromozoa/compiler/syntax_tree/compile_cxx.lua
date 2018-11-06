@@ -293,30 +293,20 @@ local function compile_proto(self, out, proto)
 struct %s_T : proto_t<%d> {
   uparray_t U;
 
-]]):format(name, proto.A))
-
-  if n == 0 then
-    out:write(([[
-  %s_T(uparray_t, array_t, array_t) {}
-]]):format(name))
-  else
-    out:write(([[
   %s_T(uparray_t S, array_t A, array_t B)
-    : U {
-        %s,
-      } {}
-]]):format(name, table.concat(inits, ",\n        ")))
-  end
-
-  out:write(([[
+    : U {%s} {}
 
   array_t operator()(array_t A, array_t V) const {
     return std::make_shared<%s_Q>(U, A, V)->Q0();
   }
 };
-]]):format(name))
+]]):format(
+    name,
+    proto.A,
+    name,
+    template.concat(inits, ",\n        ", "\n        ", ",\n      "),
+    name))
 end
-
 
 return function (self, out, name)
   local namespace
