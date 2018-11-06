@@ -170,7 +170,7 @@ function compile_code(self, out, code, indent, opts)
     elseif name == "SETLIST" then
       out:write(indent, ("setlist(%s, %d, %s);\n"):format(encode_var(code[1]), code[2], encode_var(code[3])))
     elseif name == "CLOSURE" then
-      out:write(indent, ("%s = std::make_shared<%s_T>(U, A, B);\n"):format(encode_var(code[1]), code[2]))
+      out:write(indent, ("%s = std::make_shared<%s>(U, A, B);\n"):format(encode_var(code[1]), code[2]))
     elseif name == "LABEL" then
       out:write(("  %s:\n"):format(code[1]))
     elseif name == "COND" then
@@ -193,9 +193,9 @@ local function compile_constants(self, out, proto, opts)
   if n == 0 then
     out:write(([[
 
-struct %s_K {
-  static const %s_K* get() {
-    static const %s_K instance;
+struct %s_constants {
+  static const %s_constants* get() {
+    static const %s_constants instance;
     return &instance;
   }
 };
@@ -219,14 +219,14 @@ struct %s_K {
 
   out:write(([[
 
-struct %s_K {
+struct %s_constants {
   %s;
 
-  %s_K()
+  %s_constants()
     : %s {}
 
-  static const %s_K* get() {
-    static const %s_K instance;
+  static const %s_constants* get() {
+    static const %s_constants instance;
     return &instance;
   }
 };
@@ -244,8 +244,8 @@ local function compile_blocks(self, out, proto, opts)
 
   out:write(([[
 
-struct %s_Q {
-  const %s_K* K;
+struct %s_program {
+  const %s_constants* K;
   uparray_t U;
   array_t A;
   array_t V;
@@ -253,15 +253,15 @@ struct %s_Q {
   array_t C;
   array_t T;
 
-  %s_Q(uparray_t U, array_t A, array_t V)
-    : K(%s_K::get()),
+  %s_program(uparray_t U, array_t A, array_t V)
+    : K(%s_constants::get()),
       U(U),
       A(A),
       V(V),
       B(%d),
       C(%d) {}
 
-  array_t enter() {
+  array_t entry() {
 ]]):format(name, name, name, name, proto.B, proto.C))
 
   if opts.mode == "flat_code" then
@@ -298,14 +298,14 @@ local function compile_proto(self, out, proto, opts)
 
   out:write(([[
 
-struct %s_T : proto_t<%d> {
+struct %s : proto_t<%d> {
   uparray_t U;
 
-  %s_T(uparray_t S, array_t A, array_t B)
+  %s(uparray_t S, array_t A, array_t B)
     : U {%s} {}
 
   array_t operator()(array_t A, array_t V) const {
-    return std::make_shared<%s_Q>(U, A, V)->enter();
+    return std::make_shared<%s_program>(U, A, V)->entry();
   }
 };
 ]]):format(
@@ -345,7 +345,7 @@ value_t chunk() {
   uparray_t S;
   array_t A;
   array_t B = { env };
-  return std::make_shared<P0_T>(S, A, B);
+  return std::make_shared<P0>(S, A, B);
 }
 
 }

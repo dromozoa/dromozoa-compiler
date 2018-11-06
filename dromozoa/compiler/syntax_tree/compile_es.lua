@@ -169,7 +169,7 @@ function compile_code(self, out, code, indent, opts)
     elseif name == "SETLIST" then
       out:write(indent, ("setlist(%s, %d, %s);\n"):format(encode_var(code[1]), code[2], encode_var(code[3])))
     elseif name == "CLOSURE" then
-      out:write(indent, ("%s = new %s_T(U, A, B);\n"):format(encode_var(code[1]), code[2]))
+      out:write(indent, ("%s = new %s(U, A, B);\n"):format(encode_var(code[1]), code[2]))
     elseif name == "LABEL" then
       out:write(("      case %s:\n"):format(encode_var(code[1])))
     elseif name == "COND" then
@@ -200,7 +200,7 @@ local function compile_constants(self, out, proto, opts)
 
   out:write(([[
 
-const %s_K = [%s];
+const %s_constants = [%s];
 ]]):format(name, template.concat(inits, ",\n  ", "\n  ", ",\n")))
 end
 
@@ -244,9 +244,9 @@ local function compile_blocks(self, out, proto, opts)
 
   out:write(([[
 
-class %s_Q {
+class %s_program {
   constructor(U, A, V) {
-    this.K = %s_K;
+    this.K = %s_constants;
     this.U = U;
     this.A = A;
     this.V = V;
@@ -254,7 +254,7 @@ class %s_Q {
     this.C = [];
   }
 
-  enter() {
+  entry() {
     const K = this.K;
     const U = this.U;
     const A = this.A;
@@ -312,15 +312,15 @@ local function compile_proto(self, out, proto, opts)
 
   out:write(([[
 
-class %s_T extends proto_t {
+class %s extends proto_t {
   constructor(S, A, B) {
     super();
     this.U = [%s];
   }
 
-  enter(%s) {
+  entry(%s) {
     const A = [%s];
-    return new %s_Q(this.U, A, V).enter();
+    return new %s_program(this.U, A, V).entry();
   }
 }
 ]]):format(
@@ -355,7 +355,7 @@ return function (self, out, opts)
 
   out:write [[
 
-return new P0_T([], [], [ env ]);
+return new P0([], [], [ env ]);
 ]]
 
   if name then
@@ -364,7 +364,7 @@ return new P0_T([], [], [ env ]);
 ]]
   else
     out:write [[
-})().enter();
+})().entry();
 ]]
   end
 

@@ -22,7 +22,7 @@ local unpack = table.unpack or unpack
 local function generate_tree_code(stack, node, symbol_table)
   local proto = node.proto
   if proto then
-    code_builder(stack, node):CLOSURE(proto[1])
+    code_builder(stack, node):CLOSURE(node.var, proto[1])
     local code = { block = true }
     proto.tree_code = code
     stack = { code }
@@ -270,6 +270,10 @@ local function generate_flat_code(proto, code, break_label)
   end
 end
 
+local function generate_basic_blocks(proto)
+
+end
+
 return function (self)
   generate_tree_code({ { block = true } }, self.accepted_node, self.symbol_table)
 
@@ -280,6 +284,10 @@ return function (self)
     proto.M = 0
     proto.flat_code = { block = true }
     generate_flat_code(proto, proto.tree_code)
+  end
+
+  for i = 1, n do
+    generate_basic_blocks(protos[i])
   end
 
   return self

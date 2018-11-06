@@ -371,13 +371,13 @@ const call0 = (f, ...args) => {
   if (typeof f === "function") {
     return f(...args);
   } else if (proto_t.prototype.isPrototypeOf(f)) {
-    return f.enter(...args);
+    return f.entry(...args);
   } else {
     const field = getmetafield(f, "__call");
     if (typeof field === "function") {
       return field(f, ...args);
     } else if (proto_t.prototype.isPrototypeOf(field)) {
-      return field.enter(f, ...args);
+      return field.entry(f, ...args);
     } else {
       throw new runtime_error(concat("attempt to call a ", type(f), " value"));
     }
