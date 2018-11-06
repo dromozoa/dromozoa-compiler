@@ -184,7 +184,6 @@ end
 
 function compile_proto(self, out, proto)
   local name = proto[1]
-
   local constants = proto.constants
   local upvalues = proto.upvalues
 
