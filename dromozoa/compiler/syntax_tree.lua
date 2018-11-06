@@ -44,11 +44,11 @@ function class:generate()
   return generate(self)
 end
 
-function class:dump_protos(out)
+function class:dump_protos(out, ...)
   if type(out) == "string" then
-    return dump_protos(self, assert(io.open(out, "w"))):close()
+    return dump_protos(self, assert(io.open(out, "w")), ...):close()
   else
-    return dump_protos(self, out)
+    return dump_protos(self, out, ...)
   end
 end
 

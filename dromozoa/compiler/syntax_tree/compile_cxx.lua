@@ -121,36 +121,34 @@ local tmpl = template(encode_var, {
 
 local compile_code
 
-local function write_block(self, out, code, indent)
+local function write_block(self, out, code, indent, opts)
   for i = 1, #code do
-    compile_code(self, out, code[i], indent)
+    compile_code(self, out, code[i], indent, opts)
   end
 end
 
-function compile_code(self, out, code, indent)
+function compile_code(self, out, code, indent, opts)
   local name = code[0]
   if code.block then
     if name == "LOOP" then
       out:write(indent, "for (;;) {\n")
-      write_block(self, out, code, indent .. "  ")
+      write_block(self, out, code, indent .. "  ", opts)
       out:write(indent, "}\n")
     elseif name == "COND" then
       local cond = code[1]
-      if cond[2] == "TRUE" then
-        out:write(indent, ("if (%s.toboolean()) {\n"):format(encode_var(cond[1])))
-      else
-        out:write(indent, ("if (!%s.toboolean()) {\n"):format(encode_var(cond[1])))
-      end
-      write_block(self, out, code[2], indent .. "  ")
+      out:write(indent, ("if (%s%s.toboolean()) {\n"):format(
+          cond[2] == "TRUE" and "" or "!",
+          encode_var(cond[1])))
+      write_block(self, out, code[2], indent .. "  ", opts)
       if #code == 2 then
         out:write(indent, "}\n")
       else
         out:write(indent, "} else {\n")
-        write_block(self, out, code[3], indent .. "  ")
+        write_block(self, out, code[3], indent .. "  ", opts)
         out:write(indent, "}\n")
       end
     else
-      write_block(self, out, code, indent)
+      write_block(self, out, code, indent, opts)
     end
   else
     if name == "CALL" then
@@ -176,18 +174,18 @@ function compile_code(self, out, code, indent)
     elseif name == "LABEL" then
       out:write(("  %s:\n"):format(code[1]))
     elseif name == "COND" then
-      if code[2] == "TRUE" then
-        out:write(indent, ("if (%s.toboolean()) { goto %s; } else { goto %s; }"):format(encode_var(code[1]), code[3], code[4]))
-      else
-        out:write(indent, ("if (!%s.toboolean()) { goto %s; } else { goto %s; }"):format(encode_var(code[1]), code[3], code[4]))
-      end
+      out:write(indent, ("if (%s%s.toboolean()) goto %s; else goto %s;\n"):format(
+          code[2] == "TRUE" and "" or "!",
+          encode_var(code[1]),
+          code[3],
+          code[4]))
     else
       out:write(indent, tmpl:eval(name, code), ";\n")
     end
   end
 end
 
-local function compile_constants(self, out, proto)
+local function compile_constants(self, out, proto, opts)
   local name = proto[1]
   local constants = proto.constants
   local n = #constants
@@ -241,7 +239,7 @@ struct %s_K {
     name))
 end
 
-local function compile_blocks(self, out, proto)
+local function compile_blocks(self, out, proto, opts)
   local name = proto[1]
 
   out:write(([[
@@ -266,8 +264,11 @@ struct %s_Q {
   array_t Q0() {
 ]]):format(name, name, name, name, proto.B, proto.C))
 
-  -- compile_code(self, out, proto.tree_code, "    ")
-  compile_code(self, out, proto.flat_code, "    ")
+  if opts.mode == "flat_code" then
+    compile_code(self, out, proto.flat_code, "    ", opts)
+  else
+    compile_code(self, out, proto.tree_code, "    ", opts)
+  end
 
   out:write [[
     return {};
@@ -276,7 +277,7 @@ struct %s_Q {
 ]]
 end
 
-local function compile_proto(self, out, proto)
+local function compile_proto(self, out, proto, opts)
   local name = proto[1]
   local upvalues = proto.upvalues
   local n = #upvalues
@@ -292,8 +293,8 @@ local function compile_proto(self, out, proto)
     end
   end
 
-  compile_constants(self, out, proto)
-  compile_blocks(self, out, proto)
+  compile_constants(self, out, proto, opts)
+  compile_blocks(self, out, proto, opts)
 
   out:write(([[
 
@@ -315,7 +316,8 @@ struct %s_T : proto_t<%d> {
     name))
 end
 
-return function (self, out, name)
+return function (self, out, opts)
+  local name = opts.name
   local namespace
   if name then
     namespace = "namespace " .. name
@@ -334,7 +336,7 @@ using namespace dromozoa::runtime;
 
   local protos = self.protos
   for i = #protos, 1, -1 do
-    compile_proto(self, out, protos[i])
+    compile_proto(self, out, protos[i], opts)
   end
 
   out:write [[

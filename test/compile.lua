@@ -48,12 +48,12 @@ if not result then
 end
 
 local opts = {
-  mode = "tree_code";
+  mode = os.getenv "MODE"
 }
 
 t:generate()
 
-t:compile_es(output_name .. ".js", nil, opts)
-t:compile_cxx(output_name .. ".cpp", nil, opts)
+t:compile_es(output_name .. ".js", opts)
+t:compile_cxx(output_name .. ".cpp", opts)
 t:dump_tree(output_name .. ".html")
-t:dump_protos(output_name .. ".txt")
+t:dump_protos(output_name .. ".txt", opts)

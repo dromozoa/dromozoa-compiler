@@ -122,23 +122,23 @@ function compile_code(self, out, code, indent, opts)
   if code.block then
     if name == "LOOP" then
       out:write(indent, "for (;;) {\n")
-      write_block(self, out, code, indent .. "  ")
+      write_block(self, out, code, indent .. "  ", opts)
       out:write(indent, "}\n")
     elseif name == "COND" then
       local cond = code[1]
       out:write(indent, ("if (%stoboolean(%s)) {\n"):format(
           cond[2] == "TRUE" and "" or "!",
           encode_var(cond[1])))
-      write_block(self, out, code[2], indent .. "  ")
+      write_block(self, out, code[2], indent .. "  ", opts)
       if #code == 2 then
         out:write(indent, "}\n")
       else
         out:write(indent, "} else {\n")
-        write_block(self, out, code[3], indent .. "  ")
+        write_block(self, out, code[3], indent .. "  ", opts)
         out:write(indent, "}\n")
       end
     else
-      write_block(self, out, code, indent)
+      write_block(self, out, code, indent, opts)
     end
   else
     if name == "CALL" then
@@ -331,10 +331,11 @@ class %s_T extends proto_t {
     name))
 end
 
-return function (self, out, name, opts)
+return function (self, out, opts)
   if not opts then
     opts = {}
   end
+  local name = opts.name
 
   if name then
     out:write(([[
