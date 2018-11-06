@@ -18,6 +18,20 @@
 local class = {}
 local metatable = { __index = class }
 
+function class.concat(items, sep, prologue, epilogue)
+  if not prologue then
+    prologue = ""
+  end
+  if not epilogue then
+    epilogue = ""
+  end
+  if #items == 0 then
+    return ""
+  else
+    return prologue .. table.concat(items, sep) .. epilogue
+  end
+end
+
 function class:eval(name, code)
   local encode = self.encode
   local rule = self.rules[name]

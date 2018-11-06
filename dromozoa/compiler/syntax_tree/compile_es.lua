@@ -183,11 +183,9 @@ end
 local function compile_constants(self, out, proto)
   local name = proto[1]
   local constants = proto.constants
-  local n = #constants
 
   local inits = {}
-
-  for i = 1, n do
+  for i = 1, #constants do
     local constant = constants[i]
     if constant.type == "string" then
       inits[i] = ("wrap(%s)"):format(encode_string(constant.source))
@@ -196,19 +194,10 @@ local function compile_constants(self, out, proto)
     end
   end
 
-  if n == 0 then
-    out:write(([[
+  out:write(([[
 
-const %s_K = [];
-]]):format(name))
-  else
-    out:write(([[
-
-const %s_K = [
-  %s,
-];
-]]):format(name, table.concat(inits, ",\n  ")))
-  end
+const %s_K = [%s];
+]]):format(name, template.concat(inits, ",\n  ", "\n  ", ",\n")))
 end
 
 local function compile_blocks(self, out, proto)
@@ -262,19 +251,14 @@ class %s_Q {
   }
 }
 ]]
-
-
 end
 
 local function compile_proto(self, out, proto)
   local name = proto[1]
-
   local upvalues = proto.upvalues
-  local m = #upvalues
-  local n = proto.A
 
   local inits = {}
-  for i = 1, m do
+  for i = 1, #upvalues do
     local var = upvalues[i][2]
     local key = var:sub(1, 1)
     if key == "U" then
@@ -286,7 +270,7 @@ local function compile_proto(self, out, proto)
 
   local pars = {}
   local args = {}
-  for i = 1, n do
+  for i = 1, proto.A do
     local name = "A" .. i - 1
     pars[i] = name
     args[i] = name
@@ -301,42 +285,20 @@ local function compile_proto(self, out, proto)
 class %s_T extends proto_t {
   constructor(S, A, B) {
     super();
-]]):format(name))
-  if m == 0 then
-    out:write [[
-    this.U = [];
-]]
-  else
-    out:write(([[
-    this.U = [
-      %s,
-    ];
-]]):format(table.concat(inits, ",\n      ")))
-  end
-
-  out:write(([[
+    this.U = [%s];
   }
 
   enter(%s) {
-]]):format(table.concat(pars, ", ")))
-
-  if n == 0 then
-    out:write [[
-    const A = [];
-]]
-  else
-    out:write(([[
-    const A = [
-      %s,
-    ];
-]]):format(table.concat(args, ",\n      ")))
-  end
-
-  out:write(([[
+    const A = [%s];
     return new %s_Q(this.U, A, V).Q0();
   }
 }
-]]):format(name))
+]]):format(
+    name,
+    template.concat(inits, ",\n      ", "\n      ", ",\n    "),
+    template.concat(pars, ", "),
+    template.concat(args, ",\n      ", "\n      ", ",\n    "),
+    name))
 end
 
 return function (self, out, name)
