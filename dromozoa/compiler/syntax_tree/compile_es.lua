@@ -109,7 +109,6 @@ local tmpl = template(encode_var, {
   TONUMBER = "%1 = checknumber(%2)";
 })
 
-local compile_proto
 local compile_code
 
 local function write_block(self, out, code, indent)
@@ -181,7 +180,7 @@ function compile_code(self, out, code, indent)
   end
 end
 
-function compile_proto(self, out, proto)
+local function compile_proto(self, out, proto)
   local name = proto[1]
   local constants = proto.constants
   local upvalues = proto.upvalues
