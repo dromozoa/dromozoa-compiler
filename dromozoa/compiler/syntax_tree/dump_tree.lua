@@ -112,11 +112,11 @@ local function prepare(self)
   end
 end
 
-local function source_to_html(self)
+local function to_code(self)
   local terminal_nodes = self.terminal_nodes
   local source = self.source
 
-  local html = _"div" { class = "source" }
+  local html = _"div" { class = "code" }
   for i = 1, #terminal_nodes do
     local node = terminal_nodes[i]
     local symbol = node[0]
@@ -186,7 +186,7 @@ local function add_edges(node, that, nid_to_uid)
   end
 end
 
-local function tree_to_html(self, tree_width, tree_height)
+local function to_graph(self, tree_width, tree_height)
   local symbol_names = self.symbol_names
   local accepted_node = self.accepted_node
 
@@ -252,8 +252,8 @@ return function (self, out)
   local doc = html5_document(_"html" {
     head;
     _"body" {
-      source_to_html(self);
-      tree_to_html(self, 800, 640);
+      to_code(self);
+      to_graph(self, 800, 640);
     };
   })
 

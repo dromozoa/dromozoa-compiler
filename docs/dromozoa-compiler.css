@@ -11,16 +11,16 @@ text {
   dominant-baseline: central;
 }
 
-.source {
+.code {
   position: absolute;
   margin: 0 0.5rem;
 }
 
-.source span {
+.code span {
   transition: background-color 400ms;
 }
 
-.source span.active {
+.code span.active {
   background-color: #FF0;
   transition: background-color 400ms;
 }
