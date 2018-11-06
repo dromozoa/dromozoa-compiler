@@ -52,7 +52,7 @@ local function encode_var(var)
     return result
   else
     local key = var:sub(1, 1)
-    if key == "P" or key == "L" or key == "M" then
+    if key == "L" or key == "M" then
       return var
     elseif key == "U" then
       return "U[" .. var:sub(2) .. "].value"
