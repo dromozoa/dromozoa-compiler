@@ -35,7 +35,7 @@ for byte = 0x00, 0x7F do
 end
 
 local var_table = {
-  V = "...V";
+  V = "...this.V";
   T = "...this.T";
   NIL = "undefined";
   FALSE = "false";
@@ -55,11 +55,9 @@ local function encode_var(var)
     if key == "L" or key == "M" then
       return var
     elseif key == "U" then
-      return "U[" .. var:sub(2) .. "].value"
-    elseif key == "T" then
-      return "this.T[" .. var:sub(2) .. "]"
+      return "this.U[" .. var:sub(2) .. "].value"
     else
-      return key .. "[" .. var:sub(2) .. "]"
+      return "this." .. key .. "[" .. var:sub(2) .. "]"
     end
   end
 end
@@ -169,7 +167,7 @@ function compile_code(self, out, code, indent, opts)
     elseif name == "SETLIST" then
       out:write(indent, ("setlist(%s, %d, %s);\n"):format(encode_var(code[1]), code[2], encode_var(code[3])))
     elseif name == "CLOSURE" then
-      out:write(indent, ("%s = new %s(U, A, B);\n"):format(encode_var(code[1]), code[2]))
+      out:write(indent, ("%s = new %s(this.U, this.A, this.B);\n"):format(encode_var(code[1]), code[2]))
     elseif name == "LABEL" then
       out:write(("      case %s:\n"):format(encode_var(code[1])))
     elseif name == "COND" then
@@ -239,8 +237,76 @@ local function compile_emulated_goto(self, out, proto, indent, opts)
 ]]
 end
 
+local function compile_basic_block(self, out, basic_blocks, uid, block, indent, opts)
+  local g = basic_blocks.g
+  local uv = g.uv
+  local uv_after = uv.after
+  local uv_target = uv.target
+
+  out:write(([[
+
+  BB%d() {
+]]):format(uid))
+
+  local code
+  local name
+  for i = 1, #block do
+    code = block[i]
+    name = code[0]
+    if name == "RETURN" or name == "COND" then
+      assert(i == #block)
+      break
+    elseif name == "COND" then
+      out:write(indent, ("return %stoboolean(%s) ? this.BB%d() : this.BB%d();\n"):format(
+          code[2] == "TRUE" and "" or "!",
+          encode_var(code[1]),
+          labels[code[3]],
+          labels[code[4]]))
+    else
+      compile_code(self, out, code, indent, opts)
+    end
+  end
+
+  if name == "RETURN" then
+    out:write(indent, ("return this.BB%d(%s);\n"):format(basic_blocks.exit_uid, encode_vars(code)))
+  else
+    local eids = {}
+    local uids = {}
+    local eid = uv.first[uid]
+    while eid do
+      eids[#eids + 1] = eid
+      uids[#uids + 1] = uv_target[eid]
+      eid = uv_after[eid]
+    end
+
+    if name == "COND" then
+      assert(#uids == 2)
+      local then_uid = uids[1]
+      local else_uid = uids[2]
+      local jumps = basic_blocks.jumps
+      assert(jumps[eids[1]] == "THEN")
+      assert(jumps[eids[2]] == "ELSE")
+      out:write(indent, ("return %stoboolean(%s) ? this.BB%d() : this.BB%d();\n"):format(
+          code[2] == "TRUE" and "" or "!",
+          encode_var(code[1]),
+          then_uid,
+          else_uid))
+    else
+      assert(#uids == 1)
+      out:write(indent, ("return this.BB%d();\n"):format(uids[1]))
+    end
+  end
+
+  out:write(([[
+  }
+]]):format(uid))
+end
+
 local function compile_blocks(self, out, proto, opts)
   local name = proto[1]
+  local basic_blocks = proto.basic_blocks
+  local entry_uid = basic_blocks.entry_uid
+  local exit_uid = basic_blocks.exit_uid
 
   out:write(([[
 
@@ -255,15 +321,13 @@ class %s_program {
   }
 
   entry() {
-    const K = this.K;
-    const U = this.U;
-    const A = this.A;
-    const V = this.V;
-    const B = this.B;
-    const C = this.C;
 ]]):format(name, name))
 
-  if opts.mode == "flat_code" then
+  if opts.mode == "basic_blocks" then
+    out:write(([[
+    return this.BB%d();
+]]):format(entry_uid))
+  elseif opts.mode == "flat_code" then
     if proto["goto"] or proto.M > 0 then
       compile_emulated_goto(self, out, proto, "    ", opts)
     else
@@ -279,6 +343,25 @@ class %s_program {
 
   out:write [[
   }
+]]
+
+  if opts.mode == "basic_blocks" then
+    local blocks = basic_blocks.blocks
+    for uid = entry_uid, exit_uid - 1 do
+      local block = blocks[uid]
+      if block then
+        compile_basic_block(self, out, basic_blocks, uid, block, "    ", opts)
+      end
+    end
+    out:write(([[
+
+  BB%d(...V) {
+    return V;
+  }
+]]):format(exit_uid))
+  end
+
+  out:write [[
 }
 ]]
 end
