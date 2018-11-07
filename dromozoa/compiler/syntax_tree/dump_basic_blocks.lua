@@ -34,7 +34,76 @@ local head = _"head" {
   _"script" { src = "dromozoa-compiler.js" };
 }
 
+local function block_to_code(basic_blocks, uid, block)
+  local g = basic_blocks.g
+  local uv = g.uv
+  local uv_after = uv.after
+  local uv_target = uv.target
+  local vu = g.vu
+  local vu_after = vu.after
+  local vu_target = vu.target
+
+  local html = _"span" { "  BB", uid, " {\n    [pred" }
+  local eid = vu.first[uid]
+  while eid do
+    local vid = vu_target[eid]
+    html[#html + 1] = " BB"
+    html[#html + 1] = vid
+    eid = vu_after[eid]
+  end
+  html[#html + 1] = "]\n"
+
+  for i = 1, #block do
+    local code = block[i]
+    html[#html + 1] = "    "
+    html[#html + 1] = code[0]
+    for j = 1, #code do
+      html[#html + 1] = " "
+      html[#html + 1] = code[j]
+    end
+    html[#html + 1] = "\n"
+  end
+
+  html[#html + 1] = "    [succ"
+  local eid = uv.first[uid]
+  while eid do
+    local vid = uv_target[eid]
+    html[#html + 1] = " BB"
+    html[#html + 1] = vid
+    eid = uv_after[eid]
+  end
+  html[#html + 1] = "]\n  }\n"
+
+  return html
+end
+
+local function proto_to_code(proto)
+  local basic_blocks = proto.basic_blocks
+  local blocks = basic_blocks.blocks
+
+  local html = _"div" {
+    _"span" { proto[1], " {\n" };
+  }
+  for uid = basic_blocks.entry_uid, basic_blocks.exit_uid do
+    local block = blocks[uid]
+    if block then
+      html[#html + 1] = block_to_code(basic_blocks, uid, block)
+    end
+  end
+  html[#html + 1] = _"span" { "}\n" }
+
+  return html
+end
+
 local function to_code(self)
+  local protos = self.protos
+
+  local html = _"div" { class = "code" }
+  for i = 1, #protos do
+    html[i] = proto_to_code(protos[i])
+  end
+
+  return html
 end
 
 local function to_graph(self, width, height)
