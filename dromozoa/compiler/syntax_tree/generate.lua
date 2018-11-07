@@ -288,9 +288,10 @@ local function generate_basic_blocks(proto)
     if name == "LABEL" then
       uid = g:add_vertex()
       uids[#uids + 1] = uid
-      block = {}
+      local label = code[1]
+      block = { label = label }
       blocks[uid] = block
-      labels[code[1]] = uid
+      labels[label] = uid
     else
       if not uid then
         uid = g:add_vertex()

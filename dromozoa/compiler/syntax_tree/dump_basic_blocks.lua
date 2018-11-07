@@ -17,8 +17,10 @@
 
 local element = require "dromozoa.dom.element"
 local html5_document = require "dromozoa.dom.html5_document"
+local space_separated = require "dromozoa.dom.space_separated"
 local graph = require "dromozoa.graph"
 local matrix3 = require "dromozoa.vecmath.matrix3"
+local path_data = require "dromozoa.svg.path_data"
 
 local _ = element
 
@@ -34,6 +36,36 @@ local head = _"head" {
   _"script" { src = "dromozoa-compiler.js" };
 }
 
+local style = _"style" { [[
+.e_paths {
+  marker-end: url(#arrow);
+}
+
+.e_texts.z1 {
+  fill: #E0E0E0;
+  stroke: #E0E0E0;
+  stroke-width: 4;
+}
+
+.e_texts.z2 {
+  fill: #000;
+  stroke: none;
+}
+]] }
+
+local marker = _"marker" {
+  id = "arrow";
+  viewBox = "0 0 4 4";
+  refX = 4;
+  refY = 2;
+  markerWidth = 8;
+  markerHeight = 8;
+  orient = "auto";
+  _"path" {
+    d = path_data():M(0,0):L(4,2):L(0,4):Z();
+  };
+}
+
 local function block_to_code(basic_blocks, uid, block)
   local g = basic_blocks.g
   local uv = g.uv
@@ -43,7 +75,13 @@ local function block_to_code(basic_blocks, uid, block)
   local vu_after = vu.after
   local vu_target = vu.target
 
-  local html = _"span" { "  BB", uid, " {\n    [pred" }
+  local html = _"span" {
+    class = space_separated { "S", "S" .. uid };
+    ["data-node-id"] = uid;
+    "  BB", uid, " {\n";
+  }
+
+  html[#html + 1] = "    [pred";
   local eid = vu.first[uid]
   while eid do
     local vid = vu_target[eid]
@@ -52,6 +90,13 @@ local function block_to_code(basic_blocks, uid, block)
     eid = vu_after[eid]
   end
   html[#html + 1] = "]\n"
+
+  local label = block.label
+  if label then
+    html[#html + 1] = "    [label "
+    html[#html + 1] = label
+    html[#html + 1] = "]\n"
+  end
 
   for i = 1, #block do
     local code = block[i]
@@ -72,8 +117,9 @@ local function block_to_code(basic_blocks, uid, block)
     html[#html + 1] = vid
     eid = uv_after[eid]
   end
-  html[#html + 1] = "]\n  }\n"
+  html[#html + 1] = "]\n"
 
+  html[#html + 1] = "  }\n"
   return html
 end
 
@@ -107,9 +153,25 @@ local function to_graph(proto, width, height)
   end
 
   local root = g:render {
+    matrix = matrix3(80, 0, 40, 0, 50, 25, 0, 0, 1);
     u_labels = u_labels;
     e_labels = basic_blocks.jumps;
   }
+
+  local u_paths = root[1]
+  local u_texts = root[2]
+  for i = 1, #u_paths do
+    local path = u_paths[i]
+    local text = u_texts[i]
+    local node_id = path["data-uid"]
+    path["data-node-id"] = node_id
+    text["data-node-id"] = node_id
+  end
+
+  local e_texts = root[4]
+  e_texts.class = nil
+  e_texts.id = "e_texts"
+  local defs = _"defs" { style, marker, e_texts }
 
   return _"div" {
     class = "graph";
@@ -117,6 +179,7 @@ local function to_graph(proto, width, height)
       version = "1.1";
       width = width;
       height = height;
+      defs;
       _"rect" {
         class = "viewport";
         width = width;
@@ -126,7 +189,17 @@ local function to_graph(proto, width, height)
       };
       _"g" {
         class = "view";
-        root;
+        u_paths;
+        u_texts;
+        root[3];
+        _"use" {
+          class = "e_texts z1";
+          ["xlink:href"] = "#e_texts";
+        };
+        _"use" {
+          class = "e_texts z2";
+          ["xlink:href"] = "#e_texts";
+        };
       }
     };
   }

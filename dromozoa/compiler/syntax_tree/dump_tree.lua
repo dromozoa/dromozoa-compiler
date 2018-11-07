@@ -225,7 +225,7 @@ local function to_graph(self, width, height)
   end
 
   return _"div" {
-    class = "graph";
+    class = space_separated { "graph", "tree" };
     _"svg" {
       version = "1.1";
       width = width;
