@@ -132,6 +132,9 @@ end
 
 local function to_code(proto)
   local basic_blocks = proto.basic_blocks
+  local g = basic_blocks.g
+  local u = g.u
+  local u_after = u.after
   local blocks = basic_blocks.blocks
 
   local html = _"div" {
@@ -139,14 +142,13 @@ local function to_code(proto)
     _"span" { proto[1], " {\n" };
   }
 
-  for uid = basic_blocks.entry_uid, basic_blocks.exit_uid do
-    local block = blocks[uid]
-    if block then
-      html[#html + 1] = block_to_code(basic_blocks, uid, block)
-    end
+  local uid = u.first
+  while uid do
+    html[#html + 1] = block_to_code(basic_blocks, uid, blocks[uid])
+    uid = u_after[uid]
   end
-  html[#html + 1] = _"span" { "}\n" }
 
+  html[#html + 1] = _"span" { "}\n" }
   return html
 end
 

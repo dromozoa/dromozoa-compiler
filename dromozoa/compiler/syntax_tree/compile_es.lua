@@ -154,9 +154,7 @@ function compile_code(self, out, code, indent, opts)
         out:write(indent, "return;\n")
       elseif n == 1 then
         local var = code[1]
-        if var == "V" then
-          out:write(indent, ("return %s;\n"):format(var))
-        elseif var == "T" then
+        if var == "V" or var == "T" then
           out:write(indent, ("return this.%s;\n"):format(var))
         else
           out:write(indent, ("return %s;\n"):format(encode_var(var)))
@@ -202,7 +200,24 @@ const %s_constants = [%s];
 ]]):format(name, template.concat(inits, ",\n  ", "\n  ", ",\n")))
 end
 
-local function compile_emulated_goto(self, out, proto, indent, opts)
+local function compile_codes(self, out, proto, opts)
+  out:write [[
+
+  entry() {
+]]
+
+  if opts.mode == "flat_code" then
+    compile_code(self, out, proto.flat_code, "    ", opts)
+  else
+    compile_code(self, out, proto.tree_code, "    ", opts)
+  end
+
+  out:write [[
+  }
+]]
+end
+
+local function compile_emulated_goto(self, out, proto, opts)
   local labels = proto.labels
 
   local decls = {}
@@ -217,6 +232,8 @@ local function compile_emulated_goto(self, out, proto, indent, opts)
   end
 
   out:write(([[
+
+  entry() {
     %s;
     let L = 0;
     for (;;) {
@@ -234,15 +251,11 @@ local function compile_emulated_goto(self, out, proto, indent, opts)
       }
       return;
     }
+  }
 ]]
 end
 
 local function compile_basic_block(self, out, basic_blocks, uid, block, indent, opts)
-  local g = basic_blocks.g
-  local uv = g.uv
-  local uv_after = uv.after
-  local uv_target = uv.target
-
   out:write(([[
 
   BB%d() {
@@ -254,14 +267,7 @@ local function compile_basic_block(self, out, basic_blocks, uid, block, indent, 
     code = block[i]
     name = code[0]
     if name == "RETURN" or name == "COND" then
-      assert(i == #block)
       break
-    elseif name == "COND" then
-      out:write(indent, ("return %stoboolean(%s) ? this.BB%d() : this.BB%d();\n"):format(
-          code[2] == "TRUE" and "" or "!",
-          encode_var(code[1]),
-          labels[code[3]],
-          labels[code[4]]))
     else
       compile_code(self, out, code, indent, opts)
     end
@@ -270,30 +276,20 @@ local function compile_basic_block(self, out, basic_blocks, uid, block, indent, 
   if name == "RETURN" then
     out:write(indent, ("return this.BB%d(%s);\n"):format(basic_blocks.exit_uid, encode_vars(code)))
   else
-    local eids = {}
-    local uids = {}
+    local g = basic_blocks.g
+    local uv = g.uv
+    local uv_target = uv.target
     local eid = uv.first[uid]
-    while eid do
-      eids[#eids + 1] = eid
-      uids[#uids + 1] = uv_target[eid]
-      eid = uv_after[eid]
-    end
-
     if name == "COND" then
-      assert(#uids == 2)
-      local then_uid = uids[1]
-      local else_uid = uids[2]
-      local jumps = basic_blocks.jumps
-      assert(jumps[eids[1]] == "THEN")
-      assert(jumps[eids[2]] == "ELSE")
+      local then_uid = uv_target[eid]
+      eid = uv.after[eid]
       out:write(indent, ("return %stoboolean(%s) ? this.BB%d() : this.BB%d();\n"):format(
           code[2] == "TRUE" and "" or "!",
           encode_var(code[1]),
           then_uid,
-          else_uid))
+          uv_target[eid]))
     else
-      assert(#uids == 1)
-      out:write(indent, ("return this.BB%d();\n"):format(uids[1]))
+      out:write(indent, ("return this.BB%d();\n"):format(uv_target[eid]))
     end
   end
 
@@ -302,11 +298,43 @@ local function compile_basic_block(self, out, basic_blocks, uid, block, indent, 
 ]]):format(uid))
 end
 
-local function compile_blocks(self, out, proto, opts)
-  local name = proto[1]
+local function compile_basic_blocks(self, out, proto, opts)
   local basic_blocks = proto.basic_blocks
+  local g = basic_blocks.g
+  local u = g.u
+  local u_after = u.after
   local entry_uid = basic_blocks.entry_uid
   local exit_uid = basic_blocks.exit_uid
+  local blocks = basic_blocks.blocks
+
+  out:write(([[
+
+  entry() {
+    return this.BB%d();
+]]):format(entry_uid))
+
+  out:write [[
+  }
+]]
+
+  local uid = u.first
+  while uid do
+    if uid ~= exit_uid then
+      compile_basic_block(self, out, basic_blocks, uid, blocks[uid], "    ", opts)
+    end
+    uid = u_after[uid]
+  end
+
+  out:write(([[
+
+  BB%d(...V) {
+    return V;
+  }
+]]):format(exit_uid))
+end
+
+local function compile_program(self, out, proto, opts)
+  local name = proto[1]
 
   out:write(([[
 
@@ -319,46 +347,22 @@ class %s_program {
     this.B = [];
     this.C = [];
   }
-
-  entry() {
 ]]):format(name, name))
 
   if opts.mode == "basic_blocks" then
-    out:write(([[
-    return this.BB%d();
-]]):format(entry_uid))
+    compile_basic_blocks(self, out, proto, opts)
   elseif opts.mode == "flat_code" then
     if proto["goto"] or proto.M > 0 then
-      compile_emulated_goto(self, out, proto, "    ", opts)
+      compile_emulated_goto(self, out, proto, opts)
     else
-      compile_code(self, out, proto.flat_code, "    ", opts)
+      compile_codes(self, out, proto, opts)
     end
   else
     if proto["goto"] then
-      compile_emulated_goto(self, out, proto, "    ", opts)
+      compile_emulated_goto(self, out, proto, opts)
     else
-      compile_code(self, out, proto.tree_code, "    ", opts)
+      compile_codes(self, out, proto, opts)
     end
-  end
-
-  out:write [[
-  }
-]]
-
-  if opts.mode == "basic_blocks" then
-    local blocks = basic_blocks.blocks
-    for uid = entry_uid, exit_uid - 1 do
-      local block = blocks[uid]
-      if block then
-        compile_basic_block(self, out, basic_blocks, uid, block, "    ", opts)
-      end
-    end
-    out:write(([[
-
-  BB%d(...V) {
-    return V;
-  }
-]]):format(exit_uid))
   end
 
   out:write [[
@@ -391,7 +395,7 @@ local function compile_proto(self, out, proto, opts)
   params[#params + 1] = "...V"
 
   compile_constants(self, out, proto, opts)
-  compile_blocks(self, out, proto, opts)
+  compile_program(self, out, proto, opts)
 
   out:write(([[
 
