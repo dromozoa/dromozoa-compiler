@@ -38,7 +38,6 @@ local keys = {
   "def";
   "use";
 
-  "C";
   "adjust";
   "label";
   "var";

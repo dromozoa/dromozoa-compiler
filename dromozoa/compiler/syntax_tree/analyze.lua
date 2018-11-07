@@ -266,33 +266,10 @@ local function assign_var(node, key)
   if not key then
     key = "C"
   end
-  do
-    local proto = attr(node, "proto")
-    local n = proto[key]
-    proto[key] = n + 1
-    return key .. n
-  end
-
-  if key == "C" then
-    while node do
-      local value = node[key]
-      if value then
-        local n = value + 1
-        node[key] = n
-        local proto = attr(node, "proto")
-        if proto[key] < n then
-          proto[key] = n
-        end
-        return key .. value
-      end
-      node = node.parent
-    end
-  else
-    local proto = attr(node, "proto")
-    local n = proto[key]
-    proto[key] = n + 1
-    return key .. n
-  end
+  local proto = attr(node, "proto")
+  local n = proto[key]
+  proto[key] = n + 1
+  return key .. n
 end
 
 local function prepare_protos(node, symbol_table, protos)
