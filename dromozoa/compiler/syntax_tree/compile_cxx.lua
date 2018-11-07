@@ -50,10 +50,10 @@ local function encode_var(var)
     local key = var:sub(1, 1)
     if key == "L" or key == "M" then
       return var
-    elseif key == "U" then
-      return "(*U[" .. var:sub(2) .. "])"
     elseif key == "K" then
       return "K->" .. var
+    elseif key == "U" then
+      return "(*U[" .. var:sub(2) .. "])"
     else
       return key .. "[" .. var:sub(2) .. "]"
     end
@@ -239,7 +239,25 @@ struct %s_constants {
     name))
 end
 
-local function compile_blocks(self, out, proto, opts)
+local function compile_codes(self, out, proto, opts)
+  out:write [[
+
+  array_t entry() {
+]]
+
+  if opts.mode == "flat_code" then
+    compile_code(self, out, proto.flat_code, "    ", opts)
+  else
+    compile_code(self, out, proto.tree_code, "    ", opts)
+  end
+
+  out:write [[
+    return {};
+  }
+]]
+end
+
+local function compile_program(self, out, proto, opts)
   local name = proto[1]
 
   out:write(([[
@@ -260,19 +278,11 @@ struct %s_program {
       V(V),
       B(%d),
       C(%d) {}
-
-  array_t entry() {
 ]]):format(name, name, name, name, proto.B, proto.C))
 
-  if opts.mode == "flat_code" then
-    compile_code(self, out, proto.flat_code, "    ", opts)
-  else
-    compile_code(self, out, proto.tree_code, "    ", opts)
-  end
+  compile_codes(self, out, proto, opts)
 
   out:write [[
-    return {};
-  }
 };
 ]]
 end
@@ -294,7 +304,7 @@ local function compile_proto(self, out, proto, opts)
   end
 
   compile_constants(self, out, proto, opts)
-  compile_blocks(self, out, proto, opts)
+  compile_program(self, out, proto, opts)
 
   out:write(([[
 
