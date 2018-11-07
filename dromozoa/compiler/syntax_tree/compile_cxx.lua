@@ -48,12 +48,12 @@ local function encode_var(var)
     return result
   else
     local key = var:sub(1, 1)
-    if key == "P" or key == "L" then
+    if key == "L" or key == "M" then
       return var
-    elseif key == "U" then
-      return "(*U[" .. var:sub(2) .. "])"
     elseif key == "K" then
       return "K->" .. var
+    elseif key == "U" then
+      return "(*U[" .. var:sub(2) .. "])"
     else
       return key .. "[" .. var:sub(2) .. "]"
     end
@@ -121,36 +121,34 @@ local tmpl = template(encode_var, {
 
 local compile_code
 
-local function write_block(self, out, code, indent)
+local function write_block(self, out, code, indent, opts)
   for i = 1, #code do
-    compile_code(self, out, code[i], indent)
+    compile_code(self, out, code[i], indent, opts)
   end
 end
 
-function compile_code(self, out, code, indent)
+function compile_code(self, out, code, indent, opts)
   local name = code[0]
   if code.block then
     if name == "LOOP" then
       out:write(indent, "for (;;) {\n")
-      write_block(self, out, code, indent .. "  ")
+      write_block(self, out, code, indent .. "  ", opts)
       out:write(indent, "}\n")
     elseif name == "COND" then
       local cond = code[1]
-      if cond[2] == "TRUE" then
-        out:write(indent, ("if (%s.toboolean()) {\n"):format(encode_var(cond[1])))
-      else
-        out:write(indent, ("if (!%s.toboolean()) {\n"):format(encode_var(cond[1])))
-      end
-      write_block(self, out, code[2], indent .. "  ")
+      out:write(indent, ("if (%s%s.toboolean()) {\n"):format(
+          cond[2] == "TRUE" and "" or "!",
+          encode_var(cond[1])))
+      write_block(self, out, code[2], indent .. "  ", opts)
       if #code == 2 then
         out:write(indent, "}\n")
       else
         out:write(indent, "} else {\n")
-        write_block(self, out, code[3], indent .. "  ")
+        write_block(self, out, code[3], indent .. "  ", opts)
         out:write(indent, "}\n")
       end
     else
-      write_block(self, out, code, indent)
+      write_block(self, out, code, indent, opts)
     end
   else
     if name == "CALL" then
@@ -172,16 +170,22 @@ function compile_code(self, out, code, indent)
     elseif name == "SETLIST" then
       out:write(indent, ("setlist(%s, %d, %s);\n"):format(encode_var(code[1]), code[2], encode_var(code[3])))
     elseif name == "CLOSURE" then
-      out:write(indent, ("value_t %s = std::make_shared<%s_T>(U, A, B);\n"):format(code[1], code[1]))
+      out:write(indent, ("%s = std::make_shared<%s>(U, A, B);\n"):format(encode_var(code[1]), code[2]))
     elseif name == "LABEL" then
       out:write(("  %s:\n"):format(code[1]))
+    elseif name == "COND" then
+      out:write(indent, ("if (%s%s.toboolean()) goto %s; else goto %s;\n"):format(
+          code[2] == "TRUE" and "" or "!",
+          encode_var(code[1]),
+          code[3],
+          code[4]))
     else
       out:write(indent, tmpl:eval(name, code), ";\n")
     end
   end
 end
 
-local function compile_constants(self, out, proto)
+local function compile_constants(self, out, proto, opts)
   local name = proto[1]
   local constants = proto.constants
   local n = #constants
@@ -189,9 +193,9 @@ local function compile_constants(self, out, proto)
   if n == 0 then
     out:write(([[
 
-struct %s_K {
-  static const %s_K* get() {
-    static const %s_K instance;
+struct %s_constants {
+  static const %s_constants* get() {
+    static const %s_constants instance;
     return &instance;
   }
 };
@@ -215,14 +219,14 @@ struct %s_K {
 
   out:write(([[
 
-struct %s_K {
+struct %s_constants {
   %s;
 
-  %s_K()
+  %s_constants()
     : %s {}
 
-  static const %s_K* get() {
-    static const %s_K instance;
+  static const %s_constants* get() {
+    static const %s_constants instance;
     return &instance;
   }
 };
@@ -235,13 +239,105 @@ struct %s_K {
     name))
 end
 
-local function compile_blocks(self, out, proto)
+local function compile_codes(self, out, proto, opts)
+  out:write [[
+
+  array_t entry() {
+]]
+
+  if opts.mode == "flat_code" then
+    compile_code(self, out, proto.flat_code, "    ", opts)
+  else
+    compile_code(self, out, proto.tree_code, "    ", opts)
+  end
+
+  out:write [[
+    return {};
+  }
+]]
+end
+
+local function compile_basic_block(self, out, basic_blocks, uid, block, indent, opts)
+  out:write(([[
+
+  array_t BB%d() {
+]]):format(uid))
+
+  local code
+  local name
+  for i = 1, #block do
+    code = block[i]
+    name = code[0]
+    if name == "RETURN" or name == "COND" then
+      break
+    else
+      compile_code(self, out, code, indent, opts)
+    end
+  end
+
+  if name == "RETURN" then
+    out:write(indent, ("return BB%d(%s);\n"):format(basic_blocks.exit_uid, encode_vars(code)))
+  else
+    local g = basic_blocks.g
+    local uv = g.uv
+    local uv_target = uv.target
+    local eid = uv.first[uid]
+    if name == "COND" then
+      local then_uid = uv_target[eid]
+      eid = uv.after[eid]
+      out:write(indent, ("if (%s%s.toboolean()) return BB%d(); else return BB%d();\n"):format(
+          code[2] == "TRUE" and "" or "!",
+          encode_var(code[1]),
+          then_uid,
+          uv_target[eid]))
+    else
+      out:write(indent, ("return BB%d();\n"):format(uv_target[eid]))
+    end
+  end
+
+  out:write(([[
+  }
+]]):format(uid))
+end
+
+local function compile_basic_blocks(self, out, proto, opts)
+  local basic_blocks = proto.basic_blocks
+  local g = basic_blocks.g
+  local u = g.u
+  local u_after = u.after
+  local exit_uid = basic_blocks.exit_uid
+  local blocks = basic_blocks.blocks
+
+  out:write(([[
+
+  array_t entry() {
+    return BB%d();
+  }
+]]):format(basic_blocks.entry_uid))
+
+  local uid = u.first
+  while uid do
+    if uid ~= exit_uid then
+      compile_basic_block(self, out, basic_blocks, uid, blocks[uid], "    ", opts)
+    end
+    uid = u_after[uid]
+  end
+
+  out:write(([[
+
+  array_t BB%d(array_t V = {}) {
+    return V;
+  }
+]]):format(exit_uid))
+end
+
+local function compile_program(self, out, proto, opts)
   local name = proto[1]
 
   out:write(([[
 
-struct %s_Q {
-  const %s_K* K;
+struct %s_program {
+  const %s_constants* K;
   uparray_t U;
   array_t A;
   array_t V;
@@ -249,27 +345,27 @@ struct %s_Q {
   array_t C;
   array_t T;
 
-  %s_Q(uparray_t U, array_t A, array_t V)
-    : K(%s_K::get()),
+  %s_program(uparray_t U, array_t A, array_t V)
+    : K(%s_constants::get()),
       U(U),
       A(A),
       V(V),
       B(%d),
       C(%d) {}
-
-  array_t Q0() {
 ]]):format(name, name, name, name, proto.B, proto.C))
 
-  compile_code(self, out, proto.code, "    ")
+  if opts.mode == "basic_blocks" then
+    compile_basic_blocks(self, out, proto, opts)
+  else
+    compile_codes(self, out, proto, opts)
+  end
 
   out:write [[
-    return {};
-  }
 };
 ]]
 end
 
-local function compile_proto(self, out, proto)
+local function compile_proto(self, out, proto, opts)
   local name = proto[1]
   local upvalues = proto.upvalues
   local n = #upvalues
@@ -285,19 +381,19 @@ local function compile_proto(self, out, proto)
     end
   end
 
-  compile_constants(self, out, proto)
-  compile_blocks(self, out, proto)
+  compile_constants(self, out, proto, opts)
+  compile_program(self, out, proto, opts)
 
   out:write(([[
 
-struct %s_T : proto_t<%d> {
+struct %s : proto_t<%d> {
   uparray_t U;
 
-  %s_T(uparray_t S, array_t A, array_t B)
+  %s(uparray_t S, array_t A, array_t B)
     : U {%s} {}
 
   array_t operator()(array_t A, array_t V) const {
-    return std::make_shared<%s_Q>(U, A, V)->Q0();
+    return std::make_shared<%s_program>(U, A, V)->entry();
   }
 };
 ]]):format(
@@ -308,7 +404,8 @@ struct %s_T : proto_t<%d> {
     name))
 end
 
-return function (self, out, name)
+return function (self, out, opts)
+  local name = opts.name
   local namespace
   if name then
     namespace = "namespace " .. name
@@ -327,7 +424,7 @@ using namespace dromozoa::runtime;
 
   local protos = self.protos
   for i = #protos, 1, -1 do
-    compile_proto(self, out, protos[i])
+    compile_proto(self, out, protos[i], opts)
   end
 
   out:write [[
@@ -336,7 +433,7 @@ value_t chunk() {
   uparray_t S;
   array_t A;
   array_t B = { env };
-  return std::make_shared<P0_T>(S, A, B);
+  return std::make_shared<P0>(S, A, B);
 }
 
 }
