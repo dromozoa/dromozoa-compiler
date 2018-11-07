@@ -61,14 +61,6 @@ function class:dump_tree(out)
   end
 end
 
-function class:dump_basic_blocks(out)
-  if type(out) == "string" then
-    return dump_basic_blocks(self, assert(io.open(out, "w"))):close()
-  else
-    return dump_basic_blocks(self, out)
-  end
-end
-
 function class:compile_es(out, ...)
   if type(out) == "string" then
     return compile_es(self, assert(io.open(out, "w")), ...):close()
@@ -82,6 +74,14 @@ function class:compile_cxx(out, ...)
     return compile_cxx(self, assert(io.open(out, "w")), ...):close()
   else
     return compile_cxx(self, out, ...)
+  end
+end
+
+function class.dump_basic_blocks(proto, out)
+  if type(out) == "string" then
+    return dump_basic_blocks(proto, assert(io.open(out, "w"))):close()
+  else
+    return dump_basic_blocks(proto, out)
   end
 end
 

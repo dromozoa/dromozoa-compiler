@@ -77,13 +77,15 @@ local function block_to_code(basic_blocks, uid, block)
   return html
 end
 
-local function proto_to_code(proto)
+local function to_code(proto)
   local basic_blocks = proto.basic_blocks
   local blocks = basic_blocks.blocks
 
   local html = _"div" {
+    class = "code";
     _"span" { proto[1], " {\n" };
   }
+
   for uid = basic_blocks.entry_uid, basic_blocks.exit_uid do
     local block = blocks[uid]
     if block then
@@ -95,26 +97,47 @@ local function proto_to_code(proto)
   return html
 end
 
-local function to_code(self)
-  local protos = self.protos
+local function to_graph(proto, width, height)
+  local basic_blocks = proto.basic_blocks
+  local g = basic_blocks.g
 
-  local html = _"div" { class = "code" }
-  for i = 1, #protos do
-    html[i] = proto_to_code(protos[i])
+  local u_labels = {}
+  for uid = basic_blocks.entry_uid, basic_blocks.exit_uid do
+    u_labels[uid] = "BB" .. uid
   end
 
-  return html
+  local root = g:render {
+    u_labels = u_labels;
+    e_labels = basic_blocks.jumps;
+  }
+
+  return _"div" {
+    class = "graph";
+    _"svg" {
+      version = "1.1";
+      width = width;
+      height = height;
+      _"rect" {
+        class = "viewport";
+        width = width;
+        height = height;
+        fill = "transparent";
+        stroke = "none";
+      };
+      _"g" {
+        class = "view";
+        root;
+      }
+    };
+  }
 end
 
-local function to_graph(self, width, height)
-end
-
-return function (self, out)
+return function (proto, out)
   local doc = html5_document(_"html" {
     head;
     _"body" {
-      to_code(self);
-      to_graph(self, 800, 640);
+      to_code(proto);
+      to_graph(proto, 800, 640);
     };
   })
   doc:serialize(out)

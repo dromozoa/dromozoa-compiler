@@ -78,6 +78,8 @@ then
   fi
 fi
 
+trap 'rm -f result/tmp.html' 0
+
 echo "<h2>execute</h2><ul>" >>result/index.html
 for i in test/execute/*.lua
 do
@@ -86,7 +88,7 @@ do
   echo "compiling $i..."
   j=`expr "X$i" : 'X.*/\([^/]*\)\.lua'`
   n=execute/$j
-  lua test/compile.lua "$i" "result/$n"
+  env OUTPUT_HTML=result/tmp.html OUTPUT_NAME="$n" lua test/compile.lua "$i" "result/$n"
 
   echo "executing $i..."
   lua "$i" >"result/$n-expected.txt"
@@ -125,11 +127,9 @@ do
 
   cat <<EOH >>result/index.html
 <li>[$result] $j:
-  <a href="$n.js">es</a>,
-  <a href="$n.cpp">cxx</a>,
-  <a href="$n.html">tree</a>,
-  <a href="$n.txt">protos</a>,
-  <a href="$n-bb.html">bb</a>,
+EOH
+  cat result/tmp.html >>result/index.html
+cat <<EOH >>result/index.html
   result:
   <a href="$n-expected.txt">lua</a>,
   <a href="$n-es.txt">es</a>,
