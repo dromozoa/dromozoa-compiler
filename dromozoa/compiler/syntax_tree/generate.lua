@@ -321,7 +321,10 @@ local function generate_basic_blocks(proto)
       name = code[0]
     end
     if name == "GOTO" then
-      g:add_edge(this_uid, labels[code[1]])
+      block[#block] = nil
+      local label = code[1]
+      block["goto"] = label
+      g:add_edge(this_uid, labels[label])
     elseif name == "RETURN" then
       g:add_edge(this_uid, exit_uid)
     elseif name == "COND" then

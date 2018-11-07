@@ -109,6 +109,13 @@ local function block_to_code(basic_blocks, uid, block)
     html[#html + 1] = "\n"
   end
 
+  local label = block["goto"]
+  if label then
+    html[#html + 1] = "    [goto "
+    html[#html + 1] = label
+    html[#html + 1] = "]\n"
+  end
+
   html[#html + 1] = "    [succ"
   local eid = uv.first[uid]
   while eid do
