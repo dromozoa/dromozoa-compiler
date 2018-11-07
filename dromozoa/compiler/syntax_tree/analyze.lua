@@ -266,6 +266,13 @@ local function assign_var(node, key)
   if not key then
     key = "C"
   end
+  do
+    local proto = attr(node, "proto")
+    local n = proto[key]
+    proto[key] = n + 1
+    return key .. n
+  end
+
   if key == "C" then
     while node do
       local value = node[key]
@@ -661,7 +668,9 @@ local function resolve_vars(self, node, symbol_table)
     if node.self then
       node.self = node[1][1].var
     end
-  elseif symbol == symbol_table.fieldlist or node.proto or node.binop or node.unop then
+  elseif symbol == symbol_table.funcbody then
+    node.var = assign_var(node.parent)
+  elseif symbol == symbol_table.fieldlist or node.binop or node.unop then
     node.var = assign_var(node)
   end
 end
