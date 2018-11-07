@@ -30,11 +30,6 @@ local keys = {
   "self";
   "vararg";
   "parlist";
-
-  "while";
-  "for2";
-  "for3";
-  "for";
   "inorder";
 
   "param";
@@ -61,7 +56,6 @@ local head = _"head" {
   _"script" { src = "https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" };
   _"script" { src = "dromozoa-compiler.js" };
 }
-
 
 local function prepare_paths(node, parent_path)
   local path = {}
@@ -117,11 +111,11 @@ local function prepare(self)
   end
 end
 
-local function source_to_html(self)
+local function to_code(self)
   local terminal_nodes = self.terminal_nodes
   local source = self.source
 
-  local html = _"div" { class = "source" }
+  local html = _"div" { class = "code" }
   for i = 1, #terminal_nodes do
     local node = terminal_nodes[i]
     local symbol = node[0]
@@ -191,7 +185,7 @@ local function add_edges(node, that, nid_to_uid)
   end
 end
 
-local function tree_to_html(self, tree_width, tree_height)
+local function to_graph(self, width, height)
   local symbol_names = self.symbol_names
   local accepted_node = self.accepted_node
 
@@ -231,15 +225,15 @@ local function tree_to_html(self, tree_width, tree_height)
   end
 
   return _"div" {
-    class = "tree";
+    class = space_separated { "graph", "tree" };
     _"svg" {
       version = "1.1";
-      width = tree_width;
-      height = tree_height;
+      width = width;
+      height = height;
       _"rect" {
         class = "viewport";
-        width = tree_width;
-        height = tree_height;
+        width = width;
+        height = height;
         fill = "transparent";
         stroke = "none";
       };
@@ -253,15 +247,13 @@ end
 
 return function (self, out)
   prepare(self)
-
   local doc = html5_document(_"html" {
     head;
     _"body" {
-      source_to_html(self);
-      tree_to_html(self, 800, 640);
+      to_code(self);
+      to_graph(self, 800, 640);
     };
   })
-
   doc:serialize(out)
   out:write "\n"
   return out

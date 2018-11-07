@@ -47,9 +47,37 @@ if not result then
   error(error_message(message, source, i, source_file))
 end
 
+local opts = {
+  mode = os.getenv "MODE"
+}
+
 t:generate()
 
-t:compile_es(output_name .. ".js")
-t:compile_cxx(output_name .. ".cpp")
+t:compile_es(output_name .. ".js", opts)
+t:compile_cxx(output_name .. ".cpp", opts)
 t:dump_tree(output_name .. ".html")
-t:dump_protos(output_name .. ".txt")
+t:dump_protos(output_name .. ".txt", opts)
+for i = 1, #t.protos do
+  local proto = t.protos[i]
+  syntax_tree.dump_basic_blocks(proto, output_name .. "-" .. proto[1] .. ".html")
+end
+
+local html = os.getenv "OUTPUT_HTML"
+local name = os.getenv "OUTPUT_NAME"
+if html then
+  local out = assert(io.open(html, "w"))
+  out:write(([[
+  <a href="%s.js">es</a>,
+  <a href="%s.cpp">cxx</a>,
+  <a href="%s.html">tree</a>,
+  <a href="%s.txt">protos</a>,
+  bb:
+]]):format(name, name, name, name))
+  for i = 1, #t.protos do
+    local proto = t.protos[i]
+    out:write(([[
+  <a href="%s-%s.html">%s</a>,
+]]):format(name, proto[1], proto[1]))
+  end
+  out:close()
+end

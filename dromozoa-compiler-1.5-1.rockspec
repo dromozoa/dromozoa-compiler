@@ -1,9 +1,9 @@
 rockspec_format = "3.0"
 package = "dromozoa-compiler"
-version = "1.4-1"
+version = "1.5-1"
 source = {
-  url = "https://github.com/dromozoa/dromozoa-compiler/archive/v1.4.tar.gz";
-  file = "dromozoa-compiler-1.4.tar.gz";
+  url = "https://github.com/dromozoa/dromozoa-compiler/archive/v1.5.tar.gz";
+  file = "dromozoa-compiler-1.5.tar.gz";
 }
 description = {
   summary = "Lua compiler toolkit";
@@ -32,6 +32,7 @@ build = {
     ["dromozoa.compiler.syntax_tree.code_builder"] = "dromozoa/compiler/syntax_tree/code_builder.lua";
     ["dromozoa.compiler.syntax_tree.compile_cxx"] = "dromozoa/compiler/syntax_tree/compile_cxx.lua";
     ["dromozoa.compiler.syntax_tree.compile_es"] = "dromozoa/compiler/syntax_tree/compile_es.lua";
+    ["dromozoa.compiler.syntax_tree.dump_basic_blocks"] = "dromozoa/compiler/syntax_tree/dump_basic_blocks.lua";
     ["dromozoa.compiler.syntax_tree.dump_protos"] = "dromozoa/compiler/syntax_tree/dump_protos.lua";
     ["dromozoa.compiler.syntax_tree.dump_tree"] = "dromozoa/compiler/syntax_tree/dump_tree.lua";
     ["dromozoa.compiler.syntax_tree.generate"] = "dromozoa/compiler/syntax_tree/generate.lua";

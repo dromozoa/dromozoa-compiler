@@ -18,6 +18,7 @@
 local analyze = require "dromozoa.compiler.syntax_tree.analyze"
 local compile_cxx = require "dromozoa.compiler.syntax_tree.compile_cxx"
 local compile_es = require "dromozoa.compiler.syntax_tree.compile_es"
+local dump_basic_blocks = require "dromozoa.compiler.syntax_tree.dump_basic_blocks"
 local dump_protos = require "dromozoa.compiler.syntax_tree.dump_protos"
 local dump_tree = require "dromozoa.compiler.syntax_tree.dump_tree"
 local generate = require "dromozoa.compiler.syntax_tree.generate"
@@ -44,11 +45,11 @@ function class:generate()
   return generate(self)
 end
 
-function class:dump_protos(out)
+function class:dump_protos(out, ...)
   if type(out) == "string" then
-    return dump_protos(self, assert(io.open(out, "w"))):close()
+    return dump_protos(self, assert(io.open(out, "w")), ...):close()
   else
-    return dump_protos(self, out)
+    return dump_protos(self, out, ...)
   end
 end
 
@@ -60,19 +61,27 @@ function class:dump_tree(out)
   end
 end
 
-function class:compile_es(out, name)
+function class:compile_es(out, ...)
   if type(out) == "string" then
-    return compile_es(self, assert(io.open(out, "w")), name):close()
+    return compile_es(self, assert(io.open(out, "w")), ...):close()
   else
-    return compile_es(self, out, name)
+    return compile_es(self, out, ...)
   end
 end
 
-function class:compile_cxx(out, name)
+function class:compile_cxx(out, ...)
   if type(out) == "string" then
-    return compile_cxx(self, assert(io.open(out, "w")), name):close()
+    return compile_cxx(self, assert(io.open(out, "w")), ...):close()
   else
-    return compile_cxx(self, out, name)
+    return compile_cxx(self, out, ...)
+  end
+end
+
+function class.dump_basic_blocks(proto, out)
+  if type(out) == "string" then
+    return dump_basic_blocks(proto, assert(io.open(out, "w"))):close()
+  else
+    return dump_basic_blocks(proto, out)
   end
 end
 
