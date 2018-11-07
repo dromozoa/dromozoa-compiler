@@ -283,7 +283,7 @@ local function compile_basic_block(self, out, basic_blocks, uid, block, indent, 
     if name == "COND" then
       local then_uid = uv_target[eid]
       eid = uv.after[eid]
-      out:write(indent, ("if (%stoboolean(%s)) return this.BB%d(); else this.BB%d();\n"):format(
+      out:write(indent, ("if (%stoboolean(%s)) return this.BB%d(); else return this.BB%d();\n"):format(
           code[2] == "TRUE" and "" or "!",
           encode_var(code[1]),
           then_uid,

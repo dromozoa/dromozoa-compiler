@@ -257,6 +257,80 @@ local function compile_codes(self, out, proto, opts)
 ]]
 end
 
+local function compile_basic_block(self, out, basic_blocks, uid, block, indent, opts)
+  out:write(([[
+
+  array_t BB%d() {
+]]):format(uid))
+
+  local code
+  local name
+  for i = 1, #block do
+    code = block[i]
+    name = code[0]
+    if name == "RETURN" or name == "COND" then
+      break
+    else
+      compile_code(self, out, code, indent, opts)
+    end
+  end
+
+  if name == "RETURN" then
+    out:write(indent, ("return BB%d(%s);\n"):format(basic_blocks.exit_uid, encode_vars(code)))
+  else
+    local g = basic_blocks.g
+    local uv = g.uv
+    local uv_target = uv.target
+    local eid = uv.first[uid]
+    if name == "COND" then
+      local then_uid = uv_target[eid]
+      eid = uv.after[eid]
+      out:write(indent, ("if (%s%s.toboolean()) return BB%d(); else return BB%d();\n"):format(
+          code[2] == "TRUE" and "" or "!",
+          encode_var(code[1]),
+          then_uid,
+          uv_target[eid]))
+    else
+      out:write(indent, ("return BB%d();\n"):format(uv_target[eid]))
+    end
+  end
+
+  out:write(([[
+  }
+]]):format(uid))
+end
+
+local function compile_basic_blocks(self, out, proto, opts)
+  local basic_blocks = proto.basic_blocks
+  local g = basic_blocks.g
+  local u = g.u
+  local u_after = u.after
+  local exit_uid = basic_blocks.exit_uid
+  local blocks = basic_blocks.blocks
+
+  out:write(([[
+
+  array_t entry() {
+    return BB%d();
+  }
+]]):format(basic_blocks.entry_uid))
+
+  local uid = u.first
+  while uid do
+    if uid ~= exit_uid then
+      compile_basic_block(self, out, basic_blocks, uid, blocks[uid], "    ", opts)
+    end
+    uid = u_after[uid]
+  end
+
+  out:write(([[
+
+  array_t BB%d(array_t V = {}) {
+    return V;
+  }
+]]):format(exit_uid))
+end
+
 local function compile_program(self, out, proto, opts)
   local name = proto[1]
 
@@ -280,7 +354,11 @@ struct %s_program {
       C(%d) {}
 ]]):format(name, name, name, name, proto.B, proto.C))
 
-  compile_codes(self, out, proto, opts)
+  if opts.mode == "basic_blocks" then
+    compile_basic_blocks(self, out, proto, opts)
+  else
+    compile_codes(self, out, proto, opts)
+  end
 
   out:write [[
 };
