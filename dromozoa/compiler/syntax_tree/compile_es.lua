@@ -283,7 +283,7 @@ local function compile_basic_block(self, out, basic_blocks, uid, block, indent, 
     if name == "COND" then
       local then_uid = uv_target[eid]
       eid = uv.after[eid]
-      out:write(indent, ("return %stoboolean(%s) ? this.BB%d() : this.BB%d();\n"):format(
+      out:write(indent, ("if (%stoboolean(%s)) return this.BB%d(); else this.BB%d();\n"):format(
           code[2] == "TRUE" and "" or "!",
           encode_var(code[1]),
           then_uid,
@@ -303,7 +303,6 @@ local function compile_basic_blocks(self, out, proto, opts)
   local g = basic_blocks.g
   local u = g.u
   local u_after = u.after
-  local entry_uid = basic_blocks.entry_uid
   local exit_uid = basic_blocks.exit_uid
   local blocks = basic_blocks.blocks
 
@@ -311,11 +310,8 @@ local function compile_basic_blocks(self, out, proto, opts)
 
   entry() {
     return this.BB%d();
-]]):format(entry_uid))
-
-  out:write [[
   }
-]]
+]]):format(basic_blocks.entry_uid))
 
   local uid = u.first
   while uid do
