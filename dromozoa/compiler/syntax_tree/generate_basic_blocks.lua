@@ -89,6 +89,49 @@ local function generate(proto)
     next_uid = u_after[this_uid]
   end
 
+  local uid = u.first
+  while uid do
+    local block = blocks[uid]
+    local uses = {}
+    local defs = {}
+    for j = 1, #block do
+      local code = block[j]
+      local name = code[0]
+      if name == "SETTABLE" then
+        uses[code[1]] = true
+        uses[code[2]] = true
+        uses[code[3]] = true
+      elseif name == "CALL" then
+        local var = code[1]
+        if var ~= "NIL" then
+          defs[var] = true
+        end
+        for k = 2, #code do
+          uses[code[k]] = true
+        end
+      elseif name == "RETURN" then
+        for k = 1, #code do
+          uses[code[k]] = true
+        end
+      elseif name == "SETLIST" then
+        uses[code[1]] = true
+        uses[code[3]] = true
+      elseif name == "CLOSURE" then
+        defs[code[1]] = true
+      elseif name == "COND" then
+        uses[code[1]] = true
+      else
+        defs[code[1]] = true
+        for k = 2, #code do
+          uses[code[k]] = true
+        end
+      end
+    end
+    block.uses = uses
+    block.defs = defs
+    uid = u_after[uid]
+  end
+
   -- for i = 1, n do
   --   local block = blocks[uids[i]]
   --   for j = 1, #block do
@@ -109,9 +152,7 @@ local function generate(proto)
   -- uses
   -- defs
   -- use-after-defs???
-
-
-
+  -- only
 
   proto.basic_blocks = {
     g = g;
