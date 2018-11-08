@@ -98,6 +98,26 @@ local function block_to_code(basic_blocks, uid, block)
     html[#html + 1] = "]\n"
   end
 
+  local defs = block.defs
+  if #defs > 0 then
+    html[#html + 1] = "    [defs"
+    for i = 1, #defs do
+      html[#html + 1] = " "
+      html[#html + 1] = defs[i]
+    end
+    html[#html + 1] = "]\n"
+  end
+
+  local uses = block.uses
+  if #uses > 0 then
+    html[#html + 1] = "    [uses"
+    for i = 1, #uses do
+      html[#html + 1] = " "
+      html[#html + 1] = uses[i]
+    end
+    html[#html + 1] = "]\n"
+  end
+
   for i = 1, #block do
     local code = block[i]
     html[#html + 1] = "    "

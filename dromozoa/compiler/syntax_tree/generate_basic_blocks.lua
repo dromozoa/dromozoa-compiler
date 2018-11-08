@@ -89,69 +89,68 @@ local function generate(proto)
     next_uid = u_after[this_uid]
   end
 
+  -- TODO Tn, Vn => T, V
   local uid = u.first
   while uid do
     local block = blocks[uid]
-    local uses = {}
-    local defs = {}
+    local useset = {}
+    local defset = {}
     for j = 1, #block do
       local code = block[j]
       local name = code[0]
       if name == "SETTABLE" then
-        uses[code[1]] = true
-        uses[code[2]] = true
-        uses[code[3]] = true
+        useset[code[1]] = true
+        useset[code[2]] = true
+        useset[code[3]] = true
       elseif name == "CALL" then
         local var = code[1]
         if var ~= "NIL" then
-          defs[var] = true
+          defset[var] = true
         end
         for k = 2, #code do
-          uses[code[k]] = true
+          useset[code[k]] = true
         end
       elseif name == "RETURN" then
         for k = 1, #code do
-          uses[code[k]] = true
+          useset[code[k]] = true
         end
       elseif name == "SETLIST" then
-        uses[code[1]] = true
-        uses[code[3]] = true
+        useset[code[1]] = true
+        useset[code[3]] = true
       elseif name == "CLOSURE" then
-        defs[code[1]] = true
+        defset[code[1]] = true
       elseif name == "COND" then
-        uses[code[1]] = true
+        useset[code[1]] = true
       else
-        defs[code[1]] = true
+        defset[code[1]] = true
         for k = 2, #code do
-          uses[code[k]] = true
+          useset[code[k]] = true
         end
       end
     end
-    block.uses = uses
+
+    local defs = {}
+    for def in pairs(defset) do
+      defs[#defs + 1] = def
+    end
+    table.sort(defs)
+    block.defset = defset
     block.defs = defs
+
+    local uses = {}
+    for use in pairs(useset) do
+      uses[#uses + 1] = use
+    end
+    table.sort(uses)
+    block.useset = useset
+    block.uses = uses
+
     uid = u_after[uid]
   end
-
-  -- for i = 1, n do
-  --   local block = blocks[uids[i]]
-  --   for j = 1, #block do
-  --     local code = block[j]
-  --     local name = code[0]
-  --     if name == "SETTABLE" then
-  --     elseif name == "RETURN" then
-  --     elseif name == "COND" then
-  --     elseif name == "SETLIST" then
-  --     else
-  --       for k = 2, #code do
-  --       end
-  --     end
-  --   end
-  -- end
 
   -- TODO investigate
   -- uses
   -- defs
-  -- use-after-defs???
   -- only
 
   proto.basic_blocks = {
