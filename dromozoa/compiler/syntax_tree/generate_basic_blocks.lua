@@ -17,6 +17,20 @@
 
 local graph = require "dromozoa.graph"
 
+local function update_useset(useset, code, i)
+  local var = code[i]
+  useset[var] = true
+end
+
+local function update_use(useset)
+  local use = {}
+  for var in pairs(useset) do
+    use[#use + 1] = var
+  end
+  table.sort(use)
+  return use
+end
+
 local function generate(proto)
   local flat_code = proto.flat_code
   local n = #flat_code
@@ -99,51 +113,39 @@ local function generate(proto)
       local code = block[j]
       local name = code[0]
       if name == "SETTABLE" then
-        useset[code[1]] = true
-        useset[code[2]] = true
-        useset[code[3]] = true
+        update_useset(useset, code, 1)
+        update_useset(useset, code, 2)
+        update_useset(useset, code, 3)
       elseif name == "CALL" then
-        local var = code[1]
-        if var ~= "NIL" then
-          defset[var] = true
+        if code[1] ~= "NIL" then
+          update_useset(defset, code, 1)
         end
         for k = 2, #code do
-          useset[code[k]] = true
+          update_useset(useset, code, k)
         end
       elseif name == "RETURN" then
         for k = 1, #code do
-          useset[code[k]] = true
+          update_useset(useset, code, k)
         end
       elseif name == "SETLIST" then
-        useset[code[1]] = true
-        useset[code[3]] = true
+        update_useset(useset, code, 1)
+        update_useset(useset, code, 3)
       elseif name == "CLOSURE" then
-        defset[code[1]] = true
+        update_useset(defset, code, 1)
       elseif name == "COND" then
-        useset[code[1]] = true
+        update_useset(useset, code, 1)
       else
-        defset[code[1]] = true
+        update_useset(defset, code, 1)
         for k = 2, #code do
-          useset[code[k]] = true
+          update_useset(useset, code, k)
         end
       end
     end
 
-    local defs = {}
-    for def in pairs(defset) do
-      defs[#defs + 1] = def
-    end
-    table.sort(defs)
     block.defset = defset
-    block.defs = defs
-
-    local uses = {}
-    for use in pairs(useset) do
-      uses[#uses + 1] = use
-    end
-    table.sort(uses)
+    block.def = update_use(defset)
     block.useset = useset
-    block.uses = uses
+    block.use = update_use(useset)
 
     uid = u_after[uid]
   end

@@ -66,6 +66,19 @@ local marker = _"marker" {
   };
 }
 
+local function use_to_code(html, block, key)
+  local use = block[key]
+  if use[1] then
+    html[#html + 1] = "    ["
+    html[#html + 1] = key
+    for i = 1, #use do
+      html[#html + 1] = " "
+      html[#html + 1] = use[i]
+    end
+    html[#html + 1] = "]\n"
+  end
+end
+
 local function block_to_code(basic_blocks, uid, block)
   local g = basic_blocks.g
   local uv = g.uv
@@ -98,25 +111,8 @@ local function block_to_code(basic_blocks, uid, block)
     html[#html + 1] = "]\n"
   end
 
-  local defs = block.defs
-  if #defs > 0 then
-    html[#html + 1] = "    [defs"
-    for i = 1, #defs do
-      html[#html + 1] = " "
-      html[#html + 1] = defs[i]
-    end
-    html[#html + 1] = "]\n"
-  end
-
-  local uses = block.uses
-  if #uses > 0 then
-    html[#html + 1] = "    [uses"
-    for i = 1, #uses do
-      html[#html + 1] = " "
-      html[#html + 1] = uses[i]
-    end
-    html[#html + 1] = "]\n"
-  end
+  use_to_code(html, block, "def")
+  use_to_code(html, block, "use")
 
   for i = 1, #block do
     local code = block[i]
