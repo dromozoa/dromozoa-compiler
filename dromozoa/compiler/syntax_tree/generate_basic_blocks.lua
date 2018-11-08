@@ -19,6 +19,9 @@ local graph = require "dromozoa.graph"
 
 local function update_useset(useset, code, i)
   local var = code[i]
+  if var == "NIL" or var == "FALSE" or var == "TRUE" or var:find "^K%d" then
+    return
+  end
   useset[var] = true
 end
 
@@ -117,9 +120,7 @@ local function generate(proto)
         update_useset(useset, code, 2)
         update_useset(useset, code, 3)
       elseif name == "CALL" then
-        if code[1] ~= "NIL" then
-          update_useset(defset, code, 1)
-        end
+        update_useset(defset, code, 1)
         for k = 2, #code do
           update_useset(useset, code, k)
         end
