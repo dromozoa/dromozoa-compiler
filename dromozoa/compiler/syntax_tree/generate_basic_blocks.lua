@@ -20,7 +20,10 @@ local graph = require "dromozoa.graph"
 local function generate(proto)
   local flat_code = proto.flat_code
   local n = #flat_code
+
   local g = graph()
+  local u = g.u
+  local u_after = u.after
 
   local entry_uid = g:add_vertex()
   local uid
@@ -58,9 +61,9 @@ local function generate(proto)
   blocks[exit_uid] = {}
   local jumps = {}
 
-  local this_uid = uids[1]
-  for i = 2, #uids do
-    local next_uid = uids[i]
+  local this_uid = u.first
+  local next_uid = u_after[this_uid]
+  while next_uid do
     local block = blocks[this_uid]
     local code = block[#block]
     local name
@@ -83,7 +86,32 @@ local function generate(proto)
       g:add_edge(this_uid, next_uid)
     end
     this_uid = next_uid
+    next_uid = u_after[this_uid]
   end
+
+  -- for i = 1, n do
+  --   local block = blocks[uids[i]]
+  --   for j = 1, #block do
+  --     local code = block[j]
+  --     local name = code[0]
+  --     if name == "SETTABLE" then
+  --     elseif name == "RETURN" then
+  --     elseif name == "COND" then
+  --     elseif name == "SETLIST" then
+  --     else
+  --       for k = 2, #code do
+  --       end
+  --     end
+  --   end
+  -- end
+
+  -- TODO investigate
+  -- uses
+  -- defs
+  -- use-after-defs???
+
+
+
 
   proto.basic_blocks = {
     g = g;
