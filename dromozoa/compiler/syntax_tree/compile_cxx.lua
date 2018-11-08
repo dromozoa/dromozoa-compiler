@@ -325,8 +325,8 @@ local function compile_basic_blocks(self, out, proto, opts)
 
   out:write(([[
 
-  array_t BB%d(array_t V = {}) {
-    return V;
+  array_t BB%d(array_t result = {}) {
+    return result;
   }
 ]]):format(exit_uid))
 end

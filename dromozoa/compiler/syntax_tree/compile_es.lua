@@ -323,8 +323,8 @@ local function compile_basic_blocks(self, out, proto, opts)
 
   out:write(([[
 
-  BB%d(...V) {
-    return V;
+  BB%d(...result) {
+    return result;
   }
 ]]):format(exit_uid))
 end
