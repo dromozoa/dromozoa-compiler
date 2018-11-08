@@ -15,17 +15,11 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-local generate_basic_blocks = require "dromozoa.compiler.syntax_tree.generate_basic_blocks"
-local generate_flat_code = require "dromozoa.compiler.syntax_tree.generate_flat_code"
-local generate_tree_code = require "dromozoa.compiler.syntax_tree.generate_tree_code"
-
---[====[
-local graph = require "dromozoa.graph"
 local code_builder = require "dromozoa.compiler.syntax_tree.code_builder"
 
 local unpack = table.unpack or unpack
 
-local function generate_tree_code(stack, node, symbol_table)
+local function generate(stack, node, symbol_table)
   local proto = node.proto
   if proto then
     code_builder(stack, node):CLOSURE(node.var, proto[1])
@@ -46,7 +40,7 @@ local function generate_tree_code(stack, node, symbol_table)
   end
 
   for i = 1, n do
-    generate_tree_code(stack, node[i], symbol_table)
+    generate(stack, node[i], symbol_table)
     if i == inorder then
       if symbol == symbol_table["while"] then
         _:COND_IF(node[1].var, "FALSE")
@@ -221,141 +215,7 @@ local function generate_tree_code(stack, node, symbol_table)
   end
 end
 
-local function generate_flat_code(proto, flat_code, code, break_label)
-  local name = code[0]
-
-  if code.block then
-    if name == "LOOP" then
-      local n = proto.M
-      local x = "M" .. n
-      local y = "M" .. n + 1
-      proto.M = n + 2
-      flat_code[#flat_code + 1] = { [0] = "LABEL", x }
-      for i = 1, #code do
-        generate_flat_code(proto, flat_code, code[i], y)
-      end
-      flat_code[#flat_code + 1] = { [0] = "GOTO", x }
-      flat_code[#flat_code + 1] = { [0] = "LABEL", y }
-    elseif name == "COND" then
-      local cond = code[1]
-      if #code == 2 then
-        local n = proto.M
-        local x = "M" .. n
-        local y = "M" .. n + 1
-        proto.M = n + 2
-        flat_code[#flat_code + 1] = { [0] = "COND", cond[1], cond[2], x, y }
-        flat_code[#flat_code + 1] = { [0] = "LABEL", x }
-        generate_flat_code(proto, flat_code, code[2], break_label)
-        flat_code[#flat_code + 1] = { [0] = "LABEL", y }
-      else
-        local n = proto.M
-        local x = "M" .. n
-        local y = "M" .. n + 1
-        local z = "M" .. n + 2
-        proto.M = n + 3
-        flat_code[#flat_code + 1] = { [0] = "COND", cond[1], cond[2], x, y }
-        flat_code[#flat_code + 1] = { [0] = "LABEL", x }
-        generate_flat_code(proto, flat_code, code[2], break_label)
-        flat_code[#flat_code + 1] = { [0] = "GOTO", z }
-        flat_code[#flat_code + 1] = { [0] = "LABEL", y }
-        generate_flat_code(proto, flat_code, code[3], break_label)
-        flat_code[#flat_code + 1] = { [0] = "LABEL", z }
-      end
-    else
-      for i = 1, #code do
-        generate_flat_code(proto, flat_code, code[i], break_label)
-      end
-    end
-  else
-    if name == "BREAK" then
-      flat_code[#flat_code + 1] = { [0] = "GOTO", break_label }
-    else
-      flat_code[#flat_code + 1] = code
-    end
-  end
-end
-
-local function generate_basic_blocks(proto)
-  local flat_code = proto.flat_code
-  local n = #flat_code
-  local g = graph()
-
-  local entry_uid = g:add_vertex()
-  local uid
-  local uids = { entry_uid }
-  local block
-  local blocks = { [entry_uid] = {} }
-  local labels = {}
-
-  for i = 1, n do
-    local code = flat_code[i]
-    local name = code[0]
-    if name == "LABEL" then
-      uid = g:add_vertex()
-      uids[#uids + 1] = uid
-      local label = code[1]
-      block = { label = label }
-      blocks[uid] = block
-      labels[label] = uid
-    else
-      if not uid then
-        uid = g:add_vertex()
-        uids[#uids + 1] = uid
-        block = {}
-        blocks[uid] = block
-      end
-      block[#block + 1] = code
-      if name == "CALL" or name == "RETURN" or name == "GOTO" or name == "COND" then
-        uid = nil
-      end
-    end
-  end
-
-  local exit_uid = g:add_vertex()
-  uids[#uids + 1] = exit_uid
-  blocks[exit_uid] = {}
-  local jumps = {}
-
-  local this_uid = uids[1]
-  for i = 2, #uids do
-    local next_uid = uids[i]
-    local block = blocks[this_uid]
-    local code = block[#block]
-    local name
-    if code then
-      name = code[0]
-    end
-    if name == "GOTO" then
-      block[#block] = nil
-      local label = code[1]
-      block["goto"] = label
-      g:add_edge(this_uid, labels[label])
-    elseif name == "RETURN" then
-      g:add_edge(this_uid, exit_uid)
-    elseif name == "COND" then
-      local then_eid = g:add_edge(this_uid, labels[code[3]])
-      local else_eid = g:add_edge(this_uid, labels[code[4]])
-      jumps[then_eid] = "THEN"
-      jumps[else_eid] = "ELSE"
-    else
-      g:add_edge(this_uid, next_uid)
-    end
-    this_uid = next_uid
-  end
-
-  proto.basic_blocks = {
-    g = g;
-    entry_uid = entry_uid;
-    exit_uid = exit_uid;
-    blocks = blocks;
-    jumps = jumps;
-  }
-end
-]====]
-
 return function (self)
-  generate_tree_code(self)
-  generate_flat_code(self)
-  generate_basic_blocks(self)
+  generate({ { block = true } }, self.accepted_node, self.symbol_table)
   return self
 end
