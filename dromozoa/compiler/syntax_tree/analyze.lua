@@ -589,8 +589,11 @@ local function resolve_vars(self, node, symbol_table)
         assign_var(node, "B"); -- var
         assign_var(node, "B"); -- limit
         assign_var(node, "B"); -- step
-        assign_var(node);
         ref_constant(node, "integer", "0")[1];
+        assign_var(node);
+        assign_var(node);
+        assign_var(node);
+        assign_var(node);
       }
     else -- generic for
       node.vars = {
