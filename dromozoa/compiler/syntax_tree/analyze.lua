@@ -16,6 +16,7 @@
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
 local symbol_value = require "dromozoa.parser.symbol_value"
+local decode_var = require "dromozoa.compiler.syntax_tree.decode_var"
 local encode_var = require "dromozoa.compiler.syntax_tree.encode_var"
 
 local function attr(node, key)
@@ -483,11 +484,11 @@ local function resolve_names(self, node, symbol_table)
       end
     end
   elseif symbol == symbol_table["nil"] then
-    node.var = "NIL"
+    node.var = encode_var "NIL"
   elseif symbol == symbol_table["false"] then
-    node.var = "FALSE"
+    node.var = encode_var "FALSE"
   elseif symbol == symbol_table["true"] then
-    node.var = "TRUE"
+    node.var = encode_var "TRUE"
   elseif symbol == symbol_table.IntegerConstant then
     node.var = ref_constant(node, "integer")[1]
   elseif symbol == symbol_table.FloatConstant then
@@ -503,11 +504,11 @@ local function resolve_names(self, node, symbol_table)
     local adjust = node.adjust
     if adjust then
       if adjust ~= 0 then
-        node.var = "V"
+        node.var = encode_var "V"
       end
     else
       node.adjust = 1
-      node.var = "V0"
+      node.var = encode_var("V", 0)
     end
   elseif symbol == symbol_table.functioncall then
     if node.self then
@@ -562,11 +563,13 @@ local function resolve_vars(self, node, symbol_table)
     for i = 1, #rvars do
       local var = rvars[i]
       if i == 1 then
-        if var:find "^T%d" then
+        local key, i = decode_var(var)
+        if key == "T" then
           var = assign_var(node)
         end
       else
-        if var:find "^[UABT]%d" then
+        local key, i = decode_var(var)
+        if key == "U" or key == "A" or key == "B" or key == "T" then
           var = assign_var(node)
         end
       end
@@ -619,16 +622,19 @@ local function resolve_vars(self, node, symbol_table)
       for i = 1, n do
         local that = node[i]
         local var = that.var
-        if var == "V" or var == "T" then
-          for j = 0, that.adjust - 1 do
-            vars[i + j] = var .. j
+        if var then
+          local key, j = decode_var(var)
+          if key == "V" or key == "T" then
+            for j = 0, that.adjust - 1 do
+              vars[i + j] = encode_var(key, j)
+            end
+          else
+            vars[i] = var
           end
-        else
-          vars[i] = var
         end
       end
       for i = #vars + 1, adjust do
-        vars[i] = "NIL"
+        vars[i] = encode_var "NIL"
       end
       node.vars = vars
     end

@@ -18,10 +18,10 @@
 return function (key, i)
   if key == "V" or key == "T" then
     if i then
-      return key
-    else
       -- return key .. "[" .. i .. "]"
       return key .. i
+    else
+      return key
     end
   elseif key == "NIL" or key == "FALSE" or key == "TRUE" then
     return key

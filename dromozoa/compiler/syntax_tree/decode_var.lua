@@ -16,7 +16,7 @@
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
 return function (var)
-  if var == "NIL" or var == "FALSE" or var == "TRUE" then
+  if var == "NIL" or var == "FALSE" or var == "TRUE" or var == "V" or var == "T" then
     return var
   else
     -- local key, i = var:match "^([VT])%[(%d+)]%]$"
