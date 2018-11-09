@@ -37,10 +37,16 @@ local function update_useset(useset, code, i)
   end
 end
 
-local function update_use(useset)
+local function update_usemap(usemap, useset, uid)
   local use = {}
   for var in pairs(useset) do
     use[#use + 1] = var
+    local uids = usemap[var]
+    if uids then
+      uids[#uids + 1] = uid
+    else
+      usemap[var] = { uid }
+    end
   end
   table.sort(use)
   return use
@@ -139,6 +145,9 @@ local function analyze(basic_blocks)
   local exit_uid = basic_blocks.exit_uid
   local blocks = basic_blocks.blocks
 
+  local defmap = {}
+  local usemap = {}
+
   local uid = u.first
   while uid do
     local block = blocks[uid]
@@ -177,9 +186,8 @@ local function analyze(basic_blocks)
 
     block.defset = defset
     block.useset = useset
-
-    block.def = update_use(defset)
-    block.use = update_use(useset)
+    block.def = update_usemap(defmap, defset, uid)
+    block.use = update_usemap(usemap, useset, uid)
 
     uid = u_after[uid]
   end
