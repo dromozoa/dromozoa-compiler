@@ -46,27 +46,22 @@ local function update_use(useset)
   return use
 end
 
-local function generate(proto)
+local function split(proto)
   local flat_code = proto.flat_code
-  local n = #flat_code
 
   local g = graph()
-  local u = g.u
-  local u_after = u.after
-
   local entry_uid = g:add_vertex()
-  local uid
-  local uids = { entry_uid }
-  local block
   local blocks = { [entry_uid] = {} }
   local labels = {}
 
-  for i = 1, n do
+  local uid
+  local block
+
+  for i = 1, #flat_code do
     local code = flat_code[i]
     local name = code[0]
     if name == "LABEL" then
       uid = g:add_vertex()
-      uids[#uids + 1] = uid
       local label = code[1]
       block = { label = label }
       blocks[uid] = block
@@ -74,7 +69,6 @@ local function generate(proto)
     else
       if not uid then
         uid = g:add_vertex()
-        uids[#uids + 1] = uid
         block = {}
         blocks[uid] = block
       end
@@ -86,9 +80,31 @@ local function generate(proto)
   end
 
   local exit_uid = g:add_vertex()
-  uids[#uids + 1] = exit_uid
   blocks[exit_uid] = {}
+
+  return {
+    g = g;
+    entry_uid = entry_uid;
+    exit_uid = exit_uid;
+    blocks = blocks;
+    labels = labels;
+  }
+end
+
+local function generate(proto)
+  local basic_blocks = split(proto)
+
+  local g = basic_blocks.g
+  local u = g.u
+  local u_after = u.after
+
+  local entry_uid = basic_blocks.entry_uid
+  local exit_uid = basic_blocks.exit_uid
+  local blocks = basic_blocks.blocks
+  local labels = basic_blocks.labels
+
   local jumps = {}
+  basic_blocks.jumps = jumps
 
   local this_uid = u.first
   local next_uid = u_after[this_uid]
@@ -163,13 +179,7 @@ local function generate(proto)
     uid = u_after[uid]
   end
 
-  proto.basic_blocks = {
-    g = g;
-    entry_uid = entry_uid;
-    exit_uid = exit_uid;
-    blocks = blocks;
-    jumps = jumps;
-  }
+  proto.basic_blocks = basic_blocks
 end
 
 return function (self)
