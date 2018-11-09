@@ -118,12 +118,11 @@ local function generate(proto)
     next_uid = u_after[this_uid]
   end
 
-  -- TODO Tn, Vn => T, V
   local uid = u.first
   while uid do
     local block = blocks[uid]
-    local useset = {}
     local defset = {}
+    local useset = {}
     for j = 1, #block do
       local code = block[j]
       local name = code[0]
@@ -156,17 +155,13 @@ local function generate(proto)
     end
 
     block.defset = defset
-    block.def = update_use(defset)
     block.useset = useset
+
+    block.def = update_use(defset)
     block.use = update_use(useset)
 
     uid = u_after[uid]
   end
-
-  -- TODO investigate
-  -- uses
-  -- defs
-  -- only
 
   proto.basic_blocks = {
     g = g;
