@@ -192,6 +192,8 @@ local function analyze(basic_blocks)
     uid = u_after[uid]
   end
 
+  basic_blocks.defmap = defmap
+  basic_blocks.usemap = usemap
   return basic_blocks
 end
 

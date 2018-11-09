@@ -66,16 +66,36 @@ local marker = _"marker" {
   };
 }
 
-local function use_to_code(html, block, key)
+local function use_to_code(block, key)
   local use = block[key]
   if use[1] then
-    html[#html + 1] = "    ["
-    html[#html + 1] = key
-    for i = 1, #use do
-      html[#html + 1] = " "
-      html[#html + 1] = use[i]
+    return "    [" .. key .. " " .. table.concat(use, " ") .. "]\n"
+  end
+end
+
+local function usemap_to_code(proto, key)
+  local usemap = proto[key]
+  if next(usemap) ~= nil then
+    local html = _"span" { "  ", key , " {\n" }
+    local vars = {}
+    for var in pairs(usemap) do
+      vars[#vars + 1] = var
     end
-    html[#html + 1] = "]\n"
+    table.sort(vars)
+    for i = 1, #vars do
+      local var = vars[i]
+      local uids = usemap[var]
+      html[#html + 1] = "    "
+      html[#html + 1] = var
+      for j = 1, #uids do
+        html[#html + 1] = " BB"
+        html[#html + 1] = uids[j]
+      end
+      html[#html + 1] = "\n"
+    end
+
+    html[#html + 1] = "  }\n"
+    return html
   end
 end
 
@@ -111,8 +131,8 @@ local function block_to_code(basic_blocks, uid, block)
     html[#html + 1] = "]\n"
   end
 
-  use_to_code(html, block, "def")
-  use_to_code(html, block, "use")
+  html[#html + 1] = use_to_code(block, "def")
+  html[#html + 1] = use_to_code(block, "use")
 
   for i = 1, #block do
     local code = block[i]
@@ -157,6 +177,9 @@ local function to_code(proto)
     class = "code";
     _"span" { proto[1], " {\n" };
   }
+
+  html[#html + 1] = usemap_to_code(basic_blocks, "defmap")
+  html[#html + 1] = usemap_to_code(basic_blocks, "usemap")
 
   local uid = u.first
   while uid do
