@@ -91,14 +91,11 @@ local function split(proto)
   }
 end
 
-local function generate(proto)
-  local basic_blocks = split(proto)
-
+local function resolve_jumps(basic_blocks)
   local g = basic_blocks.g
   local u = g.u
   local u_after = u.after
 
-  local entry_uid = basic_blocks.entry_uid
   local exit_uid = basic_blocks.exit_uid
   local blocks = basic_blocks.blocks
   local labels = basic_blocks.labels
@@ -133,6 +130,20 @@ local function generate(proto)
     this_uid = next_uid
     next_uid = u_after[this_uid]
   end
+end
+
+local function generate(proto)
+  local basic_blocks = split(proto)
+  resolve_jumps(basic_blocks)
+
+  local g = basic_blocks.g
+  local u = g.u
+  local u_after = u.after
+
+  local entry_uid = basic_blocks.entry_uid
+  local exit_uid = basic_blocks.exit_uid
+  local blocks = basic_blocks.blocks
+  local labels = basic_blocks.labels
 
   local uid = u.first
   while uid do
