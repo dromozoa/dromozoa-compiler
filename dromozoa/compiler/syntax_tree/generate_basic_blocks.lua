@@ -51,7 +51,6 @@ local function split(proto)
 
   local g = graph()
   local entry_uid = g:add_vertex()
-
   local uids = { entry_uid }
   local uid
   local block
@@ -63,7 +62,7 @@ local function split(proto)
     local name = code[0]
     if name == "LABEL" then
       uid = g:add_vertex()
-      uids[#uids + 1] = uids
+      uids[#uids + 1] = uid
       local label = code[1]
       block = { label = label }
       blocks[uid] = block
@@ -83,7 +82,7 @@ local function split(proto)
   end
 
   local exit_uid = g:add_vertex()
-  uids[#uids + 1] = uid
+  uids[#uids + 1] = exit_uid
   blocks[exit_uid] = {}
 
   return {
@@ -96,17 +95,14 @@ end
 
 local function resolve(basic_blocks, uids, labels)
   local g = basic_blocks.g
-  local u = g.u
-  local u_after = u.after
-
   local exit_uid = basic_blocks.exit_uid
   local blocks = basic_blocks.blocks
 
   local jumps = {}
 
-  local this_uid = u.first
-  local next_uid = u_after[this_uid]
-  while next_uid do
+  local this_uid = uids[1]
+  for i = 2, #uids do
+    local next_uid = uids[i]
     local block = blocks[this_uid]
     local code = block[#block]
     local name
@@ -129,17 +125,16 @@ local function resolve(basic_blocks, uids, labels)
       g:add_edge(this_uid, next_uid)
     end
     this_uid = next_uid
-    next_uid = u_after[this_uid]
   end
 
   basic_blocks.jumps = jumps
+  return basic_blocks
 end
 
 local function analyze(basic_blocks)
   local g = basic_blocks.g
   local u = g.u
   local u_after = u.after
-
   local entry_uid = basic_blocks.entry_uid
   local exit_uid = basic_blocks.exit_uid
   local blocks = basic_blocks.blocks
@@ -188,11 +183,12 @@ local function analyze(basic_blocks)
 
     uid = u_after[uid]
   end
+
+  return basic_blocks
 end
 
 local function generate(proto)
-  local basic_blocks, uids, labels = split(proto)
-  resolve(basic_blocks, uids, labels)
+  local basic_blocks = resolve(split(proto))
   analyze(basic_blocks)
   proto.basic_blocks = basic_blocks
 end
