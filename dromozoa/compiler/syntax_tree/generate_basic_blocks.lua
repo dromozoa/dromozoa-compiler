@@ -22,7 +22,12 @@ local function update_useset(useset, code, i)
   if var == "NIL" or var == "FALSE" or var == "TRUE" or var:find "^K%d" then
     return
   end
-  useset[var] = true
+  local key = var:sub(1, 1)
+  if key == "V" or key == "T" then
+    useset[key] = true
+  else
+    useset[var] = true
+  end
 end
 
 local function update_use(useset)
