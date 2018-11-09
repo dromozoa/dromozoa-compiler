@@ -17,16 +17,23 @@
 
 local graph = require "dromozoa.graph"
 
+local ignore_table = {
+  NIL = true;
+  FALSE = true;
+  TRUE = true;
+}
+
 local function update_useset(useset, code, i)
   local var = code[i]
-  if var == "NIL" or var == "FALSE" or var == "TRUE" or var:find "^K%d" then
-    return
-  end
-  local key = var:sub(1, 1)
-  if key == "V" or key == "T" then
-    useset[key] = true
-  else
-    useset[var] = true
+  if not ignore_table[var] then
+    local key = var:sub(1, 1)
+    if key ~= "K" then
+      if key == "V" or key == "T" then
+        useset[key] = true
+      else
+        useset[var] = true
+      end
+    end
   end
 end
 
