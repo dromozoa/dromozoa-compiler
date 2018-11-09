@@ -91,7 +91,7 @@ local function split(proto)
   }
 end
 
-local function resolve_jumps(basic_blocks)
+local function resolve(basic_blocks)
   local g = basic_blocks.g
   local u = g.u
   local u_after = u.after
@@ -101,7 +101,6 @@ local function resolve_jumps(basic_blocks)
   local labels = basic_blocks.labels
 
   local jumps = {}
-  basic_blocks.jumps = jumps
 
   local this_uid = u.first
   local next_uid = u_after[this_uid]
@@ -130,12 +129,12 @@ local function resolve_jumps(basic_blocks)
     this_uid = next_uid
     next_uid = u_after[this_uid]
   end
+
+  basic_blocks.labels = nil
+  basic_blocks.jumps = jumps
 end
 
-local function generate(proto)
-  local basic_blocks = split(proto)
-  resolve_jumps(basic_blocks)
-
+local function analyze(basic_blocks)
   local g = basic_blocks.g
   local u = g.u
   local u_after = u.after
@@ -143,7 +142,6 @@ local function generate(proto)
   local entry_uid = basic_blocks.entry_uid
   local exit_uid = basic_blocks.exit_uid
   local blocks = basic_blocks.blocks
-  local labels = basic_blocks.labels
 
   local uid = u.first
   while uid do
@@ -189,7 +187,12 @@ local function generate(proto)
 
     uid = u_after[uid]
   end
+end
 
+local function generate(proto)
+  local basic_blocks = split(proto)
+  resolve(basic_blocks)
+  analyze(basic_blocks)
   proto.basic_blocks = basic_blocks
 end
 
