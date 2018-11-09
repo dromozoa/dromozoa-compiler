@@ -16,6 +16,7 @@
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
 local code_builder = require "dromozoa.compiler.syntax_tree.code_builder"
+local encode_var = require "dromozoa.compiler.syntax_tree.encode_var"
 
 local unpack = table.unpack or unpack
 
@@ -92,7 +93,7 @@ local function generate(stack, node, symbol_table)
            :  CALL("T", lvars[1], lvars[2], lvars[3])
           local that = node[2]
           for i = 1, #that do
-            _:MOVE(that[i].var, "T" .. i - 1)
+            _:MOVE(that[i].var, encode_var("T", i - 1))
           end
           _:EQ(lvars[4], that[1].var, "NIL")
            :COND_IF(lvars[4], "TRUE")

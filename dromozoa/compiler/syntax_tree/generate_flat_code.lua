@@ -15,14 +15,16 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
+local encode_var = require "dromozoa.compiler.syntax_tree.encode_var"
+
 local function generate(proto, flat_code, code, break_label)
   local name = code[0]
 
   if code.block then
     if name == "LOOP" then
       local n = proto.M
-      local x = "M" .. n
-      local y = "M" .. n + 1
+      local x = encode_var("M", n)
+      local y = encode_var("M", n + 1)
       proto.M = n + 2
       flat_code[#flat_code + 1] = { [0] = "LABEL", x }
       for i = 1, #code do
@@ -34,8 +36,8 @@ local function generate(proto, flat_code, code, break_label)
       local cond = code[1]
       if #code == 2 then
         local n = proto.M
-        local x = "M" .. n
-        local y = "M" .. n + 1
+        local x = encode_var("M", n)
+        local y = encode_var("M", n + 1)
         proto.M = n + 2
         flat_code[#flat_code + 1] = { [0] = "COND", cond[1], cond[2], x, y }
         flat_code[#flat_code + 1] = { [0] = "LABEL", x }
@@ -43,9 +45,9 @@ local function generate(proto, flat_code, code, break_label)
         flat_code[#flat_code + 1] = { [0] = "LABEL", y }
       else
         local n = proto.M
-        local x = "M" .. n
-        local y = "M" .. n + 1
-        local z = "M" .. n + 2
+        local x = encode_var("M", n)
+        local y = encode_var("M", n + 1)
+        local z = encode_var("M", n + 2)
         proto.M = n + 3
         flat_code[#flat_code + 1] = { [0] = "COND", cond[1], cond[2], x, y }
         flat_code[#flat_code + 1] = { [0] = "LABEL", x }
