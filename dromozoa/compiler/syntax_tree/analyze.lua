@@ -16,6 +16,7 @@
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
 local symbol_value = require "dromozoa.parser.symbol_value"
+local encode_var = require "dromozoa.compiler.syntax_tree.encode_var"
 
 local function attr(node, key)
   while node do
@@ -47,7 +48,7 @@ local function def_label(node)
     source = source;
     def = { node.id };
     use = {};
-    "L" .. n;
+    encode_var("L", n);
   }
 
   scope_labels[m + 1] = label
@@ -97,7 +98,7 @@ local function ref_constant(node, type, source)
     type = type;
     source = source;
     use = { node.id };
-    "K" .. n;
+    encode_var("K", n);
   }
 
   constants[n + 1] = constant
@@ -120,7 +121,7 @@ local function declare_name(node, key, source)
     use = {};
     updef = {};
     upuse = {};
-    key .. n;
+    encode_var(key, n);
   }
 
   local scope_names = scope.names
@@ -142,7 +143,7 @@ local function resolve_upvalue(proto, name, parent_upvalue)
 
   local upvalue = {
     name = name;
-    "U" .. n;
+    encode_var("U", n);
   }
   if parent_upvalue then
     upvalue[2] = parent_upvalue[1]
@@ -269,7 +270,7 @@ local function assign_var(node, key)
   local proto = attr(node, "proto")
   local n = proto[key]
   proto[key] = n + 1
-  return key .. n
+  return encode_var(key, n)
 end
 
 local function prepare_protos(node, symbol_table, protos)
@@ -281,7 +282,7 @@ local function prepare_protos(node, symbol_table, protos)
       use = {};
       updef = {};
       upuse = {};
-      "B0";
+      encode_var("B", 0);
     }
 
     local external_proto = {
@@ -307,8 +308,8 @@ local function prepare_protos(node, symbol_table, protos)
       upvalues = {
         {
           name = env_name;
-          "U0";
-          "B0";
+          encode_var("U", 0);
+          encode_var("B", 0);
         };
       };
       names = {};
@@ -316,7 +317,7 @@ local function prepare_protos(node, symbol_table, protos)
       B = 0;
       C = 0;
       vararg = true;
-      "P0";
+      encode_var("P", 0);
     }
     node.proto = proto
     protos[1] = proto
@@ -330,7 +331,6 @@ local function prepare_protos(node, symbol_table, protos)
   else
     if symbol == symbol_table.funcbody then
       local n = #protos
-      local var = "P" .. n
       local proto = {
         parent = attr(node.parent, "proto");
         labels = {};
@@ -340,7 +340,7 @@ local function prepare_protos(node, symbol_table, protos)
         A = 0;
         B = 0;
         C = 0;
-        var;
+        encode_var("P", n);
       }
       node.proto = proto
       protos[n + 1] = proto
