@@ -17,6 +17,7 @@
 
 local runtime_es = require "dromozoa.compiler.runtime.runtime_es"
 local template = require "dromozoa.compiler.syntax_tree.template"
+local decode_var = require "dromozoa.compiler.syntax_tree.decode_var"
 
 local char_table = {
   ["\n"] = [[\n]];
@@ -43,7 +44,9 @@ local var_table = {
 }
 
 local function encode_string(s)
-  return "\"" .. s:gsub("[%z\1-\31\127]", char_table):gsub("\226\128[\168\169]", char_table) .. "\""
+  local s = s:gsub("[%z\1-\31\127]", char_table)
+  local s = s:gsub("\226\128[\168\169]", char_table)
+  return "\"" .. s .. "\""
 end
 
 local function encode_var(var)

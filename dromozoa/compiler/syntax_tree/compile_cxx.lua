@@ -40,7 +40,8 @@ local var_table = {
 }
 
 local function encode_string(s)
-  return "\"" .. s:gsub("[%z\1-\31\127]", char_table) .. "\""
+  local s = s:gsub("[%z\1-\31\127]", char_table)
+  return "\"" .. s .. "\""
 end
 
 local function encode_var(var)
