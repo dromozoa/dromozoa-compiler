@@ -15,13 +15,17 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-local generate_basic_blocks = require "dromozoa.compiler.syntax_tree.generate_basic_blocks"
-local generate_flat_code = require "dromozoa.compiler.syntax_tree.generate_flat_code"
-local generate_tree_code = require "dromozoa.compiler.syntax_tree.generate_tree_code"
-
-return function (self)
-  generate_tree_code(self)
-  generate_flat_code(self)
-  generate_basic_blocks(self)
-  return self
+return function (key, i)
+  if key == "V" or key == "T" then
+    if i then
+      -- return key .. "[" .. i .. "]"
+      return key .. i
+    else
+      return key
+    end
+  elseif key == "NIL" or key == "FALSE" or key == "TRUE" then
+    return key
+  else
+    return key .. i
+  end
 end

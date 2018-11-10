@@ -17,6 +17,7 @@
 
 local runtime_es = require "dromozoa.compiler.runtime.runtime_es"
 local template = require "dromozoa.compiler.syntax_tree.template"
+local decode_var = require "dromozoa.compiler.syntax_tree.decode_var"
 
 local char_table = {
   ["\n"] = [[\n]];
@@ -43,21 +44,23 @@ local var_table = {
 }
 
 local function encode_string(s)
-  return "\"" .. s:gsub("[%z\1-\31\127]", char_table):gsub("\226\128[\168\169]", char_table) .. "\""
+  local s = s:gsub("[%z\1-\31\127]", char_table)
+  local s = s:gsub("\226\128[\168\169]", char_table)
+  return "\"" .. s .. "\""
 end
 
 local function encode_var(var)
-  local result = var_table[var]
-  if result then
+  local key, i = decode_var(var)
+  local result = var_table[key]
+  if result and not i then
     return result
   else
-    local key = var:sub(1, 1)
     if key == "L" or key == "M" then
-      return var
+      return key .. i
     elseif key == "U" then
-      return "this.U[" .. var:sub(2) .. "].value"
+      return "this.U[" .. i .. "].value"
     else
-      return "this." .. key .. "[" .. var:sub(2) .. "]"
+      return "this." .. key .. "[" .. i .. "]"
     end
   end
 end
@@ -125,7 +128,7 @@ function compile_code(self, out, code, indent, opts)
     elseif name == "COND" then
       local cond = code[1]
       out:write(indent, ("if (%stoboolean(%s)) {\n"):format(
-          cond[2] == "TRUE" and "" or "!",
+          decode_var(cond[2]) == "TRUE" and "" or "!",
           encode_var(cond[1])))
       write_block(self, out, code[2], indent .. "  ", opts)
       if #code == 2 then
@@ -141,9 +144,10 @@ function compile_code(self, out, code, indent, opts)
   else
     if name == "CALL" then
       local var = code[1]
-      if var == "NIL" then
+      local key, i = decode_var(var)
+      if key == "NIL" then
         out:write(indent, ("call0(%s);\n"):format(encode_vars(code, 2)))
-      elseif var == "T" then
+      elseif key == "T" then
         out:write(indent, ("this.T = call(%s);\n"):format(encode_vars(code, 2)))
       else
         out:write(indent, ("%s = call1(%s);\n"):format(encode_var(var), encode_vars(code, 2)))
@@ -154,8 +158,9 @@ function compile_code(self, out, code, indent, opts)
         out:write(indent, "return;\n")
       elseif n == 1 then
         local var = code[1]
-        if var == "V" or var == "T" then
-          out:write(indent, ("return this.%s;\n"):format(var))
+        local key, i = decode_var(var)
+        if (key == "V" or key == "T") and not i then
+          out:write(indent, ("return this.%s;\n"):format(key))
         else
           out:write(indent, ("return %s;\n"):format(encode_var(var)))
         end
@@ -170,7 +175,7 @@ function compile_code(self, out, code, indent, opts)
       out:write(("      case %s:\n"):format(encode_var(code[1])))
     elseif name == "COND" then
       out:write(indent, ("if (%stoboolean(%s)) L = %s; else L = %s; continue;\n"):format(
-          code[2] == "TRUE" and "" or "!",
+          decode_var(code[2]) == "TRUE" and "" or "!",
           encode_var(code[1]),
           code[3],
           code[4]))
@@ -284,7 +289,7 @@ local function compile_basic_block(self, out, basic_blocks, uid, block, indent, 
       local then_uid = uv_target[eid]
       eid = uv.after[eid]
       out:write(indent, ("if (%stoboolean(%s)) return this.BB%d(); else return this.BB%d();\n"):format(
-          code[2] == "TRUE" and "" or "!",
+          decode_var(code[2]) == "TRUE" and "" or "!",
           encode_var(code[1]),
           then_uid,
           uv_target[eid]))
@@ -323,8 +328,8 @@ local function compile_basic_blocks(self, out, proto, opts)
 
   out:write(([[
 
-  BB%d(...V) {
-    return V;
+  BB%d(...result) {
+    return result;
   }
 ]]):format(exit_uid))
 end

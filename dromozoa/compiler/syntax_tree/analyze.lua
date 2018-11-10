@@ -16,6 +16,8 @@
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
 local symbol_value = require "dromozoa.parser.symbol_value"
+local decode_var = require "dromozoa.compiler.syntax_tree.decode_var"
+local encode_var = require "dromozoa.compiler.syntax_tree.encode_var"
 
 local function attr(node, key)
   while node do
@@ -47,7 +49,7 @@ local function def_label(node)
     source = source;
     def = { node.id };
     use = {};
-    "L" .. n;
+    encode_var("L", n);
   }
 
   scope_labels[m + 1] = label
@@ -97,7 +99,7 @@ local function ref_constant(node, type, source)
     type = type;
     source = source;
     use = { node.id };
-    "K" .. n;
+    encode_var("K", n);
   }
 
   constants[n + 1] = constant
@@ -120,7 +122,7 @@ local function declare_name(node, key, source)
     use = {};
     updef = {};
     upuse = {};
-    key .. n;
+    encode_var(key, n);
   }
 
   local scope_names = scope.names
@@ -142,7 +144,7 @@ local function resolve_upvalue(proto, name, parent_upvalue)
 
   local upvalue = {
     name = name;
-    "U" .. n;
+    encode_var("U", n);
   }
   if parent_upvalue then
     upvalue[2] = parent_upvalue[1]
@@ -266,26 +268,10 @@ local function assign_var(node, key)
   if not key then
     key = "C"
   end
-  if key == "C" then
-    while node do
-      local value = node[key]
-      if value then
-        local n = value + 1
-        node[key] = n
-        local proto = attr(node, "proto")
-        if proto[key] < n then
-          proto[key] = n
-        end
-        return key .. value
-      end
-      node = node.parent
-    end
-  else
-    local proto = attr(node, "proto")
-    local n = proto[key]
-    proto[key] = n + 1
-    return key .. n
-  end
+  local proto = attr(node, "proto")
+  local n = proto[key]
+  proto[key] = n + 1
+  return encode_var(key, n)
 end
 
 local function prepare_protos(node, symbol_table, protos)
@@ -297,7 +283,7 @@ local function prepare_protos(node, symbol_table, protos)
       use = {};
       updef = {};
       upuse = {};
-      "B0";
+      encode_var("B", 0);
     }
 
     local external_proto = {
@@ -323,8 +309,8 @@ local function prepare_protos(node, symbol_table, protos)
       upvalues = {
         {
           name = env_name;
-          "U0";
-          "B0";
+          encode_var("U", 0);
+          encode_var("B", 0);
         };
       };
       names = {};
@@ -332,7 +318,7 @@ local function prepare_protos(node, symbol_table, protos)
       B = 0;
       C = 0;
       vararg = true;
-      "P0";
+      encode_var("P", 0);
     }
     node.proto = proto
     protos[1] = proto
@@ -346,7 +332,6 @@ local function prepare_protos(node, symbol_table, protos)
   else
     if symbol == symbol_table.funcbody then
       local n = #protos
-      local var = "P" .. n
       local proto = {
         parent = attr(node.parent, "proto");
         labels = {};
@@ -356,7 +341,7 @@ local function prepare_protos(node, symbol_table, protos)
         A = 0;
         B = 0;
         C = 0;
-        var;
+        encode_var("P", n);
       }
       node.proto = proto
       protos[n + 1] = proto
@@ -499,11 +484,11 @@ local function resolve_names(self, node, symbol_table)
       end
     end
   elseif symbol == symbol_table["nil"] then
-    node.var = "NIL"
+    node.var = encode_var "NIL"
   elseif symbol == symbol_table["false"] then
-    node.var = "FALSE"
+    node.var = encode_var "FALSE"
   elseif symbol == symbol_table["true"] then
-    node.var = "TRUE"
+    node.var = encode_var "TRUE"
   elseif symbol == symbol_table.IntegerConstant then
     node.var = ref_constant(node, "integer")[1]
   elseif symbol == symbol_table.FloatConstant then
@@ -519,11 +504,11 @@ local function resolve_names(self, node, symbol_table)
     local adjust = node.adjust
     if adjust then
       if adjust ~= 0 then
-        node.var = "V"
+        node.var = encode_var "V"
       end
     else
       node.adjust = 1
-      node.var = "V0"
+      node.var = encode_var("V", 0)
     end
   elseif symbol == symbol_table.functioncall then
     if node.self then
@@ -578,11 +563,13 @@ local function resolve_vars(self, node, symbol_table)
     for i = 1, #rvars do
       local var = rvars[i]
       if i == 1 then
-        if var:find "^T%d" then
+        local key, i = decode_var(var)
+        if key == "T" then
           var = assign_var(node)
         end
       else
-        if var:find "^[UABT]%d" then
+        local key, i = decode_var(var)
+        if key == "U" or key == "A" or key == "B" or key == "T" then
           var = assign_var(node)
         end
       end
@@ -605,8 +592,11 @@ local function resolve_vars(self, node, symbol_table)
         assign_var(node, "B"); -- var
         assign_var(node, "B"); -- limit
         assign_var(node, "B"); -- step
-        assign_var(node);
         ref_constant(node, "integer", "0")[1];
+        assign_var(node);
+        assign_var(node);
+        assign_var(node);
+        assign_var(node);
       }
     else -- generic for
       node.vars = {
@@ -632,16 +622,19 @@ local function resolve_vars(self, node, symbol_table)
       for i = 1, n do
         local that = node[i]
         local var = that.var
-        if var == "V" or var == "T" then
-          for j = 0, that.adjust - 1 do
-            vars[i + j] = var .. j
+        if var then
+          local key, j = decode_var(var)
+          if key == "V" or key == "T" then
+            for j = 0, that.adjust - 1 do
+              vars[i + j] = encode_var(key, j)
+            end
+          else
+            vars[i] = var
           end
-        else
-          vars[i] = var
         end
       end
       for i = #vars + 1, adjust do
-        vars[i] = "NIL"
+        vars[i] = encode_var "NIL"
       end
       node.vars = vars
     end
@@ -661,7 +654,9 @@ local function resolve_vars(self, node, symbol_table)
     if node.self then
       node.self = node[1][1].var
     end
-  elseif symbol == symbol_table.fieldlist or node.proto or node.binop or node.unop then
+  elseif symbol == symbol_table.funcbody then
+    node.var = assign_var(node.parent)
+  elseif symbol == symbol_table.fieldlist or node.binop or node.unop then
     node.var = assign_var(node)
   end
 end

@@ -41,73 +41,96 @@
 浮動小数点数への変換は<code>strtod</code>と等価である。
 </p>
 
-<h2>Name</h2>
+<h2>Variables</h2>
 
 <table>
   <tr>
     <th>Name</th>
+    <th>Type</th>
     <th>Mode</th>
     <th>Description</th>
   </tr>
   <tr>
     <td><code>Pi</code></td>
-    <td>read only</td>
     <td>proto</td>
+    <td>read only</td>
+    <td></td>
   </tr>
   <tr>
     <td><code>Li</code></td>
-    <td>read only</td>
     <td>label</td>
-  </tr>
-  <tr>
-    <td><code>Ki</code></td>
     <td>read only</td>
-    <td>constant</td>
+    <td>named label</td>
   </tr>
   <tr>
-    <td><code>Ui</code></td>
-    <td></td>
-    <td>upvalue</td>
-  </tr>
-  <tr>
-    <td><code>Ai</code></td>
-    <td></td>
-    <td>parameter</td>
-  </tr>
-  <tr>
-    <td><code>Bi</code></td>
-    <td></td>
-    <td>named register</td>
-  </tr>
-  <tr>
-    <td><code>Ci</code></td>
-    <td></td>
-    <td>unnamed register</td>
-  </tr>
-  <tr>
-    <td><code>V</code>, <code>Vi</code></td>
+    <td><code>Mi</code></td>
+    <td>label</td>
     <td>read only</td>
-    <td>vararg</td>
-  </tr>
-  <tr>
-    <td><code>T</code>, <code>Ti</code></td>
-    <td>read only</td>
-    <td>results</td>
+    <td>unnamed label</td>
   </tr>
   <tr>
     <td><code>NIL</code></td>
+    <td>constant</td>
     <td>read only</td>
     <td>nil</td>
   </tr>
   <tr>
     <td><code>FALSE</code></td>
+    <td>constant</td>
     <td>read only</td>
     <td>false</td>
   </tr>
   <tr>
     <td><code>TRUE</code></td>
+    <td>constant</td>
     <td>read only</td>
     <td>true</td>
+  </tr>
+  <tr>
+    <td><code>Ki</code></td>
+    <td>constant</td>
+    <td>read only</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td><code>Ui</code></td>
+    <td>value</td>
+    <td></td>
+    <td>upvalue</td>
+  </tr>
+  <tr>
+    <td><code>Ai</code></td>
+    <td>value</td>
+    <td></td>
+    <td>parameter</td>
+  </tr>
+  <tr>
+    <td><code>Bi</code></td>
+    <td>value</td>
+    <td></td>
+    <td>named value</td>
+  </tr>
+  <tr>
+    <td><code>Ci</code></td>
+    <td>value</td>
+    <td></td>
+    <td>unnamed value</td>
+  </tr>
+  <tr>
+    <td><code>V</code>, <code>V[i]</code></td>
+    <td>array</td>
+    <td>read only</td>
+    <td>vararg</td>
+  </tr>
+  <tr>
+    <td>
+      <code>T</code>, <code>T[i]</code>
+      or
+      <code>Ti</code>, <code>Ti[j]</code>
+    </td>
+    <td>array</td>
+    <td></td>
+    <td>results</td>
   </tr>
 </table>
 

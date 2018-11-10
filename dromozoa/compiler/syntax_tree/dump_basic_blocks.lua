@@ -15,6 +15,8 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
+local decode_var = require "dromozoa.compiler.syntax_tree.decode_var"
+
 local element = require "dromozoa.dom.element"
 local html5_document = require "dromozoa.dom.html5_document"
 local space_separated = require "dromozoa.dom.space_separated"
@@ -66,6 +68,39 @@ local marker = _"marker" {
   };
 }
 
+local function use_to_code(block, key)
+  local use = block[key]
+  if use[1] then
+    return "    [" .. key .. " " .. table.concat(use, " ") .. "]\n"
+  end
+end
+
+local function usemap_to_code(proto, key)
+  local usemap = proto[key]
+  if next(usemap) ~= nil then
+    local html = _"span" { "  ", key , " {\n" }
+    local vars = {}
+    for var in pairs(usemap) do
+      vars[#vars + 1] = var
+    end
+    table.sort(vars)
+    for i = 1, #vars do
+      local var = vars[i]
+      local uids = usemap[var]
+      html[#html + 1] = "    "
+      html[#html + 1] = var
+      for j = 1, #uids do
+        html[#html + 1] = " BB"
+        html[#html + 1] = uids[j]
+      end
+      html[#html + 1] = "\n"
+    end
+
+    html[#html + 1] = "  }\n"
+    return html
+  end
+end
+
 local function block_to_code(basic_blocks, uid, block)
   local g = basic_blocks.g
   local uv = g.uv
@@ -98,13 +133,23 @@ local function block_to_code(basic_blocks, uid, block)
     html[#html + 1] = "]\n"
   end
 
+  html[#html + 1] = use_to_code(block, "def")
+  html[#html + 1] = use_to_code(block, "use")
+
   for i = 1, #block do
     local code = block[i]
     html[#html + 1] = "    "
     html[#html + 1] = code[0]
     for j = 1, #code do
       html[#html + 1] = " "
-      html[#html + 1] = code[j]
+      local var = code[j]
+      if type(var) == "number" then -- SETLIST
+        html[#html + 1] = var
+      else
+        local key, i = decode_var(var)
+        html[#html + 1] = key
+        html[#html + 1] = i
+      end
     end
     html[#html + 1] = "\n"
   end
@@ -141,6 +186,9 @@ local function to_code(proto)
     class = "code";
     _"span" { proto[1], " {\n" };
   }
+
+  html[#html + 1] = usemap_to_code(basic_blocks, "defmap")
+  html[#html + 1] = usemap_to_code(basic_blocks, "usemap")
 
   local uid = u.first
   while uid do
