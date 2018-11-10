@@ -15,6 +15,8 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
+local decode_var = require "dromozoa.compiler.syntax_tree.decode_var"
+
 local element = require "dromozoa.dom.element"
 local html5_document = require "dromozoa.dom.html5_document"
 local space_separated = require "dromozoa.dom.space_separated"
@@ -140,7 +142,14 @@ local function block_to_code(basic_blocks, uid, block)
     html[#html + 1] = code[0]
     for j = 1, #code do
       html[#html + 1] = " "
-      html[#html + 1] = code[j]
+      local var = code[j]
+      if type(var) == "number" then -- SETLIST
+        html[#html + 1] = var
+      else
+        local key, i = decode_var(var)
+        html[#html + 1] = key
+        html[#html + 1] = i
+      end
     end
     html[#html + 1] = "\n"
   end
