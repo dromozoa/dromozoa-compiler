@@ -16,23 +16,23 @@
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
 local graph = require "dromozoa.graph"
+local decode_var = require "dromozoa.compiler.syntax_tree.decode_var"
 
 local ignore_table = {
   NIL = true;
   FALSE = true;
   TRUE = true;
+  K = true;
 }
 
 local function update_useset(useset, code, i)
   local var = code[i]
-  if not ignore_table[var] then
-    local key = var:sub(1, 1)
-    if key ~= "K" then
-      if key == "V" or key == "T" then
-        useset[key] = true
-      else
-        useset[var] = true
-      end
+  local key, i = decode_var(var)
+  if not ignore_table[key] then
+    if key == "V" or key == "T" then
+      useset[key] = true
+    else
+      useset[var] = true
     end
   end
 end
