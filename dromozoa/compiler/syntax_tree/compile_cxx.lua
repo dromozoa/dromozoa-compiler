@@ -50,7 +50,6 @@ local function encode_var(var)
   if result and not i then
     return result
   else
-    local key = var:sub(1, 1)
     if key == "L" or key == "M" then
       return key .. i
     elseif key == "K" then
