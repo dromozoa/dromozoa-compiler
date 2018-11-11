@@ -15,6 +15,7 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
+local space_separated = require "dromozoa.dom.space_separated"
 local symbol_value = require "dromozoa.parser.symbol_value"
 local variable = require "dromozoa.compiler.variable"
 
@@ -559,7 +560,7 @@ local function resolve_vars(self, node, symbol_table)
   end
 
   if symbol == symbol_table["="] then
-    local lvars = {}
+    local lvars = space_separated {}
     local rvars = node[1].vars
     local that = node[2]
     for i = 1, #rvars do
@@ -582,14 +583,14 @@ local function resolve_vars(self, node, symbol_table)
     node[2].def = node[1].var
   elseif symbol == symbol_table["for"] then
     if n == 4 then -- numerical for without step
-      node.vars = {
+      node.vars = space_separated {
         assign_var(node, "B"); -- var
         assign_var(node, "B"); -- limit
         ref_constant(node, "integer", "1")[1]; -- step
         assign_var(node);
       }
     elseif n == 5 then -- numerical for with step
-      node.vars = {
+      node.vars = space_separated {
         assign_var(node, "B"); -- var
         assign_var(node, "B"); -- limit
         assign_var(node, "B"); -- step
@@ -600,7 +601,7 @@ local function resolve_vars(self, node, symbol_table)
         assign_var(node);
       }
     else -- generic for
-      node.vars = {
+      node.vars = space_separated {
         assign_var(node, "B"); -- f
         assign_var(node, "B"); -- s
         assign_var(node, "B"); -- var
@@ -617,7 +618,7 @@ local function resolve_vars(self, node, symbol_table)
   elseif symbol == symbol_table.explist then
     local adjust = node.adjust
     if adjust then
-      local vars = {}
+      local vars = space_separated {}
       for i = 1, n do
         local that = node[i]
         local var = that.var

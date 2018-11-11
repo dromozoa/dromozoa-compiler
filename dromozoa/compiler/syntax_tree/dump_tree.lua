@@ -213,12 +213,7 @@ local function to_graph(self, width, height)
     path["data-source"] = symbol_value(node)
     for j = 1, #keys do
       local key = keys[j]
-      local value = node[key]
-      if key == "vars" and type(value) == "table" then
-        path["data-" .. key] = space_separated(value)
-      else
-        path["data-" .. key] = value
-      end
+      path["data-" .. key] = node[key]
     end
     text["data-node-id"] = node_id
   end
