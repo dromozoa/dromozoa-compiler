@@ -299,11 +299,7 @@ local function prepare_protos(node, symbol_table, protos)
       constants = {};
       upvalues = {};
       names = { env_name };
-      A = 0;
-      B = 1;
-      C = 0;
-      T = 0;
-      V = 0;
+      A = 0; B = 1; C = 0; T = 0; V = 0;
     }
 
     local external_scope = {
@@ -324,11 +320,7 @@ local function prepare_protos(node, symbol_table, protos)
         };
       };
       names = {};
-      A = 0;
-      B = 0;
-      C = 0;
-      T = 0;
-      V = 0;
+      A = 0; B = 0; C = 0; T = 0; V = 0;
       vararg = true;
       variable.P(0);
     }
@@ -350,11 +342,7 @@ local function prepare_protos(node, symbol_table, protos)
         constants = {};
         upvalues = {};
         names = {};
-        A = 0;
-        B = 0;
-        C = 0;
-        T = 0;
-        V = 0;
+        A = 0; B = 0; C = 0; T = 0; V = 0;
         variable.P(n);
       }
       node.proto = proto
@@ -380,9 +368,7 @@ local function prepare_attrs(node, symbol_table)
   local symbol = node[0]
   local n = #node
 
-  if symbol == symbol_table["="] then
-    node[1].adjust = #node[2]
-  elseif symbol == symbol_table["local"] then
+  if symbol == symbol_table["="] or symbol == symbol_table["local"] then
     node[1].adjust = #node[2]
   elseif symbol == symbol_table.funcname then
     if node.self then
