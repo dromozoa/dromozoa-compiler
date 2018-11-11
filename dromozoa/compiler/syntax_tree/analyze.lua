@@ -303,6 +303,7 @@ local function prepare_protos(node, symbol_table, protos)
       B = 1;
       C = 0;
       T = 0;
+      V = 0;
     }
 
     local external_scope = {
@@ -327,6 +328,7 @@ local function prepare_protos(node, symbol_table, protos)
       B = 0;
       C = 0;
       T = 0;
+      V = 0;
       vararg = true;
       variable.P(0);
     }
@@ -352,6 +354,7 @@ local function prepare_protos(node, symbol_table, protos)
         B = 0;
         C = 0;
         T = 0;
+        V = 0;
         variable.P(n);
       }
       node.proto = proto
@@ -511,7 +514,7 @@ local function resolve_names(self, node, symbol_table)
     if not proto.vararg then
       return nil, "cannot use '...' outside a vararg function", node.i
     end
-    proto.V = true
+    proto.V = 1
     local adjust = node.adjust
     if adjust then
       if adjust ~= 0 then

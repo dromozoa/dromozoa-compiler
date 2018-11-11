@@ -63,9 +63,7 @@ local function dump_proto(out, proto, opts)
   out:write(("  A %d\n"):format(proto.A))
   out:write(("  B %d\n"):format(proto.B))
   out:write(("  C %d\n"):format(proto.C))
-  if proto.V then
-    out:write "  V\n"
-  end
+  out:write(("  V %d\n"):format(proto.V))
   out:write(("  T %d\n"):format(proto.T))
 
   local labels = proto.labels
