@@ -214,7 +214,7 @@ local function to_graph(self, width, height)
     for j = 1, #keys do
       local key = keys[j]
       local value = node[key]
-      if type(value) == "table" then
+      if key == "vars" and type(value) == "table" then
         path["data-" .. key] = space_separated(value)
       else
         path["data-" .. key] = value

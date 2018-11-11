@@ -15,8 +15,6 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-local decode_var = require "dromozoa.compiler.syntax_tree.decode_var"
-
 local element = require "dromozoa.dom.element"
 local html5_document = require "dromozoa.dom.html5_document"
 local space_separated = require "dromozoa.dom.space_separated"
@@ -129,12 +127,12 @@ local function block_to_code(basic_blocks, uid, block)
   local label = block.label
   if label then
     html[#html + 1] = "    [label "
-    html[#html + 1] = label
+    html[#html + 1] = label:encode()
     html[#html + 1] = "]\n"
   end
 
-  html[#html + 1] = use_to_code(block, "def")
-  html[#html + 1] = use_to_code(block, "use")
+  -- html[#html + 1] = use_to_code(block, "def")
+  -- html[#html + 1] = use_to_code(block, "use")
 
   for i = 1, #block do
     local code = block[i]
@@ -142,14 +140,7 @@ local function block_to_code(basic_blocks, uid, block)
     html[#html + 1] = code[0]
     for j = 1, #code do
       html[#html + 1] = " "
-      local var = code[j]
-      if type(var) == "number" then -- SETLIST
-        html[#html + 1] = var
-      else
-        local key, i = decode_var(var)
-        html[#html + 1] = key
-        html[#html + 1] = i
-      end
+      html[#html + 1] = code[j]:encode()
     end
     html[#html + 1] = "\n"
   end
@@ -157,7 +148,7 @@ local function block_to_code(basic_blocks, uid, block)
   local label = block["goto"]
   if label then
     html[#html + 1] = "    [goto "
-    html[#html + 1] = label
+    html[#html + 1] = label:encode()
     html[#html + 1] = "]\n"
   end
 
@@ -184,11 +175,11 @@ local function to_code(proto)
 
   local html = _"div" {
     class = "code";
-    _"span" { proto[1], " {\n" };
+    _"span" { proto[1]:encode(), " {\n" };
   }
 
-  html[#html + 1] = usemap_to_code(basic_blocks, "defmap")
-  html[#html + 1] = usemap_to_code(basic_blocks, "usemap")
+  -- html[#html + 1] = usemap_to_code(basic_blocks, "defmap")
+  -- html[#html + 1] = usemap_to_code(basic_blocks, "usemap")
 
   local uid = u.first
   while uid do
