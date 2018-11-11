@@ -15,7 +15,7 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-local encode_var = require "dromozoa.compiler.syntax_tree.encode_var"
+local variable = require "dromozoa.compiler.variable"
 
 local function generate(proto, flat_code, code, last_label)
   local name = code[0]
@@ -23,8 +23,8 @@ local function generate(proto, flat_code, code, last_label)
   if code.block then
     if name == "LOOP" then
       local n = proto.M
-      local loop_label = encode_var("M", n)
-      local join_label = encode_var("M", n + 1)
+      local loop_label = variable.M(n)
+      local join_label = variable.M(n + 1)
       proto.M = n + 2
       flat_code[#flat_code + 1] = { [0] = "LABEL", loop_label }
       for i = 1, #code do
@@ -36,8 +36,8 @@ local function generate(proto, flat_code, code, last_label)
       local cond = code[1]
       if #code == 2 then
         local n = proto.M
-        local then_label = encode_var("M", n)
-        local join_label = encode_var("M", n + 1)
+        local then_label = variable.M(n)
+        local join_label = variable.M(n + 1)
         proto.M = n + 2
         flat_code[#flat_code + 1] = { [0] = "COND", cond[1], cond[2], then_label, join_label }
         flat_code[#flat_code + 1] = { [0] = "LABEL", then_label }
@@ -45,9 +45,9 @@ local function generate(proto, flat_code, code, last_label)
         flat_code[#flat_code + 1] = { [0] = "LABEL", join_label }
       else
         local n = proto.M
-        local then_label = encode_var("M", n)
-        local else_label = encode_var("M", n + 1)
-        local join_label = encode_var("M", n + 2)
+        local then_label = variable.M(n)
+        local else_label = variable.M(n + 1)
+        local join_label = variable.M(n + 2)
         proto.M = n + 3
         flat_code[#flat_code + 1] = { [0] = "COND", cond[1], cond[2], then_label, else_label }
         flat_code[#flat_code + 1] = { [0] = "LABEL", then_label }

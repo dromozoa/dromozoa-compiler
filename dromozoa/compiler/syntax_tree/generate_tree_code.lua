@@ -16,14 +16,14 @@
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
 local code_builder = require "dromozoa.compiler.syntax_tree.code_builder"
-local encode_var = require "dromozoa.compiler.syntax_tree.encode_var"
+local variable = require "dromozoa.compiler.variable"
 
 local unpack = table.unpack or unpack
 
 local function generate(stack, node, symbol_table)
   local proto = node.proto
   if proto then
-    code_builder(stack, node):CLOSURE(node.var, proto[1])
+    code_builder(stack, node):CLOSURE(node.var or variable.NIL, proto[1])
     local code = { block = true }
     proto.tree_code = code
     stack = { code }
@@ -44,7 +44,7 @@ local function generate(stack, node, symbol_table)
     generate(stack, node[i], symbol_table)
     if i == inorder then
       if symbol == symbol_table["while"] then
-        _:COND_IF(node[1].var, encode_var "FALSE")
+        _:COND_IF(node[1].var, variable.FALSE)
          :  BREAK()
          :COND_END()
       elseif symbol == symbol_table["for"] then
@@ -56,7 +56,7 @@ local function generate(stack, node, symbol_table)
            :LOOP()
            :  ADD(vars[1], vars[1], vars[3])
            :  LT(vars[4], vars[2], vars[1])
-           :  COND_IF(vars[4], encode_var "TRUE")
+           :  COND_IF(vars[4], variable.TRUE)
            :    BREAK()
            :  COND_END()
            :  MOVE(node[3].var, vars[1])
@@ -69,16 +69,16 @@ local function generate(stack, node, symbol_table)
            :LOOP()
            :  ADD(vars[1], vars[1], vars[3])
            :  LE(vars[5], vars[4], vars[3])
-           :  COND_IF(vars[5], encode_var "TRUE")
+           :  COND_IF(vars[5], variable.TRUE)
            :    LT(vars[6], vars[2], vars[1])
-           :    COND_IF(vars[6], encode_var "TRUE")
+           :    COND_IF(vars[6], variable.TRUE)
            :      BREAK()
            :    COND_END()
            :  COND_END()
            :  LT(vars[7], vars[3], vars[4])
-           :  COND_IF(vars[7], encode_var "TRUE")
+           :  COND_IF(vars[7], variable.TRUE)
            :    LT(vars[8], vars[1], vars[2])
-           :    COND_IF(vars[8], encode_var "TRUE")
+           :    COND_IF(vars[8], variable.TRUE)
            :      BREAK()
            :    COND_END()
            :  COND_END()
@@ -86,17 +86,18 @@ local function generate(stack, node, symbol_table)
         else -- generic for
           local rvars = node[1].vars
           local lvars = node.vars
+          local var = lvars[5]
           _:MOVE(lvars[1], rvars[1])
            :MOVE(lvars[2], rvars[2])
            :MOVE(lvars[3], rvars[3])
            :LOOP()
-           :  CALL(encode_var "T", lvars[1], lvars[2], lvars[3])
+           :  CALL(var, lvars[1], lvars[2], lvars[3])
           local that = node[2]
           for i = 1, #that do
-            _:MOVE(that[i].var, encode_var("T", i - 1))
+            _:MOVE(that[i].var, var[i - 1])
           end
-          _:EQ(lvars[4], that[1].var, encode_var "NIL")
-           :COND_IF(lvars[4], encode_var "TRUE")
+          _:EQ(lvars[4], that[1].var, variable.NIL)
+           :COND_IF(lvars[4], variable.TRUE)
            :  BREAK()
            :COND_END()
            :MOVE(lvars[3], that[1].var)
@@ -104,13 +105,13 @@ local function generate(stack, node, symbol_table)
       elseif symbol == symbol_table.conditional then
         _:COND_ELSE()
       elseif symbol == symbol_table["if"] then
-        _:COND_IF(node[1].var, encode_var "TRUE")
+        _:COND_IF(node[1].var, variable.TRUE)
       elseif binop == "AND" then
         _:MOVE(node.var, node[1].var)
-         :COND_IF(node.var, encode_var "TRUE")
+         :COND_IF(node.var, variable.TRUE)
       elseif binop == "OR" then
         _:MOVE(node.var, node[1].var)
-         :COND_IF(node.var, encode_var "FALSE")
+         :COND_IF(node.var, variable.FALSE)
       end
     end
   end
@@ -135,7 +136,7 @@ local function generate(stack, node, symbol_table)
   elseif symbol == symbol_table["while"] then
     _:LOOP_END()
   elseif symbol == symbol_table["repeat"] then
-    _:COND_IF(node[2].var, encode_var "TRUE")
+    _:COND_IF(node[2].var, variable.TRUE)
      :  BREAK()
      :COND_END()
      :LOOP_END()
@@ -193,9 +194,9 @@ local function generate(stack, node, symbol_table)
       args[i] = that[i].var
     end
     if node.self then
-      _:CALL(node.var or encode_var "NIL", node[1].var, node.self, unpack(args))
+      _:CALL(node.var or variable.NIL, node[1].var, node.self, unpack(args))
     else
-      _:CALL(node.var or encode_var "NIL", node[1].var, unpack(args))
+      _:CALL(node.var or variable.NIL, node[1].var, unpack(args))
     end
   elseif symbol == symbol_table.fieldlist then
     _:NEWTABLE(node.var)

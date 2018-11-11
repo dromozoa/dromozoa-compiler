@@ -16,7 +16,7 @@
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
 local graph = require "dromozoa.graph"
-local decode_var = require "dromozoa.compiler.syntax_tree.decode_var"
+local variable = require "dromozoa.compiler.variable"
 
 local ignore_table = {
   NIL = true;
@@ -199,7 +199,7 @@ end
 
 local function generate(proto)
   local basic_blocks = resolve(split(proto))
-  analyze(basic_blocks)
+  -- analyze(basic_blocks)
   proto.basic_blocks = basic_blocks
 end
 

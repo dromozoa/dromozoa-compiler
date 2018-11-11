@@ -58,7 +58,7 @@ function class:encode()
       if map[key][2] then
         return ("%s%d"):format(self.key, self.number)
       else
-        return ("%s%d"):format(self.key)
+        return ("%s"):format(self.key)
       end
     end
   end

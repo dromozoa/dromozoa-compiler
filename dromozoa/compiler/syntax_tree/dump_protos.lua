@@ -38,7 +38,7 @@ local function dump_code(out, code, indent)
   else
     out:write(indent, code[0])
     for i = 1, #code do
-      out:write(" ", var:encode())
+      out:write(" ", code[i]:encode())
     end
     out:write "\n"
   end

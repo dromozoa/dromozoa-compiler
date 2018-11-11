@@ -601,15 +601,12 @@ local function resolve_vars(self, node, symbol_table)
       }
     else -- generic for
       node.vars = {
+        assign_var(node, "B"); -- f
+        assign_var(node, "B"); -- s
         assign_var(node, "B"); -- var
-        assign_var(node, "B"); -- limit
-        assign_var(node, "B"); -- step
         assign_var(node);
+        assign_var(node, "T");
       }
-      if n == 3 then -- generic for
-        -- TODO assign
-        -- attr(node, "proto").T = true
-      end
     end
   elseif symbol == symbol_table.funcname or symbol == symbol_table.var then
     if n == 1 then
