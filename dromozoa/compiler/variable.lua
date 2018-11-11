@@ -15,28 +15,15 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-local map = {
-  P     = { "proto",     true  };
-  L     = { "label",     true  };
-  M     = { "label",     true  };
-  NIL   = { "constant",  false };
-  FALSE = { "constant",  false };
-  TRUE  = { "constant",  false };
-  K     = { "constant",  true  };
-  U     = { "upvalue",   true  };
-  A     = { "value",     true  };
-  B     = { "value",     true  };
-  C     = { "value",     true  };
-  V     = { "array",     false };
-  T     = { "array",     true  };
-}
+local function is_unsigned_integer(value)
+  return type(value) == "number" and value >= 0 and value % 1 == 0
+end
 
 local class = {}
 local metatable = { ["dromozoa.dom.is_serializable"] = true }
 
 function class:encode()
-  local t = self.type
-  if t == "immediate" then
+  if self.type == "immediate" then
     return ("%d"):format(self.value)
   else
     local key = self.key
@@ -55,10 +42,11 @@ function class:encode()
         return ("T%d"):format(self.number)
       end
     else
-      if map[key][2] then
-        return ("%s%d"):format(self.key, self.number)
+      local number = self.number
+      if number then
+        return ("%s%d"):format(key, number)
       else
-        return ("%s"):format(self.key)
+        return ("%s"):format(key)
       end
     end
   end
@@ -70,36 +58,43 @@ end
 
 function metatable:__index(index)
   if type(index) == "number" then
+    assert(is_unsigned_integer(index))
     assert(self.type == "array")
     assert(not self.index)
-    return setmetatable({ key = self.key, number = self.number, index = index }, metatable)
-  elseif index == "type" then
-    local def = map[self.key]
-    if def then
-      return def[1]
-    else
-      assert(self.value)
-      return "immediate"
-    end
+    return setmetatable({ type = self.type, key = self.key, number = self.number, index = index }, metatable)
   else
     return class[index]
   end
 end
 
-for key, def in pairs(map) do
-  if def[2] then
+local function _(type, key, number)
+  if number then
     class[key] = function (number)
-      return setmetatable({ key = key, number = number }, metatable)
+      assert(is_unsigned_integer(number))
+      return setmetatable({ type = type, key = key, number = number }, metatable)
     end
   else
-    class[key] = setmetatable({ key = key }, metatable)
+    class[key] = setmetatable({ type = type, key = key }, metatable)
   end
 end
 
+_("proto",    "P",     true)
+_("label",    "L",     true)
+_("label",    "M",     true)
+_("constant", "NIL",   false)
+_("constant", "FALSE", false)
+_("constant", "TRUE",  false)
+_("constant", "K",     true)
+_("upvalue",  "U",     true)
+_("value",    "A",     true)
+_("value",    "B",     true)
+_("value",    "C",     true)
+_("array",    "V",     false)
+_("array",    "T",     true)
+
 return setmetatable(class, {
   __call = function (_, value)
-    assert(type(value) == "number")
-    assert(value % 1 == 0)
-    return setmetatable({ value = value }, metatable)
+    assert(is_unsigned_integer(value))
+    return setmetatable({ type = "immediate", value = value }, metatable)
   end;
 })
