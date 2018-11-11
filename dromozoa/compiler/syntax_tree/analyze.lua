@@ -29,9 +29,17 @@ local function attr(node, key)
   end
 end
 
+local function attr_proto(node)
+  return attr(node, "proto")
+end
+
+local function attr_scope(node)
+  return attr(node, "scope")
+end
+
 local function def_label(node)
   local source = symbol_value(node)
-  local scope = attr(node, "scope")
+  local scope = attr_scope(node)
   local proto = scope.proto
 
   local scope_labels = scope.labels
@@ -59,7 +67,7 @@ end
 
 local function ref_label(node)
   local source = symbol_value(node)
-  local scope = attr(node, "scope")
+  local scope = attr_scope(node)
   local proto = scope.proto
 
   repeat
@@ -82,7 +90,7 @@ local function ref_constant(node, type, source)
   if not source then
     source = symbol_value(node)
   end
-  local proto = attr(node, "proto")
+  local proto = attr_proto(node)
 
   local constants = proto.constants
   local n = #constants
@@ -110,7 +118,7 @@ local function declare_name(node, key, source)
   if not source then
     source = symbol_value(node)
   end
-  local scope = attr(node, "scope")
+  local scope = attr_scope(node)
   local proto = scope.proto
 
   local n = proto[key]
@@ -160,7 +168,7 @@ local function resolve_name(node, key, upkey, source)
   if not source then
     source = symbol_value(node)
   end
-  local scope = attr(node, "scope")
+  local scope = attr_scope(node)
   local proto = scope.proto
 
   repeat
@@ -268,7 +276,7 @@ local function assign_var(node, key)
   if not key then
     key = "C"
   end
-  local proto = attr(node, "proto")
+  local proto = attr_proto(node)
   local n = proto[key]
   proto[key] = n + 1
   return variable[key](n)
@@ -335,7 +343,7 @@ local function prepare_protos(node, symbol_table, protos)
     if symbol == symbol_table.funcbody then
       local n = #protos
       local proto = {
-        parent = attr(node.parent, "proto");
+        parent = attr_proto(node.parent);
         labels = {};
         constants = {};
         upvalues = {};
@@ -352,8 +360,8 @@ local function prepare_protos(node, symbol_table, protos)
 
     if node.scope then
       node.scope = {
-        proto = attr(node, "proto");
-        parent = attr(node.parent, "scope");
+        proto = attr_proto(node);
+        parent = attr_scope(node.parent);
         labels = {};
         names = {};
       }
@@ -463,7 +471,7 @@ local function ref_labels(node, symbol_table)
     if not result then
       return nil, message, i
     end
-    attr(node, "proto")["goto"] = true
+    attr_proto(node)["goto"] = true
     that.label = result[1]
   end
 
@@ -482,7 +490,7 @@ local function resolve_names(self, node, symbol_table)
 
   if symbol == symbol_table.namelist then
     if node.parlist then
-      if attr(node, "proto").self then
+      if attr_proto(node).self then
         declare_name(node, "A", "self")
       end
     end
@@ -499,7 +507,7 @@ local function resolve_names(self, node, symbol_table)
   elseif symbol == symbol_table.LiteralString then
     node.var = ref_constant(node, "string")[1]
   elseif symbol == symbol_table["..."] then
-    local proto = attr(node, "proto")
+    local proto = attr_proto(node)
     if not proto.vararg then
       return nil, "cannot use '...' outside a vararg function", node.i
     end
