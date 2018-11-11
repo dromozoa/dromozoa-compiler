@@ -53,13 +53,18 @@ local opts = {
 
 t:generate()
 
-t:compile_es(output_name .. ".js", opts)
-t:compile_cxx(output_name .. ".cpp", opts)
-t:dump_tree(output_name .. ".html")
-t:dump_protos(output_name .. ".txt", opts)
-for i = 1, #t.protos do
-  local proto = t.protos[i]
-  syntax_tree.dump_basic_blocks(proto, output_name .. "-" .. proto[1] .. ".html")
+if not os.getenv "NO_COMPILE" then
+  t:compile_es(output_name .. ".js", opts)
+  t:compile_cxx(output_name .. ".cpp", opts)
+end
+
+if not os.getenv "NO_DUMP" then
+  t:dump_tree(output_name .. ".html")
+  t:dump_protos(output_name .. ".txt", opts)
+  for i = 1, #t.protos do
+    local proto = t.protos[i]
+    syntax_tree.dump_basic_blocks(proto, output_name .. "-" .. proto[1] .. ".html")
+  end
 end
 
 local html = os.getenv "OUTPUT_HTML"
