@@ -36,7 +36,7 @@ local metatable = { ["dromozoa.dom.is_serializable"] = true }
 
 function class:encode()
   local t = self.type
-  if t == "immedeiate" then
+  if t == "immediate" then
     return ("%d"):format(self.value)
   else
     local key = self.key
@@ -74,7 +74,13 @@ function metatable:__index(index)
     assert(not self.index)
     return setmetatable({ key = self.key, number = self.number, index = index }, metatable)
   elseif index == "type" then
-    return map[self.key][1] or "immedeiate"
+    local def = map[self.key]
+    if def then
+      return def[1]
+    else
+      assert(self.value)
+      return "immediate"
+    end
   else
     return class[index]
   end
