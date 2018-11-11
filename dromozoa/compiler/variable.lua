@@ -16,83 +16,84 @@
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
 local map = {
-  P     = { "proto",     1 };
-  L     = { "label",     1 };
-  M     = { "label",     1 };
-  NIL   = { "constant",  0 };
-  FALSE = { "constant",  0 };
-  TRUE  = { "constant",  0 };
-  K     = { "constant",  1 };
-  U     = { "upvalue",   1 };
-  A     = { "value",     1 };
-  B     = { "value",     1 };
-  C     = { "value",     1 };
-  V     = { "array",     1 };
-  T     = { "array",     1 };
+  P     = { "proto",     true  };
+  L     = { "label",     true  };
+  M     = { "label",     true  };
+  NIL   = { "constant",  false };
+  FALSE = { "constant",  false };
+  TRUE  = { "constant",  false };
+  K     = { "constant",  true  };
+  U     = { "upvalue",   true  };
+  A     = { "value",     true  };
+  B     = { "value",     true  };
+  C     = { "value",     true  };
+  V     = { "array",     false };
+  T     = { "array",     true  };
 }
 
 local class = {}
 local metatable = { __index = class }
 
-function class.decode(source)
-  if type(source) == "number" then
-    assert(source % 1 == 0) -- assert is integer
-    return setmetatable({ value = source }, metatable)
-  else
-    assert(type(source) == "string")
-    local key, i, j = source:match "^(%u+)(%d+)%[%d+%]$"
-    if not key then
-      key, i = source:match "^(%u+)(%d+)$"
-    end
-    if not key then
-      key = assert(source:match "^%u+$")
-    end
-    local n = assert(map[key][2])
-    if n == 0 then
-      assert(not i)
-      assert(not j)
-      return class[key]
-    elseif n == 1 then
-      assert(not j)
-      return class[key](assert(tonumber(i)))
-    else
-      assert(n == 2)
-      return class[key](assert(tonumber(i)), assert(tonumber(j)))
-    end
-  end
-end
-
 function class:encode()
-  local key = self.key
-  local n = map[key][2]
-  if n == 0 then
-    return key
-  elseif n == 1 then
-    return key .. self.i
-  elseif n == 2 then
-    return key .. self.i .. "[" .. self.j .. "]"
+  local t = self.type
+  if t == "immedeiate" then
+    return ("%d"):format(self.value)
   else
-    error ""
+    local key = self.key
+    if key == "V" then
+      local index = self.index
+      if index then
+        return ("V[%d]"):format(index)
+      else
+        return "V"
+      end
+    elseif key == "T" then
+      local index = self.index
+      if index then
+        return ("T%d[%d]"):format(self.number, index)
+      else
+        return ("T%d"):format(self.number)
+      end
+    else
+      if map[key][2] then
+        return ("%s%d"):format(self.key, self.number)
+      else
+        return ("%s%d"):format(self.key)
+      end
+    end
   end
 end
 
 function metatable:__tostring()
-  class.encode(self)
+  return class.encode(self)
 end
 
-for key, def in pairs(map) do
-  local n = def[2]
-  if n == 0 then
-    class[key] = setmetatable({ key = key }, metatable)
-  elseif n == 1 then
-    class[key] = function (i)
-      return setmetatable({ key = key, i = i }, metatable)
-    end
-  elseif n == 2 then
-    class[key] = function (i, j)
-      return setmetatable({ key = key, i = i, j = j }, metatable)
-    end
+function metatable:__index(index)
+  if type(index) == "number" then
+    assert(self.type == "array")
+    assert(not self.index)
+    return setmetatable({ key = self.key, number = self.number, index = index }, metatable)
+  elseif index == "type" then
+    return map[self.key][1] or "immedeiate"
+  else
+    return class[index]
   end
 end
 
-return class
+for key, def in pairs(map) do
+  if def[2] then
+    class[key] = function (number)
+      return setmetatable({ key = key, number = number }, metatable)
+    end
+  else
+    class[key] = setmetatable({ key = key }, metatable)
+  end
+end
+
+return setmetatable(class, {
+  __call = function (_, value)
+    assert(type(value) == "number")
+    assert(value % 1 == 0)
+    return setmetatable({ value = value }, metatable)
+  end;
+})

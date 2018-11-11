@@ -51,7 +51,9 @@ local opts = {
   mode = os.getenv "MODE"
 }
 
-t:generate()
+if not os.getenv "NO_GENERATE" then
+  t:generate()
+end
 
 if not os.getenv "NO_COMPILE" then
   t:compile_es(output_name .. ".js", opts)
