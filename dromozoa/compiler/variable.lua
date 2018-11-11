@@ -32,7 +32,7 @@ local map = {
 }
 
 local class = {}
-local metatable = { __index = class }
+local metatable = { ["dromozoa.dom.is_serializable"] = true }
 
 function class:encode()
   local t = self.type

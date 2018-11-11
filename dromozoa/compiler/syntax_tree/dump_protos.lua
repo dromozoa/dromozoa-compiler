@@ -15,8 +15,6 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-local decode_var = require "dromozoa.compiler.syntax_tree.decode_var"
-
 local function write_use(out, item, key)
   local use = item[key]
   if use[1] then
@@ -40,23 +38,18 @@ local function dump_code(out, code, indent)
   else
     out:write(indent, code[0])
     for i = 1, #code do
-      local var = code[i]
-      if type(var) == "number" then -- SETLIST
-        out:write(" ", var)
-      else
-        out:write(" ", decode_var(var))
-      end
+      out:write(" ", var:encode())
     end
     out:write "\n"
   end
 end
 
 local function dump_proto(out, proto, opts)
-  out:write(proto[1], "\n")
+  out:write(proto[1]:encode(), "\n")
 
   local parent = proto.parent[1]
   if parent then
-    out:write("  parent ", parent, "\n")
+    out:write("  parent ", parent:encode(), "\n")
   end
   if proto.self then
     out:write "  self\n"
