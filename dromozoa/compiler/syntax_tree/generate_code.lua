@@ -89,15 +89,14 @@ local function generate(stack, node, symbol_table)
         else -- generic for
           local rvars = node[1].vars
           local lvars = node.vars
-          local var = lvars[5]
           _:MOVE(lvars[1], rvars[1])
            :MOVE(lvars[2], rvars[2])
            :MOVE(lvars[3], rvars[3])
            :LOOP()
-           :  CALL(var, lvars[1], lvars[2], lvars[3])
+           :  CALL(lvars[5], lvars[1], lvars[2], lvars[3])
           local that = node[2]
           for i = 1, #that do
-            _:MOVE(that[i].var, var[i - 1])
+            _:MOVE(that[i].var, lvars[5][i - 1])
           end
           _:EQ(lvars[4], that[1].var, variable.NIL)
            :COND_IF(lvars[4], variable.TRUE)

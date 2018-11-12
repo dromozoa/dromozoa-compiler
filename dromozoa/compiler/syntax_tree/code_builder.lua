@@ -108,24 +108,22 @@ end
 function class:COND_ELSE()
   local stack = self.stack
   local n = #stack
-  local then_block = stack[n]
+  stack[n - 1].then_block = stack[n]
   stack[n] = {}
-  local cond_block = stack[n - 1]
-  cond_block[3] = then_block
   return self
 end
 
 function class:COND_END()
   local stack = self.stack
   local n = #stack
+  local m = n - 1
   local that_block = stack[n]
+  local cond_block = stack[m]
+  local this_block = stack[m - 1]
   stack[n] = nil
-  n = n - 1
-  local cond_block = stack[n]
-  stack[n] = nil
-  local this_block = stack[n - 1]
+  stack[m] = nil
 
-  local then_block = cond_block[3]
+  local then_block = cond_block.then_block
   if then_block then
     local proto = stack.proto
     local m = proto.M
