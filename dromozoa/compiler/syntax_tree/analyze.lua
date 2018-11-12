@@ -299,6 +299,7 @@ local function prepare_protos(node, symbol_table, protos)
       constants = {};
       upvalues = {};
       names = { env_name };
+      self = false; vararg = false;
       A = 0; B = 1; C = 0; T = 0; V = 0;
     }
 
@@ -320,8 +321,8 @@ local function prepare_protos(node, symbol_table, protos)
         };
       };
       names = {};
+      self = false; vararg = true;
       A = 0; B = 0; C = 0; T = 0; V = 0;
-      vararg = true;
       variable.P(0);
     }
     node.proto = proto
@@ -342,6 +343,7 @@ local function prepare_protos(node, symbol_table, protos)
         constants = {};
         upvalues = {};
         names = {};
+        self = false; vararg = false;
         A = 0; B = 0; C = 0; T = 0; V = 0;
         variable.P(n);
       }
@@ -460,7 +462,6 @@ local function ref_labels(node, symbol_table)
     if not result then
       return nil, message, i
     end
-    attr_proto(node)["goto"] = true
     that.label = result[1]
   end
 

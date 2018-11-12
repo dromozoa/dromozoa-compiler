@@ -57,9 +57,6 @@ local function dump_proto(out, proto, opts)
   if proto.vararg then
     out:write "  vararg\n"
   end
-  if proto["goto"] then
-    out:write "  goto\n"
-  end
   out:write(("  A %d\n"):format(proto.A))
   out:write(("  B %d\n"):format(proto.B))
   out:write(("  C %d\n"):format(proto.C))
