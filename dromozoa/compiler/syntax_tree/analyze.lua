@@ -17,6 +17,7 @@
 
 local space_separated = require "dromozoa.dom.space_separated"
 local symbol_value = require "dromozoa.parser.symbol_value"
+local prototype = require "dromozoa.compiler.prototype"
 local variable = require "dromozoa.compiler.variable"
 
 local function attr(node, key)
@@ -294,7 +295,7 @@ local function prepare_protos(node, symbol_table, protos)
       variable.B(0);
     }
 
-    local external_proto = {
+    local external_proto = prototype {
       labels = {};
       constants = {};
       upvalues = {};
@@ -309,7 +310,7 @@ local function prepare_protos(node, symbol_table, protos)
       names = { env_name };
     }
 
-    local proto = {
+    local proto = prototype {
       parent = external_proto;
       labels = {};
       constants = {};
@@ -337,7 +338,7 @@ local function prepare_protos(node, symbol_table, protos)
   else
     if symbol == symbol_table.funcbody then
       local n = #protos
-      local proto = {
+      local proto = prototype {
         parent = attr_proto(node.parent);
         labels = {};
         constants = {};

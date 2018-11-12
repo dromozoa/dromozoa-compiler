@@ -53,6 +53,9 @@ local opts = {
 
 if not os.getenv "NO_GENERATE" then
   t:generate()
+  for i = 1, #t.protos do
+    t.protos[i]:generate_basic_blocks()
+  end
 end
 
 if not os.getenv "NO_COMPILE" then

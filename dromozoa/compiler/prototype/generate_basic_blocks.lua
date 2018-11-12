@@ -196,16 +196,10 @@ local function analyze(basic_blocks)
   return basic_blocks
 end
 
-local function generate(proto)
-  local basic_blocks = resolve(split(proto))
-  -- analyze(basic_blocks)
-  proto.basic_blocks = basic_blocks
-end
-
+-- self = proto
 return function (self)
-  local protos = self.protos
-  for i = 1, #protos do
-    generate(protos[i])
-  end
+  local basic_blocks = resolve(split(self))
+  -- analyze(basic_blocks)
+  self.basic_blocks = basic_blocks
   return self
 end
