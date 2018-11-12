@@ -65,9 +65,9 @@ end
 
 if not os.getenv "NO_DUMP" then
   t:dump_tree(output_name .. ".html")
-  t:dump_protos(output_name .. ".txt", opts)
+  -- t:dump_protos(output_name .. ".txt", opts)
 
-  local out = assert(io.open(output_name .. "-2.txt", "w"))
+  local out = assert(io.open(output_name .. ".txt", "w"))
 
   for i = 1, #t.protos do
     local proto = t.protos[i]

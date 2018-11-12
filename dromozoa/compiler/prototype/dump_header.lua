@@ -53,22 +53,22 @@ return function (self, out, indent)
   end
 
   dump_items(out, self, "labels", indent, function (item)
-    out:write(indent, ("  %s %q\n"):format(item[1], item.source))
+    out:write(indent, ("  %s %q\n"):format(item[1]:encode(), item.source))
     dump_use(out, item, "def", indent)
     dump_use(out, item, "use", indent)
   end)
 
   dump_items(out, self, "constants", indent, function (item)
-    out:write(indent, ("  %s %q %s\n"):format(item[1], item.source, item.type))
+    out:write(indent, ("  %s %q %s\n"):format(item[1]:encode(), item.source, item.type))
     dump_use(out, item, "use", indent)
   end)
 
   dump_items(out, self, "upvalues", indent, function (item)
-    out:write(indent, ("  %s %s (%s %q)\n"):format(item[1], item[2], item.name[1], item.name.source))
+    out:write(indent, ("  %s %s (%s %q)\n"):format(item[1]:encode(), item[2]:encode(), item.name[1], item.name.source))
   end)
 
   dump_items(out, self, "names", indent, function (item)
-    out:write(indent, ("  %s %q\n"):format(item[1], item.source))
+    out:write(indent, ("  %s %q\n"):format(item[1]:encode(), item.source))
     dump_use(out, item, "def", indent)
     dump_use(out, item, "use", indent)
     dump_use(out, item, "updef", indent)
