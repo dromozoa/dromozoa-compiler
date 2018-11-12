@@ -18,7 +18,6 @@
 local analyze = require "dromozoa.compiler.syntax_tree.analyze"
 local compile_cxx = require "dromozoa.compiler.syntax_tree.compile_cxx"
 local compile_es = require "dromozoa.compiler.syntax_tree.compile_es"
-local dump_protos = require "dromozoa.compiler.syntax_tree.dump_protos"
 local dump_tree = require "dromozoa.compiler.syntax_tree.dump_tree"
 local generate = require "dromozoa.compiler.syntax_tree.generate"
 
@@ -31,6 +30,14 @@ local function construct(self, node)
     that.parent = node
     construct(self, that)
   end
+end
+
+local function dump_protos(self, out)
+  local protos = self.protos
+  for i = 1, #protos do
+    protos[i]:dump_code(out)
+  end
+  return out
 end
 
 local class = {}

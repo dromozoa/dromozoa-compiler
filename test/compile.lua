@@ -65,17 +65,11 @@ end
 
 if not os.getenv "NO_DUMP" then
   t:dump_tree(output_name .. ".html")
-  -- t:dump_protos(output_name .. ".txt", opts)
-
-  local out = assert(io.open(output_name .. ".txt", "w"))
-
+  t:dump_protos(output_name .. ".txt")
   for i = 1, #t.protos do
     local proto = t.protos[i]
-    proto:dump_code(out, "")
     proto:dump_basic_blocks(output_name .. "-" .. proto[1]:encode() .. ".html")
   end
-
-  out:close()
 end
 
 local html = os.getenv "OUTPUT_HTML"
