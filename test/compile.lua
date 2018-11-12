@@ -68,7 +68,7 @@ if not os.getenv "NO_DUMP" then
   t:dump_protos(output_name .. ".txt", opts)
   for i = 1, #t.protos do
     local proto = t.protos[i]
-    syntax_tree.dump_basic_blocks(proto, output_name .. "-" .. proto[1]:encode() .. ".html")
+    proto:dump_basic_blocks(output_name .. "-" .. proto[1]:encode() .. ".html")
   end
 end
 

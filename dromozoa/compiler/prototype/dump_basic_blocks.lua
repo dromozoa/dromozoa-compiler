@@ -66,14 +66,14 @@ local marker = _"marker" {
   };
 }
 
-local function use_to_code(block, key)
+local function use_to_text(block, key)
   local use = block[key]
   if use[1] then
     return "    [" .. key .. " " .. table.concat(use, " ") .. "]\n"
   end
 end
 
-local function usemap_to_code(proto, key)
+local function usemap_to_text(proto, key)
   local usemap = proto[key]
   if next(usemap) ~= nil then
     local html = _"span" { "  ", key , " {\n" }
@@ -99,7 +99,7 @@ local function usemap_to_code(proto, key)
   end
 end
 
-local function block_to_code(basic_blocks, uid, block)
+local function block_to_text(basic_blocks, uid, block)
   local g = basic_blocks.g
   local uv = g.uv
   local uv_after = uv.after
@@ -131,8 +131,8 @@ local function block_to_code(basic_blocks, uid, block)
     html[#html + 1] = "]\n"
   end
 
-  -- html[#html + 1] = use_to_code(block, "def")
-  -- html[#html + 1] = use_to_code(block, "use")
+  -- html[#html + 1] = use_to_text(block, "def")
+  -- html[#html + 1] = use_to_text(block, "use")
 
   for i = 1, #block do
     local code = block[i]
@@ -166,7 +166,7 @@ local function block_to_code(basic_blocks, uid, block)
   return html
 end
 
-local function to_code(proto)
+local function to_text(proto)
   local basic_blocks = proto.basic_blocks
   local g = basic_blocks.g
   local u = g.u
@@ -174,16 +174,16 @@ local function to_code(proto)
   local blocks = basic_blocks.blocks
 
   local html = _"div" {
-    class = "code";
+    class = "text";
     _"span" { proto[1]:encode(), " {\n" };
   }
 
-  -- html[#html + 1] = usemap_to_code(basic_blocks, "defmap")
-  -- html[#html + 1] = usemap_to_code(basic_blocks, "usemap")
+  -- html[#html + 1] = usemap_to_text(basic_blocks, "defmap")
+  -- html[#html + 1] = usemap_to_text(basic_blocks, "usemap")
 
   local uid = u.first
   while uid do
-    html[#html + 1] = block_to_code(basic_blocks, uid, blocks[uid])
+    html[#html + 1] = block_to_text(basic_blocks, uid, blocks[uid])
     uid = u_after[uid]
   end
 
@@ -257,7 +257,7 @@ return function (proto, out)
   local doc = html5_document(_"html" {
     head;
     _"body" {
-      to_code(proto);
+      to_text(proto);
       to_graph(proto, 800, 640);
     };
   })

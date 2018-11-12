@@ -109,11 +109,11 @@ local function prepare(self)
   end
 end
 
-local function to_code(self)
+local function to_text(self)
   local terminal_nodes = self.terminal_nodes
   local source = self.source
 
-  local html = _"div" { class = "code" }
+  local html = _"div" { class = "text" }
   for i = 1, #terminal_nodes do
     local node = terminal_nodes[i]
     local symbol = node[0]
@@ -243,7 +243,7 @@ return function (self, out)
   local doc = html5_document(_"html" {
     head;
     _"body" {
-      to_code(self);
+      to_text(self);
       to_graph(self, 800, 640);
     };
   })
