@@ -16,12 +16,10 @@
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
 local generate_basic_blocks = require "dromozoa.compiler.syntax_tree.generate_basic_blocks"
-local generate_flat_code = require "dromozoa.compiler.syntax_tree.generate_flat_code"
-local generate_tree_code = require "dromozoa.compiler.syntax_tree.generate_tree_code"
+local generate_code = require "dromozoa.compiler.syntax_tree.generate_code"
 
 return function (self)
-  generate_tree_code(self)
-  -- generate_flat_code(self)
+  generate_code(self)
   generate_basic_blocks(self)
   return self
 end

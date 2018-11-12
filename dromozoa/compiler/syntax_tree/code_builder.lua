@@ -178,8 +178,8 @@ end
 return setmetatable(class, {
   __call = function (_, stack, node)
     return setmetatable({
-      node = node;
       stack = stack;
+      node = node;
     }, metatable)
   end;
 })
