@@ -27,10 +27,18 @@ function class:generate_basic_blocks()
 end
 
 function class:dump_code(out)
+  local buffer = dump_code({}, self, "")
   if type(out) == "string" then
-    return dump_code(self, assert(io.open(out, "w"))):close()
+    local out = assert(io.open(out, "w"))
+    for i = 1, #buffer do
+      out:write(buffer[i])
+    end
+    return out:close()
   else
-    return dump_code(self, out)
+    for i = 1, #buffer do
+      out:write(buffer[i])
+    end
+    return out
   end
 end
 

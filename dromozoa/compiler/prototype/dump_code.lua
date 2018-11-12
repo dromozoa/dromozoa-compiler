@@ -17,29 +17,28 @@
 
 local dump_header = require "dromozoa.compiler.prototype.dump_header"
 
-local function dump_code(self, out, block, indent)
-  out:write(indent, "{\n")
+local function dump_code(buffer, block, indent)
+  buffer[#buffer + 1] = indent .. "{\n"
+
+  local block_indent = indent .. "  "
   for i = 1, #block do
     local code = block[i]
-    out:write(indent, "  ", code[0])
+    local vars = {}
     for i = 1, #code do
-      out:write((" %s"):format(code[i]:encode()))
+      vars[i] = code[i]:encode()
     end
-    out:write "\n"
+    buffer[#buffer + 1] = block_indent .. ("%s %s\n"):format(code[0], table.concat(vars, " "))
   end
-  out:write(indent, "}\n")
+
+  buffer[#buffer + 1] = indent .. "}\n"
 end
 
-return function (self, out, indent)
-  if not indent then
-    indent = ""
-  end
-
-  out:write(indent, ("%s\n"):format(self[1]:encode()))
+return function (buffer, self, indent)
+  buffer[#buffer + 1] = indent .. ("%s\n"):format(self[1]:encode())
 
   local indent = indent .. "  "
-  dump_header(self, out, indent)
-  dump_code(self, out, self.code, indent)
+  dump_header(buffer, self, indent)
+  dump_code(buffer, self.code, indent)
 
-  return out
+  return buffer
 end
