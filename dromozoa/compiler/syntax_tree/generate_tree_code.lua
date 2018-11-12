@@ -123,11 +123,11 @@ local function generate(stack, node, symbol_table)
       _:MOVE(that[i].var, vars[i])
     end
   elseif symbol == symbol_table["::"] then
-    _:LABEL(node[1].label)
+    _:LABEL(node[1].var)
   elseif symbol == symbol_table["break"] then
     _:BREAK()
   elseif symbol == symbol_table["goto"] then
-    _:GOTO(node[1].label)
+    _:GOTO(node[1].var)
   elseif symbol == symbol_table["function"] then
     local that = node[1]
     if that.declare then

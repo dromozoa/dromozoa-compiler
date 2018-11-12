@@ -29,17 +29,16 @@ local keys = {
   "unop";
   "self";
   "vararg";
-  "parlist";
   "inorder";
 
+  "parlist";
   "param";
   "declare";
   "key";
   "def";
   "use";
-
   "adjust";
-  "label";
+
   "var";
   "vars";
 }

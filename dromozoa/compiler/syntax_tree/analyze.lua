@@ -300,7 +300,7 @@ local function prepare_protos(node, symbol_table, protos)
       upvalues = {};
       names = { env_name };
       self = false; vararg = false;
-      A = 0; B = 1; C = 0; T = 0; V = 0;
+      M = 0; A = 0; B = 1; C = 0; T = 0; V = 0;
     }
 
     local external_scope = {
@@ -322,7 +322,7 @@ local function prepare_protos(node, symbol_table, protos)
       };
       names = {};
       self = false; vararg = true;
-      A = 0; B = 0; C = 0; T = 0; V = 0;
+      M = 0; A = 0; B = 0; C = 0; T = 0; V = 0;
       variable.P(0);
     }
     node.proto = proto
@@ -344,7 +344,7 @@ local function prepare_protos(node, symbol_table, protos)
         upvalues = {};
         names = {};
         self = false; vararg = false;
-        A = 0; B = 0; C = 0; T = 0; V = 0;
+        M = 0; A = 0; B = 0; C = 0; T = 0; V = 0;
         variable.P(n);
       }
       node.proto = proto
@@ -442,7 +442,7 @@ local function def_labels(node, symbol_table)
     if not result then
       return nil, message, i
     end
-    that.label = result[1]
+    that.var = result[1]
   end
 
   for i = 1, #node do
@@ -462,7 +462,7 @@ local function ref_labels(node, symbol_table)
     if not result then
       return nil, message, i
     end
-    that.label = result[1]
+    that.var = result[1]
   end
 
   for i = 1, #node do
