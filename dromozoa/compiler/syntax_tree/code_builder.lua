@@ -15,6 +15,8 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
+local variable = require "dromozoa.compiler.variable"
+
 local function _(name)
   return function (self, ...)
     local s = self.stack
@@ -22,15 +24,6 @@ local function _(name)
     b[#b + 1] = { [0] = name, ... }
     return self
   end
-end
-
-local function pop(self, name)
-  local s = self.stack
-  local n = #s
-  local b1 = s[n]
-  local b2 = s[n - 1]
-  s[n] = nil
-  b2[#b2 + 1] = b1
 end
 
 local class = {
@@ -71,34 +64,114 @@ local class = {
 local metatable = { __index = class }
 
 function class:LOOP()
-  local s = self.stack
-  s[#s + 1] = { block = true, [0] = "LOOP" }
+  local stack = self.stack
+  stack[#stack + 1] = { [0] = "LOOP" }
   return self
 end
 
 function class:LOOP_END()
-  pop(self, "LOOP")
+  local stack = self.stack
+  local n = #stack
+  local loop_block = stack[n]
+  local this_block = stack[n - 1]
+  stack[n] = nil
+
+  assert(loop_block[0] == "LOOP")
+
+  local proto = stack.proto
+  local m = proto.M
+  local loop_label = variable.M(m)
+  local join_label = variable.M(m + 1)
+  proto.M = m + 2
+
+  this_block[#this_block + 1] = { [0] = "LABEL", loop_label }
+  for i = 1, #loop_block do
+    local code = loop_block[i]
+    if code[0] == "BREAK" then
+      this_block[#this_block + 1] = { [0] = "GOTO", join_label }
+    else
+      this_block[#this_block + 1] = code
+    end
+  end
+  this_block[#this_block + 1] = { [0] = "GOTO", loop_label }
+  this_block[#this_block + 1] = { [0] = "LABEL", join_label }
+
   return self
 end
 
 function class:COND_IF(...)
-  local s = self.stack
-  local n = #s
-  s[n + 1] = { block = true, [0] = "COND", { [0] = "IF", ... } }
-  s[n + 2] = { block = true }
+  local stack = self.stack
+  local n = #stack
+  stack[n + 1] = { [0] = "COND", { [0] = "COND", ... } }
+  stack[n + 2] = {}
   return self
 end
 
 function class:COND_ELSE()
-  pop(self)
-  local s = self.stack
-  s[#s + 1] = { block = true }
+  local stack = self.stack
+  local n = #stack
+  local then_block = stack[n]
+  local cond_block = stack[n - 1]
+
+  assert(cond_block[0] == "COND")
+
+  cond_block[#cond_block + 1] = then_block
+  stack[n] = {}
   return self
 end
 
 function class:COND_END()
-  pop(self)
-  pop(self, "COND")
+  local stack = self.stack
+  local n = #stack
+  local that_block = stack[n]
+  local cond_block = stack[n - 1]
+  local this_block = stack[n - 2]
+  stack[n] = nil
+  stack[n - 1] = nil
+
+  assert(cond_block[0] == "COND")
+
+  local then_block = cond_block[2]
+  if then_block then
+    local proto = stack.proto
+    local m = proto.M
+    local then_label = variable.M(m)
+    local else_label = variable.M(m + 1)
+    local join_label = variable.M(m + 2)
+    proto.M = m + 3
+
+    local cond = cond_block[1]
+    cond[3] = then_label
+    cond[4] = else_label
+    this_block[#this_block + 1] = cond
+    this_block[#this_block + 1] = { [0] = "LABEL", then_label }
+    for i = 1, #then_block do
+      this_block[#this_block + 1] = then_block[i]
+    end
+    this_block[#this_block + 1] = { [0] = "GOTO", join_label }
+    this_block[#this_block + 1] = { [0] = "LABEL", else_label }
+    for i = 1, #that_block do
+      this_block[#this_block + 1] = that_block[i]
+    end
+    this_block[#this_block + 1] = { [0] = "LABEL", join_label }
+  else
+    local proto = stack.proto
+    local m = proto.M
+    local then_label = variable.M(m)
+    local join_label = variable.M(m + 1)
+    proto.M = m + 2
+
+    local cond = cond_block[1]
+    cond[3] = then_label
+    cond[4] = join_label
+    this_block[#this_block + 1] = cond
+    this_block[#this_block + 1] = { [0] = "LABEL", then_label }
+    for i = 1, #that_block do
+      this_block[#this_block + 1] = that_block[i]
+    end
+    this_block[#this_block + 1] = { [0] = "LABEL", join_label }
+  end
+
   return self
 end
 

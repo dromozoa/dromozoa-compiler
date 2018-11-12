@@ -52,7 +52,7 @@ local function update_usemap(usemap, useset, uid)
 end
 
 local function split(proto)
-  local flat_code = proto.flat_code
+  local flat_code = proto.code
 
   local g = graph()
   local entry_uid = g:add_vertex()

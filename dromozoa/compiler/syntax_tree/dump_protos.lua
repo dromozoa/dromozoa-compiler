@@ -22,20 +22,9 @@ local function write_use(out, item, key)
   end
 end
 
-local function dump_code(out, code, indent)
-  if code.block then
-    local block_indent = indent .. "  "
-    out:write(indent)
-    local name = code[0]
-    if name then
-      out:write(name, " ")
-    end
-    out:write "{\n"
-    for i = 1, #code do
-      dump_code(out, code[i], block_indent)
-    end
-    out:write(indent, "}\n")
-  else
+local function dump_code(out, block, indent)
+  for i = 1, #block do
+    local code = block[i]
     out:write(indent, code[0])
     for i = 1, #code do
       out:write(" ", code[i]:encode())
@@ -107,13 +96,9 @@ local function dump_proto(out, proto, opts)
     end
   end
 
-  if opts.mode == "flat_code" then
-    dump_code(out, proto.flat_code, "  ")
-  else
-    dump_code(out, proto.tree_code, "  ")
-  end
-
-  out:write "\n"
+  out:write "  {\n"
+  dump_code(out, proto.code, "    ")
+  out:write "  }\n"
 end
 
 return function (self, out, opts)

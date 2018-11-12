@@ -75,9 +75,10 @@ return function (self)
   local protos = self.protos
   for i = 1, #protos do
     local proto = protos[i]
-    local flat_code = { block = true }
-    proto.flat_code = flat_code
-    generate(proto, flat_code, proto.tree_code)
+    -- local flat_code = { block = true }
+    -- proto.code = flat_code
+    -- generate(proto, flat_code, proto.tree_code)
+    proto.code = proto.tree_code
   end
   return self
 end

@@ -27,9 +27,9 @@ local function generate(stack, node, symbol_table)
     if var then
       code_builder(stack, node):CLOSURE(var, proto[1])
     end
-    local code = { block = true }
+    local code = {}
     proto.tree_code = code
-    stack = { code }
+    stack = { proto = proto, code }
   end
 
   local symbol = node[0]
