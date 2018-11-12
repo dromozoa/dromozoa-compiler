@@ -65,7 +65,7 @@ local metatable = { __index = class }
 
 function class:LOOP()
   local stack = self.stack
-  stack[#stack + 1] = { [0] = "LOOP" }
+  stack[#stack + 1] = {}
   return self
 end
 
@@ -75,8 +75,6 @@ function class:LOOP_END()
   local loop_block = stack[n]
   local this_block = stack[n - 1]
   stack[n] = nil
-
-  assert(loop_block[0] == "LOOP")
 
   local proto = stack.proto
   local m = proto.M
