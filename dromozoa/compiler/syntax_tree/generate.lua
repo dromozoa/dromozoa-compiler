@@ -21,7 +21,7 @@ local generate_tree_code = require "dromozoa.compiler.syntax_tree.generate_tree_
 
 return function (self)
   generate_tree_code(self)
-  generate_flat_code(self)
+  -- generate_flat_code(self)
   generate_basic_blocks(self)
   return self
 end

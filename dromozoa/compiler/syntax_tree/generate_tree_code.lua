@@ -28,7 +28,7 @@ local function generate(stack, node, symbol_table)
       code_builder(stack, node):CLOSURE(var, proto[1])
     end
     local code = {}
-    proto.tree_code = code
+    proto.code = code
     stack = { proto = proto, code }
   end
 
