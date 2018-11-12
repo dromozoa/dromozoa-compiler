@@ -100,7 +100,7 @@ end
 function class:COND_IF(...)
   local stack = self.stack
   local n = #stack
-  stack[n + 1] = { [0] = "COND", { [0] = "COND", ... } }
+  stack[n + 1] = { ... }
   stack[n + 2] = {}
   return self
 end
@@ -109,12 +109,9 @@ function class:COND_ELSE()
   local stack = self.stack
   local n = #stack
   local then_block = stack[n]
-  local cond_block = stack[n - 1]
-
-  assert(cond_block[0] == "COND")
-
-  cond_block[#cond_block + 1] = then_block
   stack[n] = {}
+  local cond_block = stack[n - 1]
+  cond_block[3] = then_block
   return self
 end
 
@@ -122,14 +119,13 @@ function class:COND_END()
   local stack = self.stack
   local n = #stack
   local that_block = stack[n]
-  local cond_block = stack[n - 1]
-  local this_block = stack[n - 2]
   stack[n] = nil
-  stack[n - 1] = nil
+  n = n - 1
+  local cond_block = stack[n]
+  stack[n] = nil
+  local this_block = stack[n - 1]
 
-  assert(cond_block[0] == "COND")
-
-  local then_block = cond_block[2]
+  local then_block = cond_block[3]
   if then_block then
     local proto = stack.proto
     local m = proto.M
@@ -138,10 +134,7 @@ function class:COND_END()
     local join_label = variable.M(m + 2)
     proto.M = m + 3
 
-    local cond = cond_block[1]
-    cond[3] = then_label
-    cond[4] = else_label
-    this_block[#this_block + 1] = cond
+    this_block[#this_block + 1] = { [0] = "COND", cond_block[1], cond_block[2], then_label, else_label }
     this_block[#this_block + 1] = { [0] = "LABEL", then_label }
     for i = 1, #then_block do
       this_block[#this_block + 1] = then_block[i]
@@ -159,10 +152,7 @@ function class:COND_END()
     local join_label = variable.M(m + 1)
     proto.M = m + 2
 
-    local cond = cond_block[1]
-    cond[3] = then_label
-    cond[4] = join_label
-    this_block[#this_block + 1] = cond
+    this_block[#this_block + 1] = { [0] = "COND", cond_block[1], cond_block[2], then_label, join_label }
     this_block[#this_block + 1] = { [0] = "LABEL", then_label }
     for i = 1, #that_block do
       this_block[#this_block + 1] = that_block[i]
