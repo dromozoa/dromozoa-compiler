@@ -81,6 +81,7 @@ end
 _("proto",    "P",     true)
 _("label",    "L",     true)
 _("label",    "M",     true)
+_("constant", "VOID",  false)
 _("constant", "NIL",   false)
 _("constant", "FALSE", false)
 _("constant", "TRUE",  false)

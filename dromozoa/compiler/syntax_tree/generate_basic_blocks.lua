@@ -16,7 +16,6 @@
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
 local graph = require "dromozoa.graph"
-local variable = require "dromozoa.compiler.variable"
 
 local ignore_table = {
   NIL = true;

@@ -23,7 +23,10 @@ local unpack = table.unpack or unpack
 local function generate(stack, node, symbol_table)
   local proto = node.proto
   if proto then
-    code_builder(stack, node):CLOSURE(node.var or variable.NIL, proto[1])
+    local var = node.var
+    if var then
+      code_builder(stack, node):CLOSURE(var, proto[1])
+    end
     local code = { block = true }
     proto.tree_code = code
     stack = { code }
@@ -52,11 +55,11 @@ local function generate(stack, node, symbol_table)
           local vars = node.vars
           _:TONUMBER(vars[1], node[1].var)
            :TONUMBER(vars[2], node[2].var)
-           :SUB(vars[1], vars[1], vars[3])
+           :SUB(vars[1], vars[1], variable(1))
            :LOOP()
-           :  ADD(vars[1], vars[1], vars[3])
-           :  LT(vars[4], vars[2], vars[1])
-           :  COND_IF(vars[4], variable.TRUE)
+           :  ADD(vars[1], vars[1], variable(1))
+           :  LT(vars[3], vars[2], vars[1])
+           :  COND_IF(vars[3], variable.TRUE)
            :    BREAK()
            :  COND_END()
            :  MOVE(node[3].var, vars[1])
@@ -68,17 +71,17 @@ local function generate(stack, node, symbol_table)
            :SUB(vars[1], vars[1], vars[3])
            :LOOP()
            :  ADD(vars[1], vars[1], vars[3])
-           :  LE(vars[5], vars[4], vars[3])
-           :  COND_IF(vars[5], variable.TRUE)
-           :    LT(vars[6], vars[2], vars[1])
-           :    COND_IF(vars[6], variable.TRUE)
+           :  LE(vars[4], variable(0), vars[3])
+           :  COND_IF(vars[4], variable.TRUE)
+           :    LT(vars[5], vars[2], vars[1])
+           :    COND_IF(vars[5], variable.TRUE)
            :      BREAK()
            :    COND_END()
            :  COND_END()
-           :  LT(vars[7], vars[3], vars[4])
-           :  COND_IF(vars[7], variable.TRUE)
-           :    LT(vars[8], vars[1], vars[2])
-           :    COND_IF(vars[8], variable.TRUE)
+           :  LT(vars[6], vars[3], variable(0))
+           :  COND_IF(vars[6], variable.TRUE)
+           :    LT(vars[7], vars[1], vars[2])
+           :    COND_IF(vars[7], variable.TRUE)
            :      BREAK()
            :    COND_END()
            :  COND_END()
@@ -194,9 +197,9 @@ local function generate(stack, node, symbol_table)
       args[i] = that[i].var
     end
     if node.self then
-      _:CALL(node.var or variable.NIL, node[1].var, node.self, unpack(args))
+      _:CALL(node.var or variable.VOID, node[1].var, node.self, unpack(args))
     else
-      _:CALL(node.var or variable.NIL, node[1].var, unpack(args))
+      _:CALL(node.var or variable.VOID, node[1].var, unpack(args))
     end
   elseif symbol == symbol_table.fieldlist then
     _:NEWTABLE(node.var)
@@ -218,6 +221,6 @@ local function generate(stack, node, symbol_table)
 end
 
 return function (self)
-  generate({ { block = true } }, self.accepted_node, self.symbol_table)
+  generate(nil, self.accepted_node, self.symbol_table)
   return self
 end

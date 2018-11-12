@@ -584,7 +584,6 @@ local function resolve_vars(self, node, symbol_table)
       node.vars = space_separated {
         assign_var(node, "B"); -- var
         assign_var(node, "B"); -- limit
-        ref_constant(node, "integer", "1")[1]; -- step
         assign_var(node);
       }
     elseif n == 5 then -- numerical for with step
@@ -592,7 +591,6 @@ local function resolve_vars(self, node, symbol_table)
         assign_var(node, "B"); -- var
         assign_var(node, "B"); -- limit
         assign_var(node, "B"); -- step
-        ref_constant(node, "integer", "0")[1];
         assign_var(node);
         assign_var(node);
         assign_var(node);
