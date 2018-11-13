@@ -20,8 +20,8 @@ local graph = require "dromozoa.graph"
 local function split(code_block)
   local g = graph()
   local entry_uid = g:add_vertex()
-  local uids = { entry_uid }
   local uid
+  local uids = { entry_uid }
   local block
   local blocks = { [entry_uid] = { entry = true } }
   local labels = {}
