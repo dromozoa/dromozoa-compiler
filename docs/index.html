@@ -63,8 +63,32 @@
     <td><code>n</code></td>
     <td>immediate</td>
     <td>read only</td>
-    <td>unsigned integer immediate</td>
+    <td>unsigned integer</td>
   <tr>
+  <tr>
+    <td><code>VOID</code></td>
+    <td>immediate</td>
+    <td>read only</td>
+    <td>not use the return value</td>
+  </tr>
+  <tr>
+    <td><code>NIL</code></td>
+    <td>immediate</td>
+    <td>read only</td>
+    <td>nil</td>
+  </tr>
+  <tr>
+    <td><code>FALSE</code></td>
+    <td>immediate</td>
+    <td>read only</td>
+    <td>false</td>
+  </tr>
+  <tr>
+    <td><code>TRUE</code></td>
+    <td>immediate</td>
+    <td>read only</td>
+    <td>true</td>
+  </tr>
   <tr>
     <td><code>Pn</code></td>
     <td>proto</td>
@@ -82,24 +106,6 @@
     <td>label</td>
     <td>read only</td>
     <td>unnamed label</td>
-  </tr>
-  <tr>
-    <td><code>NIL</code></td>
-    <td>constant</td>
-    <td>read only</td>
-    <td>nil</td>
-  </tr>
-  <tr>
-    <td><code>FALSE</code></td>
-    <td>constant</td>
-    <td>read only</td>
-    <td>false</td>
-  </tr>
-  <tr>
-    <td><code>TRUE</code></td>
-    <td>constant</td>
-    <td>read only</td>
-    <td>true</td>
   </tr>
   <tr>
     <td><code>Kn</code></td>
@@ -132,15 +138,13 @@
     <td>unnamed value</td>
   </tr>
   <tr>
-    <td><code>V</code>, <code>V[i]</code></td>
+    <td><code>V0</code>, <code>V0[i]</code></td>
     <td>array</td>
     <td>read only</td>
     <td>vararg</td>
   </tr>
   <tr>
-    <td>
-      <code>Tn</code>, <code>Tn[j]</code>
-    </td>
+    <td><code>Tn</code>, <code>Tn[j]</code></td>
     <td>array</td>
     <td>single assigned</td>
     <td>results</td>

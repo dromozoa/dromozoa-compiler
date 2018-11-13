@@ -22,59 +22,61 @@ end
 local class = {}
 local metatable = { ["dromozoa.dom.is_serializable"] = true }
 
-function class.I(number)
-  assert(is_unsigned_integer(number))
-  return setmetatable({ type = "immediate", key = "I", number = number }, metatable)
-end
+local order = {
+  VOID  =  0;
+  NIL   =  1;
+  FALSE =  2;
+  TRUE  =  3;
+  I     =  4;
+  P     =  5;
+  L     =  6;
+  M     =  7;
+  K     =  8;
+  U     =  9;
+  A     = 10;
+  B     = 11;
+  C     = 12;
+  V     = 13;
+  T     = 14;
+}
 
-local order = { I = 0 }
-local count = 0
+class.VOID  = setmetatable({ type = "immediate", key = "VOID"  }, metatable)
+class.NIL   = setmetatable({ type = "immediate", key = "NIL"   }, metatable)
+class.FALSE = setmetatable({ type = "immediate", key = "FALSE" }, metatable)
+class.TRUE  = setmetatable({ type = "immediate", key = "TRUE"  }, metatable)
 
-local function _(type, key, number)
-  if number then
-    class[key] = function (number)
-      assert(is_unsigned_integer(number))
-      return setmetatable({ type = type, key = key, number = number }, metatable)
-    end
-  else
-    class[key] = setmetatable({ type = type, key = key }, metatable)
+local function _(type, key)
+  class[key] = function (number)
+    assert(is_unsigned_integer(number))
+    return setmetatable({ type = type, key = key, number = number }, metatable)
   end
-  count = count + 1
-  order[key] = count
 end
 
-_("proto",    "P",     true)
-_("label",    "L",     true)
-_("label",    "M",     true)
-_("constant", "VOID",  false)
-_("constant", "NIL",   false)
-_("constant", "FALSE", false)
-_("constant", "TRUE",  false)
-_("constant", "K",     true)
-_("value",    "U",     true)
-_("value",    "A",     true)
-_("value",    "B",     true)
-_("value",    "C",     true)
-_("array",    "V",     false)
-_("array",    "T",     true)
+_("immediate", "I")
+_("proto",     "P")
+_("label",     "L")
+_("label",     "M")
+_("constant",  "K")
+_("value",     "U")
+_("value",     "A")
+_("value",     "B")
+_("value",     "C")
+_("array",     "V")
+_("array",     "T")
 
 function class.decode(s)
   if s:find "^%d+$" then
-    return class(tonumber(s))
+    return class.I(tonumber(s))
   else
-    local index = s:match "^V%[(%d+)%]$"
-    if index then
-      return class.V[tonumber(index)]
-    end
-    local number, index = s:match "^T(%d+)%[(%d+)%]"
+    local key, number, index = s:match "^[VT](%d+)%[(%d+)%]"
     if number then
-      return class.T(tonumber(number))[tonumber(index)]
+      return class[key](tonumber(number))[tonumber(index)]
     end
-    local key, number = s:match "^([PLMKUABCT])(%d+)$"
+    local key, number = s:match "^([PLMKUABCVT])(%d+)$"
     if key then
       return class[key](tonumber(number))
     end
-    assert(s == "VOID" or s == "NIL" or s == "FALSE" or s == "TRUE" or s == "V")
+    assert(s == "VOID" or s == "NIL" or s == "FALSE" or s == "TRUE")
     return class[s]
   end
 end
@@ -83,19 +85,12 @@ function class:encode()
   local key = self.key
   if key == "I" then
     return ("%d"):format(self.number)
-  elseif key == "V" then
+  elseif key == "V" or key == "T" then
     local index = self.index
     if index then
-      return ("V[%d]"):format(index)
+      return ("%s%d[%d]"):format(key, self.number, index)
     else
-      return "V"
-    end
-  elseif key == "T" then
-    local index = self.index
-    if index then
-      return ("T%d[%d]"):format(self.number, index)
-    else
-      return ("T%d"):format(self.number)
+      return ("%s%d"):format(key, self.number)
     end
   else
     local number = self.number
@@ -143,10 +138,11 @@ end
 
 function metatable:__index(index)
   if type(index) == "number" then
+    local key = self.key
     assert(is_unsigned_integer(index))
-    assert(self.type == "array")
+    assert(key == "V" or key == "T")
     assert(not self.index)
-    return setmetatable({ type = self.type, key = self.key, number = self.number, index = index }, metatable)
+    return setmetatable({ type = self.type, key = key, number = self.number, index = index }, metatable)
   else
     return class[index]
   end
@@ -154,7 +150,6 @@ end
 
 return setmetatable(class, {
   __call = function (_, number)
-    assert(is_unsigned_integer(number))
-    return setmetatable({ type = "immediate", key = "I", number = number }, metatable)
+    return class.I(number)
   end;
 })

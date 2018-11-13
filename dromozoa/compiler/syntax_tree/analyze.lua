@@ -510,11 +510,11 @@ local function resolve_names(self, node, symbol_table)
     local adjust = node.adjust
     if adjust then
       if adjust ~= 0 then
-        node.var = variable.V
+        node.var = variable.V(0)
       end
     else
       node.adjust = 1
-      node.var = variable.V[0]
+      node.var = variable.V(0)[0]
     end
   elseif symbol == symbol_table.functioncall then
     if node.self then
