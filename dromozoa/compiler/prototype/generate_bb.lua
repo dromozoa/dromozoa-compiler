@@ -112,8 +112,12 @@ local function analyze(bb)
     local ref = {}
     local def = {}
     local use = {}
-
-
+    for i = 1, #block do
+      local code = block[i]
+    end
+    block.ref = ref
+    block.def = def
+    block.use = use
     uid = u_after[uid]
   end
 end

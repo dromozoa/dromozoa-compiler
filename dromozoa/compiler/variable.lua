@@ -15,14 +15,19 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-local function is_unsigned_integer(value)
-  return type(value) == "number" and value >= 0 and value % 1 == 0
+local function is_unsigned_integer(number)
+  return type(number) == "number" and number >= 0 and number % 1 == 0
 end
 
 local class = {}
 local metatable = { ["dromozoa.dom.is_serializable"] = true }
 
-local order = {}
+function class.I(number)
+  assert(is_unsigned_integer(number))
+  return setmetatable({ type = "immediate", key = "I", number = number }, metatable)
+end
+
+local order = { I = 0 }
 local count = 0
 
 local function _(type, key, number)
@@ -75,31 +80,29 @@ function class.decode(s)
 end
 
 function class:encode()
-  if self.type == "immediate" then
-    return ("%d"):format(self.value)
-  else
-    local key = self.key
-    if key == "V" then
-      local index = self.index
-      if index then
-        return ("V[%d]"):format(index)
-      else
-        return "V"
-      end
-    elseif key == "T" then
-      local index = self.index
-      if index then
-        return ("T%d[%d]"):format(self.number, index)
-      else
-        return ("T%d"):format(self.number)
-      end
+  local key = self.key
+  if key == "I" then
+    return ("%d"):format(self.number)
+  elseif key == "V" then
+    local index = self.index
+    if index then
+      return ("V[%d]"):format(index)
     else
-      local number = self.number
-      if number then
-        return ("%s%d"):format(key, number)
-      else
-        return ("%s"):format(key)
-      end
+      return "V"
+    end
+  elseif key == "T" then
+    local index = self.index
+    if index then
+      return ("T%d[%d]"):format(self.number, index)
+    else
+      return ("T%d"):format(self.number)
+    end
+  else
+    local number = self.number
+    if number then
+      return ("%s%d"):format(key, number)
+    else
+      return ("%s"):format(key)
     end
   end
 end
@@ -109,34 +112,15 @@ function metatable:__tostring()
 end
 
 function metatable:__lt(that)
-  local self_key = self.key
-  local self_order = order[self_key] or 0
-  local that_order = order[that.key] or 0
+  local self_order = order[self.key]
+  local that_order = order[that.key]
   if self_order == that_order then
-    if self.type == "immediate" then
-      return self.value < that.value
+    local self_number = self.number or -1
+    local that_number = that.number or -1
+    if self_number == that.number then
+      return (self.index or -1) < (that.index or -1)
     else
-      if self_key == "V" then
-        local self_index = self.index or -1
-        local that_index = that.index or -1
-        return self_index < that_index
-      elseif self_key == "T" then
-        local self_number = self.number
-        local that_number = that.number
-        if self_number == that_number then
-          local self_index = self.index or -1
-          local that_index = that.index or -1
-          return self_index < that_index
-        else
-          return self_number < that_number
-        end
-      elseif self_key == "VOID" or self_key == "NIL" or self_key == "FALSE" or self_key == "TRUE" then
-        return false
-      else
-        local self_number = self.number
-        local that_number = that.number
-        return self_number < that_number
-      end
+      return self_number < that_number
     end
   else
     return self_order < that_order
@@ -155,8 +139,8 @@ function metatable:__index(index)
 end
 
 return setmetatable(class, {
-  __call = function (_, value)
-    assert(is_unsigned_integer(value))
-    return setmetatable({ type = "immediate", value = value }, metatable)
+  __call = function (_, number)
+    assert(is_unsigned_integer(number))
+    return setmetatable({ type = "immediate", key = "I", number = number }, metatable)
   end;
 })
