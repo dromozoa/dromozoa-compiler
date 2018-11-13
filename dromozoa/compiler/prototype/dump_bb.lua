@@ -160,10 +160,14 @@ end
 local function to_graph(proto, width, height)
   local bb = proto.bb
   local g = bb.g
-
+  local u = g.u
+  local u_after = u.after
   local u_labels = {}
-  for uid = bb.entry_uid, bb.exit_uid do
-    u_labels[uid] = "BB" .. uid
+
+  local uid = u.first
+  while uid do
+    u_labels[uid] = ("BB%d"):format(uid)
+    uid = u_after[uid]
   end
 
   local root = g:render {
