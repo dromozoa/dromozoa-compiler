@@ -22,6 +22,37 @@ end
 local class = {}
 local metatable = { ["dromozoa.dom.is_serializable"] = true }
 
+local order = {}
+local count = 0
+
+local function _(type, key, number)
+  if number then
+    class[key] = function (number)
+      assert(is_unsigned_integer(number))
+      return setmetatable({ type = type, key = key, number = number }, metatable)
+    end
+  else
+    class[key] = setmetatable({ type = type, key = key }, metatable)
+  end
+  count = count + 1
+  order[key] = count
+end
+
+_("proto",    "P",     true)
+_("label",    "L",     true)
+_("label",    "M",     true)
+_("constant", "VOID",  false)
+_("constant", "NIL",   false)
+_("constant", "FALSE", false)
+_("constant", "TRUE",  false)
+_("constant", "K",     true)
+_("upvalue",  "U",     true)
+_("value",    "A",     true)
+_("value",    "B",     true)
+_("value",    "C",     true)
+_("array",    "V",     false)
+_("array",    "T",     true)
+
 function class.decode(s)
   if s:find "^%d+$" then
     return class(tonumber(s))
@@ -73,21 +104,43 @@ function class:encode()
   end
 end
 
-function class:encode_without_index()
-  if self.type == "immediate" then
-    return ("%d"):format(self.value)
-  else
-    local number = self.number
-    if number then
-      return ("%s%d"):format(key, number)
-    else
-      return ("%s"):format(key)
-    end
-  end
-end
-
 function metatable:__tostring()
   return class.encode(self)
+end
+
+function metatable:__lt(that)
+  local self_key = self.key
+  local self_order = order[self_key] or 0
+  local that_order = order[that.key] or 0
+  if self_order == that_order then
+    if self.type == "immediate" then
+      return self.value < that.value
+    else
+      if self_key == "V" then
+        local self_index = self.index or -1
+        local that_index = that.index or -1
+        return self_index < that_index
+      elseif self_key == "T" then
+        local self_number = self.number
+        local that_number = that.number
+        if self_number == that_number then
+          local self_index = self.index or -1
+          local that_index = that.index or -1
+          return self_index < that_index
+        else
+          return self_number < that_number
+        end
+      elseif self_key == "VOID" or self_key == "NIL" or self_key == "FALSE" or self_key == "TRUE" then
+        return false
+      else
+        local self_number = self.number
+        local that_number = that.number
+        return self_number < that_number
+      end
+    end
+  else
+    return self_order < that_order
+  end
 end
 
 function metatable:__index(index)
@@ -100,32 +153,6 @@ function metatable:__index(index)
     return class[index]
   end
 end
-
-local function _(type, key, number)
-  if number then
-    class[key] = function (number)
-      assert(is_unsigned_integer(number))
-      return setmetatable({ type = type, key = key, number = number }, metatable)
-    end
-  else
-    class[key] = setmetatable({ type = type, key = key }, metatable)
-  end
-end
-
-_("proto",    "P",     true)
-_("label",    "L",     true)
-_("label",    "M",     true)
-_("constant", "VOID",  false)
-_("constant", "NIL",   false)
-_("constant", "FALSE", false)
-_("constant", "TRUE",  false)
-_("constant", "K",     true)
-_("upvalue",  "U",     true)
-_("value",    "A",     true)
-_("value",    "B",     true)
-_("value",    "C",     true)
-_("array",    "V",     false)
-_("array",    "T",     true)
 
 return setmetatable(class, {
   __call = function (_, value)
