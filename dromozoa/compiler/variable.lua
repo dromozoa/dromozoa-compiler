@@ -107,6 +107,20 @@ function class:encode()
   end
 end
 
+function class:encode_without_index()
+  local key = self.key
+  if key == "I" then
+    return ("%d"):format(self.number)
+  else
+    local number = self.number
+    if number then
+      return ("%s%d"):format(key, number)
+    else
+      return ("%s"):format(key)
+    end
+  end
+end
+
 function metatable:__tostring()
   return class.encode(self)
 end

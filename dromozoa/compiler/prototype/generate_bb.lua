@@ -103,7 +103,7 @@ end
 local function update_varmap(varmap, key, uid, var)
   local t = var.type
   if t == "upvalue" or t == "value" or t == "array" then
-    local encoded_var = var:encode()
+    local encoded_var = var:encode_without_index()
     local map = varmap[encoded_var]
     if not map then
       map = {}
