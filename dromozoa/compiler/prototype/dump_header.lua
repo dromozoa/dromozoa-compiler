@@ -26,10 +26,12 @@ local function dump_items(buffer, self, key, indent, f)
   local items = self[key]
   if items[1] then
     buffer[#buffer + 1] = indent .. ("%s {\n"):format(key)
+
     local block_indent = indent .. "  "
     for i = 1, #items do
       f(buffer, items[i], block_indent)
     end
+
     buffer[#buffer + 1] = indent .. "}\n"
   end
 end
