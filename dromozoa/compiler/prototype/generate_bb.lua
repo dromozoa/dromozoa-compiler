@@ -198,8 +198,8 @@ end
 
 -- self = proto
 return function (self)
-  local basic_blocks = resolve(split(self))
+  local bb = resolve(split(self))
   -- analyze(basic_blocks)
-  self.basic_blocks = basic_blocks
+  self.bb = bb
   return self
 end

@@ -99,8 +99,8 @@ local function usemap_to_text(proto, key)
   end
 end
 
-local function block_to_text(basic_blocks, uid, block)
-  local g = basic_blocks.g
+local function block_to_text(bb, uid, block)
+  local g = bb.g
   local uv = g.uv
   local uv_after = uv.after
   local uv_target = uv.target
@@ -167,11 +167,11 @@ local function block_to_text(basic_blocks, uid, block)
 end
 
 local function to_text(proto)
-  local basic_blocks = proto.basic_blocks
-  local g = basic_blocks.g
+  local bb = proto.bb
+  local g = bb.g
   local u = g.u
   local u_after = u.after
-  local blocks = basic_blocks.blocks
+  local blocks = bb.blocks
 
   local html = _"div" {
     class = "text";
@@ -183,7 +183,7 @@ local function to_text(proto)
 
   local uid = u.first
   while uid do
-    html[#html + 1] = block_to_text(basic_blocks, uid, blocks[uid])
+    html[#html + 1] = block_to_text(bb, uid, blocks[uid])
     uid = u_after[uid]
   end
 
@@ -192,18 +192,18 @@ local function to_text(proto)
 end
 
 local function to_graph(proto, width, height)
-  local basic_blocks = proto.basic_blocks
-  local g = basic_blocks.g
+  local bb = proto.bb
+  local g = bb.g
 
   local u_labels = {}
-  for uid = basic_blocks.entry_uid, basic_blocks.exit_uid do
+  for uid = bb.entry_uid, bb.exit_uid do
     u_labels[uid] = "BB" .. uid
   end
 
   local root = g:render {
     matrix = matrix3(80, 0, 40, 0, 50, 25, 0, 0, 1);
     u_labels = u_labels;
-    e_labels = basic_blocks.jumps;
+    e_labels = bb.jumps;
   }
 
   local u_paths = root[1]

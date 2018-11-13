@@ -15,15 +15,15 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-local dump_basic_blocks = require "dromozoa.compiler.prototype.dump_basic_blocks"
+local dump_bb = require "dromozoa.compiler.prototype.dump_bb"
 local dump_code = require "dromozoa.compiler.prototype.dump_code"
-local generate_basic_blocks = require "dromozoa.compiler.prototype.generate_basic_blocks"
+local generate_bb = require "dromozoa.compiler.prototype.generate_bb"
 
 local class = {}
 local metatable = { __index = class }
 
-function class:generate_basic_blocks()
-  return generate_basic_blocks(self)
+function class:generate_bb()
+  return generate_bb(self)
 end
 
 function class:dump_code(out)
@@ -42,11 +42,11 @@ function class:dump_code(out)
   end
 end
 
-function class:dump_basic_blocks(out)
+function class:dump_bb(out)
   if type(out) == "string" then
-    return dump_basic_blocks(self, assert(io.open(out, "w"))):close()
+    return dump_bb(self, assert(io.open(out, "w"))):close()
   else
-    return dump_basic_blocks(self, out)
+    return dump_bb(self, out)
   end
 end
 
