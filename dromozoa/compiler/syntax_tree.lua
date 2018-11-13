@@ -32,14 +32,6 @@ local function construct(self, node)
   end
 end
 
-local function dump_protos(self, out)
-  local protos = self.protos
-  for i = 1, #protos do
-    protos[i]:dump_code(out)
-  end
-  return out
-end
-
 local class = {}
 local metatable = { __index = class }
 
@@ -51,11 +43,19 @@ function class:generate()
   return generate(self)
 end
 
-function class:dump_protos(out, ...)
+function class:dump_protos(out)
+  local protos = self.protos
   if type(out) == "string" then
-    return dump_protos(self, assert(io.open(out, "w")), ...):close()
+    local out = assert(io.open(out, "w"))
+    for i = 1, #protos do
+      protos[i]:dump_code(out)
+    end
+    return out:close()
   else
-    return dump_protos(self, out, ...)
+    for i = 1, #protos do
+      protos[i]:dump_code(out)
+    end
+    return out
   end
 end
 
