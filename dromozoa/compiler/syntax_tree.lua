@@ -16,8 +16,8 @@
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
 local analyze = require "dromozoa.compiler.syntax_tree.analyze"
-local compile_cxx = require "dromozoa.compiler.syntax_tree.compile_cxx"
-local compile_es = require "dromozoa.compiler.syntax_tree.compile_es"
+-- local compile_cxx = require "dromozoa.compiler.syntax_tree.compile_cxx"
+-- local compile_es = require "dromozoa.compiler.syntax_tree.compile_es"
 local dump_tree = require "dromozoa.compiler.syntax_tree.dump_tree"
 local generate = require "dromozoa.compiler.syntax_tree.generate"
 
