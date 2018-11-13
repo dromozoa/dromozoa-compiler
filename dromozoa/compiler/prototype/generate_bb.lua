@@ -17,53 +17,17 @@
 
 local graph = require "dromozoa.graph"
 
-local ignore_table = {
-  NIL = true;
-  FALSE = true;
-  TRUE = true;
-  K = true;
-}
-
-local function update_useset(useset, code, i)
-  local var = code[i]
-  local key, i = decode_var(var)
-  if not ignore_table[key] then
-    if key == "V" or key == "T" then
-      useset[key] = true
-    else
-      useset[var] = true
-    end
-  end
-end
-
-local function update_usemap(usemap, useset, uid)
-  local use = {}
-  for var in pairs(useset) do
-    use[#use + 1] = var
-    local uids = usemap[var]
-    if uids then
-      uids[#uids + 1] = uid
-    else
-      usemap[var] = { uid }
-    end
-  end
-  table.sort(use)
-  return use
-end
-
-local function split(proto)
-  local flat_code = proto.code
-
+local function split(code_block)
   local g = graph()
   local entry_uid = g:add_vertex()
   local uids = { entry_uid }
   local uid
   local block
-  local blocks = { [entry_uid] = {} }
+  local blocks = { [entry_uid] = { entry = true } }
   local labels = {}
 
-  for i = 1, #flat_code do
-    local code = flat_code[i]
+  for i = 1, #code_block do
+    local code = code_block[i]
     local name = code[0]
     if name == "LABEL" then
       uid = g:add_vertex()
@@ -88,7 +52,7 @@ local function split(proto)
 
   local exit_uid = g:add_vertex()
   uids[#uids + 1] = exit_uid
-  blocks[exit_uid] = {}
+  blocks[exit_uid] = { exit = true }
 
   return {
     g = g;
@@ -136,70 +100,8 @@ local function resolve(bb, uids, labels)
   return bb
 end
 
-local function analyze(bb)
-  local g = bb.g
-  local u = g.u
-  local u_after = u.after
-  local entry_uid = bb.entry_uid
-  local exit_uid = bb.exit_uid
-  local blocks = bb.blocks
-
-  local defmap = {}
-  local usemap = {}
-
-  local uid = u.first
-  while uid do
-    local block = blocks[uid]
-    local defset = {}
-    local useset = {}
-    for j = 1, #block do
-      local code = block[j]
-      local name = code[0]
-      if name == "SETTABLE" then
-        update_useset(useset, code, 1)
-        update_useset(useset, code, 2)
-        update_useset(useset, code, 3)
-      elseif name == "CALL" then
-        update_useset(defset, code, 1)
-        for k = 2, #code do
-          update_useset(useset, code, k)
-        end
-      elseif name == "RETURN" then
-        for k = 1, #code do
-          update_useset(useset, code, k)
-        end
-      elseif name == "SETLIST" then
-        update_useset(useset, code, 1)
-        update_useset(useset, code, 3)
-      elseif name == "CLOSURE" then
-        update_useset(defset, code, 1)
-      elseif name == "COND" then
-        update_useset(useset, code, 1)
-      else
-        update_useset(defset, code, 1)
-        for k = 2, #code do
-          update_useset(useset, code, k)
-        end
-      end
-    end
-
-    block.defset = defset
-    block.useset = useset
-    block.def = update_usemap(defmap, defset, uid)
-    block.use = update_usemap(usemap, useset, uid)
-
-    uid = u_after[uid]
-  end
-
-  bb.defmap = defmap
-  bb.usemap = usemap
-  return bb
-end
-
--- self = proto
 return function (self)
-  local bb = resolve(split(self))
-  -- analyze(bb)
+  local bb = resolve(split(self.code))
   self.bb = bb
   return self
 end
