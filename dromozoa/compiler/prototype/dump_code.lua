@@ -18,27 +18,28 @@
 local dump_header = require "dromozoa.compiler.prototype.dump_header"
 
 local function dump_code(buffer, block, indent)
-  buffer[#buffer + 1] = indent .. "{\n"
-
-  local block_indent = indent .. "  "
-  for i = 1, #block do
-    local code = block[i]
-    local vars = {}
-    for i = 1, #code do
-      vars[i] = code[i]:encode()
+  if block[1] then
+    buffer[#buffer + 1] = indent .. "code {\n"
+    local block_indent = indent .. "  "
+    for i = 1, #block do
+      local code = block[i]
+      local vars = {}
+      for i = 1, #code do
+        vars[i] = code[i]:encode()
+      end
+      buffer[#buffer + 1] = block_indent .. ("%s %s\n"):format(code[0], table.concat(vars, " "))
     end
-    buffer[#buffer + 1] = block_indent .. ("%s %s\n"):format(code[0], table.concat(vars, " "))
+    buffer[#buffer + 1] = indent .. "}\n"
   end
-
-  buffer[#buffer + 1] = indent .. "}\n"
 end
 
 return function (buffer, self, indent)
-  buffer[#buffer + 1] = indent .. ("%s\n"):format(self[1]:encode())
+  buffer[#buffer + 1] = indent .. ("%s {\n"):format(self[1]:encode())
 
-  local indent = indent .. "  "
-  dump_header(buffer, self, indent)
-  dump_code(buffer, self.code, indent)
+  local block_indent = indent .. "  "
+  dump_header(buffer, self, block_indent)
+  dump_code(buffer, self.code, block_indent)
 
+  buffer[#buffer + 1] = indent .. "}\n"
   return buffer
 end

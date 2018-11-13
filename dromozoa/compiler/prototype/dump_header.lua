@@ -25,11 +25,12 @@ end
 local function dump_items(buffer, self, key, indent, f)
   local items = self[key]
   if items[1] then
-    buffer[#buffer + 1] = indent .. ("%s\n"):format(key)
-    local indent = indent .. "  "
+    buffer[#buffer + 1] = indent .. ("%s {\n"):format(key)
+    local block_indent = indent .. "  "
     for i = 1, #items do
-      f(buffer, items[i], indent)
+      f(buffer, items[i], block_indent)
     end
+    buffer[#buffer + 1] = indent .. "}\n"
   end
 end
 
@@ -55,15 +56,15 @@ return function (buffer, self, indent)
 
   dump_items(buffer, self, "labels", indent, function (buffer, item, indent)
     buffer[#buffer + 1] = indent .. ("%s %q\n"):format(item[1]:encode(), item.source)
-    local indent = indent .. "  "
-    dump_use(buffer, item, "def", indent)
-    dump_use(buffer, item, "use", indent)
+    local block_indent = indent .. "  "
+    dump_use(buffer, item, "def", block_indent)
+    dump_use(buffer, item, "use", block_indent)
   end)
 
   dump_items(buffer, self, "constants", indent, function (buffer, item, indent)
     buffer[#buffer + 1] = indent .. ("%s %q %s\n"):format(item[1]:encode(), item.source, item.type)
-    local indent = indent .. "  "
-    dump_use(buffer, item, "use", indent)
+    local block_indent = indent .. "  "
+    dump_use(buffer, item, "use", block_indent)
   end)
 
   dump_items(buffer, self, "upvalues", indent, function (buffer, item, indent)
@@ -72,11 +73,11 @@ return function (buffer, self, indent)
 
   dump_items(buffer, self, "names", indent, function (buffer, item, indent)
     buffer[#buffer + 1] = indent .. ("%s %q\n"):format(item[1]:encode(), item.source)
-    local indent = indent .. "  "
-    dump_use(buffer, item, "def", indent)
-    dump_use(buffer, item, "use", indent)
-    dump_use(buffer, item, "updef", indent)
-    dump_use(buffer, item, "upuse", indent)
+    local block_indent = indent .. "  "
+    dump_use(buffer, item, "def", block_indent)
+    dump_use(buffer, item, "use", block_indent)
+    dump_use(buffer, item, "updef", block_indent)
+    dump_use(buffer, item, "upuse", block_indent)
   end)
 
   return buffer
