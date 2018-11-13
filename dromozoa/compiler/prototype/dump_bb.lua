@@ -20,6 +20,7 @@ local html5_document = require "dromozoa.dom.html5_document"
 local space_separated = require "dromozoa.dom.space_separated"
 local matrix3 = require "dromozoa.vecmath.matrix3"
 local path_data = require "dromozoa.svg.path_data"
+local variable = require "dromozoa.compiler.variable"
 local dump_header = require "dromozoa.compiler.prototype.dump_header"
 
 local _ = element
@@ -65,6 +66,27 @@ local marker = _"marker" {
     d = path_data():M(0,0):L(4,2):L(0,4):Z();
   };
 }
+
+local function map_to_text(bb, key)
+  local map = bb[key]
+
+  local vars = {}
+  for encoded_var in pairs(map) do
+    vars[#vars + 1] = variable.decode(encoded_var)
+  end
+  table.sort(vars)
+
+  if vars[1] then
+    local html = _"span" { ("  %s {\n"):format(key) }
+    for i = 1, #vars do
+      local encoded_var = vars[i]:encode()
+      local uids = map[encoded_var]
+      html[#html + 1] = ("    %s BB%s\n"):format(encoded_var, table.concat(uids, " BB"))
+    end
+    html[#html + 1] = "  }\n"
+    return html
+  end
+end
 
 local function block_to_text(bb, uid, block)
   local g = bb.g
@@ -146,6 +168,10 @@ local function proto_to_text(self)
     _"span" { ("%s {\n"):format(self[1]:encode()) };
     _"span" { table.concat(dump_header({}, self, "  ")) };
   }
+
+  html[#html + 1] = map_to_text(bb, "refmap")
+  html[#html + 1] = map_to_text(bb, "defmap")
+  html[#html + 1] = map_to_text(bb, "usemap")
 
   local uid = u.first
   while uid do

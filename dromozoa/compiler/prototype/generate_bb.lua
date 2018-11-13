@@ -100,11 +100,28 @@ local function resolve(bb, uids, labels)
   return bb
 end
 
+local function update_map(map, uid, var)
+  local encoded_var = var:encode()
+  local uids = map[encoded_var]
+  if uids then
+    local n = #uids
+    if uids[n] ~= uid then
+      uids[n + 1] = uid
+    end
+  else
+    map[encoded_var] = { uid }
+  end
+end
+
 local function analyze(bb)
   local g = bb.g
   local u = g.u
   local u_after = u.after
   local blocks = bb.blocks
+
+  local refmap = {}
+  local defmap = {}
+  local usemap = {}
 
   local uid = u.first
   while uid do
@@ -114,12 +131,27 @@ local function analyze(bb)
     local use = {}
     for i = 1, #block do
       local code = block[i]
+      local name = code[0]
+      if name == "CLOSURE" then
+        update_map(defmap, uid, code[1])
+        -- TODO process proto
+      else
+        if name == "SETTABLE" or name == "RETURN" or name == "SETLIST" or name == "COND" then
+          update_map(usemap, uid, code[1])
+        else
+          update_map(defmap, uid, code[1])
+        end
+        for i = 2, #code do
+          update_map(usemap, uid, code[i])
+        end
+      end
     end
-    block.ref = ref
-    block.def = def
-    block.use = use
     uid = u_after[uid]
   end
+
+  bb.refmap = refmap
+  bb.defmap = defmap
+  bb.usemap = usemap
 end
 
 return function (self)

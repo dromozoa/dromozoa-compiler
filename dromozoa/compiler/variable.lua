@@ -74,7 +74,7 @@ function class.decode(s)
     if key then
       return class[key](tonumber(number))
     end
-    assert(s == "VOID" or s == "NIL" or s == "FALSE" or s == "TRUE")
+    assert(s == "VOID" or s == "NIL" or s == "FALSE" or s == "TRUE" or s == "V")
     return class[s]
   end
 end
