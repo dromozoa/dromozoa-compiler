@@ -101,20 +101,23 @@ local function resolve(bb, uids, labels)
 end
 
 local function update_varmap(varmap, key, uid, var)
-  local encoded_var = var:encode()
-  local map = varmap[encoded_var]
-  if not map then
-    map = {}
-    varmap[encoded_var] = map
-  end
-  local uids = map[key]
-  if uids then
-    local n = #uids
-    if uids[n] ~= uid then
-      uids[n + 1] = uid
+  local t = var.type
+  if t == "upvalue" or t == "value" or t == "array" then
+    local encoded_var = var:encode()
+    local map = varmap[encoded_var]
+    if not map then
+      map = {}
+      varmap[encoded_var] = map
     end
-  else
-    map[key] = { uid }
+    local uids = map[key]
+    if uids then
+      local n = #uids
+      if uids[n] ~= uid then
+        uids[n + 1] = uid
+      end
+    else
+      map[key] = { uid }
+    end
   end
 end
 
@@ -137,7 +140,10 @@ local function analyze(bb)
       local name = code[0]
       if name == "CLOSURE" then
         update_varmap(varmap, "def", uid, code[1])
-        -- TODO process proto
+        local upvalues = code[2].proto.upvalues
+        for j = 1, #upvalues do
+          update_varmap(varmap, "ref", uid, upvalues[j][2])
+        end
       else
         if name == "SETTABLE" or name == "RETURN" or name == "SETLIST" or name == "COND" then
           update_varmap(varmap, "use", uid, code[1])

@@ -82,6 +82,10 @@ local function varmap_to_text(bb)
       local encoded_var = vars[i]:encode()
       local map = varmap[encoded_var]
       html[#html + 1] = ("    %s\n"):format(encoded_var)
+      local uids = map.ref
+      if uids then
+        html[#html + 1] = ("      ref BB%s\n"):format(table.concat(uids, " BB"))
+      end
       local uids = map.def
       if uids then
         html[#html + 1] = ("      def BB%s\n"):format(table.concat(uids, " BB"))
@@ -113,10 +117,6 @@ local function block_to_text(bb, uid, block)
 
   if block.entry then
     html[#html + 1] = "    [entry]\n"
-  end
-
-  if block.exit then
-    html[#html + 1] = "    [exit]\n"
   end
 
   local pred = {}
@@ -158,6 +158,10 @@ local function block_to_text(bb, uid, block)
   end
   if succ[1] then
     html[#html + 1] = ("    [succ %s]\n"):format(table.concat(succ, " "))
+  end
+
+  if block.exit then
+    html[#html + 1] = "    [exit]\n"
   end
 
   html[#html + 1] = "  }\n"
