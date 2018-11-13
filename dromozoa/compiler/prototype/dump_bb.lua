@@ -67,21 +67,29 @@ local marker = _"marker" {
   };
 }
 
-local function map_to_text(bb, key)
-  local map = bb[key]
+local function varmap_to_text(bb)
+  local varmap = bb.varmap
 
   local vars = {}
-  for encoded_var in pairs(map) do
+  for encoded_var in pairs(varmap) do
     vars[#vars + 1] = variable.decode(encoded_var)
   end
   table.sort(vars)
 
   if vars[1] then
-    local html = _"span" { ("  %s {\n"):format(key) }
+    local html = _"span" { "  varmap {\n" }
     for i = 1, #vars do
       local encoded_var = vars[i]:encode()
-      local uids = map[encoded_var]
-      html[#html + 1] = ("    %s BB%s\n"):format(encoded_var, table.concat(uids, " BB"))
+      local map = varmap[encoded_var]
+      html[#html + 1] = ("    %s\n"):format(encoded_var)
+      local uids = map.def
+      if uids then
+        html[#html + 1] = ("      def BB%s\n"):format(table.concat(uids, " BB"))
+      end
+      local uids = map.use
+      if uids then
+        html[#html + 1] = ("      use BB%s\n"):format(table.concat(uids, " BB"))
+      end
     end
     html[#html + 1] = "  }\n"
     return html
@@ -167,11 +175,8 @@ local function proto_to_text(self)
     class = "text";
     _"span" { ("%s {\n"):format(self[1]:encode()) };
     _"span" { table.concat(dump_header({}, self, "  ")) };
+    varmap_to_text(bb);
   }
-
-  html[#html + 1] = map_to_text(bb, "refmap")
-  html[#html + 1] = map_to_text(bb, "defmap")
-  html[#html + 1] = map_to_text(bb, "usemap")
 
   local uid = u.first
   while uid do

@@ -100,16 +100,21 @@ local function resolve(bb, uids, labels)
   return bb
 end
 
-local function update_map(map, uid, var)
+local function update_varmap(varmap, key, uid, var)
   local encoded_var = var:encode()
-  local uids = map[encoded_var]
+  local map = varmap[encoded_var]
+  if not map then
+    map = {}
+    varmap[encoded_var] = map
+  end
+  local uids = map[key]
   if uids then
     local n = #uids
     if uids[n] ~= uid then
       uids[n + 1] = uid
     end
   else
-    map[encoded_var] = { uid }
+    map[key] = { uid }
   end
 end
 
@@ -119,9 +124,7 @@ local function analyze(bb)
   local u_after = u.after
   local blocks = bb.blocks
 
-  local refmap = {}
-  local defmap = {}
-  local usemap = {}
+  local varmap = {}
 
   local uid = u.first
   while uid do
@@ -133,25 +136,24 @@ local function analyze(bb)
       local code = block[i]
       local name = code[0]
       if name == "CLOSURE" then
-        update_map(defmap, uid, code[1])
+        update_varmap(varmap, "def", uid, code[1])
         -- TODO process proto
       else
         if name == "SETTABLE" or name == "RETURN" or name == "SETLIST" or name == "COND" then
-          update_map(usemap, uid, code[1])
+          update_varmap(varmap, "use", uid, code[1])
         else
-          update_map(defmap, uid, code[1])
+          update_varmap(varmap, "def", uid, code[1])
         end
         for i = 2, #code do
-          update_map(usemap, uid, code[i])
+          update_varmap(varmap, "use", uid, code[i])
         end
       end
     end
     uid = u_after[uid]
   end
 
-  bb.refmap = refmap
-  bb.defmap = defmap
-  bb.usemap = usemap
+  bb.varmap = varmap
+  return bb
 end
 
 return function (self)
