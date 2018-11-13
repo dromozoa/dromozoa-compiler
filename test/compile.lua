@@ -87,7 +87,7 @@ if html then
     local proto = t.protos[i]
     out:write(([[
   <a href="%s-%s.html">%s</a>,
-]]):format(name, proto[1], proto[1]))
+]]):format(name, proto[1]:encode(), proto[1]:encode()))
   end
   out:close()
 end

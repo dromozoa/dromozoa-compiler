@@ -70,7 +70,7 @@ return function (buffer, self, indent)
   end)
 
   dump_items(buffer, self, "upvalues", indent, function (buffer, item, indent)
-    buffer[#buffer + 1] = indent .. ("%s %s (%s %q)\n"):format(item[1]:encode(), item[2]:encode(), item.name[1], item.name.source)
+    buffer[#buffer + 1] = indent .. ("%s %s (%s %q)\n"):format(item[1]:encode(), item[2]:encode(), item.name[1]:encode(), item.name.source)
   end)
 
   dump_items(buffer, self, "names", indent, function (buffer, item, indent)

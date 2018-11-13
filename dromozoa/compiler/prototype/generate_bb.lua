@@ -100,8 +100,27 @@ local function resolve(bb, uids, labels)
   return bb
 end
 
+local function analyze(bb)
+  local g = bb.g
+  local u = g.u
+  local u_after = u.after
+  local blocks = bb.blocks
+
+  local uid = u.first
+  while uid do
+    local block = blocks[uid]
+    local ref = {}
+    local def = {}
+    local use = {}
+
+
+    uid = u_after[uid]
+  end
+end
+
 return function (self)
   local bb = resolve(split(self.code))
+  analyze(bb)
   self.bb = bb
   return self
 end

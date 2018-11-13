@@ -22,6 +22,27 @@ end
 local class = {}
 local metatable = { ["dromozoa.dom.is_serializable"] = true }
 
+function class.decode(s)
+  if s:find "^%d+$" then
+    return class(tonumber(s))
+  else
+    local index = s:match "^V%[(%d+)%]$"
+    if index then
+      return class.V[tonumber(index)]
+    end
+    local number, index = s:match "^T(%d+)%[(%d+)%]"
+    if number then
+      return class.T(tonumber(number))[tonumber(index)]
+    end
+    local key, number = s:match "^([PLMKUABCT])(%d+)$"
+    if key then
+      return class[key](tonumber(number))
+    end
+    assert(s == "VOID" or s == "NIL" or s == "FALSE" or s == "TRUE")
+    return class[s]
+  end
+end
+
 function class:encode()
   if self.type == "immediate" then
     return ("%d"):format(self.value)
@@ -48,6 +69,19 @@ function class:encode()
       else
         return ("%s"):format(key)
       end
+    end
+  end
+end
+
+function class:encode_without_index()
+  if self.type == "immediate" then
+    return ("%d"):format(self.value)
+  else
+    local number = self.number
+    if number then
+      return ("%s%d"):format(key, number)
+    else
+      return ("%s"):format(key)
     end
   end
 end
