@@ -98,10 +98,10 @@ local function split(proto)
   }, uids, labels
 end
 
-local function resolve(basic_blocks, uids, labels)
-  local g = basic_blocks.g
-  local exit_uid = basic_blocks.exit_uid
-  local blocks = basic_blocks.blocks
+local function resolve(bb, uids, labels)
+  local g = bb.g
+  local exit_uid = bb.exit_uid
+  local blocks = bb.blocks
 
   local jumps = {}
 
@@ -132,17 +132,17 @@ local function resolve(basic_blocks, uids, labels)
     this_uid = next_uid
   end
 
-  basic_blocks.jumps = jumps
-  return basic_blocks
+  bb.jumps = jumps
+  return bb
 end
 
-local function analyze(basic_blocks)
-  local g = basic_blocks.g
+local function analyze(bb)
+  local g = bb.g
   local u = g.u
   local u_after = u.after
-  local entry_uid = basic_blocks.entry_uid
-  local exit_uid = basic_blocks.exit_uid
-  local blocks = basic_blocks.blocks
+  local entry_uid = bb.entry_uid
+  local exit_uid = bb.exit_uid
+  local blocks = bb.blocks
 
   local defmap = {}
   local usemap = {}
@@ -191,15 +191,15 @@ local function analyze(basic_blocks)
     uid = u_after[uid]
   end
 
-  basic_blocks.defmap = defmap
-  basic_blocks.usemap = usemap
-  return basic_blocks
+  bb.defmap = defmap
+  bb.usemap = usemap
+  return bb
 end
 
 -- self = proto
 return function (self)
   local bb = resolve(split(self))
-  -- analyze(basic_blocks)
+  -- analyze(bb)
   self.bb = bb
   return self
 end
