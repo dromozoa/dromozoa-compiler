@@ -15,14 +15,13 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-local decode_var = require "dromozoa.compiler.syntax_tree.decode_var"
-
 local element = require "dromozoa.dom.element"
 local html5_document = require "dromozoa.dom.html5_document"
 local space_separated = require "dromozoa.dom.space_separated"
-local graph = require "dromozoa.graph"
 local matrix3 = require "dromozoa.vecmath.matrix3"
 local path_data = require "dromozoa.svg.path_data"
+local variable = require "dromozoa.compiler.variable"
+local dump_header = require "dromozoa.compiler.prototype.dump_header"
 
 local _ = element
 
@@ -68,41 +67,41 @@ local marker = _"marker" {
   };
 }
 
-local function use_to_code(block, key)
-  local use = block[key]
-  if use[1] then
-    return "    [" .. key .. " " .. table.concat(use, " ") .. "]\n"
+local function varmap_to_text(bb)
+  local varmap = bb.varmap
+
+  local vars = {}
+  for encoded_var in pairs(varmap) do
+    vars[#vars + 1] = variable.decode(encoded_var)
   end
-end
+  table.sort(vars)
 
-local function usemap_to_code(proto, key)
-  local usemap = proto[key]
-  if next(usemap) ~= nil then
-    local html = _"span" { "  ", key , " {\n" }
-    local vars = {}
-    for var in pairs(usemap) do
-      vars[#vars + 1] = var
-    end
-    table.sort(vars)
+  if vars[1] then
+    local html = _"span" { "  varmap {\n" }
     for i = 1, #vars do
-      local var = vars[i]
-      local uids = usemap[var]
-      html[#html + 1] = "    "
-      html[#html + 1] = var
-      for j = 1, #uids do
-        html[#html + 1] = " BB"
-        html[#html + 1] = uids[j]
+      local encoded_var = vars[i]:encode()
+      local map = varmap[encoded_var]
+      html[#html + 1] = ("    %s\n"):format(encoded_var)
+      local uids = map.ref
+      if uids then
+        html[#html + 1] = ("      ref BB%s\n"):format(table.concat(uids, " BB"))
       end
-      html[#html + 1] = "\n"
+      local uids = map.def
+      if uids then
+        html[#html + 1] = ("      def BB%s\n"):format(table.concat(uids, " BB"))
+      end
+      local uids = map.use
+      if uids then
+        html[#html + 1] = ("      use BB%s\n"):format(table.concat(uids, " BB"))
+      end
     end
-
     html[#html + 1] = "  }\n"
     return html
   end
 end
 
-local function block_to_code(basic_blocks, uid, block)
-  local g = basic_blocks.g
+local function block_to_text(bb, uid, block)
+  local g = bb.g
   local uv = g.uv
   local uv_after = uv.after
   local uv_target = uv.target
@@ -113,86 +112,79 @@ local function block_to_code(basic_blocks, uid, block)
   local html = _"span" {
     class = space_separated { "S", "S" .. uid };
     ["data-node-id"] = uid;
-    "  BB", uid, " {\n";
+    ("  BB%d {\n"):format(uid);
   }
 
-  html[#html + 1] = "    [pred";
+  if block.entry then
+    html[#html + 1] = "    [entry]\n"
+  end
+
+  local pred = {}
   local eid = vu.first[uid]
   while eid do
     local vid = vu_target[eid]
-    html[#html + 1] = " BB"
-    html[#html + 1] = vid
+    pred[#pred + 1] = ("BB%d"):format(vid)
     eid = vu_after[eid]
   end
-  html[#html + 1] = "]\n"
+  if pred[1] then
+    html[#html + 1] = ("    [pred %s]\n"):format(table.concat(pred, " "))
+  end
 
   local label = block.label
   if label then
-    html[#html + 1] = "    [label "
-    html[#html + 1] = label
-    html[#html + 1] = "]\n"
+    html[#html + 1] = ("    [label %s]\n"):format(label:encode())
   end
-
-  html[#html + 1] = use_to_code(block, "def")
-  html[#html + 1] = use_to_code(block, "use")
 
   for i = 1, #block do
     local code = block[i]
-    html[#html + 1] = "    "
-    html[#html + 1] = code[0]
+    local encoded_vars = {}
     for j = 1, #code do
-      html[#html + 1] = " "
-      local var = code[j]
-      if type(var) == "number" then -- SETLIST
-        html[#html + 1] = var
-      else
-        local key, i = decode_var(var)
-        html[#html + 1] = key
-        html[#html + 1] = i
-      end
+      encoded_vars[j] = code[j]:encode()
     end
-    html[#html + 1] = "\n"
+    html[#html + 1] = ("    %s %s\n"):format(code[0], table.concat(encoded_vars, " "))
   end
 
   local label = block["goto"]
   if label then
-    html[#html + 1] = "    [goto "
-    html[#html + 1] = label
-    html[#html + 1] = "]\n"
+    html[#html + 1] = ("    [goto %s]\n"):format(label:encode())
   end
 
-  html[#html + 1] = "    [succ"
+  local succ = {}
   local eid = uv.first[uid]
   while eid do
     local vid = uv_target[eid]
-    html[#html + 1] = " BB"
-    html[#html + 1] = vid
+    succ[#succ + 1] = ("BB%d"):format(vid)
     eid = uv_after[eid]
   end
-  html[#html + 1] = "]\n"
+  if succ[1] then
+    html[#html + 1] = ("    [succ %s]\n"):format(table.concat(succ, " "))
+  end
+
+  if block.exit then
+    html[#html + 1] = "    [exit]\n"
+  end
 
   html[#html + 1] = "  }\n"
   return html
 end
 
-local function to_code(proto)
-  local basic_blocks = proto.basic_blocks
-  local g = basic_blocks.g
+local function proto_to_text(self)
+  local bb = self.bb
+  local g = bb.g
   local u = g.u
   local u_after = u.after
-  local blocks = basic_blocks.blocks
+  local blocks = bb.blocks
 
   local html = _"div" {
-    class = "code";
-    _"span" { proto[1], " {\n" };
+    class = "text";
+    _"span" { ("%s {\n"):format(self[1]:encode()) };
+    _"span" { table.concat(dump_header({}, self, "  ")) };
+    varmap_to_text(bb);
   }
-
-  html[#html + 1] = usemap_to_code(basic_blocks, "defmap")
-  html[#html + 1] = usemap_to_code(basic_blocks, "usemap")
 
   local uid = u.first
   while uid do
-    html[#html + 1] = block_to_code(basic_blocks, uid, blocks[uid])
+    html[#html + 1] = block_to_text(bb, uid, blocks[uid])
     uid = u_after[uid]
   end
 
@@ -201,18 +193,22 @@ local function to_code(proto)
 end
 
 local function to_graph(proto, width, height)
-  local basic_blocks = proto.basic_blocks
-  local g = basic_blocks.g
-
+  local bb = proto.bb
+  local g = bb.g
+  local u = g.u
+  local u_after = u.after
   local u_labels = {}
-  for uid = basic_blocks.entry_uid, basic_blocks.exit_uid do
-    u_labels[uid] = "BB" .. uid
+
+  local uid = u.first
+  while uid do
+    u_labels[uid] = ("BB%d"):format(uid)
+    uid = u_after[uid]
   end
 
   local root = g:render {
     matrix = matrix3(80, 0, 40, 0, 50, 25, 0, 0, 1);
     u_labels = u_labels;
-    e_labels = basic_blocks.jumps;
+    e_labels = bb.jumps;
   }
 
   local u_paths = root[1]
@@ -262,12 +258,12 @@ local function to_graph(proto, width, height)
   }
 end
 
-return function (proto, out)
+return function (self, out)
   local doc = html5_document(_"html" {
     head;
     _"body" {
-      to_code(proto);
-      to_graph(proto, 800, 640);
+      proto_to_text(self);
+      to_graph(self, 800, 640);
     };
   })
   doc:serialize(out)

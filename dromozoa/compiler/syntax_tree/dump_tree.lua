@@ -29,17 +29,16 @@ local keys = {
   "unop";
   "self";
   "vararg";
-  "parlist";
   "inorder";
 
+  "parlist";
   "param";
   "declare";
   "key";
   "def";
   "use";
-
   "adjust";
-  "label";
+
   "var";
   "vars";
 }
@@ -110,11 +109,11 @@ local function prepare(self)
   end
 end
 
-local function to_code(self)
+local function to_text(self)
   local terminal_nodes = self.terminal_nodes
   local source = self.source
 
-  local html = _"div" { class = "code" }
+  local html = _"div" { class = "text" }
   for i = 1, #terminal_nodes do
     local node = terminal_nodes[i]
     local symbol = node[0]
@@ -213,12 +212,7 @@ local function to_graph(self, width, height)
     path["data-source"] = symbol_value(node)
     for j = 1, #keys do
       local key = keys[j]
-      local value = node[key]
-      if type(value) == "table" then
-        path["data-" .. key] = space_separated(value)
-      else
-        path["data-" .. key] = value
-      end
+      path["data-" .. key] = node[key]
     end
     text["data-node-id"] = node_id
   end
@@ -249,7 +243,7 @@ return function (self, out)
   local doc = html5_document(_"html" {
     head;
     _"body" {
-      to_code(self);
+      to_text(self);
       to_graph(self, 800, 640);
     };
   })

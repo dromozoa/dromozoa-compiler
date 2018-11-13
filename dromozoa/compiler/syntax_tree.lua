@@ -16,10 +16,8 @@
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
 local analyze = require "dromozoa.compiler.syntax_tree.analyze"
-local compile_cxx = require "dromozoa.compiler.syntax_tree.compile_cxx"
-local compile_es = require "dromozoa.compiler.syntax_tree.compile_es"
-local dump_basic_blocks = require "dromozoa.compiler.syntax_tree.dump_basic_blocks"
-local dump_protos = require "dromozoa.compiler.syntax_tree.dump_protos"
+-- local compile_cxx = require "dromozoa.compiler.syntax_tree.compile_cxx"
+-- local compile_es = require "dromozoa.compiler.syntax_tree.compile_es"
 local dump_tree = require "dromozoa.compiler.syntax_tree.dump_tree"
 local generate = require "dromozoa.compiler.syntax_tree.generate"
 
@@ -45,11 +43,19 @@ function class:generate()
   return generate(self)
 end
 
-function class:dump_protos(out, ...)
+function class:dump_protos(out)
+  local protos = self.protos
   if type(out) == "string" then
-    return dump_protos(self, assert(io.open(out, "w")), ...):close()
+    local out = assert(io.open(out, "w"))
+    for i = 1, #protos do
+      protos[i]:dump_code(out)
+    end
+    return out:close()
   else
-    return dump_protos(self, out, ...)
+    for i = 1, #protos do
+      protos[i]:dump_code(out)
+    end
+    return out
   end
 end
 
@@ -74,14 +80,6 @@ function class:compile_cxx(out, ...)
     return compile_cxx(self, assert(io.open(out, "w")), ...):close()
   else
     return compile_cxx(self, out, ...)
-  end
-end
-
-function class.dump_basic_blocks(proto, out)
-  if type(out) == "string" then
-    return dump_basic_blocks(proto, assert(io.open(out, "w"))):close()
-  else
-    return dump_basic_blocks(proto, out)
   end
 end
 

@@ -51,15 +51,25 @@ local opts = {
   mode = os.getenv "MODE"
 }
 
-t:generate()
+if not os.getenv "NO_GENERATE" then
+  t:generate()
+  for i = 1, #t.protos do
+    t.protos[i]:generate_bb()
+  end
+end
 
-t:compile_es(output_name .. ".js", opts)
-t:compile_cxx(output_name .. ".cpp", opts)
-t:dump_tree(output_name .. ".html")
-t:dump_protos(output_name .. ".txt", opts)
-for i = 1, #t.protos do
-  local proto = t.protos[i]
-  syntax_tree.dump_basic_blocks(proto, output_name .. "-" .. proto[1] .. ".html")
+if not os.getenv "NO_COMPILE" then
+  t:compile_es(output_name .. ".js", opts)
+  t:compile_cxx(output_name .. ".cpp", opts)
+end
+
+if not os.getenv "NO_DUMP" then
+  t:dump_tree(output_name .. ".html")
+  t:dump_protos(output_name .. ".txt")
+  for i = 1, #t.protos do
+    local proto = t.protos[i]
+    proto:dump_bb(output_name .. "-" .. proto[1]:encode() .. ".html")
+  end
 end
 
 local html = os.getenv "OUTPUT_HTML"
@@ -77,7 +87,7 @@ if html then
     local proto = t.protos[i]
     out:write(([[
   <a href="%s-%s.html">%s</a>,
-]]):format(name, proto[1], proto[1]))
+]]):format(name, proto[1]:encode(), proto[1]:encode()))
   end
   out:close()
 end

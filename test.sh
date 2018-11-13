@@ -93,14 +93,17 @@ do
   echo "executing $i..."
   lua "$i" >"result/$n-expected.txt"
 
-  printf 'executing %s (es)... ' "$i"
-  node "result/$n.js" >"result/$n-es.txt" 2>&1
-  if diff "result/$n-expected.txt" "result/$n-es.txt" >/dev/null 2>&1
+  if test "X$NO_ES_TEST" = "X"
   then
-    ok
-  else
-    ng
-    result=NG
+    printf 'executing %s (es)... ' "$i"
+    node "result/$n.js" >"result/$n-es.txt" 2>&1
+    if diff "result/$n-expected.txt" "result/$n-es.txt" >/dev/null 2>&1
+    then
+      ok
+    else
+      ng
+      result=NG
+    fi
   fi
 
   if test "X$NO_CXX_TEST" = "X"
