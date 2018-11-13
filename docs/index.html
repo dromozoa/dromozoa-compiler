@@ -54,25 +54,31 @@
 
 <table>
   <tr>
-    <th>Name</th>
+    <th>Code</th>
     <th>Type</th>
     <th>Mode</th>
     <th>Description</th>
   </tr>
   <tr>
-    <td><code>Pi</code></td>
+    <td><code>n</code></td>
+    <td>immediate</td>
+    <td>read only</td>
+    <td>unsigned integer immediate</td>
+  <tr>
+  <tr>
+    <td><code>Pn</code></td>
     <td>proto</td>
     <td>read only</td>
     <td></td>
   </tr>
   <tr>
-    <td><code>Li</code></td>
+    <td><code>Ln</code></td>
     <td>label</td>
     <td>read only</td>
     <td>named label</td>
   </tr>
   <tr>
-    <td><code>Mi</code></td>
+    <td><code>Mn</code></td>
     <td>label</td>
     <td>read only</td>
     <td>unnamed label</td>
@@ -96,33 +102,33 @@
     <td>true</td>
   </tr>
   <tr>
-    <td><code>Ki</code></td>
+    <td><code>Kn</code></td>
     <td>constant</td>
     <td>read only</td>
     <td></td>
   </tr>
   <tr>
-    <td><code>Ui</code></td>
+    <td><code>Un</code></td>
     <td>value</td>
-    <td></td>
+    <td>reference</td>
     <td>upvalue</td>
   </tr>
   <tr>
-    <td><code>Ai</code></td>
+    <td><code>An</code></td>
     <td>value</td>
-    <td></td>
+    <td>reference?</td>
     <td>parameter</td>
   </tr>
   <tr>
-    <td><code>Bi</code></td>
+    <td><code>Bn</code></td>
     <td>value</td>
-    <td></td>
+    <td>reference?</td>
     <td>named value</td>
   </tr>
   <tr>
-    <td><code>Ci</code></td>
+    <td><code>Cn</code></td>
     <td>value</td>
-    <td></td>
+    <td>single assigned</td>
     <td>unnamed value</td>
   </tr>
   <tr>
@@ -133,10 +139,10 @@
   </tr>
   <tr>
     <td>
-      <code>Ti</code>, <code>Ti[j]</code>
+      <code>Tn</code>, <code>Tn[j]</code>
     </td>
     <td>array</td>
-    <td></td>
+    <td>single assigned</td>
     <td>results</td>
   </tr>
 </table>
