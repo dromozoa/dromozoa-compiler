@@ -122,10 +122,7 @@ local function update_varmap(varmap, mode, uid, var)
     local map = varmap[var.key][var.number]
     local uids = map[mode]
     if uids then
-      local n = #uids
-      if uids[n] ~= uid then
-        uids[n + 1] = uid
-      end
+      uids[#uids + 1] = uid
     else
       map[mode] = { uid }
     end
