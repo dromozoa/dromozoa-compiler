@@ -20,7 +20,6 @@ local html5_document = require "dromozoa.dom.html5_document"
 local space_separated = require "dromozoa.dom.space_separated"
 local matrix3 = require "dromozoa.vecmath.matrix3"
 local path_data = require "dromozoa.svg.path_data"
-local variable = require "dromozoa.compiler.variable"
 local dump_header = require "dromozoa.compiler.prototype.dump_header"
 
 local _ = element
@@ -69,32 +68,32 @@ local marker = _"marker" {
 
 local function varmap_to_text(bb)
   local varmap = bb.varmap
-
-  local vars = {}
-  for encoded_var in pairs(varmap) do
-    vars[#vars + 1] = variable.decode(encoded_var)
-  end
-  table.sort(vars)
-
-  if vars[1] then
+  if varmap.n > 0 then
     local html = _"span" { "  varmap {\n" }
-    for i = 1, #vars do
-      local encoded_var = vars[i]:encode()
-      local map = varmap[encoded_var]
-      html[#html + 1] = ("    %s\n"):format(encoded_var)
-      local uids = map.ref
-      if uids then
-        html[#html + 1] = ("      ref BB%s\n"):format(table.concat(uids, " BB"))
-      end
-      local uids = map.def
-      if uids then
-        html[#html + 1] = ("      def BB%s\n"):format(table.concat(uids, " BB"))
-      end
-      local uids = map.use
-      if uids then
-        html[#html + 1] = ("      use BB%s\n"):format(table.concat(uids, " BB"))
+
+    local keys = { "U", "A", "B", "C", "V", "T" }
+    for i = 1, #keys do
+      local array = varmap[keys[i]]
+      if array then
+        for j = 0, array.n - 1 do
+          local map = array[j]
+          html[#html + 1] = ("    %s\n"):format(map.var:encode())
+          local uids = map.def
+          if uids then
+            html[#html + 1] = ("      def BB%s\n"):format(table.concat(uids, " BB"))
+          end
+          local uids = map.use
+          if uids then
+            html[#html + 1] = ("      use BB%s\n"):format(table.concat(uids, " BB"))
+          end
+          local uids = map.ref
+          if uids then
+            html[#html + 1] = ("      ref BB%s\n"):format(table.concat(uids, " BB"))
+          end
+        end
       end
     end
+
     html[#html + 1] = "  }\n"
     return html
   end

@@ -15,17 +15,17 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-local function dump_use(buffer, item, key, indent)
-  local use = item[key]
+local function dump_use(buffer, item, mode, indent)
+  local use = item[mode]
   if use[1] then
-    buffer[#buffer + 1] = indent .. ("%s %s\n"):format(key, table.concat(use, " "))
+    buffer[#buffer + 1] = indent .. ("%s %s\n"):format(mode, table.concat(use, " "))
   end
 end
 
-local function dump_items(buffer, self, key, indent, f)
-  local items = self[key]
+local function dump_items(buffer, self, mode, indent, f)
+  local items = self[mode]
   if items[1] then
-    buffer[#buffer + 1] = indent .. ("%s {\n"):format(key)
+    buffer[#buffer + 1] = indent .. ("%s {\n"):format(mode)
 
     local block_indent = indent .. "  "
     for i = 1, #items do

@@ -16,6 +16,7 @@
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
 local graph = require "dromozoa.graph"
+local variable = require "dromozoa.compiler.variable"
 
 local function split(code_block)
   local g = graph()
@@ -100,41 +101,57 @@ local function resolve(bb, uids, labels)
   return bb
 end
 
-local function update_varmap(varmap, key, uid, var)
+local function initialize_varmap(varmap, key, n, uid)
+  if n > 0 then
+    local array = { n = n }
+    for i = 0, n - 1 do
+      local map = { var = variable[key](i) }
+      if uid then
+        map.def = { uid }
+      end
+      array[i] = map
+    end
+    varmap[key] = array
+    varmap.n = varmap.n + n
+  end
+end
+
+local function update_varmap(varmap, mode, uid, var)
   local t = var.type
   if t == "value" or t == "array" then
-    local encoded_var = var:encode_without_index()
-    local map = varmap[encoded_var]
-    if not map then
-      map = {}
-      varmap[encoded_var] = map
-    end
-    local uids = map[key]
+    local map = varmap[var.key][var.number]
+    local uids = map[mode]
     if uids then
       local n = #uids
       if uids[n] ~= uid then
         uids[n + 1] = uid
       end
     else
-      map[key] = { uid }
+      map[mode] = { uid }
     end
   end
 end
 
-local function analyze(bb)
+local function analyze(self, bb)
   local g = bb.g
   local u = g.u
   local u_after = u.after
+  local entry_uid = bb.entry_uid
   local blocks = bb.blocks
 
-  local varmap = {}
+  local varmap = { n = 0 }
+  initialize_varmap(varmap, "U", #self.upvalues, entry_uid)
+  initialize_varmap(varmap, "A", self.A, entry_uid)
+  initialize_varmap(varmap, "B", self.B)
+  initialize_varmap(varmap, "C", self.C)
+  if self.vararg then
+    initialize_varmap(varmap, "V", 1, entry_uid)
+  end
+  initialize_varmap(varmap, "T", self.T)
 
   local uid = u.first
   while uid do
     local block = blocks[uid]
-    local ref = {}
-    local def = {}
-    local use = {}
     for i = 1, #block do
       local code = block[i]
       local name = code[0]
@@ -164,7 +181,7 @@ end
 
 return function (self)
   local bb = resolve(split(self.code))
-  analyze(bb)
+  analyze(self, bb)
   self.bb = bb
   return self
 end
