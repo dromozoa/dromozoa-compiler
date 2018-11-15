@@ -19,31 +19,14 @@ local function is_unsigned_integer(number)
   return type(number) == "number" and number >= 0 and number % 1 == 0
 end
 
-local class = {}
 local metatable = { ["dromozoa.dom.is_serializable"] = true }
 
-local order = {
-  VOID  =  0;
-  NIL   =  1;
-  FALSE =  2;
-  TRUE  =  3;
-  I     =  4;
-  P     =  5;
-  L     =  6;
-  M     =  7;
-  K     =  8;
-  U     =  9;
-  A     = 10;
-  B     = 11;
-  C     = 12;
-  V     = 13;
-  T     = 14;
+local class = {
+  VOID  = setmetatable({ type = "immediate", key = "VOID"  }, metatable);
+  NIL   = setmetatable({ type = "immediate", key = "NIL"   }, metatable);
+  FALSE = setmetatable({ type = "immediate", key = "FALSE" }, metatable);
+  TRUE  = setmetatable({ type = "immediate", key = "TRUE"  }, metatable);
 }
-
-class.VOID  = setmetatable({ type = "immediate", key = "VOID"  }, metatable)
-class.NIL   = setmetatable({ type = "immediate", key = "NIL"   }, metatable)
-class.FALSE = setmetatable({ type = "immediate", key = "FALSE" }, metatable)
-class.TRUE  = setmetatable({ type = "immediate", key = "TRUE"  }, metatable)
 
 local function _(type, key)
   class[key] = function (number)
@@ -64,55 +47,26 @@ _("value",     "C")
 _("array",     "V")
 _("array",     "T")
 
-function class.decode(s)
-  if s:find "^%d+$" then
-    return class.I(tonumber(s))
-  else
-    local key, number, index = s:match "^[VT](%d+)%[(%d+)%]"
-    if number then
-      return class[key](tonumber(number))[tonumber(index)]
-    end
-    local key, number = s:match "^([PLMKUABCVT])(%d+)$"
-    if key then
-      return class[key](tonumber(number))
-    end
-    assert(s == "VOID" or s == "NIL" or s == "FALSE" or s == "TRUE")
-    return class[s]
-  end
-end
-
 function class:encode()
   local key = self.key
   if key == "I" then
     return ("%d"):format(self.number)
+  elseif key == "A" or key == "B" then
+    local index = self.index
+    if index then
+      return ("%s%d_%d"):format(key, self.number, index)
+    end
   elseif key == "V" or key == "T" then
     local index = self.index
     if index then
       return ("%s%d[%d]"):format(key, self.number, index)
-    else
-      return ("%s%d"):format(key, self.number)
-    end
-  else
-    local number = self.number
-    if number then
-      return ("%s%d"):format(key, number)
-    else
-      return ("%s"):format(key)
     end
   end
-end
-
-function class:encode_without_index()
-  local key = self.key
-  if key == "I" then
-    return ("%d"):format(self.number)
+  local number = self.number
+  if number then
+    return ("%s%d"):format(key, number)
   else
-    local number = self.number
-    if number then
-      return ("%s%d"):format(key, number)
-    else
-      return ("%s"):format(key)
-    end
+    return ("%s"):format(key)
   end
 end
 
@@ -120,27 +74,11 @@ function metatable:__tostring()
   return class.encode(self)
 end
 
-function metatable:__lt(that)
-  local self_order = order[self.key]
-  local that_order = order[that.key]
-  if self_order == that_order then
-    local self_number = self.number or -1
-    local that_number = that.number or -1
-    if self_number == that.number then
-      return (self.index or -1) < (that.index or -1)
-    else
-      return self_number < that_number
-    end
-  else
-    return self_order < that_order
-  end
-end
-
 function metatable:__index(index)
   if type(index) == "number" then
     local key = self.key
     assert(is_unsigned_integer(index))
-    assert(key == "V" or key == "T")
+    assert(key == "A" or key == "B" or key == "V" or key == "T")
     assert(not self.index)
     return setmetatable({ type = self.type, key = key, number = self.number, index = index }, metatable)
   else
