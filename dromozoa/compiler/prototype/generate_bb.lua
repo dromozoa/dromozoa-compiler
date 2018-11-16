@@ -18,7 +18,7 @@
 local graph = require "dromozoa.graph"
 local variable = require "dromozoa.compiler.variable"
 
-local function split(code_block)
+local function generate_basic_blocks(code_block)
   local g = graph()
   local entry_uid = g:add_vertex()
   local uid
@@ -63,7 +63,7 @@ local function split(code_block)
   }, uids, labels
 end
 
-local function resolve(bb, uids, labels)
+local function resolve_jumps(bb, uids, labels)
   local g = bb.g
   local exit_uid = bb.exit_uid
   local blocks = bb.blocks
@@ -129,7 +129,7 @@ local function update_varmap(varmap, mode, uid, var)
   end
 end
 
-local function analyze(self, bb)
+local function resolve_varmap(self, bb)
   local g = bb.g
   local u = g.u
   local u_after = u.after
@@ -176,9 +176,114 @@ local function analyze(self, bb)
   return bb
 end
 
+local function update_def(def, var)
+  local t = var.type
+  if t == "value" or t == "array" then
+    def[var:encode_without_index()] = true
+  end
+end
+
+local function update_use(def, use, var)
+  local t = var.type
+  if t == "value" or t == "array" then
+    local encoded_var = var:encode_without_index()
+    if not def[encoded_var] then
+      use[encoded_var] = true
+    end
+  end
+end
+
+local function analyze_liveness(self, bb)
+  local g = bb.g
+  local u = g.u
+  local u_first = u.first
+  local u_after = u.after
+  local uv = g.uv
+  local uv_first = uv.first
+  local uv_after = uv.after
+  local uv_target = uv.target
+  local entry_uid = bb.entry_uid
+  local blocks = bb.blocks
+
+  local uid = u_first
+  while uid do
+    local block = blocks[uid]
+    local def = {}
+    local use = {}
+    for i = 1, #block do
+      local code = block[i]
+      local name = code[0]
+      if name == "CLOSURE" then
+        local upvalues = code[2].proto.upvalues
+        for i = 1, #upvalues do
+          update_use(def, use, upvalues[i][2])
+        end
+        update_def(def, code[1])
+      else
+        for i = 2, #code do
+          update_use(def, use, code[i])
+        end
+        if name == "SETTABLE" or name == "RETURN" or name == "SETLIST" or name == "COND" then
+          update_use(def, use, code[1])
+        else
+          update_def(def, code[1])
+        end
+      end
+    end
+
+    local live_in = {}
+    for encoded_var in pairs(use) do
+      live_in[encoded_var] = true
+    end
+
+    block.def = def
+    block.use = use
+    block.live_in = live_in
+    block.live_out = {}
+    uid = u_after[uid]
+  end
+
+  repeat
+    local changed = false
+
+    local uid = u_first
+    while uid do
+      local block = blocks[uid]
+      local def = block.def
+      local use = block.use
+      local live_in = block.live_in
+      local live_out = block.live_out
+
+      local eid = uv_first[uid]
+      while eid do
+        local vid = uv_target[eid]
+        for encoded_var in pairs(blocks[vid].live_in) do
+          if not live_out[encoded_var] then
+            live_out[encoded_var] = true
+            changed = true
+          end
+        end
+        eid = uv_after[eid]
+      end
+
+      for encoded_var in pairs(live_out) do
+        if not def[encoded_var] then
+          if not live_in[encoded_var] then
+            live_in[encoded_var] = true
+            changed = true
+          end
+        end
+      end
+
+      uid = u_after[uid]
+    end
+  until not changed
+end
+
 return function (self)
-  local bb = resolve(split(self.code))
-  analyze(self, bb)
+  local bb = resolve_jumps(generate_basic_blocks(self.code))
+  resolve_varmap(self, bb)
+  analyze_liveness(self, bb)
   self.bb = bb
   return self
 end

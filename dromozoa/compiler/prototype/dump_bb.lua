@@ -20,6 +20,7 @@ local html5_document = require "dromozoa.dom.html5_document"
 local space_separated = require "dromozoa.dom.space_separated"
 local matrix3 = require "dromozoa.vecmath.matrix3"
 local path_data = require "dromozoa.svg.path_data"
+local variable = require "dromozoa.compiler.variable"
 local dump_header = require "dromozoa.compiler.prototype.dump_header"
 
 local _ = element
@@ -134,6 +135,18 @@ local function block_to_text(bb, uid, block)
     html[#html + 1] = ("    [label %s]\n"):format(label:encode())
   end
 
+  local live = {}
+  for encoded_var in pairs(block.live_in) do
+    live[#live + 1] = variable.decode(encoded_var)
+  end
+  if live[1] then
+    table.sort(live)
+    for i = 1, #live do
+      live[i] = live[i]:encode()
+    end
+    html[#html + 1] = ("    [live_in %s]\n"):format(table.concat(live, " "))
+  end
+
   for i = 1, #block do
     local code = block[i]
     local encoded_vars = {}
@@ -141,6 +154,18 @@ local function block_to_text(bb, uid, block)
       encoded_vars[j] = code[j]:encode()
     end
     html[#html + 1] = ("    %s %s\n"):format(code[0], table.concat(encoded_vars, " "))
+  end
+
+  local live = {}
+  for encoded_var in pairs(block.live_out) do
+    live[#live + 1] = variable.decode(encoded_var)
+  end
+  if live[1] then
+    table.sort(live)
+    for i = 1, #live do
+      live[i] = live[i]:encode()
+    end
+    html[#html + 1] = ("    [live_out %s]\n"):format(table.concat(live, " "))
   end
 
   local label = block["goto"]

@@ -47,6 +47,32 @@ _("value",     "C")
 _("array",     "V")
 _("array",     "T")
 
+local orders = { "VOID", "NIL", "FALSE", "TRUE", "I", "P", "L", "M", "K", "U", "A", "B", "C", "V", "T" }
+local order = {}
+for i = 1, #orders do
+  order[orders[i]] = i
+end
+
+function class.decode(s)
+  if s:find "^%d+$" then
+    return class.I(tonumber(s))
+  else
+    local key, number, index = s:match "^[AB](%d+)_(%d+)$"
+    if not key then
+      key, number, index = s:match "^[VT](%d+)%[(%d+)%]$"
+    end
+    if key then
+      return class[key](tonumber(number))[tonumber(index)]
+    end
+    local key, number = s:match "^([PLMKUABCVT])(%d+)$"
+    if key then
+      return class[key](tonumber(number))
+    end
+    assert(s == "VOID" or s == "NIL" or s == "FALSE" or s == "TRUE")
+    return class[s]
+  end
+end
+
 function class:encode()
   local key = self.key
   if key == "I" then
@@ -70,8 +96,38 @@ function class:encode()
   end
 end
 
+function class:encode_without_index()
+  local key = self.key
+  if key == "I" then
+    return ("%d"):format(self.number)
+  else
+    local number = self.number
+    if number then
+      return ("%s%d"):format(key, number)
+    else
+      return ("%s"):format(key)
+    end
+  end
+end
+
 function metatable:__tostring()
   return class.encode(self)
+end
+
+function metatable:__lt(that)
+  local self_order = order[self.key]
+  local that_order = order[that.key]
+  if self_order == that_order then
+    local self_number = self.number or -1
+    local that_number = that.number or -1
+    if self_number == that.number then
+      return (self.index or -1) < (that.index or -1)
+    else
+      return self_number < that_number
+    end
+  else
+    return self_order < that_order
+  end
 end
 
 function metatable:__index(index)
