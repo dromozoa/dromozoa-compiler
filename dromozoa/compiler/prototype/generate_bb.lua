@@ -16,8 +16,9 @@
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
 local graph = require "dromozoa.graph"
+local variable = require "dromozoa.compiler.variable"
 
-local function split(code_block)
+local function generate_basic_blocks(code_block)
   local g = graph()
   local entry_uid = g:add_vertex()
   local uid
@@ -100,71 +101,228 @@ local function resolve(bb, uids, labels)
   return bb
 end
 
-local function update_varmap(varmap, key, uid, var)
-  local t = var.type
-  if t == "upvalue" or t == "value" or t == "array" then
-    local encoded_var = var:encode_without_index()
-    local map = varmap[encoded_var]
-    if not map then
-      map = {}
-      varmap[encoded_var] = map
-    end
-    local uids = map[key]
-    if uids then
-      local n = #uids
-      if uids[n] ~= uid then
-        uids[n + 1] = uid
-      end
+local function analyze_dominator(bb)
+  local g = bb.g
+  local u = g.u
+  local u_first = u.first
+  local u_after = u.after
+  local vu = g.vu
+  local vu_first = vu.first
+  local vu_after = vu.after
+  local vu_target = vu.target
+  local entry_uid = bb.entry_uid
+  local blocks = bb.blocks
+
+  local all = {}
+
+  local uid = u_first
+  while uid do
+    all[#all + 1] = uid
+    uid = u_after[uid]
+  end
+
+  local uid = u_first
+  while uid do
+    local block = blocks[uid]
+    if uid == entry_uid then
+      block.dom = { [uid] = true }
     else
-      map[key] = { uid }
+      local dom = {}
+      for i = 1, #all do
+        dom[all[i]] = true
+      end
+      block.dom = dom
+    end
+    block.df = {}
+    uid = u_after[uid]
+  end
+
+  repeat
+    local changed = false
+
+    local uid = u_first
+    while uid do
+      local block = blocks[uid]
+      local dom = block.dom
+      local set
+
+      local eid = vu_first[uid]
+      while eid do
+        local vid = vu_target[eid]
+        local pred_dom = blocks[vid].dom
+        if set then
+          for wid in pairs(set) do
+            if not pred_dom[wid] then
+              set[wid] = nil
+            end
+          end
+        else
+          set = {}
+          for wid in pairs(pred_dom) do
+            set[wid] = true
+          end
+        end
+        eid = vu_after[eid]
+      end
+      if set then
+        set[uid] = true
+      else
+        set = { [uid] = true }
+      end
+
+      if not changed then
+        for vid in pairs(set) do
+          if not dom[vid] then
+            changed = true
+            break
+          end
+        end
+      end
+
+      if not changed then
+        for vid in pairs(dom) do
+          if not set[vid] then
+            changed = true
+            break
+          end
+        end
+      end
+
+      block.dom = set
+      uid = u_after[uid]
+    end
+  until not changed
+
+  local uid = u_first
+  while uid do
+    local dom = blocks[uid].dom
+    local eid = vu_first[uid]
+    if eid and vu_after[eid] then
+      while eid do
+        local vid = vu_target[eid]
+        for wid in pairs(blocks[vid].dom) do
+          if not (dom[wid] and uid ~= wid) then
+            blocks[wid].df[uid] = true
+          end
+        end
+        eid = vu_after[eid]
+      end
+    end
+    uid = u_after[uid]
+  end
+
+  return bb
+end
+
+local function update_def(def, var)
+  local t = var.type
+  if t == "value" or t == "array" then
+    def[var:encode_without_index()] = true
+  end
+end
+
+local function update_use(def, use, var)
+  local t = var.type
+  if t == "value" or t == "array" then
+    local encoded_var = var:encode_without_index()
+    if not def[encoded_var] then
+      use[encoded_var] = true
     end
   end
 end
 
-local function analyze(bb)
+local function analyze_liveness(bb)
   local g = bb.g
   local u = g.u
+  local u_first = u.first
   local u_after = u.after
+  local uv = g.uv
+  local uv_first = uv.first
+  local uv_after = uv.after
+  local uv_target = uv.target
   local blocks = bb.blocks
 
-  local varmap = {}
-
-  local uid = u.first
+  local uid = u_first
   while uid do
     local block = blocks[uid]
-    local ref = {}
     local def = {}
     local use = {}
     for i = 1, #block do
       local code = block[i]
       local name = code[0]
       if name == "CLOSURE" then
-        update_varmap(varmap, "def", uid, code[1])
         local upvalues = code[2].proto.upvalues
-        for j = 1, #upvalues do
-          update_varmap(varmap, "ref", uid, upvalues[j][2])
+        for i = 1, #upvalues do
+          update_use(def, use, upvalues[i][2])
         end
+        update_def(def, code[1])
       else
-        if name == "SETTABLE" or name == "RETURN" or name == "SETLIST" or name == "COND" then
-          update_varmap(varmap, "use", uid, code[1])
-        else
-          update_varmap(varmap, "def", uid, code[1])
-        end
         for i = 2, #code do
-          update_varmap(varmap, "use", uid, code[i])
+          update_use(def, use, code[i])
+        end
+        if name == "SETTABLE" or name == "RETURN" or name == "SETLIST" or name == "COND" then
+          update_use(def, use, code[1])
+        else
+          update_def(def, code[1])
         end
       end
     end
+
+    local live_in = {}
+    for encoded_var in pairs(use) do
+      live_in[encoded_var] = true
+    end
+
+    block.def = def
+    block.use = use
+    block.live_in = live_in
+    block.live_out = {}
     uid = u_after[uid]
   end
 
-  bb.varmap = varmap
+  repeat
+    local changed = false
+
+    local uid = u_first
+    while uid do
+      local block = blocks[uid]
+      local def = block.def
+      local use = block.use
+      local live_in = block.live_in
+      local live_out = block.live_out
+
+      local eid = uv_first[uid]
+      while eid do
+        local vid = uv_target[eid]
+        for encoded_var in pairs(blocks[vid].live_in) do
+          if not live_out[encoded_var] then
+            live_out[encoded_var] = true
+            changed = true
+          end
+        end
+        eid = uv_after[eid]
+      end
+
+      for encoded_var in pairs(live_out) do
+        if not def[encoded_var] then
+          if not live_in[encoded_var] then
+            live_in[encoded_var] = true
+            changed = true
+          end
+        end
+      end
+
+      uid = u_after[uid]
+    end
+  until not changed
+
   return bb
 end
 
 return function (self)
-  local bb = resolve(split(self.code))
-  analyze(bb)
+  local bb = resolve(generate_basic_blocks(self.code))
+  analyze_dominator(bb)
+  analyze_liveness(bb)
   self.bb = bb
   return self
 end

@@ -214,6 +214,9 @@ local function ref_name(node)
   return resolve_name(node, "use", "upuse")
 end
 
+local function normalize_local_function(self, node, symbol_table)
+end
+
 local function normalize_self(self, node, symbol_table)
   local id = self.id + 1
   self.id = id
@@ -510,11 +513,11 @@ local function resolve_names(self, node, symbol_table)
     local adjust = node.adjust
     if adjust then
       if adjust ~= 0 then
-        node.var = variable.V
+        node.var = variable.V(0)
       end
     else
       node.adjust = 1
-      node.var = variable.V[0]
+      node.var = variable.V(0)[0]
     end
   elseif symbol == symbol_table.functioncall then
     if node.self then

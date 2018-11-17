@@ -39,7 +39,12 @@ local function generate(stack, node, symbol_table)
   local unop = node.unop
   local _ = code_builder(stack, node)
 
-  if symbol == symbol_table["while"] or symbol == symbol_table["repeat"] then
+  if symbol == symbol_table["function"] then
+    local that = node[1]
+    if that.declare then
+      _:MOVE(that.var, variable.NIL)
+    end
+  elseif symbol == symbol_table["while"] or symbol == symbol_table["repeat"] then
     _:LOOP()
   end
 

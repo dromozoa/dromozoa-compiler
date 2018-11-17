@@ -67,39 +67,6 @@ local marker = _"marker" {
   };
 }
 
-local function varmap_to_text(bb)
-  local varmap = bb.varmap
-
-  local vars = {}
-  for encoded_var in pairs(varmap) do
-    vars[#vars + 1] = variable.decode(encoded_var)
-  end
-  table.sort(vars)
-
-  if vars[1] then
-    local html = _"span" { "  varmap {\n" }
-    for i = 1, #vars do
-      local encoded_var = vars[i]:encode()
-      local map = varmap[encoded_var]
-      html[#html + 1] = ("    %s\n"):format(encoded_var)
-      local uids = map.ref
-      if uids then
-        html[#html + 1] = ("      ref BB%s\n"):format(table.concat(uids, " BB"))
-      end
-      local uids = map.def
-      if uids then
-        html[#html + 1] = ("      def BB%s\n"):format(table.concat(uids, " BB"))
-      end
-      local uids = map.use
-      if uids then
-        html[#html + 1] = ("      use BB%s\n"):format(table.concat(uids, " BB"))
-      end
-    end
-    html[#html + 1] = "  }\n"
-    return html
-  end
-end
-
 local function block_to_text(bb, uid, block)
   local g = bb.g
   local uv = g.uv
@@ -135,6 +102,36 @@ local function block_to_text(bb, uid, block)
     html[#html + 1] = ("    [label %s]\n"):format(label:encode())
   end
 
+  local dom = {}
+  for vid in pairs(block.dom) do
+    dom[#dom + 1] = vid
+  end
+  if dom[1] then
+    table.sort(dom)
+    html[#html + 1] = ("    [dom BB%s]\n"):format(table.concat(dom, " BB"))
+  end
+
+  local df = {}
+  for vid in pairs(block.df) do
+    df[#df + 1] = vid
+  end
+  if df[1] then
+    table.sort(df)
+    html[#html + 1] = ("    [df BB%s]\n"):format(table.concat(df, " BB"))
+  end
+
+  local live = {}
+  for encoded_var in pairs(block.live_in) do
+    live[#live + 1] = variable.decode(encoded_var)
+  end
+  if live[1] then
+    table.sort(live)
+    for i = 1, #live do
+      live[i] = live[i]:encode()
+    end
+    html[#html + 1] = ("    [live_in %s]\n"):format(table.concat(live, " "))
+  end
+
   for i = 1, #block do
     local code = block[i]
     local encoded_vars = {}
@@ -142,6 +139,18 @@ local function block_to_text(bb, uid, block)
       encoded_vars[j] = code[j]:encode()
     end
     html[#html + 1] = ("    %s %s\n"):format(code[0], table.concat(encoded_vars, " "))
+  end
+
+  local live = {}
+  for encoded_var in pairs(block.live_out) do
+    live[#live + 1] = variable.decode(encoded_var)
+  end
+  if live[1] then
+    table.sort(live)
+    for i = 1, #live do
+      live[i] = live[i]:encode()
+    end
+    html[#html + 1] = ("    [live_out %s]\n"):format(table.concat(live, " "))
   end
 
   local label = block["goto"]
@@ -179,7 +188,6 @@ local function proto_to_text(self)
     class = "text";
     _"span" { ("%s {\n"):format(self[1]:encode()) };
     _"span" { table.concat(dump_header({}, self, "  ")) };
-    varmap_to_text(bb);
   }
 
   local uid = u.first
