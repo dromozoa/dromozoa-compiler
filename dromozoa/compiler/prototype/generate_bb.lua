@@ -63,7 +63,7 @@ local function generate_basic_blocks(code_block)
   }, uids, labels
 end
 
-local function resolve_jumps(bb, uids, labels)
+local function resolve(bb, uids, labels)
   local g = bb.g
   local exit_uid = bb.exit_uid
   local blocks = bb.blocks
@@ -101,6 +101,119 @@ local function resolve_jumps(bb, uids, labels)
   return bb
 end
 
+local function analyze_dominator(bb)
+  local g = bb.g
+  local u = g.u
+  local u_first = u.first
+  local u_after = u.after
+  local vu = g.vu
+  local vu_first = vu.first
+  local vu_after = vu.after
+  local vu_target = vu.target
+  local entry_uid = bb.entry_uid
+  local blocks = bb.blocks
+
+  local all = {}
+
+  local uid = u_first
+  while uid do
+    all[#all + 1] = uid
+    uid = u_after[uid]
+  end
+
+  local uid = u_first
+  while uid do
+    local block = blocks[uid]
+    if uid == entry_uid then
+      block.dom = { [uid] = true }
+    else
+      local dom = {}
+      for i = 1, #all do
+        dom[all[i]] = true
+      end
+      block.dom = dom
+    end
+    block.df = {}
+    uid = u_after[uid]
+  end
+
+  repeat
+    local changed = false
+
+    local uid = u_first
+    while uid do
+      local block = blocks[uid]
+      local dom = block.dom
+      local set
+
+      local eid = vu_first[uid]
+      while eid do
+        local vid = vu_target[eid]
+        local pred_dom = blocks[vid].dom
+        if set then
+          for wid in pairs(set) do
+            if not pred_dom[wid] then
+              set[wid] = nil
+            end
+          end
+        else
+          set = {}
+          for wid in pairs(pred_dom) do
+            set[wid] = true
+          end
+        end
+        eid = vu_after[eid]
+      end
+      if set then
+        set[uid] = true
+      else
+        set = { [uid] = true }
+      end
+
+      if not changed then
+        for vid in pairs(set) do
+          if not dom[vid] then
+            changed = true
+            break
+          end
+        end
+      end
+
+      if not changed then
+        for vid in pairs(dom) do
+          if not set[vid] then
+            changed = true
+            break
+          end
+        end
+      end
+
+      block.dom = set
+      uid = u_after[uid]
+    end
+  until not changed
+
+  local uid = u_first
+  while uid do
+    local dom = blocks[uid].dom
+    local eid = vu_first[uid]
+    if eid and vu_after[eid] then
+      while eid do
+        local vid = vu_target[eid]
+        for wid in pairs(blocks[vid].dom) do
+          if not (dom[wid] and uid ~= wid) then
+            blocks[wid].df[uid] = true
+          end
+        end
+        eid = vu_after[eid]
+      end
+    end
+    uid = u_after[uid]
+  end
+
+  return bb
+end
+
 local function update_def(def, var)
   local t = var.type
   if t == "value" or t == "array" then
@@ -118,7 +231,7 @@ local function update_use(def, use, var)
   end
 end
 
-local function analyze_liveness(self, bb)
+local function analyze_liveness(bb)
   local g = bb.g
   local u = g.u
   local u_first = u.first
@@ -127,7 +240,6 @@ local function analyze_liveness(self, bb)
   local uv_first = uv.first
   local uv_after = uv.after
   local uv_target = uv.target
-  local entry_uid = bb.entry_uid
   local blocks = bb.blocks
 
   local uid = u_first
@@ -203,11 +315,14 @@ local function analyze_liveness(self, bb)
       uid = u_after[uid]
     end
   until not changed
+
+  return bb
 end
 
 return function (self)
-  local bb = resolve_jumps(generate_basic_blocks(self.code))
-  analyze_liveness(self, bb)
+  local bb = resolve(generate_basic_blocks(self.code))
+  analyze_dominator(bb)
+  analyze_liveness(bb)
   self.bb = bb
   return self
 end
