@@ -79,7 +79,7 @@ local function block_to_text(bb, uid, block)
   local html = _"span" {
     class = space_separated { "S", "S" .. uid };
     ["data-node-id"] = uid;
-    ("  BB%d {\n"):format(uid);
+    ("  b%d {\n"):format(uid);
   }
 
   if block.entry then
@@ -90,7 +90,7 @@ local function block_to_text(bb, uid, block)
   local eid = vu.first[uid]
   while eid do
     local vid = vu_target[eid]
-    pred[#pred + 1] = ("BB%d"):format(vid)
+    pred[#pred + 1] = ("b%d"):format(vid)
     eid = vu_after[eid]
   end
   if pred[1] then
@@ -108,7 +108,7 @@ local function block_to_text(bb, uid, block)
   end
   if dom[1] then
     table.sort(dom)
-    html[#html + 1] = ("    [dom BB%s]\n"):format(table.concat(dom, " BB"))
+    html[#html + 1] = ("    [dom b%s]\n"):format(table.concat(dom, " b"))
   end
 
   local df = {}
@@ -117,7 +117,7 @@ local function block_to_text(bb, uid, block)
   end
   if df[1] then
     table.sort(df)
-    html[#html + 1] = ("    [df BB%s]\n"):format(table.concat(df, " BB"))
+    html[#html + 1] = ("    [df b%s]\n"):format(table.concat(df, " b"))
   end
 
   local live = {}
@@ -162,7 +162,7 @@ local function block_to_text(bb, uid, block)
   local eid = uv.first[uid]
   while eid do
     local vid = uv_target[eid]
-    succ[#succ + 1] = ("BB%d"):format(vid)
+    succ[#succ + 1] = ("b%d"):format(vid)
     eid = uv_after[eid]
   end
   if succ[1] then
@@ -209,7 +209,7 @@ local function to_graph(proto, width, height)
 
   local uid = u.first
   while uid do
-    u_labels[uid] = ("BB%d"):format(uid)
+    u_labels[uid] = ("b%d"):format(uid)
     uid = u_after[uid]
   end
 

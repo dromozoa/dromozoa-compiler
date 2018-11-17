@@ -54,7 +54,7 @@ local opts = {
 if not os.getenv "NO_GENERATE" then
   t:generate()
   for i = 1, #t.protos do
-    t.protos[i]:generate_bb()
+    t.protos[i]:generate()
   end
 end
 
@@ -68,7 +68,7 @@ if not os.getenv "NO_DUMP" then
   t:dump_protos(output_name .. ".txt")
   for i = 1, #t.protos do
     local proto = t.protos[i]
-    proto:dump_bb(output_name .. "-" .. proto[1]:encode() .. ".html")
+    proto:dump(output_name .. "-" .. proto[1]:encode() .. ".html")
   end
 end
 

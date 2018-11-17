@@ -242,6 +242,8 @@ local function analyze_liveness(bb)
   local uv_target = uv.target
   local blocks = bb.blocks
 
+  local varmap = {}
+
   local uid = u_first
   while uid do
     local block = blocks[uid]
@@ -319,10 +321,32 @@ local function analyze_liveness(bb)
   return bb
 end
 
+local function ssa(bb)
+  local g = bb.g
+  local u = g.u
+  local u_first = u.first
+  local u_after = u.after
+  local blocks = bb.blocks
+
+  local varmap = {}
+
+  local uid = u_first
+  while uid do
+    local block = blocks[uid]
+    for i = 1, #block do
+      local code = block[i]
+    end
+    uid = u_after[uid]
+  end
+
+  return bb
+end
+
 return function (self)
   local bb = resolve(generate_basic_blocks(self.code))
   analyze_dominator(bb)
   analyze_liveness(bb)
+  -- ssa(bb)
   self.bb = bb
   return self
 end
