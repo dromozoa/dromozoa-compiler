@@ -40,7 +40,7 @@ return function (buffer, self, indent)
 
   local block_indent = indent .. "  "
   dump_header(buffer, self, block_indent)
-  dump_code(buffer, self.code, block_indent)
+  dump_code(buffer, self.code_block, block_indent)
 
   buffer[#buffer + 1] = indent .. "}\n"
   return buffer

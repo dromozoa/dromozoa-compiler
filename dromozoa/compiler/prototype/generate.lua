@@ -343,7 +343,7 @@ local function ssa(bb)
 end
 
 return function (self)
-  local bb = resolve(generate_basic_blocks(self.code))
+  local bb = resolve(generate_basic_blocks(self.code_block))
   analyze_dominator(bb)
   analyze_liveness(bb)
   -- ssa(bb)
