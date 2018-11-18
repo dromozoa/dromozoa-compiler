@@ -37,12 +37,6 @@ local head = _"head" {
   _"script" { src = "dromozoa-compiler.js" };
 }
 
-local style = _"style" { [[
-.e_paths {
-  marker-end: url(#arrow);
-}
-]] }
-
 local marker = _"marker" {
   id = "arrow";
   viewBox = "0 0 4 4";
@@ -218,10 +212,13 @@ local function to_graph(proto, width, height)
     text["data-node-id"] = node_id
   end
 
+  local e_paths = root[3]
+  e_paths.class = space_separated { "e_paths", "arrow" }
+
   local e_texts = root[4]
   e_texts.class = nil
   e_texts.id = "e_texts"
-  local defs = _"defs" { style, marker, e_texts }
+  local defs = _"defs" { marker, e_texts }
 
   return _"div" {
     class = "graph";
@@ -241,7 +238,7 @@ local function to_graph(proto, width, height)
         class = "view";
         u_paths;
         u_texts;
-        root[3];
+        e_paths;
         _"use" {
           class = "e_texts z1";
           ["xlink:href"] = "#e_texts";

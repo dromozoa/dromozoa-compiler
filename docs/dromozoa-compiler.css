@@ -59,6 +59,10 @@ text {
   stroke: #000;
 }
 
+.e_paths.arrow {
+  marker-end: url(#arrow);
+}
+
 .e_texts.z1 {
   fill: #E0E0E0;
   stroke: #E0E0E0;
