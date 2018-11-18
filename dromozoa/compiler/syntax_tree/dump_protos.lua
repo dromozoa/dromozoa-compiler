@@ -15,10 +15,38 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
+local element = require "dromozoa.dom.element"
+local html5_document = require "dromozoa.dom.html5_document"
+
+local _ = element
+
+local head = _"head" {
+  _"meta" {
+    charset = "UTF-8";
+  };
+  _"title" {
+    "dromozoa-compiler";
+  };
+  _"link" { rel = "stylesheet"; href = "dromozoa-compiler.css" };
+  _"script" { src = "https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" };
+  _"script" { src = "dromozoa-compiler.js" };
+}
+
 return function (self, out)
   local protos = self.protos
+
+  local buffer = _"div" { class = "text" }
   for i = 1, #protos do
-    protos[i]:dump_code_list(out)
+    protos[i]:dump_code_list(buffer)
   end
+
+  local doc = html5_document(_"html" {
+    head;
+    _"body" {
+      buffer;
+    };
+  })
+  doc:serialize(out)
+  out:write "\n"
   return out
 end
