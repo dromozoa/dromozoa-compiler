@@ -11,7 +11,7 @@ text {
   dominant-baseline: central;
 }
 
-.text {
+.left {
   position: absolute;
   margin: 0 0.5rem;
 }

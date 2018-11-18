@@ -17,6 +17,7 @@
 
 local element = require "dromozoa.dom.element"
 local html5_document = require "dromozoa.dom.html5_document"
+local dump_source = require "dromozoa.compiler.syntax_tree.dump_source"
 
 local _ = element
 
@@ -35,15 +36,18 @@ local head = _"head" {
 return function (self, out)
   local protos = self.protos
 
-  local buffer = _"div" { class = "text" }
+  local source = dump_source(self)
+
+  local code_list = _"div" { class = "text" }
   for i = 1, #protos do
-    protos[i]:dump_code_list(buffer)
+    protos[i]:dump_code_list(code_list)
   end
 
   local doc = html5_document(_"html" {
     head;
     _"body" {
-      buffer;
+      source;
+      code_list;
     };
   })
   doc:serialize(out)

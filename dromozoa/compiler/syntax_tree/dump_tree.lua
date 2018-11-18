@@ -136,7 +136,10 @@ return function (self, out)
   local doc = html5_document(_"html" {
     head;
     _"body" {
-      dump_source(self);
+      _"div" {
+        class = "left";
+        dump_source(self);
+      };
       dump_graph(self, 800, 640);
     };
   })
