@@ -128,7 +128,7 @@ local function to_text(self)
       for i = 1, #prev_path do
         local id = prev_path[i]
         if id == path[i] then
-          class[i] = "S" .. id
+          class[i] = "node" .. id
         else
           break
         end
@@ -148,9 +148,9 @@ local function to_text(self)
 
     local class = space_separated {}
     for i = 1, #path do
-      class[i] = "S" .. path[i]
+      class[i] = "node" .. path[i]
     end
-    class[#class + 1] = "S"
+    class[#class + 1] = "node"
     html[#html + 1] = _"span" {
       id = id;
       class = class;

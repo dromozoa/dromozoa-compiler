@@ -77,7 +77,7 @@ local function block_to_text(bb, uid, block)
   local vu_target = vu.target
 
   local html = _"span" {
-    class = space_separated { "S", "S" .. uid };
+    class = space_separated { "node", "node" .. uid };
     ["data-node-id"] = uid;
     ("  b%d {\n"):format(uid);
   }

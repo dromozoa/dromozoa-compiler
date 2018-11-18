@@ -59,7 +59,7 @@
 
   const click = function (node_id) {
     $(".active").removeClass("active");
-    $(".S" + node_id).addClass("active");
+    $(".node" + node_id).addClass("active");
     const $path = $("g.u_paths > path[data-node-id=" + node_id + "]");
     $path.addClass("active");
     const data = [];
@@ -105,7 +105,7 @@
       y: 0,
     };
 
-    $(".S").on("click", function () {
+    $(".node").on("click", function () {
       const node_id = $(this).attr("data-node-id");
       if (node_id) {
         const $text = $("g.u_texts > text[data-node-id=" + node_id + "]");
