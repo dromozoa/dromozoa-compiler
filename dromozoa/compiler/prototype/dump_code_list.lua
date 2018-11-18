@@ -19,7 +19,7 @@ local dump_header = require "dromozoa.compiler.prototype.dump_header"
 
 local function dump_code(buffer, code_list, indent)
   if code_list[1] then
-    buffer[#buffer + 1] = indent .. "code {\n"
+    buffer[#buffer + 1] = indent .. "code_list {\n"
 
     local block_indent = indent .. "  "
     for i = 1, #code_list do

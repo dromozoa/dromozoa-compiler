@@ -65,7 +65,7 @@ end
 
 if not os.getenv "NO_DUMP" then
   t:dump_tree(output_name .. ".html")
-  t:dump_protos(output_name .. ".txt")
+  t:dump_protos(output_name .. "-protos.txt")
   for i = 1, #t.protos do
     local proto = t.protos[i]
     proto:dump(output_name .. "-" .. proto[1]:encode() .. ".html")
@@ -80,7 +80,7 @@ if html then
   <a href="%s.js">es</a>,
   <a href="%s.cpp">cxx</a>,
   <a href="%s.html">tree</a>,
-  <a href="%s.txt">protos</a>,
+  <a href="%s-protos.txt">protos</a>,
   bb:
 ]]):format(name, name, name, name))
   for i = 1, #t.protos do
