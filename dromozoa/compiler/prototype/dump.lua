@@ -41,17 +41,6 @@ local style = _"style" { [[
 .e_paths {
   marker-end: url(#arrow);
 }
-
-.e_texts.z1 {
-  fill: #E0E0E0;
-  stroke: #E0E0E0;
-  stroke-width: 4;
-}
-
-.e_texts.z2 {
-  fill: #000;
-  stroke: none;
-}
 ]] }
 
 local marker = _"marker" {
