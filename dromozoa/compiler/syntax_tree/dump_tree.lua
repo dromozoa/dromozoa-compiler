@@ -77,7 +77,7 @@ local function add_edges(node, that, nid_to_uid)
   end
 end
 
-local function to_graph(self, width, height)
+local function dump_graph(self, width, height)
   local symbol_names = self.symbol_names
   local accepted_node = self.accepted_node
 
@@ -137,7 +137,7 @@ return function (self, out)
     head;
     _"body" {
       dump_source(self);
-      to_graph(self, 800, 640);
+      dump_graph(self, 800, 640);
     };
   })
   doc:serialize(out)
