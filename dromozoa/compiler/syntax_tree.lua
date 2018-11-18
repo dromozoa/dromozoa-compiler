@@ -48,12 +48,12 @@ function class:dump_protos(out)
   if type(out) == "string" then
     local out = assert(io.open(out, "w"))
     for i = 1, #protos do
-      protos[i]:dump_code(out)
+      protos[i]:dump_code_list(out)
     end
     return out:close()
   else
     for i = 1, #protos do
-      protos[i]:dump_code(out)
+      protos[i]:dump_code_list(out)
     end
     return out
   end
