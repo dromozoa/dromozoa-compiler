@@ -16,7 +16,7 @@
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
 local dump = require "dromozoa.compiler.prototype.dump"
-local dump_code = require "dromozoa.compiler.prototype.dump_code"
+local dump_code_list = require "dromozoa.compiler.prototype.dump_code_list"
 local generate = require "dromozoa.compiler.prototype.generate"
 
 local class = {}
@@ -26,8 +26,8 @@ function class:generate()
   return generate(self)
 end
 
-function class:dump_code(out)
-  local buffer = dump_code({}, self, "")
+function class:dump_code_list(out)
+  local buffer = dump_code_list({}, self, "")
   if type(out) == "string" then
     local out = assert(io.open(out, "w"))
     for i = 1, #buffer do

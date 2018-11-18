@@ -17,13 +17,13 @@
 
 local dump_header = require "dromozoa.compiler.prototype.dump_header"
 
-local function dump_code(buffer, code_block, indent)
-  if code_block[1] then
+local function dump_code(buffer, code_list, indent)
+  if code_list[1] then
     buffer[#buffer + 1] = indent .. "code {\n"
 
     local block_indent = indent .. "  "
-    for i = 1, #code_block do
-      local code = code_block[i]
+    for i = 1, #code_list do
+      local code = code_list[i]
       local encoded_vars = {}
       for i = 1, #code do
         encoded_vars[i] = code[i]:encode()
@@ -40,7 +40,7 @@ return function (buffer, self, indent)
 
   local block_indent = indent .. "  "
   dump_header(buffer, self, block_indent)
-  dump_code(buffer, self.code_block, block_indent)
+  dump_code(buffer, self.code_list, block_indent)
 
   buffer[#buffer + 1] = indent .. "}\n"
   return buffer
