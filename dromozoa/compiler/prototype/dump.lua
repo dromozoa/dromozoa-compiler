@@ -256,7 +256,10 @@ return function (self, out)
   local doc = html5_document(_"html" {
     head;
     _"body" {
-      proto_to_text(self);
+      _"div" {
+        class = "root";
+        proto_to_text(self);
+      };
       dump_graph(self, 800, 640);
     };
   })

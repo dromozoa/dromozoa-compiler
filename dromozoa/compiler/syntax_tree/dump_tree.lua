@@ -137,7 +137,7 @@ return function (self, out)
     head;
     _"body" {
       _"div" {
-        class = "left";
+        class = "root";
         dump_source(self);
       };
       dump_graph(self, 800, 640);

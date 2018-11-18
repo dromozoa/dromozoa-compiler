@@ -46,8 +46,14 @@ return function (self, out)
   local doc = html5_document(_"html" {
     head;
     _"body" {
-      source;
-      code_list;
+      _"div" {
+        class = "column";
+        dump_source(self);
+      };
+      _"div" {
+        class = "column";
+        code_list;
+      };
     };
   })
   doc:serialize(out)
