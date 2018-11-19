@@ -63,10 +63,10 @@ local function generate_basic_blocks(code_list)
   }, uids, labels
 end
 
-local function resolve(bb, uids, labels)
-  local g = bb.g
-  local exit_uid = bb.exit_uid
-  local blocks = bb.blocks
+local function resolve(code_blocks, uids, labels)
+  local g = code_blocks.g
+  local exit_uid = code_blocks.exit_uid
+  local blocks = code_blocks.blocks
 
   local jumps = {}
 
@@ -97,12 +97,12 @@ local function resolve(bb, uids, labels)
     this_uid = next_uid
   end
 
-  bb.jumps = jumps
-  return bb
+  code_blocks.jumps = jumps
+  return code_blocks
 end
 
-local function analyze_dominator(bb)
-  local g = bb.g
+local function analyze_dominator(code_blocks)
+  local g = code_blocks.g
   local u = g.u
   local u_first = u.first
   local u_after = u.after
@@ -110,8 +110,8 @@ local function analyze_dominator(bb)
   local vu_first = vu.first
   local vu_after = vu.after
   local vu_target = vu.target
-  local entry_uid = bb.entry_uid
-  local blocks = bb.blocks
+  local entry_uid = code_blocks.entry_uid
+  local blocks = code_blocks.blocks
 
   local all = {}
 
@@ -211,7 +211,7 @@ local function analyze_dominator(bb)
     uid = u_after[uid]
   end
 
-  return bb
+  return code_blocks
 end
 
 local function update_def(def, var)
@@ -231,8 +231,8 @@ local function update_use(def, use, var)
   end
 end
 
-local function analyze_liveness(bb)
-  local g = bb.g
+local function analyze_liveness(code_blocks)
+  local g = code_blocks.g
   local u = g.u
   local u_first = u.first
   local u_after = u.after
@@ -240,7 +240,7 @@ local function analyze_liveness(bb)
   local uv_first = uv.first
   local uv_after = uv.after
   local uv_target = uv.target
-  local blocks = bb.blocks
+  local blocks = code_blocks.blocks
 
   local varmap = {}
 
@@ -318,15 +318,15 @@ local function analyze_liveness(bb)
     end
   until not changed
 
-  return bb
+  return code_blocks
 end
 
-local function ssa(bb)
-  local g = bb.g
+local function ssa(code_blocks)
+  local g = code_blocks.g
   local u = g.u
   local u_first = u.first
   local u_after = u.after
-  local blocks = bb.blocks
+  local blocks = code_blocks.blocks
 
   local varmap = {}
 
@@ -339,14 +339,14 @@ local function ssa(bb)
     uid = u_after[uid]
   end
 
-  return bb
+  return code_blocks
 end
 
 return function (self)
-  local bb = resolve(generate_basic_blocks(self.code_list))
-  analyze_dominator(bb)
-  analyze_liveness(bb)
-  -- ssa(bb)
-  self.bb = bb
+  local code_blocks = resolve(generate_basic_blocks(self.code_list))
+  analyze_dominator(code_blocks)
+  analyze_liveness(code_blocks)
+  -- ssa(code_blocks)
+  self.code_blocks = code_blocks
   return self
 end
