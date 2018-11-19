@@ -18,7 +18,7 @@
 local graph = require "dromozoa.graph"
 local variable = require "dromozoa.compiler.variable"
 
-local function generate_basic_blocks(code_list)
+local function generate(code_list)
   local g = graph()
   local entry_uid = g:add_vertex()
   local uid
@@ -343,7 +343,7 @@ local function ssa(code_blocks)
 end
 
 return function (self)
-  local code_blocks = resolve(generate_basic_blocks(self.code_list))
+  local code_blocks = resolve(generate(self.code_list))
   analyze_dominator(code_blocks)
   analyze_liveness(code_blocks)
   -- ssa(code_blocks)
