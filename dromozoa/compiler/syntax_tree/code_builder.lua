@@ -21,7 +21,7 @@ local function _(name)
   return function (self, ...)
     local stack = self.stack
     local block = stack[#stack]
-    block[#block + 1] = { node_id = self.node.id, [0] = name, ... }
+    block[#block + 1] = { node_id = self.node_id, [0] = name, ... }
     return self
   end
 end
@@ -65,13 +65,13 @@ local metatable = { __index = class }
 
 function class:LOOP()
   local stack = self.stack
-  stack[#stack + 1] = { loop_node_id = self.node.id }
+  stack[#stack + 1] = { loop_node_id = self.node_id }
   return self
 end
 
 function class:LOOP_END()
   local stack = self.stack
-  local node_id = self.node.id
+  local node_id = self.node_id
   local n = #stack
   local loop_block = stack[n]
   local this_block = stack[n - 1]
@@ -101,7 +101,7 @@ end
 function class:COND_IF(...)
   local stack = self.stack
   local n = #stack
-  stack[n + 1] = { then_node_id = self.node.id, ... }
+  stack[n + 1] = { then_node_id = self.node_id, ... }
   stack[n + 2] = {}
   return self
 end
@@ -111,14 +111,14 @@ function class:COND_ELSE()
   local n = #stack
   local cond_block = stack[n - 1]
   cond_block.then_block = stack[n]
-  cond_block.else_node_id = self.node.id
+  cond_block.else_node_id = self.node_id
   stack[n] = {}
   return self
 end
 
 function class:COND_END()
   local stack = self.stack
-  local node_id = self.node.id
+  local node_id = self.node_id
   local n = #stack
   local m = n - 1
   local that_block = stack[n]
@@ -171,7 +171,7 @@ return setmetatable(class, {
   __call = function (_, stack, node)
     return setmetatable({
       stack = stack;
-      node = node;
+      node_id = node.id;
     }, metatable)
   end;
 })
