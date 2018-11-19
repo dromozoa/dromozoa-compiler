@@ -61,7 +61,7 @@ local function generate(code_list)
   return blocks, uids, labels
 end
 
-local function resolve(blocks, uids, labels)
+local function resolve_jumps(blocks, uids, labels)
   local g = blocks.g
   local exit_uid = blocks.exit_uid
 
@@ -98,10 +98,26 @@ local function resolve(blocks, uids, labels)
   return blocks
 end
 
+local function update_variables(variables, var, encoded_var, is_reference)
+  local variable = variables[encoded_var]
+  if not variable then
+    variable = {
+      key = var.key;
+      index = var.index;
+    }
+    variables[encoded_var] = variable
+  end
+  if var.key == "U" or is_reference then
+    variable.reference = true
+  end
+end
+
 local function update_def(variables, def, var)
   local t = var.type
   if t == "value" or t == "array" then
-    def[var:encode_without_index()] = true
+    local encoded_var = var:encode_without_index()
+    update_variables(variables, var, encoded_var)
+    def[encoded_var] = true
   end
 end
 
@@ -109,6 +125,7 @@ local function update_use(variables, def, use, var)
   local t = var.type
   if t == "value" or t == "array" then
     local encoded_var = var:encode_without_index()
+    update_variables(variables, var, encoded_var)
     if not def[encoded_var] then
       use[encoded_var] = true
     end
@@ -116,7 +133,14 @@ local function update_use(variables, def, use, var)
 end
 
 local function update_ref(variables, def, use, var)
-  update_use(variables, def, use, var)
+  local t = var.type
+  if t == "value" or t == "array" then
+    local encoded_var = var:encode_without_index()
+    update_variables(variables, var, encoded_var, true)
+    if not def[encoded_var] then
+      use[encoded_var] = true
+    end
+  end
 end
 
 local function analyze_variables(blocks)
@@ -337,7 +361,7 @@ local function analyze_liveness(blocks)
   return blocks
 end
 
-local function ssa(blocks)
+local function sigle_assigned(blocks)
   local g = blocks.g
   local u = g.u
   local u_first = u.first
@@ -356,7 +380,7 @@ local function ssa(blocks)
 end
 
 return function (self)
-  local blocks = resolve(generate(self.code_list))
+  local blocks = resolve_jumps(generate(self.code_list))
   analyze_variables(blocks)
   analyze_dominator(blocks)
   analyze_liveness(blocks)
