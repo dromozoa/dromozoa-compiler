@@ -16,13 +16,26 @@
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
 local element = require "dromozoa.dom.element"
+local space_separated = require "dromozoa.dom.space_separated"
 
 local _ = element
 
 local function dump_use(buffer, item, mode, indent)
   local use = item[mode]
   if use[1] then
-    buffer[#buffer + 1] = _"span" { indent .. ("%s %s\n"):format(mode, table.concat(use, " ")) }
+    local html = _"span" { indent .. ("%s"):format(mode) }
+    for i = 1, #use do
+      local node_id = use[i]
+      html[#html + 1] = " "
+      html[#html + 1] = _"span" {
+        class = space_separated { "node", "node" .. node_id };
+        ["data-node-id"] = node_id;
+        node_id;
+      }
+    end
+    html[#html + 1] = "\n"
+    -- buffer[#buffer + 1] = _"span" { indent .. ("%s %s\n"):format(mode, table.concat(use, " ")) }
+    buffer[#buffer + 1] = html
   end
 end
 

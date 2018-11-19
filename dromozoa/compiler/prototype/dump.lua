@@ -50,7 +50,7 @@ local marker = _"marker" {
   };
 }
 
-local function block_to_text(bb, uid, block)
+local function dump_block(bb, uid, block)
   local g = bb.g
   local uv = g.uv
   local uv_after = uv.after
@@ -160,7 +160,7 @@ local function block_to_text(bb, uid, block)
   return html
 end
 
-local function proto_to_text(self)
+local function dump_code(self)
   local bb = self.bb
   local g = bb.g
   local u = g.u
@@ -175,7 +175,7 @@ local function proto_to_text(self)
 
   local uid = u.first
   while uid do
-    html[#html + 1] = block_to_text(bb, uid, blocks[uid])
+    html[#html + 1] = dump_block(bb, uid, blocks[uid])
     uid = u_after[uid]
   end
 
@@ -258,7 +258,7 @@ return function (self, out)
     _"body" {
       _"div" {
         class = "root";
-        proto_to_text(self);
+        dump_code(self);
       };
       dump_graph(self, 800, 640);
     };

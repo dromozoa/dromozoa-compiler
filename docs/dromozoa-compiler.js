@@ -61,15 +61,17 @@
     $(".active").removeClass("active");
     $(".node" + node_id).addClass("active");
     const $path = $("g.u_paths > path[data-node-id=" + node_id + "]");
-    $path.addClass("active");
-    const data = [];
-    $.each($path.get(0).attributes, function (_, attr) {
-      const name = attr.name;
-      if (name.startsWith("data-")) {
-        data.push([ name.substr(5), attr.value ]);
-      }
-    });
-    console.log(data);
+    if ($path.get(0)) {
+      $path.addClass("active");
+      const data = [];
+      $.each($path.get(0).attributes, function (_, attr) {
+        const name = attr.name;
+        if (name.startsWith("data-")) {
+          data.push([ name.substr(5), attr.value ]);
+        }
+      });
+      console.log(data);
+    }
   };
 
   $(function () {
@@ -109,18 +111,20 @@
       const node_id = $(this).attr("data-node-id");
       if (node_id) {
         const $text = $("g.u_texts > text[data-node-id=" + node_id + "]");
-        const v = {
-          x: parseFloat($text.attr("x")),
-          y: parseFloat($text.attr("y")),
-        };
-        const a = animation.a;
-        const b = animation.b;
-        a.set(transform);
-        b.set(transform);
-        b.transform_vector(v);
-        b.translate_to(hw - v.x, hh - v.y);
-        animation.t = false;
-        requestAnimationFrame(animation_step);
+        if ($text.get(0)) {
+          const v = {
+            x: parseFloat($text.attr("x")),
+            y: parseFloat($text.attr("y")),
+          };
+          const a = animation.a;
+          const b = animation.b;
+          a.set(transform);
+          b.set(transform);
+          b.transform_vector(v);
+          b.translate_to(hw - v.x, hh - v.y);
+          animation.t = false;
+          requestAnimationFrame(animation_step);
+        }
         click(node_id);
       }
     });
