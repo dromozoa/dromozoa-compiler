@@ -361,17 +361,32 @@ local function analyze_liveness(blocks)
   return blocks
 end
 
-local function sigle_assigned(blocks)
+local function resolve_variables(blocks)
   local g = blocks.g
   local u = g.u
   local u_first = u.first
   local u_after = u.after
+  local variables = blocks.variables
 
   local uid = u_first
   while uid do
     local block = blocks[uid]
     for i = 1, #block do
       local code = block[i]
+      local name = code[0]
+      if name ~= "SETTABLE" and name ~= "RETURN" and name ~= "SETLIST" and name ~= "COND" then
+        local var = code[1]
+        local variable = variables[var:encode_without_index()]
+        if variable and not variable.reference then
+          local version = variable.version
+          if version then
+            code[1] = var[version]
+            variable.version = version + 1
+          else
+            variable.version = 1
+          end
+        end
+      end
     end
     uid = u_after[uid]
   end
@@ -384,7 +399,7 @@ return function (self)
   analyze_variables(blocks)
   analyze_dominator(blocks)
   analyze_liveness(blocks)
-  -- ssa(blocks)
+  -- resolve_variables(blocks)
   self.blocks = blocks
   return self
 end
