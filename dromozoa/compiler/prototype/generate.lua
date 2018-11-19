@@ -24,7 +24,7 @@ local function generate(code_list)
   local uid
   local uids = { entry_uid }
   local block
-  local blocks = { [entry_uid] = { entry = true } }
+  local code_blocks = { [entry_uid] = { entry = true } }
   local labels = {}
 
   for i = 1, #code_list do
@@ -35,14 +35,14 @@ local function generate(code_list)
       uids[#uids + 1] = uid
       local label = code[1]
       block = { label = label }
-      blocks[uid] = block
+      code_blocks[uid] = block
       labels[label] = uid
     else
       if not uid then
         uid = g:add_vertex()
         uids[#uids + 1] = uid
         block = {}
-        blocks[uid] = block
+        code_blocks[uid] = block
       end
       block[#block + 1] = code
       if name == "CALL" or name == "RETURN" or name == "GOTO" or name == "COND" then
@@ -53,20 +53,18 @@ local function generate(code_list)
 
   local exit_uid = g:add_vertex()
   uids[#uids + 1] = exit_uid
-  blocks[exit_uid] = { exit = true }
+  code_blocks[exit_uid] = { exit = true }
 
-  return {
-    g = g;
-    entry_uid = entry_uid;
-    exit_uid = exit_uid;
-    blocks = blocks;
-  }, uids, labels
+  code_blocks.g = g
+  code_blocks.entry_uid = entry_uid
+  code_blocks.exit_uid = exit_uid
+  return code_blocks, uids, labels
 end
 
 local function resolve(code_blocks, uids, labels)
   local g = code_blocks.g
   local exit_uid = code_blocks.exit_uid
-  local blocks = code_blocks.blocks
+  local blocks = code_blocks
 
   local jumps = {}
 
@@ -111,7 +109,7 @@ local function analyze_dominator(code_blocks)
   local vu_after = vu.after
   local vu_target = vu.target
   local entry_uid = code_blocks.entry_uid
-  local blocks = code_blocks.blocks
+  local blocks = code_blocks
 
   local all = {}
 
@@ -240,7 +238,7 @@ local function analyze_liveness(code_blocks)
   local uv_first = uv.first
   local uv_after = uv.after
   local uv_target = uv.target
-  local blocks = code_blocks.blocks
+  local blocks = code_blocks
 
   local varmap = {}
 
@@ -326,7 +324,7 @@ local function ssa(code_blocks)
   local u = g.u
   local u_first = u.first
   local u_after = u.after
-  local blocks = code_blocks.blocks
+  local blocks = code_blocks
 
   local varmap = {}
 

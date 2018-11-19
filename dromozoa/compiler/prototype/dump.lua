@@ -165,7 +165,7 @@ local function dump_code(self)
   local g = code_blocks.g
   local u = g.u
   local u_after = u.after
-  local blocks = code_blocks.blocks
+  local blocks = code_blocks
 
   local html = _"div" {
     class = "text";
