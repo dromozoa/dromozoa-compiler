@@ -24,7 +24,7 @@ local function generate(code_list)
   local uid
   local uids = { entry_uid }
   local block
-  local code_blocks = { [entry_uid] = { entry = true } }
+  local blocks = { [entry_uid] = { entry = true } }
   local labels = {}
 
   for i = 1, #code_list do
@@ -35,14 +35,14 @@ local function generate(code_list)
       uids[#uids + 1] = uid
       local label = code[1]
       block = { label = label }
-      code_blocks[uid] = block
+      blocks[uid] = block
       labels[label] = uid
     else
       if not uid then
         uid = g:add_vertex()
         uids[#uids + 1] = uid
         block = {}
-        code_blocks[uid] = block
+        blocks[uid] = block
       end
       block[#block + 1] = code
       if name == "CALL" or name == "RETURN" or name == "GOTO" or name == "COND" then
@@ -53,24 +53,24 @@ local function generate(code_list)
 
   local exit_uid = g:add_vertex()
   uids[#uids + 1] = exit_uid
-  code_blocks[exit_uid] = { exit = true }
+  blocks[exit_uid] = { exit = true }
 
-  code_blocks.g = g
-  code_blocks.entry_uid = entry_uid
-  code_blocks.exit_uid = exit_uid
-  return code_blocks, uids, labels
+  blocks.g = g
+  blocks.entry_uid = entry_uid
+  blocks.exit_uid = exit_uid
+  return blocks, uids, labels
 end
 
-local function resolve(code_blocks, uids, labels)
-  local g = code_blocks.g
-  local exit_uid = code_blocks.exit_uid
+local function resolve(blocks, uids, labels)
+  local g = blocks.g
+  local exit_uid = blocks.exit_uid
 
   local jumps = {}
 
   local this_uid = uids[1]
   for i = 2, #uids do
     local next_uid = uids[i]
-    local block = code_blocks[this_uid]
+    local block = blocks[this_uid]
     local code = block[#block]
     local name
     if code then
@@ -94,12 +94,12 @@ local function resolve(code_blocks, uids, labels)
     this_uid = next_uid
   end
 
-  code_blocks.jumps = jumps
-  return code_blocks
+  blocks.jumps = jumps
+  return blocks
 end
 
-local function analyze_dominator(code_blocks)
-  local g = code_blocks.g
+local function analyze_dominator(blocks)
+  local g = blocks.g
   local u = g.u
   local u_first = u.first
   local u_after = u.after
@@ -107,7 +107,7 @@ local function analyze_dominator(code_blocks)
   local vu_first = vu.first
   local vu_after = vu.after
   local vu_target = vu.target
-  local entry_uid = code_blocks.entry_uid
+  local entry_uid = blocks.entry_uid
 
   local all = {}
 
@@ -119,7 +119,7 @@ local function analyze_dominator(code_blocks)
 
   local uid = u_first
   while uid do
-    local block = code_blocks[uid]
+    local block = blocks[uid]
     if uid == entry_uid then
       block.dom = { [uid] = true }
     else
@@ -138,14 +138,14 @@ local function analyze_dominator(code_blocks)
 
     local uid = u_first
     while uid do
-      local block = code_blocks[uid]
+      local block = blocks[uid]
       local dom = block.dom
       local set
 
       local eid = vu_first[uid]
       while eid do
         local vid = vu_target[eid]
-        local pred_dom = code_blocks[vid].dom
+        local pred_dom = blocks[vid].dom
         if set then
           for wid in pairs(set) do
             if not pred_dom[wid] then
@@ -191,14 +191,14 @@ local function analyze_dominator(code_blocks)
 
   local uid = u_first
   while uid do
-    local dom = code_blocks[uid].dom
+    local dom = blocks[uid].dom
     local eid = vu_first[uid]
     if eid and vu_after[eid] then
       while eid do
         local vid = vu_target[eid]
-        for wid in pairs(code_blocks[vid].dom) do
+        for wid in pairs(blocks[vid].dom) do
           if not (dom[wid] and uid ~= wid) then
-            code_blocks[wid].df[uid] = true
+            blocks[wid].df[uid] = true
           end
         end
         eid = vu_after[eid]
@@ -207,7 +207,7 @@ local function analyze_dominator(code_blocks)
     uid = u_after[uid]
   end
 
-  return code_blocks
+  return blocks
 end
 
 local function update_def(def, var)
@@ -227,8 +227,8 @@ local function update_use(def, use, var)
   end
 end
 
-local function analyze_liveness(code_blocks)
-  local g = code_blocks.g
+local function analyze_liveness(blocks)
+  local g = blocks.g
   local u = g.u
   local u_first = u.first
   local u_after = u.after
@@ -241,7 +241,7 @@ local function analyze_liveness(code_blocks)
 
   local uid = u_first
   while uid do
-    local block = code_blocks[uid]
+    local block = blocks[uid]
     local def = {}
     local use = {}
     for i = 1, #block do
@@ -282,7 +282,7 @@ local function analyze_liveness(code_blocks)
 
     local uid = u_first
     while uid do
-      local block = code_blocks[uid]
+      local block = blocks[uid]
       local def = block.def
       local use = block.use
       local live_in = block.live_in
@@ -291,7 +291,7 @@ local function analyze_liveness(code_blocks)
       local eid = uv_first[uid]
       while eid do
         local vid = uv_target[eid]
-        for encoded_var in pairs(code_blocks[vid].live_in) do
+        for encoded_var in pairs(blocks[vid].live_in) do
           if not live_out[encoded_var] then
             live_out[encoded_var] = true
             changed = true
@@ -313,11 +313,11 @@ local function analyze_liveness(code_blocks)
     end
   until not changed
 
-  return code_blocks
+  return blocks
 end
 
-local function ssa(code_blocks)
-  local g = code_blocks.g
+local function ssa(blocks)
+  local g = blocks.g
   local u = g.u
   local u_first = u.first
   local u_after = u.after
@@ -326,21 +326,21 @@ local function ssa(code_blocks)
 
   local uid = u_first
   while uid do
-    local block = code_blocks[uid]
+    local block = blocks[uid]
     for i = 1, #block do
       local code = block[i]
     end
     uid = u_after[uid]
   end
 
-  return code_blocks
+  return blocks
 end
 
 return function (self)
-  local code_blocks = resolve(generate(self.code_list))
-  analyze_dominator(code_blocks)
-  analyze_liveness(code_blocks)
-  -- ssa(code_blocks)
-  self.code_blocks = code_blocks
+  local blocks = resolve(generate(self.code_list))
+  analyze_dominator(blocks)
+  analyze_liveness(blocks)
+  -- ssa(blocks)
+  self.blocks = blocks
   return self
 end
