@@ -560,6 +560,7 @@ end
 local function resolve_vars(self, node, symbol_table)
   local symbol = node[0]
   local n = #node
+  local binop = node.binop
 
   for i = 1, n do
     resolve_vars(self, node[i], symbol_table)
@@ -658,7 +659,9 @@ local function resolve_vars(self, node, symbol_table)
     end
   elseif symbol == symbol_table.funcbody then
     node.var = assign_var(node.parent)
-  elseif symbol == symbol_table.fieldlist or node.binop or node.unop then
+  elseif binop == "AND" or binop == "OR" then
+    node.var = assign_var(node, "B")
+  elseif symbol == symbol_table.fieldlist or binop or node.unop then
     node.var = assign_var(node)
   end
 end
