@@ -64,14 +64,13 @@ end
 local function resolve(code_blocks, uids, labels)
   local g = code_blocks.g
   local exit_uid = code_blocks.exit_uid
-  local blocks = code_blocks
 
   local jumps = {}
 
   local this_uid = uids[1]
   for i = 2, #uids do
     local next_uid = uids[i]
-    local block = blocks[this_uid]
+    local block = code_blocks[this_uid]
     local code = block[#block]
     local name
     if code then
@@ -109,7 +108,6 @@ local function analyze_dominator(code_blocks)
   local vu_after = vu.after
   local vu_target = vu.target
   local entry_uid = code_blocks.entry_uid
-  local blocks = code_blocks
 
   local all = {}
 
@@ -121,7 +119,7 @@ local function analyze_dominator(code_blocks)
 
   local uid = u_first
   while uid do
-    local block = blocks[uid]
+    local block = code_blocks[uid]
     if uid == entry_uid then
       block.dom = { [uid] = true }
     else
@@ -140,14 +138,14 @@ local function analyze_dominator(code_blocks)
 
     local uid = u_first
     while uid do
-      local block = blocks[uid]
+      local block = code_blocks[uid]
       local dom = block.dom
       local set
 
       local eid = vu_first[uid]
       while eid do
         local vid = vu_target[eid]
-        local pred_dom = blocks[vid].dom
+        local pred_dom = code_blocks[vid].dom
         if set then
           for wid in pairs(set) do
             if not pred_dom[wid] then
@@ -193,14 +191,14 @@ local function analyze_dominator(code_blocks)
 
   local uid = u_first
   while uid do
-    local dom = blocks[uid].dom
+    local dom = code_blocks[uid].dom
     local eid = vu_first[uid]
     if eid and vu_after[eid] then
       while eid do
         local vid = vu_target[eid]
-        for wid in pairs(blocks[vid].dom) do
+        for wid in pairs(code_blocks[vid].dom) do
           if not (dom[wid] and uid ~= wid) then
-            blocks[wid].df[uid] = true
+            code_blocks[wid].df[uid] = true
           end
         end
         eid = vu_after[eid]
@@ -238,13 +236,12 @@ local function analyze_liveness(code_blocks)
   local uv_first = uv.first
   local uv_after = uv.after
   local uv_target = uv.target
-  local blocks = code_blocks
 
   local varmap = {}
 
   local uid = u_first
   while uid do
-    local block = blocks[uid]
+    local block = code_blocks[uid]
     local def = {}
     local use = {}
     for i = 1, #block do
@@ -285,7 +282,7 @@ local function analyze_liveness(code_blocks)
 
     local uid = u_first
     while uid do
-      local block = blocks[uid]
+      local block = code_blocks[uid]
       local def = block.def
       local use = block.use
       local live_in = block.live_in
@@ -294,7 +291,7 @@ local function analyze_liveness(code_blocks)
       local eid = uv_first[uid]
       while eid do
         local vid = uv_target[eid]
-        for encoded_var in pairs(blocks[vid].live_in) do
+        for encoded_var in pairs(code_blocks[vid].live_in) do
           if not live_out[encoded_var] then
             live_out[encoded_var] = true
             changed = true
@@ -324,13 +321,12 @@ local function ssa(code_blocks)
   local u = g.u
   local u_first = u.first
   local u_after = u.after
-  local blocks = code_blocks
 
   local varmap = {}
 
   local uid = u_first
   while uid do
-    local block = blocks[uid]
+    local block = code_blocks[uid]
     for i = 1, #block do
       local code = block[i]
     end
