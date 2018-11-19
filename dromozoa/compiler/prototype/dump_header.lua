@@ -34,7 +34,6 @@ local function dump_use(buffer, item, mode, indent)
       }
     end
     html[#html + 1] = "\n"
-    -- buffer[#buffer + 1] = _"span" { indent .. ("%s %s\n"):format(mode, table.concat(use, " ")) }
     buffer[#buffer + 1] = html
   end
 end

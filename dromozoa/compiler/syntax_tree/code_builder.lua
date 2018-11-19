@@ -19,9 +19,9 @@ local variable = require "dromozoa.compiler.variable"
 
 local function _(name)
   return function (self, ...)
-    local s = self.stack
-    local b = s[#s]
-    b[#b + 1] = { [0] = name, ... }
+    local stack = self.stack
+    local block = stack[#stack]
+    block[#block + 1] = { node_id = self.node.id, [0] = name, ... }
     return self
   end
 end
@@ -65,12 +65,13 @@ local metatable = { __index = class }
 
 function class:LOOP()
   local stack = self.stack
-  stack[#stack + 1] = {}
+  stack[#stack + 1] = { loop_node_id = self.node.id }
   return self
 end
 
 function class:LOOP_END()
   local stack = self.stack
+  local node_id = self.node.id
   local n = #stack
   local loop_block = stack[n]
   local this_block = stack[n - 1]
@@ -82,17 +83,17 @@ function class:LOOP_END()
   local join_label = variable.M(m + 1)
   proto.M = m + 2
 
-  this_block[#this_block + 1] = { [0] = "LABEL", loop_label }
+  this_block[#this_block + 1] = { node_id = loop_block.loop_node_id, [0] = "LABEL", loop_label }
   for i = 1, #loop_block do
     local code = loop_block[i]
     if code[0] == "BREAK" then
-      this_block[#this_block + 1] = { [0] = "GOTO", join_label }
+      this_block[#this_block + 1] = { node_id = code.node_id, [0] = "GOTO", join_label }
     else
       this_block[#this_block + 1] = code
     end
   end
-  this_block[#this_block + 1] = { [0] = "GOTO", loop_label }
-  this_block[#this_block + 1] = { [0] = "LABEL", join_label }
+  this_block[#this_block + 1] = { node_id = node_id, [0] = "GOTO", loop_label }
+  this_block[#this_block + 1] = { node_id = node_id, [0] = "LABEL", join_label }
 
   return self
 end
@@ -100,7 +101,7 @@ end
 function class:COND_IF(...)
   local stack = self.stack
   local n = #stack
-  stack[n + 1] = { ... }
+  stack[n + 1] = { then_node_id = self.node.id, ... }
   stack[n + 2] = {}
   return self
 end
@@ -108,13 +109,16 @@ end
 function class:COND_ELSE()
   local stack = self.stack
   local n = #stack
-  stack[n - 1].then_block = stack[n]
+  local cond_block = stack[n - 1]
+  cond_block.then_block = stack[n]
+  cond_block.else_node_id = self.node.id
   stack[n] = {}
   return self
 end
 
 function class:COND_END()
   local stack = self.stack
+  local node_id = self.node.id
   local n = #stack
   local m = n - 1
   local that_block = stack[n]
@@ -124,7 +128,9 @@ function class:COND_END()
   stack[m] = nil
 
   local then_block = cond_block.then_block
+  local then_node_id = cond_block.then_node_id
   if then_block then
+    local else_node_id = cond_block.else_node_id
     local proto = stack.proto
     local m = proto.M
     local then_label = variable.M(m)
@@ -132,17 +138,17 @@ function class:COND_END()
     local join_label = variable.M(m + 2)
     proto.M = m + 3
 
-    this_block[#this_block + 1] = { [0] = "COND", cond_block[1], cond_block[2], then_label, else_label }
-    this_block[#this_block + 1] = { [0] = "LABEL", then_label }
+    this_block[#this_block + 1] = { node_id = then_node_id; [0] = "COND", cond_block[1], cond_block[2], then_label, else_label }
+    this_block[#this_block + 1] = { node_id = then_node_id; [0] = "LABEL", then_label }
     for i = 1, #then_block do
       this_block[#this_block + 1] = then_block[i]
     end
-    this_block[#this_block + 1] = { [0] = "GOTO", join_label }
-    this_block[#this_block + 1] = { [0] = "LABEL", else_label }
+    this_block[#this_block + 1] = { node_id = else_node_id; [0] = "GOTO", join_label }
+    this_block[#this_block + 1] = { node_id = else_node_id; [0] = "LABEL", else_label }
     for i = 1, #that_block do
       this_block[#this_block + 1] = that_block[i]
     end
-    this_block[#this_block + 1] = { [0] = "LABEL", join_label }
+    this_block[#this_block + 1] = { node_id = node_id; [0] = "LABEL", join_label }
   else
     local proto = stack.proto
     local m = proto.M
@@ -150,12 +156,12 @@ function class:COND_END()
     local join_label = variable.M(m + 1)
     proto.M = m + 2
 
-    this_block[#this_block + 1] = { [0] = "COND", cond_block[1], cond_block[2], then_label, join_label }
-    this_block[#this_block + 1] = { [0] = "LABEL", then_label }
+    this_block[#this_block + 1] = { node_id = then_node_id; [0] = "COND", cond_block[1], cond_block[2], then_label, join_label }
+    this_block[#this_block + 1] = { node_id = then_node_id; [0] = "LABEL", then_label }
     for i = 1, #that_block do
       this_block[#this_block + 1] = that_block[i]
     end
-    this_block[#this_block + 1] = { [0] = "LABEL", join_label }
+    this_block[#this_block + 1] = { node_id = node_id; [0] = "LABEL", join_label }
   end
 
   return self

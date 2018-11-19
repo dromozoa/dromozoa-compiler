@@ -16,6 +16,7 @@
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
 local element = require "dromozoa.dom.element"
+local space_separated = require "dromozoa.dom.space_separated"
 local dump_header = require "dromozoa.compiler.prototype.dump_header"
 
 local _ = element
@@ -27,11 +28,20 @@ local function dump_code(buffer, code_list, indent)
     local block_indent = indent .. "  "
     for i = 1, #code_list do
       local code = code_list[i]
+      local node_id = code.node_id
       local encoded_vars = {}
       for i = 1, #code do
         encoded_vars[i] = code[i]:encode()
       end
-      buffer[#buffer + 1] = _"span" { block_indent .. ("%s %s\n"):format(code[0], table.concat(encoded_vars, " ")) }
+      buffer[#buffer + 1] = _"span" {
+        block_indent;
+        _"span" {
+          class = space_separated { "node", "node" .. node_id };
+          ["data-node-id"] = node_id;
+          ("%s %s"):format(code[0], table.concat(encoded_vars, " "));
+        };
+        "\n";
+      }
     end
 
     buffer[#buffer + 1] = _"span" { indent .. "}\n" }
