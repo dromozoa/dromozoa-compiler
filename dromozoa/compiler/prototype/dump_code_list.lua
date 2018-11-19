@@ -21,7 +21,7 @@ local dump_header = require "dromozoa.compiler.prototype.dump_header"
 
 local _ = element
 
-local function dump_code(buffer, code_list, indent)
+local function dump_code_list(buffer, code_list, indent)
   if code_list[1] then
     buffer[#buffer + 1] = _"span" { indent .. "code_list {\n" }
 
@@ -52,8 +52,8 @@ return function (buffer, self, indent)
   buffer[#buffer + 1] = _"span" { indent .. ("%s {\n"):format(self[1]:encode()) }
 
   local block_indent = indent .. "  "
-  dump_header(buffer, self, block_indent)
-  dump_code(buffer, self.code_list, block_indent)
+  dump_header(buffer, self, block_indent, true)
+  dump_code_list(buffer, self.code_list, block_indent)
 
   buffer[#buffer + 1] = _"span" { indent .. "}\n" }
   return buffer
