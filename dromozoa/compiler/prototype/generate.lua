@@ -98,6 +98,69 @@ local function resolve(blocks, uids, labels)
   return blocks
 end
 
+local function update_def(variables, def, var)
+  local t = var.type
+  if t == "value" or t == "array" then
+    def[var:encode_without_index()] = true
+  end
+end
+
+local function update_use(variables, def, use, var)
+  local t = var.type
+  if t == "value" or t == "array" then
+    local encoded_var = var:encode_without_index()
+    if not def[encoded_var] then
+      use[encoded_var] = true
+    end
+  end
+end
+
+local function update_ref(variables, def, use, var)
+  update_use(variables, def, use, var)
+end
+
+local function analyze_variables(blocks)
+  local g = blocks.g
+  local u = g.u
+  local u_after = u.after
+
+  local variables = {}
+
+  local uid = u.first
+  while uid do
+    local block = blocks[uid]
+    local def = {}
+    local use = {}
+    for i = 1, #block do
+      local code = block[i]
+      local name = code[0]
+      if name == "CLOSURE" then
+        local upvalues = code[2].proto.upvalues
+        for i = 1, #upvalues do
+          update_ref(variables, def, use, upvalues[i][2])
+        end
+        update_def(variables, def, code[1])
+      else
+        for i = 2, #code do
+          update_use(variables, def, use, code[i])
+        end
+        if name == "SETTABLE" or name == "RETURN" or name == "SETLIST" or name == "COND" then
+          update_use(variables, def, use, code[1])
+        else
+          update_def(variables, def, code[1])
+        end
+      end
+    end
+
+    block.def = def
+    block.use = use
+    uid = u_after[uid]
+  end
+
+  blocks.variables = variables
+  return blocks
+end
+
 local function analyze_dominator(blocks)
   local g = blocks.g
   local u = g.u
@@ -210,23 +273,6 @@ local function analyze_dominator(blocks)
   return blocks
 end
 
-local function update_def(def, var)
-  local t = var.type
-  if t == "value" or t == "array" then
-    def[var:encode_without_index()] = true
-  end
-end
-
-local function update_use(def, use, var)
-  local t = var.type
-  if t == "value" or t == "array" then
-    local encoded_var = var:encode_without_index()
-    if not def[encoded_var] then
-      use[encoded_var] = true
-    end
-  end
-end
-
 local function analyze_liveness(blocks)
   local g = blocks.g
   local u = g.u
@@ -237,41 +283,16 @@ local function analyze_liveness(blocks)
   local uv_after = uv.after
   local uv_target = uv.target
 
-  local varmap = {}
-
   local uid = u_first
   while uid do
     local block = blocks[uid]
-    local def = {}
-    local use = {}
-    for i = 1, #block do
-      local code = block[i]
-      local name = code[0]
-      if name == "CLOSURE" then
-        local upvalues = code[2].proto.upvalues
-        for i = 1, #upvalues do
-          update_use(def, use, upvalues[i][2])
-        end
-        update_def(def, code[1])
-      else
-        for i = 2, #code do
-          update_use(def, use, code[i])
-        end
-        if name == "SETTABLE" or name == "RETURN" or name == "SETLIST" or name == "COND" then
-          update_use(def, use, code[1])
-        else
-          update_def(def, code[1])
-        end
-      end
-    end
+    local use = block.use
 
     local live_in = {}
     for encoded_var in pairs(use) do
       live_in[encoded_var] = true
     end
 
-    block.def = def
-    block.use = use
     block.live_in = live_in
     block.live_out = {}
     uid = u_after[uid]
@@ -322,8 +343,6 @@ local function ssa(blocks)
   local u_first = u.first
   local u_after = u.after
 
-  local varmap = {}
-
   local uid = u_first
   while uid do
     local block = blocks[uid]
@@ -338,6 +357,7 @@ end
 
 return function (self)
   local blocks = resolve(generate(self.code_list))
+  analyze_variables(blocks)
   analyze_dominator(blocks)
   analyze_liveness(blocks)
   -- ssa(blocks)
