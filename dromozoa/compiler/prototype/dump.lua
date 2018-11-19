@@ -165,7 +165,6 @@ local function dump_code(self)
   local g = code_blocks.g
   local u = g.u
   local u_after = u.after
-  local blocks = code_blocks
 
   local html = _"div" {
     class = "text";
@@ -175,7 +174,7 @@ local function dump_code(self)
 
   local uid = u.first
   while uid do
-    html[#html + 1] = dump_block(code_blocks, uid, blocks[uid])
+    html[#html + 1] = dump_block(code_blocks, uid, code_blocks[uid])
     uid = u_after[uid]
   end
 
