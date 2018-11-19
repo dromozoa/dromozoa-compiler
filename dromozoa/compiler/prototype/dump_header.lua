@@ -15,71 +15,91 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-local function dump_use(buffer, item, mode, indent)
+local element = require "dromozoa.dom.element"
+local space_separated = require "dromozoa.dom.space_separated"
+
+local _ = element
+
+local function dump_use(buffer, item, mode, indent, set_node_class)
   local use = item[mode]
   if use[1] then
-    buffer[#buffer + 1] = indent .. ("%s %s\n"):format(mode, table.concat(use, " "))
+    if set_node_class then
+      local html = _"span" { indent .. ("%s"):format(mode) }
+      for i = 1, #use do
+        local node_id = use[i]
+        html[#html + 1] = " "
+        html[#html + 1] = _"span" {
+          class = space_separated { "node", "node" .. node_id };
+          ["data-node-id"] = node_id;
+          node_id;
+        }
+      end
+      html[#html + 1] = "\n"
+      buffer[#buffer + 1] = html
+    else
+      buffer[#buffer + 1] = indent .. ("%s %s\n"):format(mode, table.concat(use, " "))
+    end
   end
 end
 
 local function dump_items(buffer, self, mode, indent, f)
   local items = self[mode]
   if items[1] then
-    buffer[#buffer + 1] = indent .. ("%s {\n"):format(mode)
+    buffer[#buffer + 1] = _"span" { indent .. ("%s {\n"):format(mode) }
 
     local block_indent = indent .. "  "
     for i = 1, #items do
       f(buffer, items[i], block_indent)
     end
 
-    buffer[#buffer + 1] = indent .. "}\n"
+    buffer[#buffer + 1] = _"span" { indent .. "}\n" }
   end
 end
 
-return function (buffer, self, indent)
+return function (buffer, self, indent, set_node_class)
   local parent = self.parent[1]
   if parent then
-    buffer[#buffer + 1] = indent .. ("parent %s\n"):format(parent:encode())
+    buffer[#buffer + 1] = _"span" { indent .. ("parent %s\n"):format(parent:encode()) }
   end
 
   if self.self then
-    buffer[#buffer + 1] = indent .. "self\n"
+    buffer[#buffer + 1] = _"span" { indent .. "self\n" }
   end
 
   if self.vararg then
-    buffer[#buffer + 1] = indent .. "vararg\n"
+    buffer[#buffer + 1] = _"span" { indent .. "vararg\n" }
   end
 
   local keys = { "M", "A", "B", "C", "V", "T" }
   for i = 1, #keys do
     local key = keys[i]
-    buffer[#buffer + 1] = indent .. ("%s %d\n"):format(key, self[key])
+    buffer[#buffer + 1] = _"span" { indent .. ("%s %d\n"):format(key, self[key]) }
   end
 
   dump_items(buffer, self, "labels", indent, function (buffer, item, indent)
-    buffer[#buffer + 1] = indent .. ("%s %q\n"):format(item[1]:encode(), item.source)
+    buffer[#buffer + 1] = _"span" { indent .. ("%s %q\n"):format(item[1]:encode(), item.source) }
     local block_indent = indent .. "  "
-    dump_use(buffer, item, "def", block_indent)
-    dump_use(buffer, item, "use", block_indent)
+    dump_use(buffer, item, "def", block_indent, set_node_class)
+    dump_use(buffer, item, "use", block_indent, set_node_class)
   end)
 
   dump_items(buffer, self, "constants", indent, function (buffer, item, indent)
-    buffer[#buffer + 1] = indent .. ("%s %q %s\n"):format(item[1]:encode(), item.source, item.type)
+    buffer[#buffer + 1] = _"span" { indent .. ("%s %q %s\n"):format(item[1]:encode(), item.source, item.type) }
     local block_indent = indent .. "  "
-    dump_use(buffer, item, "use", block_indent)
+    dump_use(buffer, item, "use", block_indent, set_node_class)
   end)
 
   dump_items(buffer, self, "upvalues", indent, function (buffer, item, indent)
-    buffer[#buffer + 1] = indent .. ("%s %s (%s %q)\n"):format(item[1]:encode(), item[2]:encode(), item.name[1]:encode(), item.name.source)
+    buffer[#buffer + 1] = _"span" { indent .. ("%s %s (%s %q)\n"):format(item[1]:encode(), item[2]:encode(), item.name[1]:encode(), item.name.source) }
   end)
 
   dump_items(buffer, self, "names", indent, function (buffer, item, indent)
-    buffer[#buffer + 1] = indent .. ("%s %q\n"):format(item[1]:encode(), item.source)
+    buffer[#buffer + 1] = _"span" { indent .. ("%s %q\n"):format(item[1]:encode(), item.source) }
     local block_indent = indent .. "  "
-    dump_use(buffer, item, "def", block_indent)
-    dump_use(buffer, item, "use", block_indent)
-    dump_use(buffer, item, "updef", block_indent)
-    dump_use(buffer, item, "upuse", block_indent)
+    dump_use(buffer, item, "def", block_indent, set_node_class)
+    dump_use(buffer, item, "use", block_indent, set_node_class)
+    dump_use(buffer, item, "updef", block_indent, set_node_class)
+    dump_use(buffer, item, "upuse", block_indent, set_node_class)
   end)
 
   return buffer

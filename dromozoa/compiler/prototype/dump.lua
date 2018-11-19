@@ -50,7 +50,7 @@ local marker = _"marker" {
   };
 }
 
-local function block_to_text(bb, uid, block)
+local function dump_block(bb, uid, block)
   local g = bb.g
   local uv = g.uv
   local uv_after = uv.after
@@ -160,7 +160,7 @@ local function block_to_text(bb, uid, block)
   return html
 end
 
-local function proto_to_text(self)
+local function dump_code(self)
   local bb = self.bb
   local g = bb.g
   local u = g.u
@@ -170,12 +170,12 @@ local function proto_to_text(self)
   local html = _"div" {
     class = "text";
     _"span" { ("%s {\n"):format(self[1]:encode()) };
-    _"span" { table.concat(dump_header({}, self, "  ")) };
   }
+  dump_header(html, self, "  ")
 
   local uid = u.first
   while uid do
-    html[#html + 1] = block_to_text(bb, uid, blocks[uid])
+    html[#html + 1] = dump_block(bb, uid, blocks[uid])
     uid = u_after[uid]
   end
 
@@ -183,7 +183,7 @@ local function proto_to_text(self)
   return html
 end
 
-local function to_graph(proto, width, height)
+local function dump_graph(proto, width, height)
   local bb = proto.bb
   local g = bb.g
   local u = g.u
@@ -256,8 +256,11 @@ return function (self, out)
   local doc = html5_document(_"html" {
     head;
     _"body" {
-      proto_to_text(self);
-      to_graph(self, 800, 640);
+      _"div" {
+        class = "root";
+        dump_code(self);
+      };
+      dump_graph(self, 800, 640);
     };
   })
   doc:serialize(out)

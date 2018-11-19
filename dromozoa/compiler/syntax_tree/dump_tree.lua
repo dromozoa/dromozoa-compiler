@@ -21,6 +21,7 @@ local space_separated = require "dromozoa.dom.space_separated"
 local graph = require "dromozoa.graph"
 local symbol_value = require "dromozoa.parser.symbol_value"
 local matrix3 = require "dromozoa.vecmath.matrix3"
+local dump_source = require "dromozoa.compiler.syntax_tree.dump_source"
 
 local _ = element
 
@@ -55,113 +56,6 @@ local head = _"head" {
   _"script" { src = "dromozoa-compiler.js" };
 }
 
-local function prepare_paths(node, parent_path)
-  local path = {}
-  local n = #parent_path
-  for i = 1, n do
-    path[i] = parent_path[i]
-  end
-  path[n + 1] = node.id
-
-  node.path = path
-
-  for i = 1, #node do
-    prepare_paths(node[i], path)
-  end
-end
-
-local function prepare(self)
-  local terminal_nodes = self.terminal_nodes
-  local accepted_node = self.accepted_node
-
-  prepare_paths(accepted_node, {})
-
-  local n = #terminal_nodes
-  local next_path = {}
-  for i = n, 1, -1 do
-    local node = terminal_nodes[i]
-    node.next_path = next_path
-    local path = node.path
-    if path then
-      next_path = path
-    end
-  end
-  local prev_path = {}
-  for i = 1, n do
-    local node = terminal_nodes[i]
-    node.prev_path = prev_path
-    local path = node.path
-    if path then
-      prev_path = path
-    else
-      local next_path = node.next_path
-      local path = {}
-      for i = 1, #prev_path do
-        local id = prev_path[i]
-        if id == next_path[i] then
-          path[i] = id
-        else
-          break
-        end
-      end
-      node.path = path
-    end
-  end
-end
-
-local function to_text(self)
-  local terminal_nodes = self.terminal_nodes
-  local source = self.source
-
-  local html = _"div" { class = "text" }
-  for i = 1, #terminal_nodes do
-    local node = terminal_nodes[i]
-    local symbol = node[0]
-    local p = node.p
-    local i = node.i
-    local j = node.j
-    local path = node.path
-
-    if p < i then
-      local prev_path = node.prev_path
-      local class = space_separated {}
-      for i = 1, #prev_path do
-        local id = prev_path[i]
-        if id == path[i] then
-          class[i] = "node" .. id
-        else
-          break
-        end
-      end
-      if #class == 0 then
-        class = nil
-      end
-      html[#html + 1] = _"span" {
-        class = class;
-        source:sub(p, i - 1);
-      }
-    end
-
-    if symbol == 1 then -- eof
-      break
-    end
-
-    local class = space_separated {}
-    for i = 1, #path do
-      class[i] = "node" .. path[i]
-    end
-    class[#class + 1] = "node"
-    html[#html + 1] = _"span" {
-      id = id;
-      class = class;
-      ["data-node-id"] = node.id;
-      source:sub(i, j);
-    }
-  end
-
-  return html
-end
-
 local function add_vertices(node, symbol_names, that, labels, nid_to_uid, uid_to_node)
   local nid = node.id
   local uid = that:add_vertex()
@@ -183,7 +77,7 @@ local function add_edges(node, that, nid_to_uid)
   end
 end
 
-local function to_graph(self, width, height)
+local function dump_graph(self, width, height)
   local symbol_names = self.symbol_names
   local accepted_node = self.accepted_node
 
@@ -239,12 +133,14 @@ local function to_graph(self, width, height)
 end
 
 return function (self, out)
-  prepare(self)
   local doc = html5_document(_"html" {
     head;
     _"body" {
-      to_text(self);
-      to_graph(self, 800, 640);
+      _"div" {
+        class = "root";
+        dump_source(self);
+      };
+      dump_graph(self, 800, 640);
     };
   })
   doc:serialize(out)

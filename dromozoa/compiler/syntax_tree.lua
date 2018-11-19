@@ -18,6 +18,7 @@
 local analyze = require "dromozoa.compiler.syntax_tree.analyze"
 -- local compile_cxx = require "dromozoa.compiler.syntax_tree.compile_cxx"
 -- local compile_es = require "dromozoa.compiler.syntax_tree.compile_es"
+local dump_protos = require "dromozoa.compiler.syntax_tree.dump_protos"
 local dump_tree = require "dromozoa.compiler.syntax_tree.dump_tree"
 local generate = require "dromozoa.compiler.syntax_tree.generate"
 
@@ -44,18 +45,10 @@ function class:generate()
 end
 
 function class:dump_protos(out)
-  local protos = self.protos
   if type(out) == "string" then
-    local out = assert(io.open(out, "w"))
-    for i = 1, #protos do
-      protos[i]:dump_code_list(out)
-    end
-    return out:close()
+    return dump_protos(self, assert(io.open(out, "w"))):close()
   else
-    for i = 1, #protos do
-      protos[i]:dump_code_list(out)
-    end
-    return out
+    return dump_protos(self, out)
   end
 end
 
