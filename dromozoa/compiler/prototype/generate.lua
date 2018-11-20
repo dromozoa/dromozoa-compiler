@@ -297,18 +297,16 @@ local function analyze_dominator(blocks)
   return blocks
 end
 
-local function analyze_liveness(blocks)
+local function analyze_liveness(blocks, postorder)
   local g = blocks.g
-  local u = g.u
-  local u_first = u.first
-  local u_after = u.after
   local uv = g.uv
   local uv_first = uv.first
   local uv_after = uv.after
   local uv_target = uv.target
+  local n = #postorder
 
-  local uid = u_first
-  while uid do
+  for i = n, 1, -1 do
+    local uid = postorder[i]
     local block = blocks[uid]
     local use = block.use
 
@@ -319,14 +317,13 @@ local function analyze_liveness(blocks)
 
     block.live_in = live_in
     block.live_out = {}
-    uid = u_after[uid]
   end
 
   repeat
     local changed = false
 
-    local uid = u_first
-    while uid do
+    for i = n, 1, -1 do
+      local uid = postorder[i]
       local block = blocks[uid]
       local def = block.def
       local use = block.use
@@ -353,8 +350,6 @@ local function analyze_liveness(blocks)
           end
         end
       end
-
-      uid = u_after[uid]
     end
   until not changed
 
@@ -396,9 +391,12 @@ end
 
 return function (self)
   local blocks = resolve_jumps(generate(self.code_list))
+  local g = blocks.g
+  local uv_postorder = g:uv_postorder(blocks.entry_uid)
+  local vu_postorder = g:vu_postorder(blocks.exit_uid)
   analyze_variables(blocks)
   analyze_dominator(blocks)
-  analyze_liveness(blocks)
+  analyze_liveness(blocks, vu_postorder)
   -- resolve_variables(blocks)
   self.blocks = blocks
   return self
