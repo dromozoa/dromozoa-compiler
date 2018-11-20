@@ -156,7 +156,6 @@ local function analyze_variables(blocks, postorder)
       local code = block[j]
       local name = code[0]
       if name == "CLOSURE" then
-        -- local upvalues = code[2].proto.upvalues
         for k = 3, #code do
           update_ref(variables, def, use, code[k])
         end
