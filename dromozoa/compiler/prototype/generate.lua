@@ -98,7 +98,7 @@ local function resolve_jumps(blocks, uids, labels)
   return blocks
 end
 
-local function update_variables(variables, var, encoded_var, is_reference)
+local function update_variables(variables, var, encoded_var, reference)
   local variable = variables[encoded_var]
   if not variable then
     variable = {
@@ -107,7 +107,7 @@ local function update_variables(variables, var, encoded_var, is_reference)
     }
     variables[encoded_var] = variable
   end
-  if var.key == "U" or is_reference then
+  if var.key == "U" or reference then
     variable.reference = true
   end
 end
