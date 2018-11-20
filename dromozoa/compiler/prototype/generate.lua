@@ -45,7 +45,7 @@ local function generate(code_list)
         blocks[uid] = block
       end
       block[#block + 1] = code
-      if name == "CALL" or name == "RETURN" or name == "GOTO" or name == "COND" then
+      if name == "RESULT" or name == "RETURN" or name == "GOTO" or name == "COND" then
         uid = nil
       end
     end
@@ -160,11 +160,15 @@ local function analyze_variables(blocks, postorder)
           update_ref(variables, def, use, code[k])
         end
         update_def(variables, def, code[1])
+      elseif name == "RESULT" then
+        for k = 1, #code do
+          update_def(variables, def, code[k])
+        end
       else
         for k = 2, #code do
           update_use(variables, def, use, code[k])
         end
-        if name == "SETTABLE" or name == "RETURN" or name == "SETLIST" or name == "COND" then
+        if name == "SETTABLE" or name == "CALL" or name == "RETURN" or name == "SETLIST" or name == "COND" then
           update_use(variables, def, use, code[1])
         else
           update_def(variables, def, code[1])

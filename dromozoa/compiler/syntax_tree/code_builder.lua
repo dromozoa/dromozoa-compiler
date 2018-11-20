@@ -53,6 +53,7 @@ local class = {
   LT       = _"LT";
   LE       = _"LE";
   CALL     = _"CALL";
+  RESULT   = _"RESULT";
   RETURN   = _"RETURN";
   SETLIST  = _"SETLIST";
   CLOSURE  = _"CLOSURE";

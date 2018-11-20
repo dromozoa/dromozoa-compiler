@@ -103,7 +103,8 @@ local function generate(stack, node, symbol_table)
            :MOVE(lvars[2], rvars[2])
            :MOVE(lvars[3], rvars[3])
            :LOOP()
-           :  CALL(lvars[5], lvars[1], lvars[2], lvars[3])
+           :  CALL(lvars[1], lvars[2], lvars[3])
+           :  RESULT(lvars[5])
           local that = node[2]
           for i = 1, #that do
             _:MOVE(that[i].var, lvars[5][i - 1])
@@ -206,9 +207,11 @@ local function generate(stack, node, symbol_table)
       args[i] = that[i].var
     end
     if node.self then
-      _:CALL(node.var or variable.VOID, node[1].var, node.self, unpack(args))
+      _:CALL(node[1].var, node.self, unpack(args))
+      _:RESULT(node.var or variable.VOID)
     else
-      _:CALL(node.var or variable.VOID, node[1].var, unpack(args))
+      _:CALL(node[1].var, unpack(args))
+      _:RESULT(node.var or variable.VOID)
     end
   elseif symbol == symbol_table.fieldlist then
     _:NEWTABLE(node.var)
