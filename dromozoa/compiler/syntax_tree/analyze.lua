@@ -313,7 +313,6 @@ local function prepare_protos(node, symbol_table, protos)
       names = { env_name };
     }
 
-    local var = variable.P(0)
     local proto = prototype {
       parent = external_proto;
       labels = {};
@@ -328,9 +327,8 @@ local function prepare_protos(node, symbol_table, protos)
       names = {};
       self = false; vararg = true;
       M = 0; A = 0; B = 0; C = 0; T = 0; V = 0;
-      var;
+      variable.P(0);
     }
-    var.proto = proto
     node.proto = proto
     protos[1] = proto
 
@@ -343,7 +341,6 @@ local function prepare_protos(node, symbol_table, protos)
   else
     if symbol == symbol_table.funcbody then
       local n = #protos
-      local var = variable.P(n)
       local proto = prototype {
         parent = attr_proto(node.parent);
         labels = {};
@@ -352,9 +349,8 @@ local function prepare_protos(node, symbol_table, protos)
         names = {};
         self = false; vararg = false;
         M = 0; A = 0; B = 0; C = 0; T = 0; V = 0;
-        var;
+        variable.P(n);
       }
-      var.proto = proto
       node.proto = proto
       protos[n + 1] = proto
     end
