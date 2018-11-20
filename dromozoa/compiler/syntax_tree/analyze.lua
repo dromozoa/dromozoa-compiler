@@ -214,9 +214,6 @@ local function ref_name(node)
   return resolve_name(node, "use", "upuse")
 end
 
-local function normalize_local_function(self, node, symbol_table)
-end
-
 local function normalize_self(self, node, symbol_table)
   local id = self.id + 1
   self.id = id
@@ -313,7 +310,6 @@ local function prepare_protos(node, symbol_table, protos)
       names = { env_name };
     }
 
-    local var = variable.P(0)
     local proto = prototype {
       parent = external_proto;
       labels = {};
@@ -328,9 +324,8 @@ local function prepare_protos(node, symbol_table, protos)
       names = {};
       self = false; vararg = true;
       M = 0; A = 0; B = 0; C = 0; T = 0; V = 0;
-      var;
+      variable.P(0);
     }
-    var.proto = proto
     node.proto = proto
     protos[1] = proto
 
@@ -343,7 +338,6 @@ local function prepare_protos(node, symbol_table, protos)
   else
     if symbol == symbol_table.funcbody then
       local n = #protos
-      local var = variable.P(n)
       local proto = prototype {
         parent = attr_proto(node.parent);
         labels = {};
@@ -352,9 +346,8 @@ local function prepare_protos(node, symbol_table, protos)
         names = {};
         self = false; vararg = false;
         M = 0; A = 0; B = 0; C = 0; T = 0; V = 0;
-        var;
+        variable.P(n);
       }
-      var.proto = proto
       node.proto = proto
       protos[n + 1] = proto
     end
@@ -560,6 +553,7 @@ end
 local function resolve_vars(self, node, symbol_table)
   local symbol = node[0]
   local n = #node
+  local binop = node.binop
 
   for i = 1, n do
     resolve_vars(self, node[i], symbol_table)
@@ -658,7 +652,9 @@ local function resolve_vars(self, node, symbol_table)
     end
   elseif symbol == symbol_table.funcbody then
     node.var = assign_var(node.parent)
-  elseif symbol == symbol_table.fieldlist or node.binop or node.unop then
+  elseif binop == "AND" or binop == "OR" then
+    node.var = assign_var(node, "B")
+  elseif symbol == symbol_table.fieldlist or binop or node.unop then
     node.var = assign_var(node)
   end
 end

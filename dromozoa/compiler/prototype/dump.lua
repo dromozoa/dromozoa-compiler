@@ -50,8 +50,8 @@ local marker = _"marker" {
   };
 }
 
-local function dump_block(bb, uid, block)
-  local g = bb.g
+local function dump_block(blocks, uid, block)
+  local g = blocks.g
   local uv = g.uv
   local uv_after = uv.after
   local uv_target = uv.target
@@ -161,11 +161,10 @@ local function dump_block(bb, uid, block)
 end
 
 local function dump_code(self)
-  local bb = self.bb
-  local g = bb.g
+  local blocks = self.blocks
+  local g = blocks.g
   local u = g.u
   local u_after = u.after
-  local blocks = bb.blocks
 
   local html = _"div" {
     class = "text";
@@ -175,7 +174,7 @@ local function dump_code(self)
 
   local uid = u.first
   while uid do
-    html[#html + 1] = dump_block(bb, uid, blocks[uid])
+    html[#html + 1] = dump_block(blocks, uid, blocks[uid])
     uid = u_after[uid]
   end
 
@@ -184,8 +183,8 @@ local function dump_code(self)
 end
 
 local function dump_graph(proto, width, height)
-  local bb = proto.bb
-  local g = bb.g
+  local blocks = proto.blocks
+  local g = blocks.g
   local u = g.u
   local u_after = u.after
   local u_labels = {}
@@ -199,7 +198,7 @@ local function dump_graph(proto, width, height)
   local root = g:render {
     matrix = matrix3(80, 0, 40, 0, 50, 25, 0, 0, 1);
     u_labels = u_labels;
-    e_labels = bb.jumps;
+    e_labels = blocks.jumps;
   }
 
   local u_paths = root[1]

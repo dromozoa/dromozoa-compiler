@@ -18,7 +18,7 @@
 local graph = require "dromozoa.graph"
 local variable = require "dromozoa.compiler.variable"
 
-local function generate_basic_blocks(code_list)
+local function generate(code_list)
   local g = graph()
   local entry_uid = g:add_vertex()
   local uid
@@ -55,18 +55,15 @@ local function generate_basic_blocks(code_list)
   uids[#uids + 1] = exit_uid
   blocks[exit_uid] = { exit = true }
 
-  return {
-    g = g;
-    entry_uid = entry_uid;
-    exit_uid = exit_uid;
-    blocks = blocks;
-  }, uids, labels
+  blocks.g = g
+  blocks.entry_uid = entry_uid
+  blocks.exit_uid = exit_uid
+  return blocks, uids, labels
 end
 
-local function resolve(bb, uids, labels)
-  local g = bb.g
-  local exit_uid = bb.exit_uid
-  local blocks = bb.blocks
+local function resolve_jumps(blocks, uids, labels)
+  local g = blocks.g
+  local exit_uid = blocks.exit_uid
 
   local jumps = {}
 
@@ -97,51 +94,121 @@ local function resolve(bb, uids, labels)
     this_uid = next_uid
   end
 
-  bb.jumps = jumps
-  return bb
+  blocks.jumps = jumps
+  return blocks
 end
 
-local function analyze_dominator(bb)
-  local g = bb.g
-  local u = g.u
-  local u_first = u.first
-  local u_after = u.after
+local function update_variables(variables, var, encoded_var, is_reference)
+  local variable = variables[encoded_var]
+  if not variable then
+    variable = {
+      key = var.key;
+      index = var.index;
+    }
+    variables[encoded_var] = variable
+  end
+  if var.key == "U" or is_reference then
+    variable.reference = true
+  end
+end
+
+local function update_def(variables, def, var)
+  local t = var.type
+  if t == "value" or t == "array" then
+    local encoded_var = var:encode_without_index()
+    update_variables(variables, var, encoded_var)
+    def[encoded_var] = true
+  end
+end
+
+local function update_use(variables, def, use, var)
+  local t = var.type
+  if t == "value" or t == "array" then
+    local encoded_var = var:encode_without_index()
+    update_variables(variables, var, encoded_var)
+    if not def[encoded_var] then
+      use[encoded_var] = true
+    end
+  end
+end
+
+local function update_ref(variables, def, use, var)
+  local t = var.type
+  if t == "value" or t == "array" then
+    local encoded_var = var:encode_without_index()
+    update_variables(variables, var, encoded_var, true)
+    if not def[encoded_var] then
+      use[encoded_var] = true
+    end
+  end
+end
+
+local function analyze_variables(blocks, postorder)
+  local variables = {}
+
+  for i = #postorder, 1, -1 do
+    local uid = postorder[i]
+    local block = blocks[uid]
+    local def = {}
+    local use = {}
+
+    for j = 1, #block do
+      local code = block[j]
+      local name = code[0]
+      if name == "CLOSURE" then
+        for k = 3, #code do
+          update_ref(variables, def, use, code[k])
+        end
+        update_def(variables, def, code[1])
+      else
+        for k = 2, #code do
+          update_use(variables, def, use, code[k])
+        end
+        if name == "SETTABLE" or name == "RETURN" or name == "SETLIST" or name == "COND" then
+          update_use(variables, def, use, code[1])
+        else
+          update_def(variables, def, code[1])
+        end
+      end
+    end
+
+    block.def = def
+    block.use = use
+  end
+
+  blocks.variables = variables
+  return blocks
+end
+
+local function analyze_dominator(blocks, postorder)
+  local g = blocks.g
   local vu = g.vu
   local vu_first = vu.first
   local vu_after = vu.after
   local vu_target = vu.target
-  local entry_uid = bb.entry_uid
-  local blocks = bb.blocks
+  local entry_uid = blocks.entry_uid
+  local n = #postorder
 
-  local all = {}
-
-  local uid = u_first
-  while uid do
-    all[#all + 1] = uid
-    uid = u_after[uid]
-  end
-
-  local uid = u_first
-  while uid do
+  for i = n, 1, -1 do
+    local uid = postorder[i]
     local block = blocks[uid]
     if uid == entry_uid then
       block.dom = { [uid] = true }
     else
       local dom = {}
-      for i = 1, #all do
-        dom[all[i]] = true
+      for i = n, 1, -1 do
+        dom[postorder[i]] = true
       end
       block.dom = dom
     end
     block.df = {}
-    uid = u_after[uid]
   end
 
   repeat
     local changed = false
 
-    local uid = u_first
-    while uid do
+    for i = n, 1, -1 do
+      local uid = postorder[i]
       local block = blocks[uid]
       local dom = block.dom
       local set
@@ -189,12 +256,11 @@ local function analyze_dominator(bb)
       end
 
       block.dom = set
-      uid = u_after[uid]
     end
   until not changed
 
-  local uid = u_first
-  while uid do
+  for i = n, 1, -1 do
+    local uid = postorder[i]
     local dom = blocks[uid].dom
     local eid = vu_first[uid]
     if eid and vu_after[eid] then
@@ -208,85 +274,38 @@ local function analyze_dominator(bb)
         eid = vu_after[eid]
       end
     end
-    uid = u_after[uid]
   end
 
-  return bb
+  return blocks
 end
 
-local function update_def(def, var)
-  local t = var.type
-  if t == "value" or t == "array" then
-    def[var:encode_without_index()] = true
-  end
-end
-
-local function update_use(def, use, var)
-  local t = var.type
-  if t == "value" or t == "array" then
-    local encoded_var = var:encode_without_index()
-    if not def[encoded_var] then
-      use[encoded_var] = true
-    end
-  end
-end
-
-local function analyze_liveness(bb)
-  local g = bb.g
-  local u = g.u
-  local u_first = u.first
-  local u_after = u.after
+local function analyze_liveness(blocks, postorder)
+  local g = blocks.g
   local uv = g.uv
   local uv_first = uv.first
   local uv_after = uv.after
   local uv_target = uv.target
-  local blocks = bb.blocks
+  local n = #postorder
 
-  local varmap = {}
-
-  local uid = u_first
-  while uid do
+  for i = n, 1, -1 do
+    local uid = postorder[i]
     local block = blocks[uid]
-    local def = {}
-    local use = {}
-    for i = 1, #block do
-      local code = block[i]
-      local name = code[0]
-      if name == "CLOSURE" then
-        local upvalues = code[2].proto.upvalues
-        for i = 1, #upvalues do
-          update_use(def, use, upvalues[i][2])
-        end
-        update_def(def, code[1])
-      else
-        for i = 2, #code do
-          update_use(def, use, code[i])
-        end
-        if name == "SETTABLE" or name == "RETURN" or name == "SETLIST" or name == "COND" then
-          update_use(def, use, code[1])
-        else
-          update_def(def, code[1])
-        end
-      end
-    end
+    local use = block.use
 
     local live_in = {}
     for encoded_var in pairs(use) do
       live_in[encoded_var] = true
     end
 
-    block.def = def
-    block.use = use
     block.live_in = live_in
     block.live_out = {}
-    uid = u_after[uid]
   end
 
   repeat
     local changed = false
 
-    local uid = u_first
-    while uid do
+    for i = n, 1, -1 do
+      local uid = postorder[i]
       local block = blocks[uid]
       local def = block.def
       local use = block.use
@@ -313,40 +332,54 @@ local function analyze_liveness(bb)
           end
         end
       end
-
-      uid = u_after[uid]
     end
   until not changed
 
-  return bb
+  return blocks
 end
 
-local function ssa(bb)
-  local g = bb.g
+local function resolve_variables(blocks)
+  local g = blocks.g
   local u = g.u
   local u_first = u.first
   local u_after = u.after
-  local blocks = bb.blocks
-
-  local varmap = {}
+  local variables = blocks.variables
 
   local uid = u_first
   while uid do
     local block = blocks[uid]
     for i = 1, #block do
       local code = block[i]
+      local name = code[0]
+      if name ~= "SETTABLE" and name ~= "RETURN" and name ~= "SETLIST" and name ~= "COND" then
+        local var = code[1]
+        local variable = variables[var:encode_without_index()]
+        if variable and not variable.reference then
+          local version = variable.version
+          if version then
+            code[1] = var[version]
+            variable.version = version + 1
+          else
+            variable.version = 1
+          end
+        end
+      end
     end
     uid = u_after[uid]
   end
 
-  return bb
+  return blocks
 end
 
 return function (self)
-  local bb = resolve(generate_basic_blocks(self.code_list))
-  analyze_dominator(bb)
-  analyze_liveness(bb)
-  -- ssa(bb)
-  self.bb = bb
+  local blocks = resolve_jumps(generate(self.code_list))
+  local g = blocks.g
+  local uv_postorder = g:uv_postorder(blocks.entry_uid)
+  local vu_postorder = g:vu_postorder(blocks.exit_uid)
+  analyze_variables(blocks, uv_postorder)
+  analyze_dominator(blocks, uv_postorder)
+  analyze_liveness(blocks, vu_postorder)
+  -- resolve_variables(blocks)
+  self.blocks = blocks
   return self
 end
