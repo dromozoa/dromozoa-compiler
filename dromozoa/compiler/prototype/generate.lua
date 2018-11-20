@@ -181,46 +181,35 @@ local function analyze_variables(blocks, postorder)
   return blocks
 end
 
-local function analyze_dominator(blocks)
+local function analyze_dominator(blocks, postorder)
   local g = blocks.g
-  local u = g.u
-  local u_first = u.first
-  local u_after = u.after
   local vu = g.vu
   local vu_first = vu.first
   local vu_after = vu.after
   local vu_target = vu.target
   local entry_uid = blocks.entry_uid
+  local n = #postorder
 
-  local all = {}
-
-  local uid = u_first
-  while uid do
-    all[#all + 1] = uid
-    uid = u_after[uid]
-  end
-
-  local uid = u_first
-  while uid do
+  for i = n, 1, -1 do
+    local uid = postorder[i]
     local block = blocks[uid]
     if uid == entry_uid then
       block.dom = { [uid] = true }
     else
       local dom = {}
-      for i = 1, #all do
-        dom[all[i]] = true
+      for i = n, 1, -1 do
+        dom[postorder[i]] = true
       end
       block.dom = dom
     end
     block.df = {}
-    uid = u_after[uid]
   end
 
   repeat
     local changed = false
 
-    local uid = u_first
-    while uid do
+    for i = n, 1, -1 do
+      local uid = postorder[i]
       local block = blocks[uid]
       local dom = block.dom
       local set
@@ -268,12 +257,11 @@ local function analyze_dominator(blocks)
       end
 
       block.dom = set
-      uid = u_after[uid]
     end
   until not changed
 
-  local uid = u_first
-  while uid do
+  for i = n, 1, -1 do
+    local uid = postorder[i]
     local dom = blocks[uid].dom
     local eid = vu_first[uid]
     if eid and vu_after[eid] then
@@ -287,7 +275,6 @@ local function analyze_dominator(blocks)
         eid = vu_after[eid]
       end
     end
-    uid = u_after[uid]
   end
 
   return blocks
@@ -391,7 +378,7 @@ return function (self)
   local uv_postorder = g:uv_postorder(blocks.entry_uid)
   local vu_postorder = g:vu_postorder(blocks.exit_uid)
   analyze_variables(blocks, uv_postorder)
-  analyze_dominator(blocks)
+  analyze_dominator(blocks, uv_postorder)
   analyze_liveness(blocks, vu_postorder)
   -- resolve_variables(blocks)
   self.blocks = blocks
