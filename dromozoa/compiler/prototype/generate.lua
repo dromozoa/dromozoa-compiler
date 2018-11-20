@@ -180,7 +180,7 @@ local function analyze_variables(blocks, postorder)
   return blocks
 end
 
-local function analyze_dominator(blocks, postorder)
+local function analyze_dominators(blocks, postorder)
   local g = blocks.g
   local vu = g.vu
   local vu_first = vu.first
@@ -377,7 +377,7 @@ return function (self)
   local uv_postorder = g:uv_postorder(blocks.entry_uid)
   local vu_postorder = g:vu_postorder(blocks.exit_uid)
   analyze_variables(blocks, uv_postorder)
-  analyze_dominator(blocks, uv_postorder)
+  analyze_dominators(blocks, uv_postorder)
   analyze_liveness(blocks, vu_postorder)
   -- resolve_variables(blocks)
   self.blocks = blocks
