@@ -604,7 +604,6 @@ local function resolve_vars(self, node, symbol_table)
         assign_var(node, "B"); -- s
         assign_var(node, "B"); -- var
         assign_var(node);
-        assign_var(node, "T");
       }
     end
   elseif symbol == symbol_table.funcname or symbol == symbol_table.var then

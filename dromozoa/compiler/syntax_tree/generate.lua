@@ -99,21 +99,22 @@ local function generate(stack, node, symbol_table)
         else -- generic for
           local rvars = node[1].vars
           local lvars = node.vars
+          local that = node[2]
+          local args = {}
+          for i = 1, #that do
+            args[i] = that[i].var
+          end
           _:MOVE(lvars[1], rvars[1])
            :MOVE(lvars[2], rvars[2])
            :MOVE(lvars[3], rvars[3])
            :LOOP()
            :  CALL(lvars[1], lvars[2], lvars[3])
-           :  RESULT(lvars[5])
-          local that = node[2]
-          for i = 1, #that do
-            _:MOVE(that[i].var, lvars[5][i - 1])
-          end
-          _:EQ(lvars[4], that[1].var, variable.NIL)
-           :COND_IF(lvars[4], variable.TRUE)
-           :  BREAK()
-           :COND_END()
-           :MOVE(lvars[3], that[1].var)
+           :  RESULT(unpack(args))
+           :  EQ(lvars[4], that[1].var, variable.NIL)
+           :  COND_IF(lvars[4], variable.TRUE)
+           :    BREAK()
+           :  COND_END()
+           :  MOVE(lvars[3], that[1].var)
         end
       elseif symbol == symbol_table.conditional then
         _:COND_ELSE()
@@ -206,13 +207,13 @@ local function generate(stack, node, symbol_table)
     for i = 1, #that do
       args[i] = that[i].var
     end
-    if node.self then
-      _:CALL(node[1].var, node.self, unpack(args))
-      _:RESULT(node.var or variable.VOID)
+    local self = node.self
+    if self then
+      _:CALL(node[1].var, self, unpack(args))
     else
       _:CALL(node[1].var, unpack(args))
-      _:RESULT(node.var or variable.VOID)
     end
+    _:RESULT(node.var)
   elseif symbol == symbol_table.fieldlist then
     _:NEWTABLE(node.var)
     for i = 1, n do
