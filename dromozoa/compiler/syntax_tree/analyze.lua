@@ -214,9 +214,6 @@ local function ref_name(node)
   return resolve_name(node, "use", "upuse")
 end
 
-local function normalize_local_function(self, node, symbol_table)
-end
-
 local function normalize_self(self, node, symbol_table)
   local id = self.id + 1
   self.id = id
