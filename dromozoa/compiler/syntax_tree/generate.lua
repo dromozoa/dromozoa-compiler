@@ -25,7 +25,12 @@ local function generate(stack, node, symbol_table)
   if proto then
     local var = node.var
     if var then
-      code_builder(stack, node):CLOSURE(var, proto[1])
+      local upvalues = proto.upvalues
+      local args = {}
+      for i = 1, #upvalues do
+        args[i] = upvalues[i][2]
+      end
+      code_builder(stack, node):CLOSURE(var, proto[1], unpack(args))
     end
     local code_list = {}
     proto.code_list = code_list
