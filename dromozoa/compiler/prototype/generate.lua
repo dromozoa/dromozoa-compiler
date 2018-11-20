@@ -143,30 +143,27 @@ local function update_ref(variables, def, use, var)
   end
 end
 
-local function analyze_variables(blocks)
-  local g = blocks.g
-  local u = g.u
-  local u_after = u.after
-
+local function analyze_variables(blocks, postorder)
   local variables = {}
 
-  local uid = u.first
-  while uid do
+  for i = #postorder, 1, -1 do
+    local uid = postorder[i]
     local block = blocks[uid]
     local def = {}
     local use = {}
-    for i = 1, #block do
-      local code = block[i]
+
+    for j = 1, #block do
+      local code = block[j]
       local name = code[0]
       if name == "CLOSURE" then
         local upvalues = code[2].proto.upvalues
-        for i = 1, #upvalues do
-          update_ref(variables, def, use, upvalues[i][2])
+        for k = 1, #upvalues do
+          update_ref(variables, def, use, upvalues[k][2])
         end
         update_def(variables, def, code[1])
       else
-        for i = 2, #code do
-          update_use(variables, def, use, code[i])
+        for k = 2, #code do
+          update_use(variables, def, use, code[k])
         end
         if name == "SETTABLE" or name == "RETURN" or name == "SETLIST" or name == "COND" then
           update_use(variables, def, use, code[1])
@@ -178,7 +175,6 @@ local function analyze_variables(blocks)
 
     block.def = def
     block.use = use
-    uid = u_after[uid]
   end
 
   blocks.variables = variables
@@ -394,7 +390,7 @@ return function (self)
   local g = blocks.g
   local uv_postorder = g:uv_postorder(blocks.entry_uid)
   local vu_postorder = g:vu_postorder(blocks.exit_uid)
-  analyze_variables(blocks)
+  analyze_variables(blocks, uv_postorder)
   analyze_dominator(blocks)
   analyze_liveness(blocks, vu_postorder)
   -- resolve_variables(blocks)
