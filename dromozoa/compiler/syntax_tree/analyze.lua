@@ -565,11 +565,7 @@ local function resolve_vars(self, node, symbol_table)
     local that = node[2]
     for i = 1, #rvars do
       local var = rvars[i]
-      if i == 1 then
-        if var.key == "T" then
-          var = assign_var(node)
-        end
-      else
+      if i > 1 then
         local key = var.key
         if key == "U" or key == "A" or key == "B" or key == "T" then
           var = assign_var(node)
