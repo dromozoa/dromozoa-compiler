@@ -505,8 +505,14 @@ local function resolve_names(self, node, symbol_table)
     proto.V = 1
     local adjust = node.adjust
     if adjust then
-      if adjust ~= 0 then
+      if adjust == -1 then
         node.var = variable.V(0)
+      else
+        local vars = space_separated {}
+        for i = 1, adjust do
+          vars[i] = variable.V(0)[i - 1]
+        end
+        node.vars = vars
       end
     else
       node.adjust = 1
@@ -565,13 +571,9 @@ local function resolve_vars(self, node, symbol_table)
     local that = node[2]
     for i = 1, #rvars do
       local var = rvars[i]
-      if i == 1 then
-        if var.key == "T" then
-          var = assign_var(node)
-        end
-      else
+      if i > 1 then
         local key = var.key
-        if key == "U" or key == "A" or key == "B" or key == "T" then
+        if key == "U" or key == "A" or key == "B" then
           var = assign_var(node)
         end
       end
@@ -604,7 +606,6 @@ local function resolve_vars(self, node, symbol_table)
         assign_var(node, "B"); -- s
         assign_var(node, "B"); -- var
         assign_var(node);
-        assign_var(node, "T");
       }
     end
   elseif symbol == symbol_table.funcname or symbol == symbol_table.var then
@@ -616,32 +617,42 @@ local function resolve_vars(self, node, symbol_table)
   elseif symbol == symbol_table.explist then
     local adjust = node.adjust
     if adjust then
-      local vars = space_separated {}
+      local lvars = space_separated {}
       for i = 1, n do
         local that = node[i]
         local var = that.var
         if var then
-          if var.type == "array" and not var.index then
-            for j = 0, that.adjust - 1 do
-              vars[i + j] = var[j]
-            end
-          else
-            vars[i] = var
+          lvars[i] = var
+          if i == adjust then
+            break
           end
+        else
+          local rvars = that.vars
+          local m = i - 1
+          for j = 1, #rvars do
+            lvars[m + j] = rvars[j]
+          end
+          break
         end
       end
-      for i = #vars + 1, adjust do
-        vars[i] = variable.NIL
+      for i = #lvars + 1, adjust do
+        lvars[i] = variable.NIL
       end
-      node.vars = vars
+      node.vars = lvars
     end
   elseif symbol == symbol_table["("] then
     node.var = node[1].var
   elseif symbol == symbol_table.functioncall then
     local adjust = node.adjust
     if adjust then
-      if adjust ~= 0 then
+      if adjust == -1 then
         node.var = assign_var(node, "T")
+      else
+        local vars = space_separated {}
+        for i = 1, adjust do
+          vars[i] = assign_var(node)
+        end
+        node.vars = vars
       end
     else
       node.adjust = 1

@@ -34,21 +34,13 @@
 
 <p>
 整数への変換は前後のホワイトスペースを無視したうえで、整数の字句表現に従う。
-8進数リテラルがないので、たとえばリテラル<code>070</code>は10進数の整数<code>70</code>に等しい。
+8進数リテラルがないので、
+たとえばリテラル<code>070</code>は10進数の整数<code>70</code>に等しい。
 </p>
 
 <p>
 浮動小数点数への変換は<code>strtod</code>と等価である。
 </p>
-
-<h2>Codes</h2>
-
-<ul>
-  <li>tree</li>
-  <li>flat</li>
-  <li>bb (basic blocks)</li>
-  <li>cps/ssa</li>
-</ul>
 
 <h2>Variables</h2>
 
@@ -65,12 +57,6 @@
     <td>read only</td>
     <td>unsigned integer</td>
   <tr>
-  <tr>
-    <td><code>VOID</code></td>
-    <td>immediate</td>
-    <td>read only</td>
-    <td>not use the return value</td>
-  </tr>
   <tr>
     <td><code>NIL</code></td>
     <td>immediate</td>
@@ -120,13 +106,13 @@
     <td>upvalue</td>
   </tr>
   <tr>
-    <td><code>An</code></td>
+    <td><code>An</code>, <code>An_v</code></td>
     <td>value</td>
     <td>reference?</td>
     <td>parameter</td>
   </tr>
   <tr>
-    <td><code>Bn</code></td>
+    <td><code>Bn</code>, <code>Bn_v</code></td>
     <td>value</td>
     <td>reference?</td>
     <td>named value</td>
@@ -144,105 +130,14 @@
     <td>vararg</td>
   </tr>
   <tr>
-    <td><code>Tn</code>, <code>Tn[j]</code></td>
+    <td><code>Tn</code></td>
     <td>array</td>
     <td>single assigned</td>
     <td>results</td>
   </tr>
 </table>
 
-<h2>Transpilable Lua</h2>
-
-<h3>チャンク</h3>
-
-<blockquote cite="https://www.lua.org/manual/5.3/manual.html#3.3.2">
-<p>
-Lua handles a chunk as the body of an anonymous function with a variable number of arguments.
-</p>
-</blockquote>
-
-<p>
-ホスト言語のために、チャンクになんらかの識別子を与える。
-C++では<code>DROMOZOA_EXPORT</code>マクロで識別子を与える。
-ECMAScriptでは<code>DROMOZOA_EXPORT</code>グローバル変数で識別子を与える。
-</p>
-
-<h3>関数</h3>
-
-<h4>可変長引数</h4>
-
-<p>
-C++ではvariadic templatesで実現できる。
-ECMAScriptではrest parameterで実現できる。
-</p>
-
-<h4>可変長返り値</h4>
-
-<p>
-C++では<code>std::tuple</code>で値を返し、<code>std::tie</code>で代入できる。
-コンパイル時に呼び出し側が要求する返り値の長さが決まる場合、これをテンプレート引数として与えることにする。
-返り値の長さが決まらない場合、<code>std::vector</code>を使うことにする。
-ECMAScriptでは配列で値を返し、Destructuring Assignmentで代入できる。
-</p>
-
-<h4>上位値</h4>
-
-<p>
-C++もECMAScriptもクロージャを用いて実現できる。
-上位値の扱いは効率的な実装が可能かどうかに影響する。
-</p>
-
-<ol>
-  <li>関数が上位値を持たない場合</li>
-  <li>関数が上位値の参照だけを行い、上位値に代入しない場合</li>
-  <li>関数が上位値に代入を行う場合</li>
-</ol>
-
-<h3>Native Components</h3>
-
-<dl>
-  <dt>native number</dt>
-  <dd>
-    IEEE 754倍精度浮動小数点数で表現される数値型。
-  </dd>
-  <dt>native array</dt>
-  <dd>
-    伸長可能な配列。
-  </dd>
-  <dt>native byte array</dt>
-  <dd>
-    効率のために特殊化したバイト配列。
-  </dd>
-  <dt>native string</dt>
-  <dd>
-    処理系によってUTF-8またはUTF-16で表現されるUnicode文字列。
-  </dd>
-  <dt>native object</dt>
-  <dd>
-    native stringをキーとする連想配列。
-  </dd>
-  <dt>native IO</dt>
-  <dd>
-    バイト列の低レベル入出力。
-  </dd>
-</dl>
-
-<h2>Runtime</h2>
-
-<h3>Embedded Data Types</h3>
-
-<ul>
-  <li>boolean</li>
-  <li>number</li>
-  <li>array
-    <ul>
-      <li>byte_array</li>
-    </ul>
-  </li>
-  <li>tuple</li>
-</ul>
-
-<h3>Lua 5.3 basic types</h3>
+<h2>Lua 5.3 basic types</h2>
 
 <pre>
 #define LUA_TNIL		0
@@ -258,7 +153,7 @@ C++もECMAScriptもクロージャを用いて実現できる。
 
 <h2>カメラの移動とズーム</h2>
 
-<h3></h3>
+<h3>移動</h3>
 
 <p>
 モデル座標系の\((c_x, c_y)\)をビュー\((w, h)\)の中心にするような移動を考える。

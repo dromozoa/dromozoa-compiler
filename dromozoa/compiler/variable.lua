@@ -22,7 +22,6 @@ end
 local metatable = { ["dromozoa.dom.is_serializable"] = true }
 
 local class = {
-  VOID  = setmetatable({ type = "immediate", key = "VOID"  }, metatable);
   NIL   = setmetatable({ type = "immediate", key = "NIL"   }, metatable);
   FALSE = setmetatable({ type = "immediate", key = "FALSE" }, metatable);
   TRUE  = setmetatable({ type = "immediate", key = "TRUE"  }, metatable);
@@ -47,7 +46,7 @@ _("value",     "C")
 _("array",     "V")
 _("array",     "T")
 
-local orders = { "VOID", "NIL", "FALSE", "TRUE", "I", "P", "L", "M", "K", "U", "A", "B", "C", "V", "T" }
+local orders = { "NIL", "FALSE", "TRUE", "I", "P", "L", "M", "K", "U", "A", "B", "C", "V", "T" }
 local order = {}
 for i = 1, #orders do
   order[orders[i]] = i
@@ -57,9 +56,9 @@ function class.decode(s)
   if s:find "^%d+$" then
     return class.I(tonumber(s))
   else
-    local key, number, index = s:match "^[AB](%d+)_(%d+)$"
+    local key, number, index = s:match "^([AB])(%d+)_(%d+)$"
     if not key then
-      key, number, index = s:match "^[VT](%d+)%[(%d+)%]$"
+      key, number, index = s:match "^(V)(%d+)%[(%d+)%]$"
     end
     if key then
       return class[key](tonumber(number))[tonumber(index)]
@@ -68,7 +67,7 @@ function class.decode(s)
     if key then
       return class[key](tonumber(number))
     end
-    assert(s == "VOID" or s == "NIL" or s == "FALSE" or s == "TRUE")
+    assert(s == "NIL" or s == "FALSE" or s == "TRUE")
     return class[s]
   end
 end
@@ -82,7 +81,7 @@ function class:encode()
     if index then
       return ("%s%d_%d"):format(key, self.number, index)
     end
-  elseif key == "V" or key == "T" then
+  elseif key == "V" then
     local index = self.index
     if index then
       return ("%s%d[%d]"):format(key, self.number, index)
@@ -134,7 +133,7 @@ function metatable:__index(index)
   if type(index) == "number" then
     local key = self.key
     assert(is_unsigned_integer(index))
-    assert(key == "A" or key == "B" or key == "V" or key == "T")
+    assert(key == "A" or key == "B" or key == "V")
     assert(not self.index)
     return setmetatable({ type = self.type, key = key, number = self.number, index = index }, metatable)
   else

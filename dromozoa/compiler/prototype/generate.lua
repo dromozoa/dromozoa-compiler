@@ -45,7 +45,7 @@ local function generate(code_list)
         blocks[uid] = block
       end
       block[#block + 1] = code
-      if name == "CALL" or name == "RETURN" or name == "GOTO" or name == "COND" then
+      if name == "RESULT" or name == "RETURN" or name == "GOTO" or name == "COND" then
         uid = nil
       end
     end
@@ -98,7 +98,7 @@ local function resolve_jumps(blocks, uids, labels)
   return blocks
 end
 
-local function update_variables(variables, var, encoded_var, is_reference)
+local function update_variables(variables, var, encoded_var, reference)
   local variable = variables[encoded_var]
   if not variable then
     variable = {
@@ -107,7 +107,7 @@ local function update_variables(variables, var, encoded_var, is_reference)
     }
     variables[encoded_var] = variable
   end
-  if var.key == "U" or is_reference then
+  if var.key == "U" or reference then
     variable.reference = true
   end
 end
@@ -160,11 +160,15 @@ local function analyze_variables(blocks, postorder)
           update_ref(variables, def, use, code[k])
         end
         update_def(variables, def, code[1])
+      elseif name == "RESULT" then
+        for k = 1, #code do
+          update_def(variables, def, code[k])
+        end
       else
         for k = 2, #code do
           update_use(variables, def, use, code[k])
         end
-        if name == "SETTABLE" or name == "RETURN" or name == "SETLIST" or name == "COND" then
+        if name == "SETTABLE" or name == "CALL" or name == "RETURN" or name == "SETLIST" or name == "COND" then
           update_use(variables, def, use, code[1])
         else
           update_def(variables, def, code[1])
@@ -180,7 +184,7 @@ local function analyze_variables(blocks, postorder)
   return blocks
 end
 
-local function analyze_dominator(blocks, postorder)
+local function analyze_dominators(blocks, postorder)
   local g = blocks.g
   local vu = g.vu
   local vu_first = vu.first
@@ -377,7 +381,7 @@ return function (self)
   local uv_postorder = g:uv_postorder(blocks.entry_uid)
   local vu_postorder = g:vu_postorder(blocks.exit_uid)
   analyze_variables(blocks, uv_postorder)
-  analyze_dominator(blocks, uv_postorder)
+  analyze_dominators(blocks, uv_postorder)
   analyze_liveness(blocks, vu_postorder)
   -- resolve_variables(blocks)
   self.blocks = blocks
