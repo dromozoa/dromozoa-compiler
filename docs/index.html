@@ -137,6 +137,94 @@
   </tr>
 </table>
 
+<h2>IR</h2>
+
+<table>
+  <tr>
+    <th>Opcode</th>
+    <th>Code</th>
+  </tr>
+
+  <tr>
+    <td><code>MOVE A B</code></td>
+    <td><code>A = B</code></td>
+  </tr>
+
+  <tr>
+    <td><code>GETTABLE A B C</code></td>
+    <td><code>A = B[C]</code></td>
+  </tr>
+
+  <tr>
+    <td><code>NEWTABLE A</code></td>
+    <td><code>A = {}</code></td>
+  </tr>
+
+  <tr>
+    <td><code>SETTABLE A B C</code></td>
+    <td><code>A[B] = C</code></td>
+  </tr>
+
+
+  <tr>
+    <td><code>binop A B C</code></td>
+    <td><code>A = B binop C</code></td>
+  </tr>
+
+  <tr>
+    <td><code>unop A B</code></td>
+    <td><code>A = unop B</code></td>
+  </tr>
+
+  <tr>
+    <td>
+      <code>CALL A B...</code><br>
+      <code>RESULT C...</code>
+    </td>
+    <td><code>C... = A(B...)</code></td>
+  </tr>
+
+  <tr>
+    <td><code>RETURN A...</code></td>
+    <td><code>return A...</code></td>
+  </tr>
+
+  <tr>
+    <td><code>SETLIST A B C</code></td>
+    <td><code>A[B] = C</code></td>
+  </tr>
+
+  <tr>
+    <td><code>CLOSURE A B C...</code></td>
+    <td><code>A = closure(B, C...)</code></td>
+  </tr>
+
+  <tr>
+    <td><code>LABEL A</code></td>
+    <td><code>::A::</code></td>
+  </tr>
+
+  <tr>
+    <td><code>BREAK</code></td>
+    <td><code>break</code></td>
+  </tr>
+
+  <tr>
+    <td><code>GOTO A</code></td>
+    <td><code>goto A</code></td>
+  </tr>
+
+  <tr>
+    <td><code>TONUMBER A B</code></td>
+    <td><code>A = tonumber(B)</code></td>
+  </tr>
+
+  <tr>
+    <td><code>COND A B C D</code></td>
+    <td><code>if toboolean(A) == B then goto C else goto D end</code></td>
+  </tr>
+</table>
+
 <h2>Lua 5.3 basic types</h2>
 
 <pre>
