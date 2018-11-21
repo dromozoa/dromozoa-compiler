@@ -213,7 +213,13 @@ local function generate(stack, node, symbol_table)
     else
       _:CALL(node[1].var, unpack(args))
     end
-    _:RESULT(node.var)
+    local var = node.var
+    if var then
+      _:RESULT(var)
+    else
+      local vars = assert(node.vars)
+      _:RESULT(unpack(vars))
+    end
   elseif symbol == symbol_table.fieldlist then
     _:NEWTABLE(node.var)
     for i = 1, n do

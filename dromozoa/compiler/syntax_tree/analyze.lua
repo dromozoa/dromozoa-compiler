@@ -611,6 +611,7 @@ local function resolve_vars(self, node, symbol_table)
   elseif symbol == symbol_table.explist then
     local adjust = node.adjust
     if adjust then
+      -- TODO refactor
       local vars = space_separated {}
       for i = 1, n do
         local that = node[i]
@@ -623,6 +624,14 @@ local function resolve_vars(self, node, symbol_table)
           else
             vars[i] = var
           end
+        else
+          local result_vars = assert(that.vars)
+          for j = 1, #result_vars do
+            vars[i + j - 1] = result_vars[j]
+          end
+        end
+        if #vars == adjust then
+          break
         end
       end
       for i = #vars + 1, adjust do
@@ -635,8 +644,15 @@ local function resolve_vars(self, node, symbol_table)
   elseif symbol == symbol_table.functioncall then
     local adjust = node.adjust
     if adjust then
-      if adjust ~= 0 then
+      if adjust == -1 then
         node.var = assign_var(node, "T")
+      else
+        assert(adjust ~= 1)
+        local vars = space_separated {}
+        for i = 1, adjust do
+          vars[i] = assign_var(node)
+        end
+        node.vars = vars
       end
     else
       node.adjust = 1

@@ -32,6 +32,8 @@ local f = function (...)
   print(a, b, c)
   local a, b, c = 42, 42, 42, ...
   print(a, b, c)
+  local a, b, c = (...)
+  print(a, b, c)
 end
 
 f()
