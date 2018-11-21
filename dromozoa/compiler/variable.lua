@@ -22,7 +22,6 @@ end
 local metatable = { ["dromozoa.dom.is_serializable"] = true }
 
 local class = {
-  VOID  = setmetatable({ type = "immediate", key = "VOID"  }, metatable);
   NIL   = setmetatable({ type = "immediate", key = "NIL"   }, metatable);
   FALSE = setmetatable({ type = "immediate", key = "FALSE" }, metatable);
   TRUE  = setmetatable({ type = "immediate", key = "TRUE"  }, metatable);
@@ -47,7 +46,7 @@ _("value",     "C")
 _("array",     "V")
 _("array",     "T")
 
-local orders = { "VOID", "NIL", "FALSE", "TRUE", "I", "P", "L", "M", "K", "U", "A", "B", "C", "V", "T" }
+local orders = { "NIL", "FALSE", "TRUE", "I", "P", "L", "M", "K", "U", "A", "B", "C", "V", "T" }
 local order = {}
 for i = 1, #orders do
   order[orders[i]] = i
@@ -68,7 +67,7 @@ function class.decode(s)
     if key then
       return class[key](tonumber(number))
     end
-    assert(s == "VOID" or s == "NIL" or s == "FALSE" or s == "TRUE")
+    assert(s == "NIL" or s == "FALSE" or s == "TRUE")
     return class[s]
   end
 end
