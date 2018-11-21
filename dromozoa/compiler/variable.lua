@@ -56,9 +56,9 @@ function class.decode(s)
   if s:find "^%d+$" then
     return class.I(tonumber(s))
   else
-    local key, number, index = s:match "^[AB](%d+)_(%d+)$"
+    local key, number, index = s:match "^([AB])(%d+)_(%d+)$"
     if not key then
-      key, number, index = s:match "^[VT](%d+)%[(%d+)%]$"
+      key, number, index = s:match "^(V)(%d+)%[(%d+)%]$"
     end
     if key then
       return class[key](tonumber(number))[tonumber(index)]
@@ -81,7 +81,7 @@ function class:encode()
     if index then
       return ("%s%d_%d"):format(key, self.number, index)
     end
-  elseif key == "V" or key == "T" then
+  elseif key == "V" then
     local index = self.index
     if index then
       return ("%s%d[%d]"):format(key, self.number, index)
@@ -133,7 +133,7 @@ function metatable:__index(index)
   if type(index) == "number" then
     local key = self.key
     assert(is_unsigned_integer(index))
-    assert(key == "A" or key == "B" or key == "V" or key == "T")
+    assert(key == "A" or key == "B" or key == "V")
     assert(not self.index)
     return setmetatable({ type = self.type, key = key, number = self.number, index = index }, metatable)
   else
