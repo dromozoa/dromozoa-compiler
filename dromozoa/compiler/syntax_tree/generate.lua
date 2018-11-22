@@ -233,7 +233,7 @@ local function generate(stack, node, symbol_table)
       local that = node[i]
       if #that == 1 then
         index = index + 1
-        _:SETLIST(node.var, variable(index), that[1].var)
+        _:SETTABLE(node.var, variable(index), that[1].var)
       end
     end
   end

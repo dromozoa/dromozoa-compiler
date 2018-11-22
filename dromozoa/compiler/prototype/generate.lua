@@ -168,7 +168,7 @@ local function analyze_variables(blocks, postorder)
         for k = 2, #code do
           update_use(variables, def, use, code[k])
         end
-        if name == "SETTABLE" or name == "CALL" or name == "RETURN" or name == "SETLIST" or name == "COND" then
+        if name == "SETTABLE" or name == "CALL" or name == "RETURN" or name == "COND" then
           update_use(variables, def, use, code[1])
         else
           update_def(variables, def, code[1])
@@ -355,7 +355,7 @@ local function resolve_variables(blocks)
     for i = 1, #block do
       local code = block[i]
       local name = code[0]
-      if name ~= "SETTABLE" and name ~= "RETURN" and name ~= "SETLIST" and name ~= "COND" then
+      if name ~= "SETTABLE" and name ~= "RETURN" and name ~= "COND" then
         local var = code[1]
         local variable = variables[var:encode_without_index()]
         if variable and not variable.reference then
