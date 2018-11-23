@@ -98,6 +98,42 @@ local function resolve_jumps(blocks, uids, labels)
   return blocks
 end
 
+local function remove_unreachable_blocks(blocks, reachables)
+  local g = blocks.g
+  local u = g.u
+  local u_after = u.after
+  local uv = g.uv
+  local uv_first = uv.first
+  local uv_after = uv.after
+  local vu = g.vu
+  local vu_first = vu.first
+  local vu_after = vu.after
+
+  local uid = u.first
+  while uid do
+    local next_uid = u_after[uid]
+    if not reachables[uid] then
+      local eid = uv_first[uid]
+      while eid do
+        local next_eid = uv_after[eid]
+        g:remove_edge(eid)
+        eid = next_eid
+      end
+      local eid = vu_first[uid]
+      while eid do
+        local next_eid = vu_after[eid]
+        g:remove_edge(eid)
+        eid = next_eid
+      end
+      g:remove_vertex(uid)
+      blocks[uid] = nil
+    end
+    uid = next_uid
+  end
+
+  return blocks
+end
+
 local function update_variables(variables, var, encoded_var, reference)
   local variable = variables[encoded_var]
   if not variable then
@@ -378,7 +414,8 @@ end
 return function (self)
   local blocks = resolve_jumps(generate(self.code_list))
   local g = blocks.g
-  local uv_postorder = g:uv_postorder(blocks.entry_uid)
+  local uv_postorder, reachables = g:uv_postorder(blocks.entry_uid)
+  remove_unreachable_blocks(blocks, reachables)
   local vu_postorder = g:vu_postorder(blocks.exit_uid)
   analyze_variables(blocks, uv_postorder)
   analyze_dominators(blocks, uv_postorder)
