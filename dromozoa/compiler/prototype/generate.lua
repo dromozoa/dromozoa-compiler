@@ -98,7 +98,7 @@ local function resolve_jumps(blocks, uids, labels)
   return blocks
 end
 
-local function remove_unreachable_blocks(blocks, reachables)
+local function remove_unreachables(blocks, reachables)
   local g = blocks.g
   local u = g.u
   local u_after = u.after
@@ -415,10 +415,10 @@ return function (self)
   local blocks = resolve_jumps(generate(self.code_list))
   local g = blocks.g
   local uv_postorder, reachables = g:uv_postorder(blocks.entry_uid)
-  remove_unreachable_blocks(blocks, reachables)
-  local vu_postorder = g:vu_postorder(blocks.exit_uid)
+  remove_unreachables(blocks, reachables)
   analyze_variables(blocks, uv_postorder)
   analyze_dominators(blocks, uv_postorder)
+  local vu_postorder = g:vu_postorder(blocks.exit_uid)
   analyze_liveness(blocks, vu_postorder)
   -- resolve_variables(blocks)
   self.blocks = blocks
