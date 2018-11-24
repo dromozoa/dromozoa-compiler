@@ -136,82 +136,39 @@ end
 
 local function analyze_dominators(blocks, postorder)
   local g = blocks.g
+  local entry_uid = blocks.entry_uid
   local vu = g.vu
   local vu_first = vu.first
   local vu_after = vu.after
   local vu_target = vu.target
-  local entry_uid = blocks.entry_uid
   local n = #postorder
+
+  local idom = g:find_dominators(entry_uid)
 
   for i = n, 1, -1 do
     local uid = postorder[i]
-    local block = blocks[uid]
-    if uid == entry_uid then
-      block.dom = { [uid] = true }
-    else
-      local dom = {}
-      for i = n, 1, -1 do
-        dom[postorder[i]] = true
-      end
-      block.dom = dom
+    -- local df = {}
+    -- local eid = vu_first[uid]
+    -- if eid and vu_after[eid] then
+    --   while eid do
+    --     local vid = vu_target[eid]
+    --     while vid ~= idom[uid] do
+    --       df[uid] = true
+    --       vid = idom[vid]
+    --     end
+    --     eid = vu_after[eid]
+    --   end
+    -- end
+    -- blocks[uid].df = df
+    local dom = {}
+    local vid = uid
+    while vid do
+      dom[vid] = true
+      vid = idom[vid]
     end
-    block.df = {}
+    blocks[uid].dom = dom
+    blocks[uid].df = {}
   end
-
-  repeat
-    local changed = false
-
-    for i = n, 1, -1 do
-      local uid = postorder[i]
-      local block = blocks[uid]
-      local dom = block.dom
-      local set
-
-      local eid = vu_first[uid]
-      while eid do
-        local vid = vu_target[eid]
-        local pred_dom = blocks[vid].dom
-        if set then
-          for wid in pairs(set) do
-            if not pred_dom[wid] then
-              set[wid] = nil
-            end
-          end
-        else
-          set = {}
-          for wid in pairs(pred_dom) do
-            set[wid] = true
-          end
-        end
-        eid = vu_after[eid]
-      end
-      if set then
-        set[uid] = true
-      else
-        set = { [uid] = true }
-      end
-
-      if not changed then
-        for vid in pairs(set) do
-          if not dom[vid] then
-            changed = true
-            break
-          end
-        end
-      end
-
-      if not changed then
-        for vid in pairs(dom) do
-          if not set[vid] then
-            changed = true
-            break
-          end
-        end
-      end
-
-      block.dom = set
-    end
-  until not changed
 
   for i = n, 1, -1 do
     local uid = postorder[i]
