@@ -134,92 +134,6 @@ local function remove_unreachables(blocks, reachables)
   return blocks
 end
 
-local function update_variables(variables, var, encoded_var, reference)
-  local variable = variables[encoded_var]
-  if not variable then
-    variable = {
-      key = var.key;
-      index = var.index;
-    }
-    variables[encoded_var] = variable
-  end
-  if var.key == "U" or reference then
-    variable.reference = true
-  end
-end
-
-local function update_def(variables, def, var)
-  local t = var.type
-  if t == "value" or t == "array" then
-    local encoded_var = var:encode_without_index()
-    update_variables(variables, var, encoded_var)
-    def[encoded_var] = true
-  end
-end
-
-local function update_use(variables, def, use, var)
-  local t = var.type
-  if t == "value" or t == "array" then
-    local encoded_var = var:encode_without_index()
-    update_variables(variables, var, encoded_var)
-    if not def[encoded_var] then
-      use[encoded_var] = true
-    end
-  end
-end
-
-local function update_ref(variables, def, use, var)
-  local t = var.type
-  if t == "value" or t == "array" then
-    local encoded_var = var:encode_without_index()
-    update_variables(variables, var, encoded_var, true)
-    if not def[encoded_var] then
-      use[encoded_var] = true
-    end
-  end
-end
-
-local function analyze_variables(blocks, postorder)
-  local variables = {}
-
-  for i = #postorder, 1, -1 do
-    local uid = postorder[i]
-    local block = blocks[uid]
-    local def = {}
-    local use = {}
-
-    for j = 1, #block do
-      local code = block[j]
-      local name = code[0]
-      if name == "CLOSURE" then
-        for k = 3, #code do
-          update_ref(variables, def, use, code[k])
-        end
-        update_def(variables, def, code[1])
-      elseif name == "RESULT" then
-        for k = 1, #code do
-          update_def(variables, def, code[k])
-        end
-      else
-        for k = 2, #code do
-          update_use(variables, def, use, code[k])
-        end
-        if name == "SETTABLE" or name == "CALL" or name == "RETURN" or name == "COND" then
-          update_use(variables, def, use, code[1])
-        else
-          update_def(variables, def, code[1])
-        end
-      end
-    end
-
-    block.def = def
-    block.use = use
-  end
-
-  blocks.variables = variables
-  return blocks
-end
-
 local function analyze_dominators(blocks, postorder)
   local g = blocks.g
   local vu = g.vu
@@ -319,6 +233,92 @@ local function analyze_dominators(blocks, postorder)
   return blocks
 end
 
+local function update_variables(variables, var, encoded_var, reference)
+  local variable = variables[encoded_var]
+  if not variable then
+    variable = {
+      key = var.key;
+      index = var.index;
+    }
+    variables[encoded_var] = variable
+  end
+  if var.key == "U" or reference then
+    variable.reference = true
+  end
+end
+
+local function update_def(variables, def, var)
+  local t = var.type
+  if t == "value" or t == "array" then
+    local encoded_var = var:encode_without_index()
+    update_variables(variables, var, encoded_var)
+    def[encoded_var] = true
+  end
+end
+
+local function update_use(variables, def, use, var)
+  local t = var.type
+  if t == "value" or t == "array" then
+    local encoded_var = var:encode_without_index()
+    update_variables(variables, var, encoded_var)
+    if not def[encoded_var] then
+      use[encoded_var] = true
+    end
+  end
+end
+
+local function update_ref(variables, def, use, var)
+  local t = var.type
+  if t == "value" or t == "array" then
+    local encoded_var = var:encode_without_index()
+    update_variables(variables, var, encoded_var, true)
+    if not def[encoded_var] then
+      use[encoded_var] = true
+    end
+  end
+end
+
+local function analyze_variables(blocks, postorder)
+  local variables = {}
+
+  for i = #postorder, 1, -1 do
+    local uid = postorder[i]
+    local block = blocks[uid]
+    local def = {}
+    local use = {}
+
+    for j = 1, #block do
+      local code = block[j]
+      local name = code[0]
+      if name == "CLOSURE" then
+        for k = 3, #code do
+          update_ref(variables, def, use, code[k])
+        end
+        update_def(variables, def, code[1])
+      elseif name == "RESULT" then
+        for k = 1, #code do
+          update_def(variables, def, code[k])
+        end
+      else
+        for k = 2, #code do
+          update_use(variables, def, use, code[k])
+        end
+        if name == "SETTABLE" or name == "CALL" or name == "RETURN" or name == "COND" then
+          update_use(variables, def, use, code[1])
+        else
+          update_def(variables, def, code[1])
+        end
+      end
+    end
+
+    block.def = def
+    block.use = use
+  end
+
+  blocks.variables = variables
+  return blocks
+end
+
 local function analyze_liveness(blocks, postorder)
   local g = blocks.g
   local uv = g.uv
@@ -414,10 +414,13 @@ end
 return function (self)
   local blocks = resolve_jumps(generate(self.code_list))
   local g = blocks.g
-  local uv_postorder, reachables = g:uv_postorder(blocks.entry_uid)
+  local entry_uid = blocks.entry_uid
+  local uv_postorder, reachables = g:uv_postorder(entry_uid)
   remove_unreachables(blocks, reachables)
-  analyze_variables(blocks, uv_postorder)
   analyze_dominators(blocks, uv_postorder)
+
+  analyze_variables(blocks, uv_postorder)
+
   local vu_postorder = g:vu_postorder(blocks.exit_uid)
   analyze_liveness(blocks, vu_postorder)
   -- resolve_variables(blocks)
