@@ -85,34 +85,34 @@ local function dump_block(blocks, uid, block)
     html[#html + 1] = ("    [label %s]\n"):format(label:encode())
   end
 
-  local dom = {}
-  for vid in pairs(block.dom) do
-    dom[#dom + 1] = vid
-  end
-  if dom[1] then
-    table.sort(dom)
-    html[#html + 1] = ("    [dom b%s]\n"):format(table.concat(dom, " b"))
-  end
+  -- local dom = {}
+  -- for vid in pairs(block.dom) do
+  --   dom[#dom + 1] = vid
+  -- end
+  -- if dom[1] then
+  --   table.sort(dom)
+  --   html[#html + 1] = ("    [dom b%s]\n"):format(table.concat(dom, " b"))
+  -- end
 
-  local df = {}
-  for vid in pairs(block.df) do
-    df[#df + 1] = vid
-  end
-  if df[1] then
-    table.sort(df)
-    html[#html + 1] = ("    [df b%s]\n"):format(table.concat(df, " b"))
-  end
+  -- local df = {}
+  -- for vid in pairs(block.df) do
+  --   df[#df + 1] = vid
+  -- end
+  -- if df[1] then
+  --   table.sort(df)
+  --   html[#html + 1] = ("    [df b%s]\n"):format(table.concat(df, " b"))
+  -- end
 
-  local live = {}
-  for encoded_var in pairs(block.live_in) do
-    live[#live + 1] = variable.decode(encoded_var)
+  local params = {}
+  for encoded_var in pairs(block.params) do
+    params[#params + 1] = variable.decode(encoded_var)
   end
-  if live[1] then
-    table.sort(live)
-    for i = 1, #live do
-      live[i] = live[i]:encode()
+  if params[1] then
+    table.sort(params)
+    for i = 1, #params do
+      params[i] = params[i]:encode()
     end
-    html[#html + 1] = ("    [live_in %s]\n"):format(table.concat(live, " "))
+    html[#html + 1] = ("    [params %s]\n"):format(table.concat(params, " "))
   end
 
   for i = 1, #block do
@@ -124,17 +124,17 @@ local function dump_block(blocks, uid, block)
     html[#html + 1] = ("    %s %s\n"):format(code[0], table.concat(encoded_vars, " "))
   end
 
-  local live = {}
-  for encoded_var in pairs(block.live_out) do
-    live[#live + 1] = variable.decode(encoded_var)
-  end
-  if live[1] then
-    table.sort(live)
-    for i = 1, #live do
-      live[i] = live[i]:encode()
-    end
-    html[#html + 1] = ("    [live_out %s]\n"):format(table.concat(live, " "))
-  end
+  -- local live = {}
+  -- for encoded_var in pairs(block.live_out) do
+  --   live[#live + 1] = variable.decode(encoded_var)
+  -- end
+  -- if live[1] then
+  --   table.sort(live)
+  --   for i = 1, #live do
+  --     live[i] = live[i]:encode()
+  --   end
+  --   html[#html + 1] = ("    [live_out %s]\n"):format(table.concat(live, " "))
+  -- end
 
   local label = block["goto"]
   if label then

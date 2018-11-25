@@ -130,8 +130,6 @@ local function remove_unreachables(blocks, reachables)
     end
     uid = next_uid
   end
-
-  return blocks
 end
 
 local function analyze_dominators(blocks, postorder)
@@ -144,26 +142,26 @@ local function analyze_dominators(blocks, postorder)
   local n = #postorder
 
   local idom = g:find_dominators(entry_uid)
-  local child = {}
+  local dom_child = {}
   local df = {}
 
   for i = n, 1, -1 do
     local uid = postorder[i]
-    child[uid] = {}
+    dom_child[uid] = {}
     df[uid] = {}
   end
 
   for i = n, 1, -1 do
     local uid = postorder[i]
-    local idom_uid = idom[uid]
-    if idom_uid then
-      local uids = child[idom_uid]
+    local dom = idom[uid]
+    if dom then
+      local uids = dom_child[dom]
       uids[#uids + 1] = uid
       local eid = vu_first[uid]
       if eid and vu_after[eid] then
         while eid do
           local vid = vu_target[eid]
-          while vid ~= idom_uid do
+          while vid ~= dom do
             df[vid][uid] = true
             vid = idom[vid]
           end
@@ -173,106 +171,25 @@ local function analyze_dominators(blocks, postorder)
     end
   end
 
-  for i = n, 1, -1 do
-    local uid = postorder[i]
-    local block = blocks[uid]
-    local dom = {}
-    local vid = uid
-    while vid do
-      dom[vid] = true
-      vid = idom[vid]
-    end
-    block.dom = dom
-    block.df = df[uid]
-  end
-
-  return blocks
+  return idom, dom_child, df
 end
 
-local function update_variables(variables, var, encoded_var, reference)
-  local variable = variables[encoded_var]
-  if not variable then
-    variable = {
-      key = var.key;
-      index = var.index;
-    }
-    variables[encoded_var] = variable
-  end
-  if var.key == "U" or reference then
-    variable.reference = true
-  end
-end
-
-local function update_def(variables, def, var)
+local function analyze_liveness_def(def, var)
   local t = var.type
   if t == "value" or t == "array" then
     local encoded_var = var:encode_without_index()
-    update_variables(variables, var, encoded_var)
     def[encoded_var] = true
   end
 end
 
-local function update_use(variables, def, use, var)
+local function analyze_liveness_use(def, use, var)
   local t = var.type
   if t == "value" or t == "array" then
     local encoded_var = var:encode_without_index()
-    update_variables(variables, var, encoded_var)
     if not def[encoded_var] then
       use[encoded_var] = true
     end
   end
-end
-
-local function update_ref(variables, def, use, var)
-  local t = var.type
-  if t == "value" or t == "array" then
-    local encoded_var = var:encode_without_index()
-    update_variables(variables, var, encoded_var, true)
-    if not def[encoded_var] then
-      use[encoded_var] = true
-    end
-  end
-end
-
-local function analyze_variables(blocks, postorder)
-  local variables = {}
-
-  for i = #postorder, 1, -1 do
-    local uid = postorder[i]
-    local block = blocks[uid]
-    local def = {}
-    local use = {}
-
-    for j = 1, #block do
-      local code = block[j]
-      local name = code[0]
-      if name == "CLOSURE" then
-        for k = 3, #code do
-          update_ref(variables, def, use, code[k])
-        end
-        update_def(variables, def, code[1])
-      elseif name == "RESULT" then
-        for k = 1, #code do
-          update_def(variables, def, code[k])
-        end
-      else
-        for k = 2, #code do
-          update_use(variables, def, use, code[k])
-        end
-        if name == "SETTABLE" or name == "CALL" or name == "RETURN" or name == "COND" then
-          update_use(variables, def, use, code[1])
-        else
-          update_def(variables, def, code[1])
-        end
-      end
-    end
-
-    block.def = def
-    block.use = use
-  end
-
-  blocks.variables = variables
-  return blocks
 end
 
 local function analyze_liveness(blocks, postorder)
@@ -283,18 +200,45 @@ local function analyze_liveness(blocks, postorder)
   local uv_target = uv.target
   local n = #postorder
 
+  local defs = {}
+  local uses = {}
+  local lives_in = {}
+  local lives_out = {}
+
   for i = n, 1, -1 do
     local uid = postorder[i]
     local block = blocks[uid]
-    local use = block.use
+    local def = {}
+    local use = {}
+
+    for j = 1, #block do
+      local code = block[j]
+      local name = code[0]
+      if name == "RESULT" then
+        for k = 1, #code do
+          analyze_liveness_def(def, code[k])
+        end
+      else
+        for k = 2, #code do
+          analyze_liveness_use(def, use, code[k])
+        end
+        if name == "SETTABLE" or name == "CALL" or name == "RETURN" or name == "COND" then
+          analyze_liveness_use(def, use, code[1])
+        else
+          analyze_liveness_def(def, code[1])
+        end
+      end
+    end
 
     local live_in = {}
     for encoded_var in pairs(use) do
       live_in[encoded_var] = true
     end
 
-    block.live_in = live_in
-    block.live_out = {}
+    defs[uid] = def
+    uses[uid] = use
+    lives_in[uid] = live_in
+    lives_out[uid] = {}
   end
 
   repeat
@@ -302,16 +246,15 @@ local function analyze_liveness(blocks, postorder)
 
     for i = n, 1, -1 do
       local uid = postorder[i]
-      local block = blocks[uid]
-      local def = block.def
-      local use = block.use
-      local live_in = block.live_in
-      local live_out = block.live_out
+      local def = defs[uid]
+      local use = uses[uid]
+      local live_in = lives_in[uid]
+      local live_out = lives_out[uid]
 
       local eid = uv_first[uid]
       while eid do
         local vid = uv_target[eid]
-        for encoded_var in pairs(blocks[vid].live_in) do
+        for encoded_var in pairs(lives_in[vid]) do
           if not live_out[encoded_var] then
             live_out[encoded_var] = true
             changed = true
@@ -331,55 +274,55 @@ local function analyze_liveness(blocks, postorder)
     end
   until not changed
 
-  return blocks
+  return lives_in, lives_out
 end
 
-local function resolve_variables(blocks)
-  local g = blocks.g
-  local u = g.u
-  local u_first = u.first
-  local u_after = u.after
-  local variables = blocks.variables
+local function update_variable()
+end
 
-  local uid = u_first
-  while uid do
+local function analyze_variables(blocks, postorder)
+  local variables = {}
+
+  for i = #postorder, 1, -1 do
+    local uid = postorder[i]
     local block = blocks[uid]
-    for i = 1, #block do
-      local code = block[i]
+    for j = 1, #block do
+      local code = block[j]
       local name = code[0]
-      if name ~= "SETTABLE" and name ~= "RETURN" and name ~= "COND" then
-        local var = code[1]
-        local variable = variables[var:encode_without_index()]
-        if variable and not variable.reference then
-          local version = variable.version
-          if version then
-            code[1] = var[version]
-            variable.version = version + 1
-          else
-            variable.version = 1
-          end
-        end
+      if name == "CLOSURE" then
+
+      elseif name == "RESULT" then
+      else
       end
     end
-    uid = u_after[uid]
   end
 
-  return blocks
+  return variables
+end
+
+local function resolve_variables(blocks, dom_child, df, lives_in, postorder)
+  local n = #postorder
+
+  for i = n, 1, -1 do
+    local uid = postorder[i]
+    local block = blocks[uid]
+    local params = {}
+    for encoded_var in pairs(lives_in[uid]) do
+      params[encoded_var] = true
+    end
+    block.params = params
+  end
 end
 
 return function (self)
   local blocks = resolve_jumps(generate(self.code_list))
   local g = blocks.g
-  local entry_uid = blocks.entry_uid
-  local uv_postorder, reachables = g:uv_postorder(entry_uid)
+  local uv_postorder, reachables = g:uv_postorder(blocks.entry_uid)
   remove_unreachables(blocks, reachables)
-  analyze_dominators(blocks, uv_postorder)
-
-  analyze_variables(blocks, uv_postorder)
-
-  local vu_postorder = g:vu_postorder(blocks.exit_uid)
-  analyze_liveness(blocks, vu_postorder)
-  -- resolve_variables(blocks)
+  local idom, dom_child, df = analyze_dominators(blocks, uv_postorder)
+  local lives_in = analyze_liveness(blocks, g:vu_postorder(blocks.exit_uid))
+  local variables = analyze_variables(blocks, uv_postorder)
+  resolve_variables(blocks, dom_child, df, lives_in, uv_postorder)
   self.blocks = blocks
   return self
 end
