@@ -277,7 +277,7 @@ local function analyze_liveness(blocks, postorder)
   return lives_in, lives_out
 end
 
-local function analyze_variable_def(def, ref, var, encoded_var)
+local function resolve_variables_def(def, ref, var, encoded_var)
   local t = var.type
   if t == "value" or t == "array" then
     if not encoded_var then
@@ -295,14 +295,14 @@ local function analyze_variable_def(def, ref, var, encoded_var)
   end
 end
 
-local function analyze_variables(blocks, lives_in, postorder)
+local function resolve_variables(blocks, lives_in, postorder)
   local variables = {}
 
   local ref = {}
   local def = {}
 
   for encoded_var in pairs(lives_in[blocks.entry_uid]) do
-    analyze_variable_def(def, ref, variable.decode(encoded_var), encoded_var)
+    resolve_variables_def(def, ref, variable.decode(encoded_var), encoded_var)
   end
 
   for i = #postorder, 1, -1 do
@@ -312,17 +312,17 @@ local function analyze_variables(blocks, lives_in, postorder)
       local code = block[j]
       local name = code[0]
       if name == "CLOSURE" then
-        analyze_variable_def(def, ref, code[1])
+        resolve_variables_def(def, ref, code[1])
         for k = 3, #code do
           ref[code[k]:encode()] = true
         end
       elseif name == "RESULT" then
         for k = 1, #code do
-          analyze_variable_def(def, ref, code[k])
+          resolve_variables_def(def, ref, code[k])
         end
       else
         if name ~= "SETTABLE" and name ~= "CALL" and name ~= "RETURN" and name ~= "COND" then
-          analyze_variable_def(def, ref, code[1])
+          resolve_variables_def(def, ref, code[1])
         end
       end
     end
@@ -334,17 +334,14 @@ local function analyze_variables(blocks, lives_in, postorder)
     block.params = params
   end
 
-  local version = {}
+  local versions = {}
   for encoded_var, n in pairs(def) do
     if n > 1 and not ref[encoded_var] then
-      version[encoded_var] = 0
+      versions[encoded_var] = 0
     end
   end
 
-  return ref, version
-end
-
-local function resolve_variables(blocks, dom_child, df, lives_in, postorder)
+  return versions
 end
 
 return function (self)
@@ -354,8 +351,7 @@ return function (self)
   remove_unreachables(blocks, reachables)
   local idom, dom_child, df = analyze_dominators(blocks, uv_postorder)
   local lives_in = analyze_liveness(blocks, g:vu_postorder(blocks.exit_uid))
-  local variables = analyze_variables(blocks, lives_in, uv_postorder)
-  resolve_variables(blocks, dom_child, df, lives_in, uv_postorder)
+  local versions = resolve_variables(blocks, lives_in, uv_postorder)
   self.blocks = blocks
   return self
 end
