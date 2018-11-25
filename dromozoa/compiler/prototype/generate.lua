@@ -314,7 +314,7 @@ local function resolve_variables(blocks, lives_in, postorder)
       if name == "CLOSURE" then
         resolve_variables_def(def, ref, code[1])
         for k = 3, #code do
-          ref[code[k]:encode()] = true
+          ref[code[k]:encode_without_index()] = true
         end
       elseif name == "RESULT" then
         for k = 1, #code do
@@ -341,7 +341,7 @@ local function resolve_variables(blocks, lives_in, postorder)
     end
   end
 
-  return versions
+  return refs, versions
 end
 
 return function (self)
@@ -351,7 +351,7 @@ return function (self)
   remove_unreachables(blocks, reachables)
   local idom, dom_child, df = analyze_dominators(blocks, uv_postorder)
   local lives_in = analyze_liveness(blocks, g:vu_postorder(blocks.exit_uid))
-  local versions = resolve_variables(blocks, lives_in, uv_postorder)
+  local refs, versions = resolve_variables(blocks, lives_in, uv_postorder)
   self.blocks = blocks
   return self
 end
