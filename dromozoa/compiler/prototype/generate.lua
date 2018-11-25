@@ -277,47 +277,20 @@ local function analyze_liveness(blocks, postorder)
   return lives_in, lives_out
 end
 
-local function analyze_variable_ref(variables, var)
+local function analyze_variable_def(def, ref, var, encoded_var)
   local t = var.type
   if t == "value" or t == "array" then
-    local encoded_var = var:encode_without_index()
-    local map = variables[encoded_var]
-    if map then
-      map.reference = true
-    else
-      variables[encoded_var] = {
-        assigned = 0;
-        reference = true;
-      }
+    if not encoded_var then
+      encoded_var = var:encode_without_index()
     end
-  end
-end
-
-local function analyze_variable_def(variables, var)
-  local t = var.type
-  if t == "value" or t == "array" then
-    local encoded_var = var:encode_without_index()
-    local map = variables[encoded_var]
-    if map then
-      map.assigned = map.assigned + 1
+    local n = def[encoded_var]
+    if n then
+      def[encoded_var] = n + 1
     else
-      variables[encoded_var] = {
-        assigned = 1;
-        reference = var.key == "U";
-      }
+      def[encoded_var] = 1
     end
-  end
-end
-
-local function analyze_variable_use(variables, var)
-  local t = var.type
-  if t == "value" or t == "array" then
-    local encoded_var = var:encode_without_index()
-    if not variables[encoded_var] then
-      variables[encoded_var] = {
-        assigned = 0;
-        reference = var.key == "U";
-      }
+    if var.key == "U" then
+      ref[encoded_var] = true
     end
   end
 end
@@ -325,8 +298,11 @@ end
 local function analyze_variables(blocks, lives_in, postorder)
   local variables = {}
 
+  local ref = {}
+  local def = {}
+
   for encoded_var in pairs(lives_in[blocks.entry_uid]) do
-    analyze_variable_def(variables, variable.decode(encoded_var))
+    analyze_variable_def(def, ref, variable.decode(encoded_var), encoded_var)
   end
 
   for i = #postorder, 1, -1 do
@@ -336,22 +312,17 @@ local function analyze_variables(blocks, lives_in, postorder)
       local code = block[j]
       local name = code[0]
       if name == "CLOSURE" then
-        analyze_variable_def(variables, code[1])
+        analyze_variable_def(def, ref, code[1])
         for k = 3, #code do
-          analyze_variable_ref(variables, code[k])
+          ref[code[k]:encode()] = true
         end
       elseif name == "RESULT" then
         for k = 1, #code do
-          analyze_variable_def(variables, code[k])
+          analyze_variable_def(def, ref, code[k])
         end
       else
-        if name == "SETTABLE" or name == "CALL" or name == "RETURN" or name == "COND" then
-          analyze_variable_use(variables, code[1])
-        else
-          analyze_variable_def(variables, code[1])
-        end
-        for k = 2, #code do
-          analyze_variable_use(variables, code[k])
+        if name ~= "SETTABLE" and name ~= "CALL" and name ~= "RETURN" and name ~= "COND" then
+          analyze_variable_def(def, ref, code[1])
         end
       end
     end
@@ -363,7 +334,14 @@ local function analyze_variables(blocks, lives_in, postorder)
     block.params = params
   end
 
-  return variables
+  local version = {}
+  for encoded_var, n in pairs(def) do
+    if n > 1 and not ref[encoded_var] then
+      version[encoded_var] = 0
+    end
+  end
+
+  return ref, version
 end
 
 local function resolve_variables(blocks, dom_child, df, lives_in, postorder)
