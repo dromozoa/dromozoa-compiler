@@ -144,32 +144,46 @@ local function analyze_dominators(blocks, postorder)
   local n = #postorder
 
   local idom = g:find_dominators(entry_uid)
+  local child = {}
+  local df = {}
 
   for i = n, 1, -1 do
     local uid = postorder[i]
+    child[uid] = {}
+    df[uid] = {}
+  end
+
+  for i = n, 1, -1 do
+    local uid = postorder[i]
+    local idom_uid = idom[uid]
+    if idom_uid then
+      local uids = child[idom_uid]
+      uids[#uids + 1] = uid
+      local eid = vu_first[uid]
+      if eid and vu_after[eid] then
+        while eid do
+          local vid = vu_target[eid]
+          while vid ~= idom_uid do
+            df[vid][uid] = true
+            vid = idom[vid]
+          end
+          eid = vu_after[eid]
+        end
+      end
+    end
+  end
+
+  for i = n, 1, -1 do
+    local uid = postorder[i]
+    local block = blocks[uid]
     local dom = {}
     local vid = uid
     while vid do
       dom[vid] = true
       vid = idom[vid]
     end
-    blocks[uid].dom = dom
-    blocks[uid].df = {}
-  end
-
-  for i = n, 1, -1 do
-    local uid = postorder[i]
-    local eid = vu_first[uid]
-    if eid and vu_after[eid] then
-      while eid do
-        local vid = vu_target[eid]
-        while vid ~= idom[uid] do
-          blocks[vid].df[uid] = true
-          vid = idom[vid]
-        end
-        eid = vu_after[eid]
-      end
-    end
+    block.dom = dom
+    block.df = df[uid]
   end
 
   return blocks
