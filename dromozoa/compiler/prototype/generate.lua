@@ -277,11 +277,57 @@ local function analyze_liveness(blocks, postorder)
   return lives_in, lives_out
 end
 
-local function update_variable()
+local function analyze_variable_ref(variables, var)
+  local t = var.type
+  if t == "value" or t == "array" then
+    local encoded_var = var:encode_without_index()
+    local map = variables[encoded_var]
+    if map then
+      map.reference = true
+    else
+      variables[encoded_var] = {
+        assigned = 0;
+        reference = true;
+      }
+    end
+  end
 end
 
-local function analyze_variables(blocks, postorder)
+local function analyze_variable_def(variables, var)
+  local t = var.type
+  if t == "value" or t == "array" then
+    local encoded_var = var:encode_without_index()
+    local map = variables[encoded_var]
+    if map then
+      map.assigned = map.assigned + 1
+    else
+      variables[encoded_var] = {
+        assigned = 1;
+        reference = var.key == "U";
+      }
+    end
+  end
+end
+
+local function analyze_variable_use(variables, var)
+  local t = var.type
+  if t == "value" or t == "array" then
+    local encoded_var = var:encode_without_index()
+    if not variables[encoded_var] then
+      variables[encoded_var] = {
+        assigned = 0;
+        reference = var.key == "U";
+      }
+    end
+  end
+end
+
+local function analyze_variables(blocks, lives_in, postorder)
   local variables = {}
+
+  for encoded_var in pairs(lives_in[blocks.entry_uid]) do
+    analyze_variable_def(variables, variable.decode(encoded_var))
+  end
 
   for i = #postorder, 1, -1 do
     local uid = postorder[i]
@@ -290,28 +336,37 @@ local function analyze_variables(blocks, postorder)
       local code = block[j]
       local name = code[0]
       if name == "CLOSURE" then
-
+        analyze_variable_def(variables, code[1])
+        for k = 3, #code do
+          analyze_variable_ref(variables, code[k])
+        end
       elseif name == "RESULT" then
+        for k = 1, #code do
+          analyze_variable_def(variables, code[k])
+        end
       else
+        if name == "SETTABLE" or name == "CALL" or name == "RETURN" or name == "COND" then
+          analyze_variable_use(variables, code[1])
+        else
+          analyze_variable_def(variables, code[1])
+        end
+        for k = 2, #code do
+          analyze_variable_use(variables, code[k])
+        end
       end
     end
-  end
 
-  return variables
-end
-
-local function resolve_variables(blocks, dom_child, df, lives_in, postorder)
-  local n = #postorder
-
-  for i = n, 1, -1 do
-    local uid = postorder[i]
-    local block = blocks[uid]
     local params = {}
     for encoded_var in pairs(lives_in[uid]) do
       params[encoded_var] = true
     end
     block.params = params
   end
+
+  return variables
+end
+
+local function resolve_variables(blocks, dom_child, df, lives_in, postorder)
 end
 
 return function (self)
@@ -321,7 +376,7 @@ return function (self)
   remove_unreachables(blocks, reachables)
   local idom, dom_child, df = analyze_dominators(blocks, uv_postorder)
   local lives_in = analyze_liveness(blocks, g:vu_postorder(blocks.exit_uid))
-  local variables = analyze_variables(blocks, uv_postorder)
+  local variables = analyze_variables(blocks, lives_in, uv_postorder)
   resolve_variables(blocks, dom_child, df, lives_in, uv_postorder)
   self.blocks = blocks
   return self

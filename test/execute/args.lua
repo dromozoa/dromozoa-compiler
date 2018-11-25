@@ -17,6 +17,7 @@
 
 local function f(a, b, c, d)
   print(type(a), b, c, d)
+  a = 42
 end
 
 f(1, 2, 3, 4)
