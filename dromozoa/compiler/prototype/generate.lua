@@ -345,23 +345,17 @@ local function resolve_variables(blocks, lives_in, postorder)
 end
 
 local function insert_phi_functions(blocks, df, defs, vers, postorder)
-  local inserted = {}
-  local work = {}
-
-  for i = #postorder, 1, -1 do
-    local uid = postorder[i]
-    inserted[uid] = {}
-    work[uid] = {}
-  end
-
-  local stack = {}
-
   for encoded_var in pairs(vers) do
     local def = defs[encoded_var]
+
+    local inserted = {}
+    local work = {}
+    local stack = {}
+
     for i = 1, #def do
       local uid = def[i]
       stack[#stack + 1] = uid
-      work[uid][encoded_var] = true
+      work[uid] = true
     end
     while true do
       local n = #stack
@@ -371,15 +365,15 @@ local function insert_phi_functions(blocks, df, defs, vers, postorder)
       local uid = stack[n]
       stack[n] = nil
       for vid in pairs(df[uid]) do
-        if not inserted[vid][encoded_var] then
+        if not inserted[vid] then
           local params = blocks[vid].params
           if params[encoded_var] then
             params[encoded_var] = { [0] = "phi" } -- phi
-            inserted[vid][encoded_var] = true
+            inserted[vid] = true
           end
-          if not work[vid][encoded_var] then
+          if not work[vid] then
             stack[#stack + 1] = vid
-            work[vid][encoded_var] = true
+            work[vid] = true
           end
         end
       end
