@@ -354,21 +354,21 @@ local function insert_phi_functions(blocks, df, defs, vers, postorder)
     work[uid] = {}
   end
 
-  local w = {}
+  local stack = {}
+  local n = 0
 
   for encoded_var in pairs(vers) do
     local def = defs[encoded_var]
     for i = 1, #def do
       local uid = def[i]
-      w[uid] = true
+      n = n + 1
+      stack[n] = uid
       work[uid][encoded_var] = true
     end
-    while true do
-      local uid = next(w)
-      if not uid then
-        break
-      end
-      w[uid] = nil
+    while n > 0 do
+      local uid = stack[n]
+      stack[n] = nil
+      n = n - 1
       for vid in pairs(df[uid]) do
         if not inserted[vid][encoded_var] then
           local params = blocks[vid].params
@@ -377,7 +377,8 @@ local function insert_phi_functions(blocks, df, defs, vers, postorder)
             inserted[vid][encoded_var] = true
           end
           if not work[vid][encoded_var] then
-            w[vid] = true
+            n = n + 1
+            stack[n] = vid
             work[vid][encoded_var] = true
           end
         end
