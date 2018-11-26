@@ -106,7 +106,7 @@ local function dump_block(blocks, uid, block)
   local params = {}
   for encoded_var, param in pairs(block.params) do
     local value = encoded_var
-    if type(param) == "table" then
+    if type(param) ~= "boolean" then
       value = encoded_var .. "=phi()"
     end
     params[#params + 1] = {
