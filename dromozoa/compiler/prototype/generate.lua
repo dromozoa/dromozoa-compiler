@@ -277,32 +277,32 @@ local function analyze_liveness(blocks, postorder)
   return lives_in, lives_out
 end
 
-local function resolve_variables_def(def, ref, var, encoded_var)
+local function resolve_variables_def(defs, refs, uid, var, encoded_var)
   local t = var.type
   if t == "value" or t == "array" then
     if not encoded_var then
       encoded_var = var:encode_without_index()
     end
-    local n = def[encoded_var]
-    if n then
-      def[encoded_var] = n + 1
+    local def = defs[encoded_var]
+    if def then
+      def[#def + 1] = uid
     else
-      def[encoded_var] = 1
+      defs[encoded_var] = { uid }
     end
     if var.key == "U" then
-      ref[encoded_var] = true
+      refs[encoded_var] = true
     end
   end
 end
 
 local function resolve_variables(blocks, lives_in, postorder)
-  local variables = {}
+  local entry_uid = blocks.entry_uid
 
-  local ref = {}
-  local def = {}
+  local refs = {}
+  local defs = {}
 
-  for encoded_var in pairs(lives_in[blocks.entry_uid]) do
-    resolve_variables_def(def, ref, variable.decode(encoded_var), encoded_var)
+  for encoded_var in pairs(lives_in[entry_uid]) do
+    resolve_variables_def(defs, refs, entry_uid, variable.decode(encoded_var), encoded_var)
   end
 
   for i = #postorder, 1, -1 do
@@ -312,17 +312,17 @@ local function resolve_variables(blocks, lives_in, postorder)
       local code = block[j]
       local name = code[0]
       if name == "CLOSURE" then
-        resolve_variables_def(def, ref, code[1])
+        resolve_variables_def(defs, refs, uid, code[1])
         for k = 3, #code do
-          ref[code[k]:encode_without_index()] = true
+          refs[code[k]:encode_without_index()] = true
         end
       elseif name == "RESULT" then
         for k = 1, #code do
-          resolve_variables_def(def, ref, code[k])
+          resolve_variables_def(defs, refs, uid, code[k])
         end
       else
         if name ~= "SETTABLE" and name ~= "CALL" and name ~= "RETURN" and name ~= "COND" then
-          resolve_variables_def(def, ref, code[1])
+          resolve_variables_def(defs, refs, uid, code[1])
         end
       end
     end
@@ -334,14 +334,56 @@ local function resolve_variables(blocks, lives_in, postorder)
     block.params = params
   end
 
-  local versions = {}
-  for encoded_var, n in pairs(def) do
-    if n > 1 and not ref[encoded_var] then
-      versions[encoded_var] = 0
+  local vers = {}
+  for encoded_var, def in pairs(defs) do
+    if #def > 1 and not refs[encoded_var] then
+      vers[encoded_var] = 0
     end
   end
 
-  return refs, versions
+  return defs, refs, vers
+end
+
+local function insert_phi_functions(blocks, df, defs, vers, postorder)
+  local inserted = {}
+  local work = {}
+
+  for i = #postorder, 1, -1 do
+    local uid = postorder[i]
+    inserted[uid] = {}
+    work[uid] = {}
+  end
+
+  local w = {}
+
+  for encoded_var in pairs(vers) do
+    local def = defs[encoded_var]
+    for i = 1, #def do
+      local uid = def[i]
+      w[uid] = true
+      work[uid][encoded_var] = true
+    end
+    while true do
+      local uid = next(w)
+      if not uid then
+        break
+      end
+      w[uid] = nil
+      for vid in pairs(df[uid]) do
+        if not inserted[vid][encoded_var] then
+          local params = blocks[vid].params
+          if params[encoded_var] then
+            params[encoded_var] = { [0] = "phi" } -- phi
+            inserted[vid][encoded_var] = true
+          end
+          if not work[vid][encoded_var] then
+            w[vid] = true
+            work[vid][encoded_var] = true
+          end
+        end
+      end
+    end
+  end
 end
 
 return function (self)
@@ -351,7 +393,8 @@ return function (self)
   remove_unreachables(blocks, reachables)
   local idom, dom_child, df = analyze_dominators(blocks, uv_postorder)
   local lives_in = analyze_liveness(blocks, g:vu_postorder(blocks.exit_uid))
-  local refs, versions = resolve_variables(blocks, lives_in, uv_postorder)
+  local defs, refs, vers = resolve_variables(blocks, lives_in, uv_postorder)
+  insert_phi_functions(blocks, df, defs, vers, uv_postorder)
   self.blocks = blocks
   return self
 end

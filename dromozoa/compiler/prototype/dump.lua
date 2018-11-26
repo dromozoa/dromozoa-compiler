@@ -104,13 +104,20 @@ local function dump_block(blocks, uid, block)
   -- end
 
   local params = {}
-  for encoded_var in pairs(block.params) do
-    params[#params + 1] = variable.decode(encoded_var)
+  for encoded_var, param in pairs(block.params) do
+    local value = encoded_var
+    if type(param) == "table" then
+      value = encoded_var .. "=phi()"
+    end
+    params[#params + 1] = {
+      var = variable.decode(encoded_var);
+      value;
+    }
   end
   if params[1] then
-    table.sort(params)
+    table.sort(params, function (a, b) return a.var < b.var end)
     for i = 1, #params do
-      params[i] = params[i]:encode()
+      params[i] = params[i][1]
     end
     html[#html + 1] = ("    [params %s]\n"):format(table.concat(params, " "))
   end
