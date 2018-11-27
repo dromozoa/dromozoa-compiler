@@ -320,10 +320,8 @@ local function resolve_variables(blocks, lives_in, postorder)
         for k = 1, #code do
           resolve_variables_def(defs, refs, uid, code[k])
         end
-      else
-        if name ~= "SETTABLE" and name ~= "CALL" and name ~= "RETURN" and name ~= "COND" then
-          resolve_variables_def(defs, refs, uid, code[1])
-        end
+      elseif name ~= "SETTABLE" and name ~= "CALL" and name ~= "RETURN" and name ~= "COND" then
+        resolve_variables_def(defs, refs, uid, code[1])
       end
     end
 
@@ -370,7 +368,7 @@ local function insert_phi_functions(blocks, df, defs, vers, postorder)
         if not inserted[vid] then
           local params = blocks[vid].params
           if params[encoded_var] then
-            params[encoded_var] = { [0] = "phi" } -- phi
+            params[encoded_var] = { phi = true }
             inserted[vid] = true
           end
           if not color[vid] then
@@ -383,6 +381,114 @@ local function insert_phi_functions(blocks, df, defs, vers, postorder)
   end
 end
 
+local function rename_variables_def(vers, stacks, code, i)
+  local var = code[i]
+  local encoded_var = var:encode_without_index()
+  local stack = stacks[encoded_var]
+  if stack then
+    local v = vers[encoded_var]
+    vers[encoded_var] = v + 1
+    stack[#stack + 1] = v
+    code[i] = var[v]
+  end
+end
+
+local function rename_variables_use(stacks, code, i)
+  local var = code[i]
+  local stack = stacks[var:encode_without_index()]
+  if stack then
+    code[i] = var[stack[#stack]]
+  end
+end
+
+local function rename_variables_pop(stacks, var, code)
+  local stack = stacks[var:encode_without_index()]
+  if stack then
+    stack[#stack] = nil
+  end
+end
+
+local function rename_variables_search(blocks, dom_child, vers, stacks, uid)
+  local g = blocks.g
+  local uv = g.uv
+  local uv_after = uv.after
+  local uv_target = uv.target
+  local block = blocks[uid]
+  local n = #block
+
+  local params = block.params
+  for encoded_var, param in pairs(params) do
+    local stack = stacks[encoded_var]
+    if stack then
+      if param == true then
+        params[encoded_var] = variable.decode(encoded_var)[stack[#stack]]
+      else
+        assert(param.phi)
+        local v = vers[encoded_var]
+        vers[encoded_var] = v + 1
+        stack[#stack + 1] = v
+        param[0] = variable.decode(encoded_var)[v]
+      end
+    end
+  end
+
+  for i = 1, n do
+    local code = block[i]
+    local name = code[0]
+    if name == "RESULT" then
+      for j = 1, #code do
+        rename_variables_def(vers, stacks, code, j)
+      end
+    else
+      for j = 2, #code do
+        rename_variables_use(stacks, code, j)
+      end
+      if name == "SETTABLE" or name == "CALL" or name == "RETURN" or name == "COND" then
+        rename_variables_use(stacks, code, 1)
+      else
+        rename_variables_def(vers, stacks, code, 1)
+      end
+    end
+  end
+
+  local eid = uv.first[uid]
+  while eid do
+    local vid = uv_target[eid]
+    for encoded_var, param in pairs(blocks[vid].params) do
+      if type(param) == "table" and param.phi then
+        local stack = stacks[encoded_var]
+        param[#param + 1] = variable.decode(encoded_var)[stack[#stack]]
+      end
+    end
+    eid = uv_after[eid]
+  end
+
+  local uids = dom_child[uid]
+  for i = 1, #uids do
+    rename_variables_search(blocks, dom_child, vers, stacks, uids[i])
+  end
+
+  for i = 1, n do
+    local code = block[i]
+    local name = code[0]
+    if name == "RESULT" then
+      for j = 1, #code do
+        rename_variables_pop(stacks, code[j], code)
+      end
+    elseif name ~= "SETTABLE" and name ~= "CALL" and name ~= "RETURN" and name ~= "COND" then
+      rename_variables_pop(stacks, code[1], code)
+    end
+  end
+end
+
+local function rename_variables(blocks, dom_child, vers)
+  local stacks = {}
+  for encoded_var in pairs(vers) do
+    stacks[encoded_var] = { 0 }
+  end
+  rename_variables_search(blocks, dom_child, vers, stacks, blocks.entry_uid)
+end
+
 return function (self)
   local blocks = resolve_jumps(generate(self.code_list))
   local g = blocks.g
@@ -392,6 +498,7 @@ return function (self)
   local lives_in = analyze_liveness(blocks, g:vu_postorder(blocks.exit_uid))
   local defs, refs, vers = resolve_variables(blocks, lives_in, uv_postorder)
   insert_phi_functions(blocks, df, defs, vers, uv_postorder)
+  rename_variables(blocks, dom_child, vers)
   self.blocks = blocks
   return self
 end
