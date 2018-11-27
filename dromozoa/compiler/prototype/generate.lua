@@ -18,6 +18,10 @@
 local graph = require "dromozoa.graph"
 local variable = require "dromozoa.compiler.variable"
 
+local function not_assign(name)
+  return name == "SETTABLE" or name == "CALL" or name == "RETURN" or name == "COND"
+end
+
 local function generate(code_list)
   local g = graph()
   local entry_uid = g:add_vertex()
@@ -222,7 +226,7 @@ local function analyze_liveness(blocks, postorder)
         for k = 2, #code do
           analyze_liveness_use(def, use, code[k])
         end
-        if name == "SETTABLE" or name == "CALL" or name == "RETURN" or name == "COND" then
+        if not_assign(name) then
           analyze_liveness_use(def, use, code[1])
         else
           analyze_liveness_def(def, code[1])
@@ -320,7 +324,7 @@ local function resolve_variables(blocks, lives_in, postorder)
         for k = 1, #code do
           resolve_variables_def(defs, refs, uid, code[k])
         end
-      elseif name ~= "SETTABLE" and name ~= "CALL" and name ~= "RETURN" and name ~= "COND" then
+      elseif not not_assign(name) then
         resolve_variables_def(defs, refs, uid, code[1])
       end
     end
@@ -443,7 +447,7 @@ local function rename_variables_search(blocks, dom_child, vers, stacks, uid)
       for j = 2, #code do
         rename_variables_use(stacks, code, j)
       end
-      if name == "SETTABLE" or name == "CALL" or name == "RETURN" or name == "COND" then
+      if not_assign(name) then
         rename_variables_use(stacks, code, 1)
       else
         rename_variables_def(vers, stacks, code, 1)
@@ -475,7 +479,7 @@ local function rename_variables_search(blocks, dom_child, vers, stacks, uid)
       for j = 1, #code do
         rename_variables_pop(stacks, code[j], code)
       end
-    elseif name ~= "SETTABLE" and name ~= "CALL" and name ~= "RETURN" and name ~= "COND" then
+    elseif not not_assign(name) then
       rename_variables_pop(stacks, code[1], code)
     end
   end
