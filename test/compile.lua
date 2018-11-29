@@ -63,6 +63,15 @@ if not os.getenv "NO_COMPILE" then
   t:compile_cxx(output_name .. ".cpp", opts)
 end
 
+if not os.getenv "NO_COMPILE2" then
+  local out = assert(io.open(output_name .. "2.cpp", "w"))
+  for i = 1, #t.protos do
+    local proto = t.protos[i]
+    proto:generate_cxx(out)
+  end
+  out:close()
+end
+
 if not os.getenv "NO_DUMP" then
   t:dump_tree(output_name .. ".html")
   t:dump_protos(output_name .. "-protos.html")
