@@ -20,8 +20,8 @@
 // and a copy of the GCC Runtime Library Exception along with
 // dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef DROMOZOA_COMPILER_RUNTIME_CXX_VALUE_HPP
-#define DROMOZOA_COMPILER_RUNTIME_CXX_VALUE_HPP
+#ifndef DROMOZOA_COMPILER_RUNTIME_HPP
+#define DROMOZOA_COMPILER_RUNTIME_HPP
 
 #include <cstddef>
 #include <cstdint>
