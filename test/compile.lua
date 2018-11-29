@@ -65,7 +65,7 @@ end
 
 if not os.getenv "NO_COMPILE2" then
   local out = assert(io.open(output_name .. "2.cpp", "w"))
-  for i = 1, #t.protos do
+  for i = #t.protos, 1, -1 do
     local proto = t.protos[i]
     proto:generate_cxx(out)
   end
