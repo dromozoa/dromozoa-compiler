@@ -117,12 +117,18 @@ local function generate_closure(out, self)
   local refs = blocks.refs
 
   local proto_tuple = make_tuple(refs, blocks[entry_uid].params)
+
   local proto_param_tuple = {}
-  for i = 1, #proto_tuple do
-    local item = proto_tuple[i]
-    if item.var.key ~= "U" then
-      proto_param_tuple[#proto_param_tuple + 1] = item
+  for i = 0, self.A - 1 do
+    local var = variable.A(i)
+    if refs[var:encode()] then
+      proto_param_tuple[#proto_param_tuple + 1] = { type = "ref_t", var = var }
+    else
+      proto_param_tuple[#proto_param_tuple + 1] = { type = "value_t", var = var }
     end
+  end
+  for i = 0, self.V - 1 do
+    proto_param_tuple[#proto_param_tuple + 1] = { type = "array_t", var = variable.V(i) }
   end
 
   local closure_param_tuple = {}
