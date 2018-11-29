@@ -21,7 +21,7 @@ local unpack = table.unpack or unpack
 
 local heads = { "cont_t k", "thread_t t", "handler_t h" }
 local head_types = { "cont_t", "thread_t", "handler_t" }
-local name_types = { "k", "t", "h" }
+local head_names = { "k", "t", "h" }
 
 local function make_tuple(refs, params)
   local tuple = {}
@@ -130,17 +130,18 @@ local function generate_closure(out, self)
     closure_param_tuple[i] = { type = "ref_t", var = upvalues[i][1] }
   end
 
-
-  local proto_types = encode_tuple_types(proto_param_tuple, { "cont_t", "thread_t", "handler_t" })
+  local proto_types = encode_tuple_types(proto_param_tuple, head_types)
+  local proto_params = encode_tuple(proto_param_tuple, heads)
   local closure_params = encode_tuple(closure_param_tuple)
+  local proto_args = encode_tuple_names(proto_tuple, head_names)
 
   out:write(([[
 std::function<std::function<void()>(%s)> %s(%s) {
-  return [=](...) -> std::function<void()> {
-    return %s_%d(...)
+  return [=](%s) -> std::function<void()> {
+    return %s_%d(%s);
   };
 }
-]]):format(proto_types, proto_name, closure_params, proto_name, entry_uid))
+]]):format(proto_types, proto_name, closure_params, proto_params, proto_name, entry_uid, proto_args))
 end
 
 return function (self, out)
