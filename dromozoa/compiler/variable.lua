@@ -19,7 +19,10 @@ local function is_unsigned_integer(number)
   return type(number) == "number" and number >= 0 and number % 1 == 0
 end
 
-local metatable = { ["dromozoa.dom.is_serializable"] = true }
+local metatable = {
+  ["dromozoa.dom.is_serializable"] = true;
+  ["dromozoa.compiler.is_serializable"] = true;
+}
 
 local class = {
   NIL   = setmetatable({ type = "immediate", key = "NIL"   }, metatable);
