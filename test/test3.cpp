@@ -15,7 +15,9 @@
 // You should have received a copy of the GNU General Public License
 // along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-namespace dromozoa {
-  namespace runtime {
-  }
+#include "runtime.hpp"
+
+int main(int, char*[]) {
+  using namespace dromozoa::runtime;
+  return 0;
 }
