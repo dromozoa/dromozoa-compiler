@@ -23,13 +23,16 @@
 #ifndef DROMOZOA_COMPILER_RUNTIME_HPP
 #define DROMOZOA_COMPILER_RUNTIME_HPP
 
+#include <cstddef>
 #include <cstdint>
+#include <functional>
+#include <initializer_list>
 #include <memory>
 #include <string>
 
 namespace dromozoa {
   namespace runtime {
-    enum struct type_t : std::uint8_t {
+    enum class type_t : std::uint8_t {
       nil,
       boolean,
       number,
@@ -38,29 +41,57 @@ namespace dromozoa {
       function,
     };
 
-    struct table_t;
-    struct function_t;
+    class table_t;
+    class function_t;
 
-    struct value_t {
-      value_t& operator*();
+    class value_t {
+    public:
+      value_t();
+      value_t(const value_t&);
+      value_t(value_t&&);
+      ~value_t();
+      value_t& operator=(const value_t&);
+      value_t& operator=(value_t&&);
 
-      type_t type;
+      bool operator<(const value_t&) const;
+
+    private:
+      type_t type_;
       union {
-        bool boolean;
-        double number;
-        std::shared_ptr<std::string> string;
-        std::shared_ptr<table_t> table;
-        std::shared_ptr<function_t> function;
+        bool boolean_;
+        double number_;
+        std::shared_ptr<std::string> string_;
+        std::shared_ptr<table_t> table_;
+        std::shared_ptr<function_t> function_;
       };
     };
 
-    struct ref_t {
-      value_t& operator*();
+    extern value_t NIL;
+    extern value_t FALSE;
+    extern value_t TRUE;
 
-      std::shared_ptr<value_t> value;
+    class ref_t {
+    public:
+
+    private:
+      std::shared_ptr<value_t> data_;
     };
 
-    struct tuple_t;
+    class array_t {
+    public:
+      array_t();
+      array_t(const value_t*, const value_t*);
+      value_t& operator[](std::size_t) const;
+    private:
+      std::shared_ptr<value_t> data;
+      std::size_t size;
+    };
+
+    class function_t {
+    public:
+      virtual ~function_t();
+      virtual std::function<void()> operator()(std::shared_ptr<function_t>, std::shared_ptr<function_t>, std::shared_ptr<function_t>, std::initializer_list<value_t>) = 0;
+    };
   }
 }
 

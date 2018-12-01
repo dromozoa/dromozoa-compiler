@@ -142,12 +142,43 @@ local function generate_closure(out, self)
   local proto_args = encode_tuple_names(proto_tuple, head_names)
 
   out:write(([[
-std::function<std::function<void()>(%s)> %s(%s) {
-  return [=](%s) -> std::function<void()> {
-    return %s_%d(%s);
+class %s : public function_t {
+public:
+  %s(%s) ]]):format(proto_name, proto_name, closure_params))
+
+  for i = 1, #upvalues do
+    local encoded_var = upvalues[i][1]:encode()
+    if i == 1 then
+      out:write ": "
+    else
+      out:write ", "
+    end
+    out:write(("%s(%s)"):format(encoded_var, encoded_var))
+  end
+  out:write [[
+ {}
+private:
+  std::function<void()> operator()(std::shared_ptr<function_t> k, std::shared_ptr<function_t> t, std::shared_ptr<function_t> h, std::initializer_list<value_t> args) {
+  }
+]]
+
+  for i = 1, #upvalues do
+    out:write(([[
+  ref_t %s;
+]]):format(upvalues[i][1]:encode()))
+  end
+
+  out:write [[
+};
+]]
+
+--[[
+std::function<std::function<void()>({proto_types})> {proto_name}({closure_params}) {
+  return [=]({proto_params}) -> std::function<void()> {
+    return {proto_name}_{entry_uid}({proto_args});
   };
 }
-]]):format(proto_types, proto_name, closure_params, proto_params, proto_name, entry_uid, proto_args))
+]]
 end
 
 return function (self, out)
