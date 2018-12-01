@@ -29,17 +29,23 @@ local vars = {
   variable.U(3);
 }
 
-local s = tostring(serializer.separated ", " { 42, "foo", unpack(vars) })
-
+local x = serializer.separated ", " { 42, "foo", unpack(vars) }
+local s = tostring(x)
 if verbose then
   print(s)
 end
 assert(s == "42, foo, U0, U1, U2, U3")
 
-local s = tostring(serializer.separated ", " (serializer.map(vars, function (v)
-  return ("%s(%s)"):format(v:encode(), v:encode())
-end)))
+local x = serializer.separated ", " (serializer.map(vars, function (var)
+  local encoded_var = var:encode()
+  return ("%s(%s)"):format(encoded_var, encoded_var)
+end))
+local s = tostring(x)
 if verbose then
   print(s)
 end
 assert(s == "U0(U0), U1(U1), U2(U2), U3(U3)")
+
+
+
+
