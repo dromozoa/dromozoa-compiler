@@ -17,9 +17,9 @@
 
 local metatable = { ["dromozoa.compiler.is_serializable"] = true }
 
-function metatable:__call(t)
-  for i = 1, #t do
-    self[i] = t[i]
+function metatable:__call(source)
+  for i = 1, #source do
+    self[i] = source[i]
   end
   return self
 end
@@ -29,9 +29,9 @@ function metatable:__tostring()
   for i = 1, #self do
     local v = self[i]
     local t = type(v)
-    if v == "number" then
+    if t == "number" then
       buffer[#buffer + 1] = ("%.17g"):format(v)
-    elseif v == "string" then
+    elseif t == "string" then
       buffer[#buffer + 1] = v
     else
       local metatable = getmetatable(v)

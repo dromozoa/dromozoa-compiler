@@ -15,31 +15,19 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-local variable = require "dromozoa.compiler.variable"
-local serializer = require "dromozoa.compiler.serializer"
-
-local verbose = os.getenv "VERBOSE" == "1"
-
-local unpack = table.unpack or unpack
-
-local vars = {
-  variable.U(0);
-  variable.U(1);
-  variable.U(2);
-  variable.U(3);
+local class = {
+  separated = require "dromozoa.compiler.serializer.separated";
 }
 
-local s = tostring(serializer.separated ", " { 42, "foo", unpack(vars) })
-
-if verbose then
-  print(s)
+function class.map(source, f)
+  local result = {}
+  for i = 1, #source do
+    local v = f(source[i])
+    if v ~= nil then
+      result[#result + 1] = v
+    end
+  end
+  return result
 end
-assert(s == "42, foo, U0, U1, U2, U3")
 
-local s = tostring(serializer.separated ", " (serializer.map(vars, function (v)
-  return ("%s(%s)"):format(v:encode(), v:encode())
-end)))
-if verbose then
-  print(s)
-end
-assert(s == "U0(U0), U1(U1), U2(U2), U3(U3)")
+return class
