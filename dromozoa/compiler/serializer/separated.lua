@@ -15,6 +15,8 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
+local serialize = require "dromozoa.compiler.serializer.serialize"
+
 local metatable = { ["dromozoa.compiler.is_serializable"] = true }
 
 function metatable:__call(source)
@@ -27,24 +29,13 @@ end
 function metatable:__tostring()
   local buffer = {}
   for i = 1, #self do
-    local v = self[i]
-    local t = type(v)
-    if t == "number" then
-      buffer[#buffer + 1] = ("%.17g"):format(v)
-    elseif t == "string" then
-      buffer[#buffer + 1] = v
-    else
-      local metatable = getmetatable(v)
-      if metatable and metatable["dromozoa.compiler.is_serializable"] then
-        buffer[#buffer + 1] = tostring(v)
-      end
-    end
+    buffer[#buffer + 1] = serialize(self[i])
   end
   return table.concat(buffer, self[0])
 end
 
 return setmetatable({}, {
-  __call = function (_, sep)
-    return setmetatable({ [0] = sep }, metatable)
+  __call = function (_, separator)
+    return setmetatable({ [0] = separator }, metatable)
   end;
 })

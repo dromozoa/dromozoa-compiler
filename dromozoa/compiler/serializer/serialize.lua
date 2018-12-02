@@ -15,20 +15,16 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-local class = {
-  if_not_empty = require "dromozoa.compiler.serializer.if_not_empty";
-  separated = require "dromozoa.compiler.serializer.separated";
-}
-
-function class.map(source, f)
-  local result = {}
-  for i = 1, #source do
-    local v = f(source[i])
-    if v ~= nil then
-      result[#result + 1] = v
+return function (value)
+  local t = type(value)
+  if t == "number" then
+    return ("%.17g"):format(value)
+  elseif t == "string" then
+    return value
+  else
+    local metatable = getmetatable(value)
+    if metatable and metatable["dromozoa.compiler.is_serializable"] then
+      return tostring(value)
     end
   end
-  return result
 end
-
-return class

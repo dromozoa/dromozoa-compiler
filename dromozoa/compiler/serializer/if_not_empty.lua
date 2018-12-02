@@ -15,20 +15,25 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-local class = {
-  if_not_empty = require "dromozoa.compiler.serializer.if_not_empty";
-  separated = require "dromozoa.compiler.serializer.separated";
-}
+local serialize = require "dromozoa.compiler.serializer.serialize"
 
-function class.map(source, f)
-  local result = {}
-  for i = 1, #source do
-    local v = f(source[i])
-    if v ~= nil then
-      result[#result + 1] = v
-    end
-  end
-  return result
+local metatable = { ["dromozoa.compiler.is_serializable"] = true }
+
+function metatable:__call(source)
+  self[1] = source
+  return self
 end
 
-return class
+function metatable:__tostring()
+  local source = self[1]
+  if #source == 0 then
+    return ""
+  end
+  return serialize(self[0]) .. serialize(source)
+end
+
+return setmetatable({}, {
+  __call = function (_, before)
+    return setmetatable({ [0] = before }, metatable)
+  end;
+})

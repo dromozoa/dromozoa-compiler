@@ -46,6 +46,16 @@ if verbose then
 end
 assert(s == "U0(U0), U1(U1), U2(U2), U3(U3)")
 
+local y = serializer.if_not_empty ": " (x)
+local s = tostring(y)
+if verbose then
+  print(s)
+end
+assert(s == ": U0(U0), U1(U1), U2(U2), U3(U3)")
 
-
-
+local y = serializer.if_not_empty ": " (serializer.separated ", " {})
+local s = tostring(y)
+if verbose then
+  print(s)
+end
+assert(s == "")
