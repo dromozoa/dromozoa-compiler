@@ -22,40 +22,20 @@ local verbose = os.getenv "VERBOSE" == "1"
 
 local unpack = table.unpack or unpack
 
-local vars = {
+local s = serializer.sequence {
   variable.U(0);
   variable.U(1);
   variable.U(2);
   variable.U(3);
 }
-
-local x = serializer.separated ", " { 42, "foo", unpack(vars) }
-local s = tostring(x)
-if verbose then
-  print(s)
-end
-assert(s == "42, foo, U0, U1, U2, U3")
-
-local x = serializer.separated ", " (serializer.map(vars, function (var)
+:separated ", "
+:map(function (var)
   local encoded_var = var:encode()
   return ("%s(%s)"):format(encoded_var, encoded_var)
-end))
-local s = tostring(x)
-if verbose then
-  print(s)
-end
-assert(s == "U0(U0), U1(U1), U2(U2), U3(U3)")
+end)
+:if_not_empty ": "
+:encode()
 
-local y = serializer.if_not_empty ": " (x)
-local s = tostring(y)
-if verbose then
-  print(s)
-end
-assert(s == ": U0(U0), U1(U1), U2(U2), U3(U3)")
+serializer.template "%1(%1)"
 
-local y = serializer.if_not_empty ": " (serializer.separated ", " {})
-local s = tostring(y)
-if verbose then
-  print(s)
-end
-assert(s == "")
+

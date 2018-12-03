@@ -15,20 +15,6 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-local class = {
-  if_not_empty = require "dromozoa.compiler.serializer.if_not_empty";
-  separated = require "dromozoa.compiler.serializer.separated";
+return {
+  sequence = require "dromozoa.compiler.serializer.sequence";
 }
-
-function class.map(source, f)
-  local result = {}
-  for i = 1, #source do
-    local v = f(source[i])
-    if v ~= nil then
-      result[#result + 1] = v
-    end
-  end
-  return result
-end
-
-return class
