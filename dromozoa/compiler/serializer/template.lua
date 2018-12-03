@@ -20,7 +20,7 @@ local serialize = require "dromozoa.compiler.serializer.serialize"
 return function (rule)
   return function (...)
     local args = { ... }
-    return (rule:gsub("%%(%d)", function (index)
+    return (rule:gsub("%%(%d+)", function (index)
       return serialize(args[tonumber(index)])
     end))
   end
