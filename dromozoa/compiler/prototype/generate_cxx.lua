@@ -20,8 +20,6 @@ local variable = require "dromozoa.compiler.variable"
 
 local unpack = table.unpack or unpack
 
-local heads = { "cont_t k", "thread_t t", "handler_t h" }
-
 local function generate_declations(out, proto_name, blocks, postorder)
   local refs = blocks.refs
 
@@ -51,8 +49,11 @@ local function generate_declations(out, proto_name, blocks, postorder)
           end
         end)
         :sort(function (a, b) return a[2] < b[2] end)
+        :unshift(
+          serializer.tuple("std::shared_ptr<function_t>", "k"),
+          serializer.tuple("std::shared_ptr<function_t>", "t"),
+          serializer.tuple("std::shared_ptr<function_t>", "h"))
         :map(serializer.template "%1 %2")
-        :unshift(unpack(heads))
         :separated ", "
     ))
   end
@@ -61,15 +62,18 @@ end
 local function generate_closure(out, self)
   local proto_name = self[1]
   local upvalues = self.upvalues
+  local blocks = self.blocks
+  local refs = blocks.refs
 
   out:write(serializer.template [[
 class %1 : public function_t {
 public:
   %1(%2)%3 {}
 private:
-  std::function<void()> operator()(std::shared_ptr<function_t> k, std::shared_ptr<function_t> t, std::shared_ptr<function_t> h, std::initializer_list<value_t> args) {
-  }
+  std::function<void()> operator()(std::shared_ptr<function_t> k, std::shared_ptr<function_t> t, std::shared_ptr<function_t> h, array_t A) {
 %4%
+  }
+%5%
 };
 ]] (
     self[1],
@@ -82,6 +86,19 @@ private:
       :map(serializer.template "%1(%1)")
       :if_not_empty " : "
       :separated ", ",
+    serializer.entries(blocks[blocks.entry_uid].params)
+      :map(function (encoded_var, param)
+        local var = variable.decode(encoded_var)
+        if refs[encoded_var] then
+          return serializer.tuple("ref_t", var)
+        elseif var.type == "array" then
+          return serializer.tuple("array_t", var)
+        else
+          return serializer.tuple("value_t", var)
+        end
+      end)
+      :sort(function (a, b) return a[2] < b[2] end)
+      :map(serializer.template "    %1 %2;\n"),
     serializer.sequence(upvalues)
       :map(function (item) return item[1] end)
       :map(serializer.template "  ref_t %1;\n")
