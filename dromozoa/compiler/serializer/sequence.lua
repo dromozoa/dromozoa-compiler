@@ -17,13 +17,20 @@
 
 local serialize = require "dromozoa.compiler.serializer.serialize"
 
-local class = {}
-local metatable = { __index = class }
+local unpack = table.unpack or unpack
 
-local function construct(self)
+local class = {}
+local metatable = {
+  __index = class;
+  ["dromozoa.compiler.is_serializable"] = true;
+}
+
+local function construct(self, ...)
   return setmetatable({
     separator = self.separator;
     before = self.before;
+    after = self.after;
+    ...
   }, metatable)
 end
 
@@ -32,16 +39,24 @@ function class:separated(separator)
   return self
 end
 
-function class:if_not_empty(before)
+function class:if_not_empty(before, after)
   self.before = before
+  self.after = after
   return self
 end
 
 function class:filter(f)
   local that = construct(self)
   for i = 1, #self do
-    if f(self[i]) then
-      that[#that + 1] = self[i]
+    local item = self[i]
+    if item.tuple then
+      if f(unpack(item)) then
+        that[#that + 1] = item
+      end
+    else
+      if f(item) then
+        that[#that + 1] = item
+      end
     end
   end
   return that
@@ -50,8 +65,27 @@ end
 function class:map(f)
   local that = construct(self)
   for i = 1, #self do
-    that[i] = f(self[i])
+    local item = self[i]
+    if item.tuple then
+      that[i] = f(unpack(item))
+    else
+      that[i] = f(item)
+    end
   end
+  return that
+end
+
+function class:unshift(...)
+  local that = construct(self, ...)
+  for i = 1, #self do
+    that[#that + 1] = self[i]
+  end
+  return that
+end
+
+function class:sort(compare)
+  local that = construct(self, unpack(self))
+  table.sort(that, compare)
   return that
 end
 
@@ -61,12 +95,15 @@ function class:encode()
     that[i] = serialize(self[i])
   end
   if that[1] then
-    local before = self.before
-    if before then
-      return before .. table.concat(that, self.separator)
-    end
+    return (self.before or "") .. table.concat(that, self.separator) .. (self.after or "")
+  else
+    return ""
   end
-  return table.concat(that, self.separator)
+end
+
+function class:write(out)
+  out:write(self:encode())
+  return out
 end
 
 function metatable:__tostring()

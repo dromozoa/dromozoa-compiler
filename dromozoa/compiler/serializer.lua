@@ -15,7 +15,40 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-return {
-  sequence = require "dromozoa.compiler.serializer.sequence";
-  template = require "dromozoa.compiler.serializer.template";
+local sequence = require "dromozoa.compiler.serializer.sequence";
+local serialize = require "dromozoa.compiler.serializer.serialize"
+
+local function tuple(...)
+  return { tuple = true, ... }
+end
+
+local class = {
+  sequence = sequence;
+  tuple = tuple;
 }
+
+function class.entries(that)
+  local entries = {}
+  for k, v in pairs(that) do
+    entries[#entries + 1] = tuple(k, v)
+  end
+  return sequence(entries)
+end
+
+function class.template(rule)
+  return function (...)
+    local args = { ... }
+    return (rule:gsub("%%(.)", function (match)
+      if match == "%" then
+        return "%"
+      elseif match:find "^%d$" then
+        return serialize(args[tonumber(match)])
+      elseif match:find "^%s$" then
+        return ""
+      end
+    end):gsub("%%%s", "%%")
+    )
+  end
+end
+
+return class

@@ -37,3 +37,15 @@ if verbose then
   print(s)
 end
 assert(s == ": U0(U0), U1(U1), U2(U2), U3(U3)")
+
+serializer.entries {
+  a = 17;
+  b = 23;
+  c = 37;
+  d = 42;
+}
+:sort(function (a, b) return a[1] < b[1] end)
+:map(serializer.template "%1=%2")
+:separated "\n"
+:write(io.stdout)
+:write "\n"
