@@ -29,13 +29,8 @@ local s = serializer.sequence {
   variable.U(3);
 }
 :separated ", "
-:map(function (var)
-  local encoded_var = var:encode()
-  return ("%s(%s)"):format(encoded_var, encoded_var)
-end)
+:map(serializer.template "%1(%1)")
 :if_not_empty ": "
 :encode()
 
-serializer.template "%1(%1)"
-
-
+print(s)

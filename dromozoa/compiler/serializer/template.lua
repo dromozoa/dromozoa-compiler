@@ -15,7 +15,13 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-return {
-  sequence = require "dromozoa.compiler.serializer.sequence";
-  template = require "dromozoa.compiler.serializer.template";
-}
+local serialize = require "dromozoa.compiler.serializer.serialize"
+
+return function (rule)
+  return function (...)
+    local args = { ... }
+    return (rule:gsub("%%(%d)", function (index)
+      return serialize(args[tonumber(index)])
+    end))
+  end
+end
