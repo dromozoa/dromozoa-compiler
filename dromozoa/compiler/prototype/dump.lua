@@ -87,22 +87,22 @@ local function dump_block(blocks, uid, block)
 
   local params = {}
   for encoded_var, param in pairs(block.params) do
-    local value = encoded_var
-    if type(param) == "table" then
-      if param.phi then
-        local phi = {}
-        for i = 1, #param do
-          phi[i] = param[i]:encode()
-        end
-        value = ("%s=phi(%s)"):format(param[0]:encode(), table.concat(phi, ","))
-      else
-        value = param:encode()
+    if param.phi then
+      local phi = {}
+      for i = 1, #param do
+        phi[i] = param[i]:encode()
       end
+      local var = param[0]
+      params[#params + 1] = {
+        var = var;
+        ("%s=phi(%s)"):format(var:encode(), table.concat(phi, ","));
+      }
+    else
+      params[#params + 1] = {
+        var = param;
+        param:encode();
+      }
     end
-    params[#params + 1] = {
-      var = variable.decode(encoded_var);
-      value;
-    }
   end
   if params[1] then
     table.sort(params, function (a, b) return a.var < b.var end)
