@@ -28,11 +28,19 @@ local class = {
 }
 
 function class.entries(that)
-  local entries = {}
+  local self = sequence {}
   for k, v in pairs(that) do
-    entries[#entries + 1] = tuple(k, v)
+    self[#self + 1] = tuple(k, v)
   end
-  return sequence(entries)
+  return self
+end
+
+function class.range(a, b, c)
+  local self = sequence {}
+  for i = a, b, c do
+    self[#self + 1] = i
+  end
+  return self
 end
 
 function class.template(rule)
