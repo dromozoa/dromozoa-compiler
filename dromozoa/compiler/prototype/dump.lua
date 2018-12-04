@@ -98,9 +98,10 @@ local function dump_block(blocks, uid, block)
         ("%s=phi(%s)"):format(var:encode(), table.concat(phi, ","));
       }
     else
+      local var = param[0]
       params[#params + 1] = {
-        var = param;
-        param:encode();
+        var = var;
+        var:encode();
       }
     end
   end

@@ -425,7 +425,7 @@ local function rename_variables_search(blocks, dom_child, vers, stacks, uid)
     local stack = stacks[encoded_var]
     if stack then
       if param == true then
-        params[encoded_var] = variable.decode(encoded_var)[stack[#stack]]
+        params[encoded_var] = { [0] = variable.decode(encoded_var)[stack[#stack]] }
       else
         assert(param.phi)
         local v = vers[encoded_var]
@@ -501,11 +501,15 @@ local function resolve_types(blocks, refs, postorder)
 
     for encoded_var, param in pairs(params) do
       if param == true then
-        param = variable.decode(encoded_var)
-        params[encoded_var] = param
-      end
-      if refs[encoded_var] then
-        param.reference = true
+        local var = variable.decode(encoded_var)
+        if refs[encoded_var] then
+          var.reference = true
+        end
+        params[encoded_var] = { [0] = var }
+      else
+        if refs[encoded_var] then
+          param[0].reference = true
+        end
       end
     end
 

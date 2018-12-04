@@ -28,12 +28,7 @@ local function generate_declations(out, proto_name, blocks, postorder)
       uid,
       serializer.entries(blocks[uid].params)
         :map(function (encoded_var, param)
-          local var
-          if param.phi then
-            var = param[0]
-          else
-            var = param
-          end
+          local var = param[0]
           if var.reference then
             return serializer.tuple("ref_t", var)
           elseif var.type == "array" then
@@ -81,12 +76,7 @@ private:
       :separated ", ",
     serializer.entries(blocks[blocks.entry_uid].params)
       :map(function (encoded_var, param)
-        local var
-        if param.phi then
-          var = param[0]
-        else
-          var = param
-        end
+        local var = param[0]
         if var.reference then
           return serializer.tuple("ref_t", var)
         elseif var.type == "array" then
