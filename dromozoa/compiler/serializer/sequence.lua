@@ -67,9 +67,12 @@ function class:map(f)
   for i = 1, #self do
     local item = self[i]
     if item.tuple then
-      that[i] = f(unpack(item))
+      item = f(unpack(item))
     else
-      that[i] = f(item)
+      item = f(item)
+    end
+    if item then
+      that[#that + 1] = item
     end
   end
   return that

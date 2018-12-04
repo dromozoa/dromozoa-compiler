@@ -516,7 +516,7 @@ local function resolve_types(blocks, refs, postorder)
     for j = 1, #block do
       local code = block[j]
       local name = code[0]
-      if name ~= "RESULT" and not_assign(name) then
+      if name ~= "RESULT" and not not_assign(name) then
         local var = code[1]
         if not params[var:encode_without_index()] then
           var.declare = true
