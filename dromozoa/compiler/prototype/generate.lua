@@ -537,7 +537,6 @@ return function (self)
   local idom, dom_child, df = analyze_dominators(blocks, uv_postorder)
   local lives_in = analyze_liveness(blocks, g:vu_postorder(blocks.exit_uid))
   local defs, refs, vers = resolve_variables(blocks, lives_in, uv_postorder)
-  blocks.refs = refs
   insert_phi_functions(blocks, df, defs, vers, uv_postorder)
   rename_variables(blocks, dom_child, vers)
   resolve_types(blocks, refs, uv_postorder)
