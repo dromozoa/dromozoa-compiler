@@ -21,8 +21,6 @@ local variable = require "dromozoa.compiler.variable"
 local unpack = table.unpack or unpack
 
 local function generate_declations(out, proto_name, blocks, postorder)
-  local refs = blocks.refs
-
   for i = #postorder, 1, -1 do
     local uid = postorder[i]
     out:write(serializer.template "std::function<void()> %1_%2(%3);\n" (
@@ -31,16 +29,12 @@ local function generate_declations(out, proto_name, blocks, postorder)
       serializer.entries(blocks[uid].params)
         :map(function (encoded_var, param)
           local var
-          if type(param) == "table" then
-            if param.phi then
-              var = param[0]
-            else
-              var = param
-            end
+          if param.phi then
+            var = param[0]
           else
-            var = variable.decode(encoded_var)
+            var = param
           end
-          if refs[encoded_var] then
+          if var.reference then
             return serializer.tuple("ref_t", var)
           elseif var.type == "array" then
             return serializer.tuple("array_t", var)
@@ -63,7 +57,6 @@ local function generate_closure(out, self)
   local proto_name = self[1]
   local upvalues = self.upvalues
   local blocks = self.blocks
-  local refs = blocks.refs
 
   out:write(serializer.template [[
 class %1 : public function_t {
@@ -88,8 +81,13 @@ private:
       :separated ", ",
     serializer.entries(blocks[blocks.entry_uid].params)
       :map(function (encoded_var, param)
-        local var = variable.decode(encoded_var)
-        if refs[encoded_var] then
+        local var
+        if param.phi then
+          var = param[0]
+        else
+          var = param
+        end
+        if var.reference then
           return serializer.tuple("ref_t", var)
         elseif var.type == "array" then
           return serializer.tuple("array_t", var)

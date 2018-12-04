@@ -493,7 +493,7 @@ local function rename_variables(blocks, dom_child, vers)
   rename_variables_search(blocks, dom_child, vers, stacks, blocks.entry_uid)
 end
 
-local function resolve_types(blocks, postorder)
+local function resolve_types(blocks, refs, postorder)
   for i = #postorder, 1, -1 do
     local uid = postorder[i]
     local block = blocks[uid]
@@ -501,7 +501,29 @@ local function resolve_types(blocks, postorder)
 
     for encoded_var, param in pairs(params) do
       if param == true then
-        params[encoded_var] = variable.decode(encoded_var)
+        param = variable.decode(encoded_var)
+        params[encoded_var] = param
+      end
+      if refs[encoded_var] then
+        param.reference = true
+      end
+    end
+
+    for j = 1, #block do
+      local code = block[j]
+      local name = code[0]
+      if name ~= "RESULT" and not_assign(name) then
+        local var = code[1]
+        if not params[var:encode_without_index()] then
+          var.declare = true
+        end
+      end
+      for k = 1, #code do
+        local var = code[k]
+        local encoded_var = var:encode_without_index()
+        if refs[encoded_var] then
+          var.reference = true
+        end
       end
     end
   end
@@ -518,7 +540,7 @@ return function (self)
   blocks.refs = refs
   insert_phi_functions(blocks, df, defs, vers, uv_postorder)
   rename_variables(blocks, dom_child, vers)
-  resolve_types(blocks, uv_postorder)
+  resolve_types(blocks, refs, uv_postorder)
   self.blocks = blocks
   return self
 end
