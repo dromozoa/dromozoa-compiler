@@ -19,5 +19,8 @@
 
 int main(int, char*[]) {
   using namespace dromozoa::runtime;
+
+  value_t v;
+
   return 0;
 }

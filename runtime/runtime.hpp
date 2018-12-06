@@ -27,6 +27,7 @@
 #include <cstdint>
 #include <functional>
 #include <initializer_list>
+#include <map>
 #include <memory>
 #include <string>
 
@@ -45,6 +46,7 @@ namespace dromozoa {
     class function_t;
 
     class value_t {
+      struct access;
     public:
       value_t();
       value_t(const value_t&);
@@ -53,7 +55,35 @@ namespace dromozoa {
       value_t& operator=(const value_t&);
       value_t& operator=(value_t&&);
 
+      value_t(bool);
+      value_t(double);
+      value_t(const char*);
+      value_t(const char*, std::size_t);
+      value_t(const std::string&);
+      value_t(std::string&&);
+      value_t(std::shared_ptr<table_t>);
+      value_t(std::shared_ptr<function_t>);
+
       bool operator<(const value_t&) const;
+
+      std::string type() const;
+      bool isnil() const;
+      bool isboolean() const;
+      bool isnumber() const;
+      bool isstring() const;
+      bool istable() const;
+      bool isfunction() const;
+
+      bool toboolean() const;
+      bool tonumber(double& result) const;
+
+      double checknumber() const;
+      std::int64_t checkinteger() const;
+      std::string checkstring() const;
+      std::shared_ptr<table_t> checktable() const;
+      std::shared_ptr<function_t> checkfunction() const;
+
+      std::int64_t optinteger(std::int64_t) const;
 
     private:
       type_t type_;
@@ -72,6 +102,7 @@ namespace dromozoa {
 
     class ref_t {
     public:
+      ref_t();
 
     private:
       std::shared_ptr<value_t> data_;
@@ -80,11 +111,20 @@ namespace dromozoa {
     class array_t {
     public:
       array_t();
-      array_t(const value_t*, const value_t*);
       value_t& operator[](std::size_t) const;
+
     private:
-      std::shared_ptr<value_t> data;
-      std::size_t size;
+      std::shared_ptr<value_t> data_;
+      std::size_t size_;
+    };
+
+    class table_t {
+    public:
+      table_t();
+
+    private:
+      std::map<value_t, value_t> map_;
+      value_t metatable_;
     };
 
     class function_t {
