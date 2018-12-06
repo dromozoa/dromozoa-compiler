@@ -15,15 +15,117 @@
 // You should have received a copy of the GNU General Public License
 // along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
+#include <cctype>
 #include <utility>
 
 #include "runtime.hpp"
 
 namespace dromozoa {
   namespace runtime {
-    value_t NIL;
-    value_t FALSE = false;
-    value_t TRUE = true;
+    int regexp_integer(const std::string& string) {
+      int state = 6;
+      for (const char c : string) {
+        switch (state) {
+          case 1:
+            if (std::isspace(c)) {
+              state = 2;
+            } else if (isdigit(c)) {
+              state = 3;
+            } else if (c == 'X' || c == 'x') {
+              state = 8;
+            } else {
+              return 0;
+            }
+            break;
+          case 2:
+            if (!std::isspace(c)) {
+              return 0;
+            }
+            break;
+          case 3:
+            if (std::isspace(c)) {
+              state = 2;
+            } else if (!std::isdigit(c)) {
+              return 0;
+            }
+            break;
+          case 4:
+            if (std::isspace(c)) {
+              state = 5;
+            } else if (!std::isxdigit(c)) {
+              return 0;
+            }
+            break;
+          case 5:
+            if (!std::isspace(c)) {
+              return 0;
+            }
+            break;
+          case 6:
+            if (c == '0') {
+              state = 1;
+            } else if (std::isdigit(c)) {
+              state = 3;
+            } else if (c == '+' || c == '-') {
+              state = 7;
+            } else if (!std::isspace(c)) {
+              return 0;
+            }
+            break;
+          case 7:
+            if (c == '0') {
+              state = 1;
+            } else if (std::isdigit(c)) {
+              state = 3;
+            } else {
+              return 0;
+            }
+            break;
+          case 8:
+            if (std::isxdigit(c)) {
+              state = 4;
+            } else {
+              return 0;
+            }
+            break;
+        }
+      }
+
+      switch (state) {
+        case 1: case 2: case 3:
+          return 1;
+        case 4: case 5:
+          return 2;
+        default:
+          return 0;
+      }
+    }
+
+    namespace {
+      template <typename T>
+      bool tonumber_impl(const std::string& source, T& result) {
+        auto n = source.find_last_not_of(" \f\n\r\t\v");
+        if (n == source.npos) {
+          return false;
+        }
+        ++n;
+
+        try {
+          std::size_t i = 0;
+          const std::int64_t integer = std::stoll(source, &i, 10);
+          if (i == n) {
+            result = integer;
+            return true;
+          }
+        } catch (const std::exception&) {}
+
+
+
+
+
+
+      }
+    }
 
     struct value_t::access {
       static void copy_construct(value_t& self, const value_t& that) {
@@ -223,14 +325,33 @@ namespace dromozoa {
       }
     }
 
-    bool tonumber(double& result) const {
+    bool value_t::tonumber(double& result) const {
       if (isnumber()) {
         result = number_;
         return true;
       } else if (isstring()) {
+        auto n = string_->find_last_not_of(" \f\n\r\t\v");
+        if (n == std::string::npos) {
+          return false;
+        }
+        ++n;
+        try {
+          std::size_t i = 0;
+          const std::int64_t integer = std::stoll(*string_, &i, 10);
+          if (i == n) {
+            result = integer;
+            return true;
+          }
+        } catch (const std::exception&) {}
 
       }
       return false;
     }
+
+    value_t NIL;
+    value_t FALSE = false;
+    value_t TRUE = true;
+
+
   }
 }
