@@ -16,6 +16,7 @@
 // along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <cctype>
+#include <exception>
 #include <utility>
 
 #include "runtime.hpp"
@@ -282,7 +283,5 @@ namespace dromozoa {
     value_t NIL;
     value_t FALSE = false;
     value_t TRUE = true;
-
-
   }
 }
