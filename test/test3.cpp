@@ -50,6 +50,8 @@ int main(int, char*[]) {
   check_regexp_integer("+0x42");
   check_regexp_integer("-0x42");
   check_regexp_integer("--0x42");
+  check_regexp_integer("+");
+  check_regexp_integer("0X");
 
   return 0;
 }

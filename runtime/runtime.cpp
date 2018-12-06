@@ -26,78 +26,31 @@ namespace dromozoa {
       int state = 6;
       for (const char c : string) {
         switch (state) {
-          case 1:
-            if (std::isspace(c)) {
-              state = 2;
-            } else if (isdigit(c)) {
-              state = 3;
-            } else if (c == 'X' || c == 'x') {
-              state = 8;
-            } else {
-              return 0;
-            }
-            break;
-          case 2:
-            if (!std::isspace(c)) {
-              return 0;
-            }
-            break;
-          case 3:
-            if (std::isspace(c)) {
-              state = 2;
-            } else if (!std::isdigit(c)) {
-              return 0;
-            }
-            break;
-          case 4:
-            if (std::isspace(c)) {
-              state = 5;
-            } else if (!std::isxdigit(c)) {
-              return 0;
-            }
-            break;
-          case 5:
-            if (!std::isspace(c)) {
-              return 0;
-            }
-            break;
-          case 6:
-            if (c == '0') {
-              state = 1;
-            } else if (std::isdigit(c)) {
-              state = 3;
-            } else if (c == '+' || c == '-') {
-              state = 7;
-            } else if (!std::isspace(c)) {
-              return 0;
-            }
-            break;
-          case 7:
-            if (c == '0') {
-              state = 1;
-            } else if (std::isdigit(c)) {
-              state = 3;
-            } else {
-              return 0;
-            }
-            break;
-          case 8:
-            if (std::isxdigit(c)) {
-              state = 4;
-            } else {
-              return 0;
-            }
-            break;
+          case 1: if      ( std::isspace(c))      { state = 2; }
+                  else if ( isdigit(c))           { state = 3; }
+                  else if ( c == 'X' || c == 'x') { state = 8; }
+                  else                            { return 0; } break;
+          case 2: if      (!std::isspace(c))      { return 0; } break;
+          case 3: if      ( std::isspace(c))      { state = 2; }
+                  else if (!std::isdigit(c))      { return 0; } break;
+          case 4: if      ( std::isspace(c))      { state = 5; }
+                  else if (!std::isxdigit(c))     { return 0; } break;
+          case 5: if      (!std::isspace(c))      { return 0; } break;
+          case 6: if      ( c == '0')             { state = 1; }
+                  else if ( std::isdigit(c))      { state = 3; }
+                  else if ( c == '+' || c == '-') { state = 7; }
+                  else if (!std::isspace(c))      { return 0; } break;
+          case 7: if      ( c == '0')             { state = 1; }
+                  else if ( std::isdigit(c))      { state = 3; }
+                  else                            { return 0; } break;
+          case 8: if      ( std::isxdigit(c))     { state = 4; }
+                  else                            { return 0; } break;
         }
       }
-
       switch (state) {
-        case 1: case 2: case 3:
-          return 1;
-        case 4: case 5:
-          return 2;
-        default:
-          return 0;
+        case 1: case 2: case 3: return 1;
+        case 4: case 5:         return 2;
+        default:                return 0;
       }
     }
 
