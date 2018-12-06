@@ -19,39 +19,15 @@
 
 #include "runtime.hpp"
 
-void check_regexp_integer(const std::string& s) {
-  using namespace dromozoa::runtime;
-  std::cout
-      << regexp_integer(s)
-      << " [["
-      << s
-      << "]]"
-      << "\n";
-}
-
 int main(int, char*[]) {
   using namespace dromozoa::runtime;
 
-  check_regexp_integer("42");
-  check_regexp_integer(" 42");
-  check_regexp_integer(" 42 ");
-  check_regexp_integer(" 42 42");
-  check_regexp_integer(" 42 42 ");
-  check_regexp_integer("34e1");
-  check_regexp_integer("foo");
-  check_regexp_integer(" foo");
-  check_regexp_integer(" foo ");
-  check_regexp_integer("42foo");
-  check_regexp_integer("0042");
-  check_regexp_integer("+0042");
-  check_regexp_integer("++0042");
-  check_regexp_integer("-0042");
-  check_regexp_integer("0x42");
-  check_regexp_integer("+0x42");
-  check_regexp_integer("-0x42");
-  check_regexp_integer("--0x42");
-  check_regexp_integer("+");
-  check_regexp_integer("0X");
+  value_t v("0xDEF");
+  double n = 0;
+
+  std::cout << v.type() << "\n";
+  std::cout << v.tonumber(n) << "\n";
+  std::cout << n << "\n";
 
   return 0;
 }

@@ -132,8 +132,6 @@ namespace dromozoa {
       virtual ~function_t();
       virtual std::function<void()> operator()(std::shared_ptr<function_t>, std::shared_ptr<function_t>, std::shared_ptr<function_t>, std::initializer_list<value_t>) = 0;
     };
-
-    int regexp_integer(const std::string&);
   }
 }
 
