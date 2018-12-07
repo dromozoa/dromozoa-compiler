@@ -22,12 +22,11 @@
 int main(int, char*[]) {
   using namespace dromozoa::runtime;
 
-  value_t v("0xDEF");
-  double n = 0;
-
-  std::cout << v.type() << "\n";
-  std::cout << v.tonumber(n) << "\n";
-  std::cout << n << "\n";
+  try {
+    std::cout << value_t(" 0x7FFFFFFFFFFFFFFF ").checknumber() << "\n";
+  } catch (const value_t& e) {
+    std::cerr << e.checkstring() << "\n";
+  }
 
   return 0;
 }

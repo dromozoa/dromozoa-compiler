@@ -16,7 +16,10 @@
 // along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <cctype>
+#include <cmath>
 #include <exception>
+#include <iomanip>
+#include <sstream>
 #include <utility>
 
 #include "runtime.hpp"
@@ -24,7 +27,7 @@
 namespace dromozoa {
   namespace runtime {
     namespace {
-      int regexp_integer(const std::string& string) {
+      inline int regexp_integer(const std::string& string) {
         int state = 6;
         for (const char c : string) {
           switch (state) {
@@ -54,6 +57,21 @@ namespace dromozoa {
           case 4: case 5:         return 2;
           default:                return 0;
         }
+      }
+
+      inline bool to_number(const std::string& string, double& result) {
+        try {
+          const auto n = string.find_last_not_of(" \f\n\r\t\v");
+          if (n != std::string::npos) {
+            std::size_t i = 0;
+            const auto number = std::stod(string, &i);
+            if (i == n + 1) {
+              result = number;
+              return true;
+            }
+          }
+        } catch (const std::exception&) {}
+        return false;
       }
     }
 
@@ -260,24 +278,60 @@ namespace dromozoa {
         result = number_;
         return true;
       } else if (isstring()) {
-        try {
-          switch (regexp_integer(*string_)) {
-            case 1: result = std::stoll(*string_, nullptr, 10); return true;
-            case 2: result = std::stoll(*string_, nullptr, 16); return true;
-          }
-          const auto n = string_->find_last_not_of(" \f\n\r\t\v");
-          if (n == std::string::npos) {
-            return false;
-          }
-          std::size_t i = 0;
-          const double number = std::stod(*string_, &i);
-          if (i == n + 1) {
-            result = number;
-            return true;
-          }
-        } catch (const std::exception&) {}
+        switch (regexp_integer(*string_)) {
+          case 1: result = std::stoll(*string_, nullptr, 10); return true;
+          case 2: result = std::stoll(*string_, nullptr, 16); return true;
+        }
+        double number = 0;
+        if (to_number(*string_, number)) {
+          result = number;
+          return true;
+        }
       }
       return false;
+    }
+
+    double value_t::checknumber() const {
+      double result = 0;
+      if (tonumber(result)) {
+        return result;
+      }
+      throw value_t("number expected, got " + type());
+    }
+
+    std::int64_t value_t::checkinteger() const {
+      if (isnumber()) {
+        if (std::isfinite(number_) && number_ == std::floor(number_)) {
+          return number_;
+        } else {
+          throw value_t("number has no integer representation");
+        }
+      } else if (isstring()) {
+        switch (regexp_integer(*string_)) {
+          case 1: return std::stoll(*string_, nullptr, 10);
+          case 2: return std::stoll(*string_, nullptr, 16);
+        }
+        double number = 0;
+        if (to_number(*string_, number)) {
+          if (std::isfinite(number) && number == std::floor(number)) {
+            return number;
+          } else {
+            throw value_t("number has no integer representation");
+          }
+        }
+      }
+      throw value_t("integer expected, got " + type());
+    }
+
+    std::string value_t::checkstring() const {
+      if (isstring()) {
+        return *string_;
+      } else if (isnumber()) {
+        std::ostringstream out;
+        out << std::setprecision(17) << number_;
+        return out.str();
+      }
+      throw value_t("string expected, got " + type());
     }
 
     value_t NIL;
