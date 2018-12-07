@@ -73,6 +73,12 @@ namespace dromozoa {
         } catch (const std::exception&) {}
         return false;
       }
+
+      inline std::string to_string(double number) {
+        std::ostringstream out;
+        out << std::setprecision(17) << number;
+        return out.str();
+      }
     }
 
     struct value_t::access {
@@ -291,6 +297,35 @@ namespace dromozoa {
       return false;
     }
 
+    std::string value_t::tostring() const {
+      switch (type_) {
+        case type_t::nil:
+          return "nil";
+        case type_t::boolean:
+          if (boolean_) {
+            return "true";
+          } else {
+            return "false";
+          }
+        case type_t::number:
+          return to_string(number_);
+        case type_t::string:
+          return *string_;
+        case type_t::table:
+          {
+            std::ostringstream out;
+            out << "table: " << table_.get();
+            return out.str();
+          }
+        case type_t::function:
+          {
+            std::ostringstream out;
+            out << "function: " << function_.get();
+            return out.str();
+          }
+      }
+    }
+
     double value_t::checknumber() const {
       double result = 0;
       if (tonumber(result)) {
@@ -327,9 +362,7 @@ namespace dromozoa {
       if (isstring()) {
         return *string_;
       } else if (isnumber()) {
-        std::ostringstream out;
-        out << std::setprecision(17) << number_;
-        return out.str();
+        return to_string(number_);
       }
       throw value_t("string expected, got " + type());
     }

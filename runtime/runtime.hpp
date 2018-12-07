@@ -76,6 +76,7 @@ namespace dromozoa {
 
       bool toboolean() const;
       bool tonumber(double& result) const;
+      std::string tostring() const;
 
       double checknumber() const;
       std::int64_t checkinteger() const;
