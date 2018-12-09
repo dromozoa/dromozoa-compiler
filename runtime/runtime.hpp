@@ -30,9 +30,13 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <type_traits>
 
 namespace dromozoa {
   namespace runtime {
+    template <bool T_condition, class T = void>
+    using enable_if_t = typename std::enable_if<T_condition, T>::type;
+
     enum class type_t : std::uint8_t {
       nil,
       boolean,
@@ -40,10 +44,13 @@ namespace dromozoa {
       string,
       table,
       function,
+      thread,
     };
 
     class table_t;
     class function_t;
+    class thread_t;
+    class array_t;
 
     class value_t {
       struct access;
@@ -63,6 +70,11 @@ namespace dromozoa {
       value_t(std::string&&);
       value_t(std::shared_ptr<table_t>);
       value_t(std::shared_ptr<function_t>);
+      value_t(std::shared_ptr<thread_t>);
+
+      template <class T>
+      value_t(T value, enable_if_t<std::is_integral<T>::value>* = 0)
+        : value_t(static_cast<double>(value)) {}
 
       bool operator<(const value_t&) const;
 
@@ -73,18 +85,24 @@ namespace dromozoa {
       bool isstring() const;
       bool istable() const;
       bool isfunction() const;
+      bool isthread() const;
 
       bool toboolean() const;
       bool tonumber(double& result) const;
-      std::string tostring() const;
 
       double checknumber() const;
       std::int64_t checkinteger() const;
       std::string checkstring() const;
       std::shared_ptr<table_t> checktable() const;
       std::shared_ptr<function_t> checkfunction() const;
+      std::shared_ptr<thread_t> checkthread() const;
 
       std::int64_t optinteger(std::int64_t) const;
+
+      const value_t& rawget(const value_t&) const;
+      std::int64_t rawlen() const;
+      void rawset(const value_t&, const value_t&) const;
+      void rawset(const value_t&, const array_t&) const;
 
     private:
       type_t type_;
@@ -94,6 +112,7 @@ namespace dromozoa {
         std::shared_ptr<std::string> string_;
         std::shared_ptr<table_t> table_;
         std::shared_ptr<function_t> function_;
+        std::shared_ptr<thread_t> thread_;
       };
     };
 
@@ -112,8 +131,10 @@ namespace dromozoa {
     class array_t {
     public:
       array_t();
+      array_t(std::size_t);
       value_t& operator[](std::size_t) const;
-
+      std::size_t size() const;
+      array_t sub(std::size_t) const;
     private:
       std::shared_ptr<value_t> data_;
       std::size_t size_;
@@ -121,8 +142,8 @@ namespace dromozoa {
 
     class table_t {
     public:
-      table_t();
-
+      const value_t& get(const value_t&) const;
+      void set(const value_t&, const value_t&);
     private:
       std::map<value_t, value_t> map_;
       value_t metatable_;
@@ -132,6 +153,9 @@ namespace dromozoa {
     public:
       virtual ~function_t();
       virtual std::function<void()> operator()(std::shared_ptr<function_t>, std::shared_ptr<function_t>, std::shared_ptr<function_t>, std::initializer_list<value_t>) = 0;
+    };
+
+    class thread_t {
     };
   }
 }

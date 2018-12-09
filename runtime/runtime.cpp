@@ -102,6 +102,9 @@ namespace dromozoa {
           case type_t::function:
             new (&self.function_) std::shared_ptr<function_t>(that.function_);
             return;
+          case type_t::thread:
+            new (&self.thread_) std::shared_ptr<thread_t>(that.thread_);
+            return;
         }
       }
 
@@ -126,6 +129,9 @@ namespace dromozoa {
           case type_t::function:
             new (&self.function_) std::shared_ptr<function_t>(std::move(that.function_));
             return;
+          case type_t::thread:
+            new (&self.thread_) std::shared_ptr<thread_t>(std::move(that.thread_));
+            return;
         }
       }
 
@@ -146,17 +152,23 @@ namespace dromozoa {
           case type_t::function:
             self.function_.~shared_ptr();
             return;
+          case type_t::thread:
+            self.thread_.~shared_ptr();
+            return;
         }
       }
     };
 
-    value_t::value_t() : type_(type_t::nil) {}
+    value_t::value_t()
+      : type_(type_t::nil) {}
 
-    value_t::value_t(const value_t& that) : value_t() {
+    value_t::value_t(const value_t& that)
+      : value_t() {
       access::copy_construct(*this, that);
     }
 
-    value_t::value_t(value_t&& that) : value_t() {
+    value_t::value_t(value_t&& that)
+      : value_t() {
       access::move_construct(*this, std::move(that));
     }
 
@@ -176,36 +188,49 @@ namespace dromozoa {
       return *this;
     }
 
-    value_t::value_t(bool boolean) : type_(type_t::boolean) {
+    value_t::value_t(bool boolean)
+      : type_(type_t::boolean) {
       boolean_ = boolean;
     }
 
-    value_t::value_t(double number) : type_(type_t::number) {
+    value_t::value_t(double number)
+      : type_(type_t::number) {
       number_ = number;
     }
 
-    value_t::value_t(const char* data) : type_(type_t::string) {
+    value_t::value_t(const char* data)
+      : type_(type_t::string) {
       new (&string_) std::shared_ptr<std::string>(std::make_shared<std::string>(data));
     }
 
-    value_t::value_t(const char* data, std::size_t size) : type_(type_t::string) {
+    value_t::value_t(const char* data, std::size_t size)
+      : type_(type_t::string) {
       new (&string_) std::shared_ptr<std::string>(std::make_shared<std::string>(data, size));
     }
 
-    value_t::value_t(const std::string& string) : type_(type_t::string) {
+    value_t::value_t(const std::string& string)
+      : type_(type_t::string) {
       new (&string_) std::shared_ptr<std::string>(std::make_shared<std::string>(string));
     }
 
-    value_t::value_t(std::string&& string) : type_(type_t::string) {
+    value_t::value_t(std::string&& string)
+      : type_(type_t::string) {
       new (&string_) std::shared_ptr<std::string>(std::make_shared<std::string>(std::move(string)));
     }
 
-    value_t::value_t(std::shared_ptr<table_t> table) : type_(type_t::table) {
+    value_t::value_t(std::shared_ptr<table_t> table)
+      : type_(type_t::table) {
       new (&table_) std::shared_ptr<table_t>(table);
     }
 
-    value_t::value_t(std::shared_ptr<function_t> function) : type_(type_t::function) {
+    value_t::value_t(std::shared_ptr<function_t> function)
+      : type_(type_t::function) {
       new (&function_) std::shared_ptr<function_t>(function);
+    }
+
+    value_t::value_t(std::shared_ptr<thread_t> thread)
+      : type_(type_t::thread) {
+      new (&thread_) std::shared_ptr<thread_t>(thread);
     }
 
     bool value_t::operator<(const value_t& that) const {
@@ -225,6 +250,8 @@ namespace dromozoa {
           return table_ < that.table_;
         case type_t::function:
           return function_ < that.function_;
+        case type_t::thread:
+          return thread_ < that.thread_;
       }
     }
 
@@ -242,6 +269,8 @@ namespace dromozoa {
           return "table";
         case type_t::function:
           return "function";
+        case type_t::thread:
+          return "thread";
       }
     }
 
@@ -267,6 +296,10 @@ namespace dromozoa {
 
     bool value_t::isfunction() const {
       return type_ == type_t::function;
+    }
+
+    bool value_t::isthread() const {
+      return type_ == type_t::thread;
     }
 
     bool value_t::toboolean() const {
@@ -297,35 +330,6 @@ namespace dromozoa {
       return false;
     }
 
-    std::string value_t::tostring() const {
-      switch (type_) {
-        case type_t::nil:
-          return "nil";
-        case type_t::boolean:
-          if (boolean_) {
-            return "true";
-          } else {
-            return "false";
-          }
-        case type_t::number:
-          return to_string(number_);
-        case type_t::string:
-          return *string_;
-        case type_t::table:
-          {
-            std::ostringstream out;
-            out << "table: " << table_.get();
-            return out.str();
-          }
-        case type_t::function:
-          {
-            std::ostringstream out;
-            out << "function: " << function_.get();
-            return out.str();
-          }
-      }
-    }
-
     double value_t::checknumber() const {
       double result = 0;
       if (tonumber(result)) {
@@ -338,9 +342,8 @@ namespace dromozoa {
       if (isnumber()) {
         if (std::isfinite(number_) && number_ == std::floor(number_)) {
           return number_;
-        } else {
-          throw value_t("number has no integer representation");
         }
+        throw value_t("number has no integer representation");
       } else if (isstring()) {
         switch (regexp_integer(*string_)) {
           case 1: return std::stoll(*string_, nullptr, 10);
@@ -350,9 +353,8 @@ namespace dromozoa {
         if (to_number(*string_, number)) {
           if (std::isfinite(number) && number == std::floor(number)) {
             return number;
-          } else {
-            throw value_t("number has no integer representation");
           }
+          throw value_t("number has no integer representation");
         }
       }
       throw value_t("integer expected, got " + type());
@@ -367,8 +369,122 @@ namespace dromozoa {
       throw value_t("string expected, got " + type());
     }
 
+    std::shared_ptr<table_t> value_t::checktable() const {
+      if (istable()) {
+        return table_;
+      }
+      throw value_t("table expected, got " + type());
+    }
+
+    std::shared_ptr<function_t> value_t::checkfunction() const {
+      if (isfunction()) {
+        return function_;
+      }
+      throw value_t("function expected, got " + type());
+    }
+
+    std::shared_ptr<thread_t> value_t::checkthread() const {
+      if (isthread()) {
+        return thread_;
+      }
+      throw value_t("thread expected, got " + type());
+    }
+
+    std::int64_t value_t::optinteger(std::int64_t d) const {
+      if (isnil()) {
+        return d;
+      } else {
+        return checkinteger();
+      }
+    }
+
+    const value_t& value_t::rawget(const value_t& index) const {
+      return checktable()->get(index);
+    }
+
+    std::int64_t value_t::rawlen() const {
+      if (isstring()) {
+        return string_->size();
+      } else if (istable()) {
+        for (std::int64_t i = 1; ; ++i) {
+          if (rawget(i).isnil()) {
+            return i - 1;
+          }
+        }
+      }
+      throw value_t("attempt to get length of a " + type() + " value");
+    }
+
+    void value_t::rawset(const value_t& index, const value_t& value) const {
+      checktable()->set(index, value);
+    }
+
+    void value_t::rawset(const value_t& begin, const array_t& array) const {
+      const auto table = checktable();
+      std::int64_t index = begin.checkinteger();
+      for (std::size_t i = 0; i < array.size(); ++i) {
+        table->set(index++, array[i]);
+      }
+    }
+
     value_t NIL;
     value_t FALSE = false;
     value_t TRUE = true;
+
+    array_t::array_t()
+      : size_(0) {}
+
+    array_t::array_t(std::size_t size)
+      : array_t() {
+      if (size > 0) {
+        data_ = std::shared_ptr<value_t>(new value_t[size], std::default_delete<value_t[]>());
+        size_ = size;
+      }
+    }
+
+    value_t& array_t::operator[](std::size_t i) const {
+      if (i < size_) {
+        return data_.get()[i];
+      } else {
+        return NIL;
+      }
+    }
+
+    std::size_t array_t::size() const {
+      return size_;
+    }
+
+    array_t array_t::sub(std::size_t begin) const {
+      if (size_ > begin) {
+        array_t that(size_ - begin);
+        std::size_t index = 0;
+        for (std::size_t i = begin; i < size_; ++i) {
+          that[index++] = (*this)[i];
+        }
+        return that;
+      } else {
+        return array_t();
+      }
+    }
+
+    const value_t& table_t::get(const value_t& index) const {
+      const auto i = map_.find(index);
+      if (i == map_.end()) {
+        return NIL;
+      } else {
+        return i->second;
+      }
+    }
+
+    void table_t::set(const value_t& index, const value_t& value) {
+      if (index.isnil()) {
+        throw value_t("table index is nil");
+      }
+      if (value.isnil()) {
+        map_.erase(index);
+      } else {
+        map_[index] = value;
+      }
+    }
   }
 }
