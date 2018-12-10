@@ -153,10 +153,14 @@ namespace dromozoa {
     class function_t {
     public:
       virtual ~function_t();
-      virtual std::function<void()> operator()(std::shared_ptr<function_t>, std::shared_ptr<function_t>, std::shared_ptr<function_t>, std::initializer_list<value_t>) = 0;
+      virtual std::function<void()> operator()(std::shared_ptr<function_t>, std::shared_ptr<thread_t>, array_t) = 0;
     };
 
     class thread_t {
+    public:
+      thread_t();
+    private:
+      std::shared_ptr<function_t> body_;
     };
   }
 }
