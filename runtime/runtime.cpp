@@ -486,5 +486,13 @@ namespace dromozoa {
         map_[index] = value;
       }
     }
+
+    const value_t& table_t::getmetatable() const {
+      return metatable_;
+    }
+
+    void table_t::setmetatable(const value_t& metatable) {
+      metatable_ = metatable;
+    }
   }
 }

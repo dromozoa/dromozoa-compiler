@@ -123,7 +123,6 @@ namespace dromozoa {
     class ref_t {
     public:
       ref_t();
-
     private:
       std::shared_ptr<value_t> data_;
     };
@@ -144,6 +143,8 @@ namespace dromozoa {
     public:
       const value_t& get(const value_t&) const;
       void set(const value_t&, const value_t&);
+      const value_t& getmetatable() const;
+      void setmetatable(const value_t&);
     private:
       std::map<value_t, value_t> map_;
       value_t metatable_;
