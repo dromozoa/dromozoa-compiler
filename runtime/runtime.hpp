@@ -150,10 +150,13 @@ namespace dromozoa {
       value_t metatable_;
     };
 
+    using continuation_t = std::function<void(std::shared_ptr<thread_t>, array_t)>;
+
     class function_t {
     public:
       virtual ~function_t();
-      virtual std::function<void()> operator()(std::shared_ptr<function_t>, std::shared_ptr<thread_t>, array_t) = 0;
+      virtual std::function<void()> operator()(continuation_t, std::shared_ptr<thread_t>, array_t) = 0;
+      void invoke(continuation_t, std::shared_ptr<thread_t>, array_t);
     };
 
     class thread_t {

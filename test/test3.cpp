@@ -19,14 +19,72 @@
 
 #include "runtime.hpp"
 
+namespace {
+  using namespace dromozoa::runtime;
+
+  std::function<void()> F1(continuation_t k, std::shared_ptr<thread_t> t, array_t args);
+  std::function<void()> F2(continuation_t k, std::shared_ptr<thread_t> t, array_t args);
+  std::function<void()> F3(continuation_t k, std::shared_ptr<thread_t> t, array_t args);
+
+  class F : public function_t {
+  public:
+    std::function<void()> operator()(continuation_t k, std::shared_ptr<thread_t> t, array_t args) {
+      return [=]() {
+        F1(k, t, args);
+      };
+    }
+  };
+
+  std::function<void()> F1(continuation_t k, std::shared_ptr<thread_t> t, array_t args) {
+    std::cout << "foo\n";
+    return [=]() {
+      F2(k, t, args);
+    };
+  }
+
+  std::function<void()> F2(continuation_t k, std::shared_ptr<thread_t> t, array_t args) {
+    std::cout << "bar\n";
+    return [=]() {
+      F3(k, t, args);
+    };
+  }
+
+  std::function<void()> F3(continuation_t k, std::shared_ptr<thread_t> t, array_t args) {
+    std::cout << "baz\n";
+    return [=]() {
+      k(t, array_t());
+    };
+  }
+
+  std::function<void()> G1(continuation_t k, std::shared_ptr<thread_t> t, array_t args);
+
+  class G : public function_t {
+  public:
+    std::function<void()> operator()(continuation_t k, std::shared_ptr<thread_t> t, array_t args) {
+      return [=]() {
+        G1(k, t, args);
+      };
+    }
+  };
+
+  std::function<void()> G1(continuation_t k, std::shared_ptr<thread_t> t, array_t args) {
+    std::cout << "qux\n";
+    return [=]() {
+      k(t, array_t());
+    };
+  }
+}
+
 int main(int, char*[]) {
   using namespace dromozoa::runtime;
 
-  try {
-    std::cout << value_t(" 0x7FFFFFFFFFFFFFFF ").checknumber() << "\n";
-  } catch (const value_t& e) {
-    std::cerr << e.checkstring() << "\n";
-  }
+  value_t f(std::make_shared<F>());
+  value_t g(std::make_shared<G>());
+
+  // std::function<void()> r = (*f.checkfunction())([=](std::shared_ptr<thread_t> t, array_t args) {
+  //   (*g.checkfunction())([=](std::shared_ptr<thread_t> t, array_t args) {
+  //   }, nullptr, array_t());
+  // }, nullptr, array_t());
 
   return 0;
 }
