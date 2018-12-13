@@ -495,14 +495,8 @@ namespace dromozoa {
       metatable_ = metatable;
     }
 
+    thunk_t::~thunk_t() {}
+
     function_t::~function_t() {}
-
-    void function_t::invoke(continuation_t k, std::shared_ptr<thread_t> t, array_t args) {
-      auto trampoline = (*this)(k, t, args);
-      while (trampoline) {
-        trampoline = trampoline();
-      }
-
-    }
   }
 }

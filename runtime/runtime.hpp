@@ -31,6 +31,7 @@
 #include <memory>
 #include <string>
 #include <type_traits>
+#include <utility>
 
 namespace dromozoa {
   namespace runtime {
@@ -47,10 +48,10 @@ namespace dromozoa {
       thread,
     };
 
+    class array_t;
     class table_t;
     class function_t;
     class thread_t;
-    class array_t;
 
     class value_t {
       struct access;
@@ -150,13 +151,37 @@ namespace dromozoa {
       value_t metatable_;
     };
 
-    using continuation_t = std::function<void(std::shared_ptr<thread_t>, array_t)>;
+    class thunk_t {
+    public:
+      virtual ~thunk_t();
+      virtual std::shared_ptr<thunk_t> operator()() = 0;
+    };
+
+    template <class T>
+    class thunk_impl : public thunk_t {
+    public:
+      thunk_impl(T&& function)
+        : function_(std::move(function)) {}
+
+      virtual std::shared_ptr<thunk_t> operator()() {
+        return function_();
+      }
+
+    private:
+      T function_;
+    };
+
+    template <typename T>
+    inline std::shared_ptr<thunk_t> make_thunk(T&& function) {
+      return std::make_shared<thunk_impl<T>>(std::forward<T>(function));
+    }
+
+    using continuation_t = std::function<std::shared_ptr<thunk_t>(std::shared_ptr<thread_t>, array_t)>;
 
     class function_t {
     public:
       virtual ~function_t();
-      virtual std::function<void()> operator()(continuation_t, std::shared_ptr<thread_t>, array_t) = 0;
-      void invoke(continuation_t, std::shared_ptr<thread_t>, array_t);
+      virtual std::shared_ptr<thunk_t> operator()(continuation_t, std::shared_ptr<thread_t>, array_t) = 0;
     };
 
     class thread_t {
