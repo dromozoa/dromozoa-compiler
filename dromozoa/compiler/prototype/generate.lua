@@ -425,7 +425,7 @@ local function rename_variables_search(blocks, dom_child, vers, stacks, uid)
     local stack = stacks[encoded_var]
     if stack then
       if param == true then
-        params[encoded_var] = variable.decode(encoded_var)[stack[#stack]]
+        params[encoded_var] = { [0] = variable.decode(encoded_var)[stack[#stack]] }
       else
         assert(param.phi)
         local v = vers[encoded_var]
@@ -493,6 +493,46 @@ local function rename_variables(blocks, dom_child, vers)
   rename_variables_search(blocks, dom_child, vers, stacks, blocks.entry_uid)
 end
 
+local function resolve_types(blocks, refs, postorder)
+  for i = #postorder, 1, -1 do
+    local uid = postorder[i]
+    local block = blocks[uid]
+    local params = block.params
+
+    for encoded_var, param in pairs(params) do
+      if param == true then
+        local var = variable.decode(encoded_var)
+        if refs[encoded_var] then
+          var.reference = true
+        end
+        params[encoded_var] = { [0] = var }
+      else
+        if refs[encoded_var] then
+          param[0].reference = true
+        end
+      end
+    end
+
+    for j = 1, #block do
+      local code = block[j]
+      local name = code[0]
+      if name ~= "RESULT" and not not_assign(name) then
+        local var = code[1]
+        if not params[var:encode_without_index()] then
+          var.declare = true
+        end
+      end
+      for k = 1, #code do
+        local var = code[k]
+        local encoded_var = var:encode_without_index()
+        if refs[encoded_var] then
+          var.reference = true
+        end
+      end
+    end
+  end
+end
+
 return function (self)
   local blocks = resolve_jumps(generate(self.code_list))
   local g = blocks.g
@@ -501,9 +541,9 @@ return function (self)
   local idom, dom_child, df = analyze_dominators(blocks, uv_postorder)
   local lives_in = analyze_liveness(blocks, g:vu_postorder(blocks.exit_uid))
   local defs, refs, vers = resolve_variables(blocks, lives_in, uv_postorder)
-  blocks.refs = refs
   insert_phi_functions(blocks, df, defs, vers, uv_postorder)
   rename_variables(blocks, dom_child, vers)
+  resolve_types(blocks, refs, uv_postorder)
   self.blocks = blocks
   return self
 end

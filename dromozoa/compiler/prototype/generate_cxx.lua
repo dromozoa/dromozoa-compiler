@@ -15,170 +15,178 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
+local serializer = require "dromozoa.compiler.serializer"
 local variable = require "dromozoa.compiler.variable"
 
 local unpack = table.unpack or unpack
 
-local heads = { "cont_t k", "thread_t t", "handler_t h" }
-local head_types = { "cont_t", "thread_t", "handler_t" }
-local head_names = { "k", "t", "h" }
-
-local function make_tuple(refs, params)
-  local tuple = {}
-
-  for encoded_var, param in pairs(params) do
-    local var
-    if type(param) == "table" then
-      if param.phi then
-        var = param[0]
-      else
-        var = param
-      end
-    else
-      var = variable.decode(encoded_var)
-    end
-    local item = { var = var }
-    if refs[encoded_var] then
-      item.type = "ref_t"
-    elseif var.type == "array" then
-      item.type = "array_t"
-    else
-      item.type = "value_t"
-    end
-    tuple[#tuple + 1] = item
-  end
-  table.sort(tuple, function (a, b) return a.var < b.var end)
-
-  return tuple
-end
-
-local function encode_tuple(tuple, heads)
-  local buffer = {}
-  if heads then
-    for i = 1, #heads do
-      buffer[i] = heads[i]
-    end
-  end
-  local n = #buffer
-  for i = 1, #tuple do
-    local item = tuple[i]
-    buffer[n + i] = item.type .. " " .. item.var:encode()
-  end
-  return table.concat(buffer, ", ")
-end
-
-local function encode_tuple_types(tuple, heads)
-  local buffer = {}
-  if heads then
-    for i = 1, #heads do
-      buffer[i] = heads[i]
-    end
-  end
-  local n = #buffer
-  for i = 1, #tuple do
-    buffer[n + i] = tuple[i].type
-  end
-  return table.concat(buffer, ", ")
-end
-
-local function encode_tuple_names(tuple, heads)
-  local buffer = {}
-  if heads then
-    for i = 1, #heads do
-      buffer[i] = heads[i]
-    end
-  end
-  local n = #buffer
-  for i = 1, #tuple do
-    buffer[n + i] = tuple[i].var:encode()
-  end
-  return table.concat(buffer, ", ")
-end
+local templates = {
+  MOVE     = serializer.template "%1 = %2";
+  GETTABLE = serializer.template "%1 = gettable(%2, %3)";
+  NEWTABLE = serializer.template "%1 = newtable()";
+  ADD      = serializer.template "%1 = %2.checknumber() + %3.checknumber()";
+  SUB      = serializer.template "%1 = %2.checknumber() - %3.checknumber()";
+  MUL      = serializer.template "%1 = %2.checknumber() * %3.checknumber()";
+  MOD      = serializer.template "%1 = std::fmod(%2.checknumber(), %3.checknumber())";
+  POW      = serializer.template "%1 = std::pow(%2.checknumber(), %3.checknumber())";
+  DIV      = serializer.template "%1 = %2.checknumber() / %3.checknumber()";
+  IDIV     = serializer.template "%1 = std::floor(%2.checknumber() / %3.checknumber())";
+  BAND     = serializer.template "%1 = %2.checkinteger() & %3.checkinteger()";
+  BOR      = serializer.template "%1 = %2.checkinteger() | %3.checkinteger()";
+  BXOR     = serializer.template "%1 = %2.checkinteger() ^ %3.checkinteger()";
+  SHL      = serializer.template "%1 = %2.checkinteger() << %3.checkinteger()";
+  SHR      = serializer.template "%1 = %2.checkinteger() >> %3.checkinteger()";
+  UNM      = serializer.template "%1 = -%2.checknumber()";
+  BNOT     = serializer.template "%1 = ~%2.checkinteger()";
+  NOT      = serializer.template "%1 = !%2.toboolean()";
+  LEN      = serializer.template "%1 = len(%2)";
+  CONCAT   = serializer.template "%1 = %2.checkstring() + %3.checkstring()";
+  EQ       = serializer.template "%1 = eq(%2, %3)";
+  NE       = serializer.template "%1 = !eq(%2, %3)";
+  LT       = serializer.template "%1 = lt(%2, %3)";
+  LE       = serializer.template "%1 = le(%2, %3)";
+  TONUMBER = serializer.template "%1 = %2.checknumber()";
+}
 
 local function generate_declations(out, proto_name, blocks, postorder)
-  local g = blocks.g
-  local u = g.u
-  local u_after = u.after
-  local refs = blocks.refs
-
   for i = #postorder, 1, -1 do
     local uid = postorder[i]
-    out:write(([[
-std::function<void()> %s_%d(%s);
-]]):format(proto_name, uid, encode_tuple(make_tuple(refs, blocks[uid].params), heads)))
+    out:write(serializer.template "std::function<void()> %1_%2(%3);\n" (
+      proto_name,
+      uid,
+      serializer.entries(blocks[uid].params)
+        :map(function (encoded_var, param)
+          local var = param[0]
+          if var.reference then
+            return serializer.tuple("ref_t", var)
+          elseif var.type == "array" then
+            return serializer.tuple("array_t", var)
+          else
+            return serializer.tuple("value_t", var)
+          end
+        end)
+        :sort(function (a, b) return a[2] < b[2] end)
+        :unshift(
+          serializer.tuple("std::shared_ptr<function_t>", "k"),
+          serializer.tuple("std::shared_ptr<function_t>", "t"),
+          serializer.tuple("std::shared_ptr<function_t>", "h"))
+        :map(serializer.template "%1 %2")
+        :separated ", "
+    ))
   end
 end
 
 local function generate_closure(out, self)
-  local proto_name = self[1]
   local upvalues = self.upvalues
   local blocks = self.blocks
   local entry_uid = blocks.entry_uid
-  local refs = blocks.refs
+  local entry_params = blocks[entry_uid].params
 
-  local proto_tuple = make_tuple(refs, blocks[entry_uid].params)
-
-  local proto_param_tuple = {}
-  for i = 0, self.A - 1 do
-    local var = variable.A(i)
-    if refs[var:encode()] then
-      proto_param_tuple[#proto_param_tuple + 1] = { type = "ref_t", var = var }
-    else
-      proto_param_tuple[#proto_param_tuple + 1] = { type = "value_t", var = var }
-    end
-  end
-  for i = 0, self.V - 1 do
-    proto_param_tuple[#proto_param_tuple + 1] = { type = "array_t", var = variable.V(i) }
-  end
-
-  local closure_param_tuple = {}
-  for i = 1, #upvalues do
-    closure_param_tuple[i] = { type = "ref_t", var = upvalues[i][1] }
-  end
-
-  local proto_types = encode_tuple_types(proto_param_tuple, head_types)
-  local proto_params = encode_tuple(proto_param_tuple, heads)
-  local closure_params = encode_tuple(closure_param_tuple)
-  local proto_args = encode_tuple_names(proto_tuple, head_names)
-
-  out:write(([[
-class %s : public function_t {
+  out:write(serializer.template [[
+class %1 : public function_t {
 public:
-  %s(%s) ]]):format(proto_name, proto_name, closure_params))
-
-  for i = 1, #upvalues do
-    local encoded_var = upvalues[i][1]:encode()
-    if i == 1 then
-      out:write ": "
-    else
-      out:write ", "
-    end
-    out:write(("%s(%s)"):format(encoded_var, encoded_var))
-  end
-  out:write [[
- {}
+  %1(%2)%3 {}
 private:
-  std::function<void()> operator()(std::shared_ptr<function_t> k, std::shared_ptr<function_t> t, std::shared_ptr<function_t> h, std::initializer_list<value_t> args) {
+  std::function<void()> operator()(std::shared_ptr<function_t> k, std::shared_ptr<function_t> t, std::shared_ptr<function_t> h, array_t args) {
+%4%
+    return %1_%5(%6);
   }
-]]
-
-  for i = 1, #upvalues do
-    out:write(([[
-  ref_t %s;
-]]):format(upvalues[i][1]:encode()))
-  end
-
-  out:write [[
+%7%
 };
-]]
+]] (
+    self[1],
+    serializer.sequence(upvalues)
+      :map(function (item) return item[1] end)
+      :map(serializer.template "ref_t %1")
+      :separated ", ",
+    serializer.sequence(upvalues)
+      :map(function (item) return item[1] end)
+      :map(serializer.template "%1(%1)")
+      :if_not_empty " : "
+      :separated ", ",
+    serializer.entries(entry_params)
+      :map(function (encoded_var, param)
+        local var = param[0]
+        local key = var.key
+        if key == "A" then
+          if var.reference then
+            return serializer.tuple("ref_t", var, "[" .. var.number .. "]")
+          else
+            return serializer.tuple("value_t", var, "[" .. var.number .. "]")
+          end
+        elseif key == "V" then
+          return serializer.tuple("array_t", var, ".sub(" .. self.A .. ")")
+        end
+      end)
+      :sort(function (a, b) return a[2] < b[2] end)
+      :map(serializer.template "    %1 %2 = args%3;\n"),
+    entry_uid,
+    serializer.entries(entry_params)
+      :map(function (encoded_var, param)
+        return param[0]
+      end)
+      :sort()
+      :unshift("k", "t", "h")
+      :separated ", ",
+    serializer.sequence(upvalues)
+      :map(function (item) return item[1] end)
+      :map(serializer.template "  ref_t %1;\n")
+  ))
+end
 
---[[
-std::function<std::function<void()>({proto_types})> {proto_name}({closure_params}) {
-  return [=]({proto_params}) -> std::function<void()> {
-    return {proto_name}_{entry_uid}({proto_args});
-  };
-}
-]]
+local function generate_definitions(out, proto_name, blocks, postorder)
+  for i = #postorder, 1, -1 do
+    local uid = postorder[i]
+    local block = blocks[uid]
+
+    out:write(serializer.template "std::function<void()> %1_%2(%3) {\n" (
+      proto_name,
+      uid,
+      serializer.entries(block.params)
+        :map(function (encoded_var, param)
+          local var = param[0]
+          if var.reference then
+            return serializer.tuple("ref_t", var)
+          elseif var.type == "array" then
+            return serializer.tuple("array_t", var)
+          else
+            return serializer.tuple("value_t", var)
+          end
+        end)
+        :sort(function (a, b) return a[2] < b[2] end)
+        :unshift(
+          serializer.tuple("std::shared_ptr<function_t>", "k"),
+          serializer.tuple("std::shared_ptr<function_t>", "t"),
+          serializer.tuple("std::shared_ptr<function_t>", "h"))
+        :map(serializer.template "%1 %2")
+        :separated ", "
+    ))
+
+    for j = 1, #block do
+      local code = block[j]
+      local name = code[0]
+
+      local tmpl = templates[name]
+      if tmpl then
+        local var = code[1]
+        if var.declare then
+          out:write "  "
+          if var.reference then
+            out:write "ref_t"
+          elseif var.type == "array" then
+            out:write "array_t"
+          else
+            out:write "value_t"
+          end
+          out:write(" ", tmpl(unpack(code)), ";\n")
+        else
+          out:write("  ", tmpl(unpack(code)), ";\n")
+        end
+      end
+    end
+
+    out:write "}\n"
+  end
 end
 
 return function (self, out)
@@ -187,5 +195,6 @@ return function (self, out)
   local uv_postorder = g:uv_postorder(blocks.entry_uid)
   generate_declations(out, self[1], blocks, uv_postorder)
   generate_closure(out, self)
+  generate_definitions(out, self[1], blocks, uv_postorder)
   return out
 end
