@@ -244,6 +244,40 @@ table.ir tr td:first-child {
   </tr>
 </table>
 
+<h2>metatable</h2>
+
+<table>
+  <tr><th>Event    </th><th>Mode </th><th>Description</th></tr>
+  <tr><td>add      </td><td>binop</td><td><code>+</code></td></tr>
+  <tr><td>sub      </td><td>binop</td><td><code>-</code></td></tr>
+  <tr><td>mul      </td><td>binop</td><td><code>*</code></td></tr>
+  <tr><td>div      </td><td>binop</td><td><code>/</code></td></tr>
+  <tr><td>mod      </td><td>binop</td><td><code>%</code></td></tr>
+  <tr><td>pow      </td><td>binop</td><td><code>^</code></td></tr>
+  <tr><td>unm      </td><td>unop </td><td><code>-</code></td></tr>
+  <tr><td>idiv     </td><td>binop</td><td><code>//</code></td></tr>
+  <tr><td>band     </td><td>binop</td><td><code>&amp;</code></td></tr>
+  <tr><td>bor      </td><td>binop</td><td><code>|</code></td></tr>
+  <tr><td>bxor     </td><td>binop</td><td><code>~</code></td></tr>
+  <tr><td>bnot     </td><td>unop </td><td><code>~</code></td></tr>
+  <tr><td>shl      </td><td>binop</td><td><code>&lt;&lt;</code></td></tr>
+  <tr><td>shr      </td><td>binop</td><td><code>&gt;&gt;</code></td></tr>
+  <tr><td>concat   </td><td>binop</td><td><code>..</code></td></tr>
+  <tr><td>len      </td><td>unop </td><td><code>#</code></td></tr>
+  <tr><td>eq       </td><td>binop</td><td><code>==</code></td></tr>
+  <tr><td>lt       </td><td>binop</td><td><code>&lt;</code></td></tr>
+  <tr><td>le       </td><td>binop</td><td><code>&lt;=</code></td></tr>
+  <tr><td>index    </td><td>     </td><td></td></tr>
+  <tr><td>newindex </td><td>     </td><td></td></tr>
+  <tr><td>call     </td><td>     </td><td></td></tr>
+  <tr><td>gc       </td><td>     </td><td>garbage colleciton</td></tr>
+  <tr><td>mode     </td><td>     </td><td>weak table</td></tr>
+  <tr><td>name     </td><td>     </td><td><code>luaL_newmetatable</code></td></tr>
+  <tr><td>tostring </td><td>     </td><td><code>tostring</code></td></tr>
+  <tr><td>metatable</td><td>     </td><td>protected metatable</td></tr>
+  <tr><td>pairs    </td><td>     </td><td><code>pairs</code></td></tr>
+</table>
+
 <h2>Lua 5.3 basic types</h2>
 
 <pre>
