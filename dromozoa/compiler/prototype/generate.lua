@@ -18,6 +18,15 @@
 local graph = require "dromozoa.graph"
 local variable = require "dromozoa.compiler.variable"
 
+local not_split = {
+  MOVE     = true;
+  NEWTABLE = true;
+  NOT      = true;
+  CALL     = true;
+  CLOSURE  = true;
+  TONUMBER = true;
+}
+
 local not_assign = {
   SETTABLE = true;
   CALL     = true;
@@ -52,7 +61,7 @@ local function generate(code_list)
         blocks[uid] = block
       end
       block[#block + 1] = code
-      if name == "RESULT" or name == "RETURN" or name == "GOTO" or name == "COND" then
+      if not not_split[name] then
         uid = nil
       end
     end
