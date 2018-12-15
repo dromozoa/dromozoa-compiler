@@ -57,7 +57,8 @@ local function generate(stack, node, symbol_table)
     generate(stack, node[i], symbol_table)
     if i == inorder then
       if symbol == symbol_table["while"] then
-        _:COND_IF(node[1].var, variable.FALSE)
+        _:NOT(node.var, node[1].var)
+         :COND_IF(node.var, variable.TRUE)
          :  BREAK()
          :COND_END()
       elseif symbol == symbol_table["for"] then
@@ -124,8 +125,8 @@ local function generate(stack, node, symbol_table)
         _:MOVE(node.var, node[1].var)
          :COND_IF(node.var, variable.TRUE)
       elseif binop == "OR" then
-        _:MOVE(node.var, node[1].var)
-         :COND_IF(node.var, variable.FALSE)
+        _:NOT(node.var, node[1].var)
+         :COND_IF(node.var, variable.TRUE)
       end
     end
   end
