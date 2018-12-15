@@ -138,7 +138,7 @@ function class:COND_END()
     local join_label = variable.M(m + 2)
     proto.M = m + 3
 
-    this_block[#this_block + 1] = { node_id = then_node_id; [0] = "COND", cond_block[1], cond_block[2], then_label, else_label }
+    this_block[#this_block + 1] = { node_id = then_node_id; [0] = "COND", cond_block[1], then_label, else_label }
     this_block[#this_block + 1] = { node_id = then_node_id; [0] = "LABEL", then_label }
     for i = 1, #then_block do
       this_block[#this_block + 1] = then_block[i]
@@ -156,7 +156,7 @@ function class:COND_END()
     local join_label = variable.M(m + 1)
     proto.M = m + 2
 
-    this_block[#this_block + 1] = { node_id = then_node_id; [0] = "COND", cond_block[1], cond_block[2], then_label, join_label }
+    this_block[#this_block + 1] = { node_id = then_node_id; [0] = "COND", cond_block[1], then_label, join_label }
     this_block[#this_block + 1] = { node_id = then_node_id; [0] = "LABEL", then_label }
     for i = 1, #that_block do
       this_block[#this_block + 1] = that_block[i]

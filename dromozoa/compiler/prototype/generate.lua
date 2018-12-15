@@ -100,8 +100,8 @@ local function resolve_jumps(blocks, uids, labels)
     elseif name == "RETURN" then
       g:add_edge(this_uid, exit_uid)
     elseif name == "COND" then
-      local then_eid = g:add_edge(this_uid, labels[code[3]])
-      local else_eid = g:add_edge(this_uid, labels[code[4]])
+      local then_eid = g:add_edge(this_uid, labels[code[2]])
+      local else_eid = g:add_edge(this_uid, labels[code[3]])
       jumps[then_eid] = "THEN"
       jumps[else_eid] = "ELSE"
     else
