@@ -34,22 +34,22 @@ namespace dromozoa {
             case 1: if      ( std::isspace(c))      { state = 2; }
                     else if ( isdigit(c))           { state = 3; }
                     else if ( c == 'X' || c == 'x') { state = 8; }
-                    else                            { return 0;  } break;
-            case 2: if      (!std::isspace(c))      { return 0;  } break;
+                    else                            { return  0; } break;
+            case 2: if      (!std::isspace(c))      { return  0; } break;
             case 3: if      ( std::isspace(c))      { state = 2; }
-                    else if (!std::isdigit(c))      { return 0;  } break;
+                    else if (!std::isdigit(c))      { return  0; } break;
             case 4: if      ( std::isspace(c))      { state = 5; }
-                    else if (!std::isxdigit(c))     { return 0;  } break;
-            case 5: if      (!std::isspace(c))      { return 0;  } break;
+                    else if (!std::isxdigit(c))     { return  0; } break;
+            case 5: if      (!std::isspace(c))      { return  0; } break;
             case 6: if      ( c == '0')             { state = 1; }
                     else if ( std::isdigit(c))      { state = 3; }
                     else if ( c == '+' || c == '-') { state = 7; }
-                    else if (!std::isspace(c))      { return 0;  } break;
+                    else if (!std::isspace(c))      { return  0; } break;
             case 7: if      ( c == '0')             { state = 1; }
                     else if ( std::isdigit(c))      { state = 3; }
-                    else                            { return 0;  } break;
+                    else                            { return  0; } break;
             case 8: if      ( std::isxdigit(c))     { state = 4; }
-                    else                            { return 0;  } break;
+                    else                            { return  0; } break;
           }
         }
         switch (state) {
@@ -398,10 +398,6 @@ namespace dromozoa {
       }
     }
 
-    const value_t& value_t::rawget(const value_t& index) const {
-      return checktable()->get(index);
-    }
-
     std::int64_t value_t::rawlen() const {
       if (isstring()) {
         return string_->size();
@@ -413,6 +409,10 @@ namespace dromozoa {
         }
       }
       throw value_t("attempt to get length of a " + type() + " value");
+    }
+
+    const value_t& value_t::rawget(const value_t& index) const {
+      return checktable()->get(index);
     }
 
     void value_t::rawset(const value_t& index, const value_t& value) const {

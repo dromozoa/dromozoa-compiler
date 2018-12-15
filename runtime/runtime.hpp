@@ -26,7 +26,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
-#include <initializer_list>
 #include <map>
 #include <memory>
 #include <string>
@@ -100,8 +99,9 @@ namespace dromozoa {
 
       std::int64_t optinteger(std::int64_t) const;
 
-      const value_t& rawget(const value_t&) const;
+      bool rawequal(const value_t&) const;
       std::int64_t rawlen() const;
+      const value_t& rawget(const value_t&) const;
       void rawset(const value_t&, const value_t&) const;
       void rawset(const value_t&, const array_t&) const;
 
@@ -160,6 +160,9 @@ namespace dromozoa {
     template <class T>
     class thunk_impl : public thunk_t {
     public:
+      thunk_impl(const T& function)
+        : function_(function) {}
+
       thunk_impl(T&& function)
         : function_(std::move(function)) {}
 
