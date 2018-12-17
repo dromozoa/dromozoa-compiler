@@ -123,7 +123,9 @@ namespace dromozoa {
 
     class ref_t {
     public:
-      ref_t();
+      ref_t(const value_t&);
+      ref_t(value_t&&);
+
     private:
       std::shared_ptr<value_t> data_;
     };

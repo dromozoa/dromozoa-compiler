@@ -431,6 +431,9 @@ namespace dromozoa {
     value_t FALSE = false;
     value_t TRUE = true;
 
+    ref_t::ref_t(const value_t& data)
+      : data_(std::make_shared<value_t>(data)) {}
+
     array_t::array_t()
       : size_(0) {}
 
