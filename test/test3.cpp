@@ -71,12 +71,6 @@ namespace {
 int main(int, char*[]) {
   using namespace dromozoa::runtime;
 
-  // auto t = make_thunk([]() -> std::shared_ptr<thunk_t> {
-  //   return f(10);
-  // });
-
-  // using continuation_t = std::function<std::shared_ptr<thunk_t>(
-  // std::shared_ptr<thread_t>, array_t)>;
   value_t f(std::make_shared<F>());
   auto t = (*f.checkfunction())([](std::shared_ptr<thread_t>, array_t) -> std::shared_ptr<thunk_t> {
     std::cout << "done\n";
@@ -91,6 +85,16 @@ int main(int, char*[]) {
       break;
     }
   }
+
+  using let_t = var_t;
+
+  let_t x = { 42 };
+  let_t y = x;
+  std::cout << x->checknumber() << "\n";
+  std::cout << y->checknumber() << "\n";
+  *x = 69;
+  std::cout << x->checknumber() << "\n";
+  std::cout << y->checknumber() << "\n";
 
   // value_t f(std::make_shared<F>());
   // value_t g(std::make_shared<G>());

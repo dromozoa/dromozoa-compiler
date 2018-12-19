@@ -431,8 +431,38 @@ namespace dromozoa {
     value_t FALSE = false;
     value_t TRUE = true;
 
-    ref_t::ref_t(const value_t& data)
-      : data_(std::make_shared<value_t>(data)) {}
+    var_t::var_t() {}
+
+    var_t::var_t(const value_t& value)
+      : value_(value) {}
+
+    var_t::var_t(value_t&& value)
+      : value_(std::move(value)) {}
+
+    value_t& var_t::operator*() {
+      return value_;
+    }
+
+    value_t* var_t::operator->() {
+      return &value_;
+    }
+
+    ref_t::ref_t()
+      : value_(std::make_shared<value_t>()) {}
+
+    ref_t::ref_t(const value_t& value)
+      : value_(std::make_shared<value_t>(value)) {}
+
+    ref_t::ref_t(value_t&& value)
+      : value_(std::make_shared<value_t>(std::move(value))) {}
+
+    value_t& ref_t::operator*() const {
+      return *value_;
+    }
+
+    value_t* ref_t::operator->() const {
+      return value_.get();
+    }
 
     array_t::array_t()
       : size_(0) {}

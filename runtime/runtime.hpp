@@ -121,13 +121,26 @@ namespace dromozoa {
     extern value_t FALSE;
     extern value_t TRUE;
 
+    class var_t {
+    public:
+      var_t();
+      var_t(const value_t&);
+      var_t(value_t&&);
+      value_t& operator*();
+      value_t* operator->();
+    private:
+      value_t value_;
+    };
+
     class ref_t {
     public:
+      ref_t();
       ref_t(const value_t&);
       ref_t(value_t&&);
-
+      value_t& operator*() const;
+      value_t* operator->() const;
     private:
-      std::shared_ptr<value_t> data_;
+      std::shared_ptr<value_t> value_;
     };
 
     class array_t {
@@ -183,6 +196,13 @@ namespace dromozoa {
 
     using continuation_t = std::function<std::shared_ptr<thunk_t>(std::shared_ptr<thread_t>, array_t)>;
 
+    class state {
+    public:
+    private:
+      continuation_t continuation_;
+      std::shared_ptr<thread_t> thread_;
+    };
+
     class function_t {
     public:
       virtual ~function_t();
@@ -195,6 +215,7 @@ namespace dromozoa {
     private:
       std::shared_ptr<function_t> body_;
     };
+
   }
 }
 
