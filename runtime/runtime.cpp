@@ -518,15 +518,14 @@ namespace dromozoa {
 
     std::shared_ptr<thunk_t> value_t::call(continuation_t k, state_t state, array_t args) const {
       if (isfunction()) {
-        return (*function_)(k, state, args);
+        return (*checkfunction())(k, state, args);
       } else {
         const auto& field = getmetafield(state, "__call");
         if (field.isfunction()) {
-          return (*field.function_)(k, state, array_t(*this, args));
-        } else {
-          throw value_t("attempt to call a " + type() + " value");
+          return (*field.checkfunction())(k, state, array_t(*this, args));
         }
       }
+      throw value_t("attempt to call a " + type() + " value");
     }
 
     const value_t NIL;
