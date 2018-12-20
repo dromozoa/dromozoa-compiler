@@ -34,9 +34,6 @@
 
 namespace dromozoa {
   namespace runtime {
-    template <bool T_condition, class T = void>
-    using enable_if_t = typename std::enable_if<T_condition, T>::type;
-
     enum class type_t : std::uint8_t {
       nil,
       boolean,
@@ -47,10 +44,25 @@ namespace dromozoa {
       thread,
     };
 
-    class array_t;
+    class value_t;
     class table_t;
     class function_t;
     class thread_t;
+    class thunk_t;
+
+    class array_t {
+    public:
+      array_t();
+      array_t(std::size_t);
+      value_t& operator[](std::size_t) const;
+      std::size_t size() const;
+      array_t sub(std::size_t) const;
+    private:
+      std::shared_ptr<value_t> data_;
+      std::size_t size_;
+    };
+
+    using continuation_t = std::function<std::shared_ptr<thunk_t>(std::shared_ptr<thread_t>, array_t)>;
 
     class value_t {
       struct access;
@@ -73,7 +85,7 @@ namespace dromozoa {
       value_t(std::shared_ptr<thread_t>);
 
       template <class T>
-      value_t(T value, enable_if_t<std::is_integral<T>::value>* = 0)
+      value_t(T value, typename std::enable_if<std::is_integral<T>::value>::type* = 0)
         : value_t(static_cast<double>(value)) {}
 
       bool operator<(const value_t&) const;
@@ -143,18 +155,6 @@ namespace dromozoa {
       std::shared_ptr<value_t> value_;
     };
 
-    class array_t {
-    public:
-      array_t();
-      array_t(std::size_t);
-      value_t& operator[](std::size_t) const;
-      std::size_t size() const;
-      array_t sub(std::size_t) const;
-    private:
-      std::shared_ptr<value_t> data_;
-      std::size_t size_;
-    };
-
     class table_t {
     public:
       const value_t& get(const value_t&) const;
@@ -193,8 +193,6 @@ namespace dromozoa {
     inline std::shared_ptr<thunk_t> make_thunk(T&& function) {
       return std::make_shared<thunk_impl<T>>(std::forward<T>(function));
     }
-
-    using continuation_t = std::function<std::shared_ptr<thunk_t>(std::shared_ptr<thread_t>, array_t)>;
 
     class state {
     public:
