@@ -162,15 +162,42 @@ namespace dromozoa {
     array_t::array_t()
       : size_(0) {}
 
-    array_t::array_t(std::size_t size)
-      : array_t() {
-      if (size > 0) {
-        data_ = std::shared_ptr<value_t>(new value_t[size], std::default_delete<value_t[]>());
-        size_ = size;
+    array_t::array_t(std::initializer_list<value_t> data)
+      : size_(data.size()) {
+      if (size_ > 0) {
+        data_ = std::shared_ptr<value_t>(new value_t[size_], std::default_delete<value_t[]>());
+        auto* ptr = data_.get();
+        for (const auto& value : data) {
+          *ptr++ = value;
+        }
       }
     }
 
-    value_t& array_t::operator[](std::size_t i) const {
+    array_t::array_t(std::initializer_list<value_t> data, const array_t& that)
+      : size_(data.size() + that.size()) {
+      if (size_ > 0) {
+        data_ = std::shared_ptr<value_t>(new value_t[size_], std::default_delete<value_t[]>());
+        auto* ptr = data_.get();
+        for (const auto& value : data) {
+          *ptr++ = value;
+        }
+        for (const auto& value : that) {
+          *ptr++ = value;
+        }
+      }
+    }
+
+    array_t::array_t(const value_t& value, const array_t& that)
+      : size_(1 + that.size()) {
+      data_ = std::shared_ptr<value_t>(new value_t[size_], std::default_delete<value_t[]>());
+      auto* ptr = data_.get();
+      *ptr++ = value;
+      for (const auto& value : that) {
+        *ptr++ = value;
+      }
+    }
+
+    const value_t& array_t::operator[](std::size_t i) const {
       if (i < size_) {
         return data_.get()[i];
       } else {
@@ -178,26 +205,24 @@ namespace dromozoa {
       }
     }
 
+    const value_t* array_t::begin() const {
+      return data_.get();
+    }
+
+    const value_t* array_t::end() const {
+      return data_.get() + size_;
+    }
+
     std::size_t array_t::size() const {
       return size_;
     }
 
-    array_t array_t::push_front(const value_t& value) const {
-      array_t that(size_ + 1);
-      that[0] = value;
-      for (std::size_t i = 0; i < size_; ++i) {
-        that[i + 1] = (*this)[i];
-      }
-      return that;
-    }
-
-    array_t array_t::slice(std::size_t begin) const {
-      if (size_ > begin) {
-        array_t that(size_ - begin);
-        std::size_t index = 0;
-        for (std::size_t i = begin; i < size_; ++i) {
-          that[index++] = (*this)[i];
-        }
+    array_t array_t::slice(std::size_t first) const {
+      if (size_ > first) {
+        array_t that;
+        that.size_ = size_ - first;
+        that.data_ = std::shared_ptr<value_t>(new value_t[that.size_], std::default_delete<value_t[]>());
+        std::copy(begin() + first, end(), that.data_.get());
         return that;
       } else {
         return array_t();
@@ -495,16 +520,16 @@ namespace dromozoa {
       } else {
         const auto& field = getmetafield(state, "__call");
         if (field.isfunction()) {
-          return (*field.function_)(k, state, args.push_front(*this));
+          return (*field.function_)(k, state, array_t(*this, args));
         } else {
           throw value_t("attempt to call a " + type() + " value");
         }
       }
     }
 
-    value_t NIL;
-    value_t FALSE = false;
-    value_t TRUE = true;
+    const value_t NIL;
+    const value_t FALSE = false;
+    const value_t TRUE = true;
 
     var_t::var_t() {}
 

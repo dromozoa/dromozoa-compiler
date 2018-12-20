@@ -26,6 +26,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <initializer_list>
 #include <map>
 #include <memory>
 #include <string>
@@ -53,10 +54,13 @@ namespace dromozoa {
     class array_t {
     public:
       array_t();
-      array_t(std::size_t);
-      value_t& operator[](std::size_t) const;
+      array_t(std::initializer_list<value_t>);
+      array_t(std::initializer_list<value_t>, const array_t&);
+      array_t(const value_t&, const array_t&);
+      const value_t& operator[](std::size_t) const;
+      const value_t* begin() const;
+      const value_t* end() const;
       std::size_t size() const;
-      array_t push_front(const value_t&) const;
       array_t slice(std::size_t) const;
     private:
       std::shared_ptr<value_t> data_;
@@ -142,9 +146,9 @@ namespace dromozoa {
       };
     };
 
-    extern value_t NIL;
-    extern value_t FALSE;
-    extern value_t TRUE;
+    extern const value_t NIL;
+    extern const value_t FALSE;
+    extern const value_t TRUE;
 
     class var_t {
     public:
@@ -202,7 +206,7 @@ namespace dromozoa {
       T function_;
     };
 
-    template <typename T>
+    template <class T>
     inline std::shared_ptr<thunk_t> make_thunk(T&& function) {
       return std::make_shared<thunk_impl<T>>(std::forward<T>(function));
     }

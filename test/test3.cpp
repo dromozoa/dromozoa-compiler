@@ -86,10 +86,20 @@ int main(int, char*[]) {
     }
   }
 
-  array_t a(2);
-  a[0] = 42;
-  a[1] = "foo";
+  array_t a { 42, "foo" };
   std::cout << a[0].checknumber() << " " << a[1].checkstring() << " " << a[2].toboolean() << "\n";
+
+  a = array_t { 69, "foo", TRUE };
+  std::cout << a[0].checknumber() << " " << a[1].checkstring() << " " << a[2].toboolean() << "\n";
+
+  array_t x = { 42 };
+  std::cout << x.size() << "\n";
+
+  std::string s = "foo";
+  // const char* ptr = s.c_str();
+  const char* ptr = nullptr;
+  ptr = ptr + 4;
+  std::cout << static_cast<const void*>(ptr) << "\n";
 
   return 0;
 }
