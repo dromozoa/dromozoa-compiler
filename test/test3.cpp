@@ -66,6 +66,23 @@ namespace {
       });
     }
   }
+
+  void dump_array(const array_t& data) {
+    bool first = true;
+    for (const auto& value : data) {
+      if (first) {
+        first = false;
+      } else {
+        std::cout << " ";
+      }
+      if (value.isnumber()) {
+        std::cout << value.checknumber();
+      } else if (value.isstring()) {
+        std::cout << value.checkstring();
+      }
+    }
+    std::cout << "\n";
+  }
 }
 
 int main(int, char*[]) {
@@ -86,20 +103,10 @@ int main(int, char*[]) {
     }
   }
 
-  array_t a { 42, "foo" };
-  std::cout << a[0].checknumber() << " " << a[1].checkstring() << " " << a[2].toboolean() << "\n";
-
-  a = array_t { 69, "foo", TRUE };
-  std::cout << a[0].checknumber() << " " << a[1].checkstring() << " " << a[2].toboolean() << "\n";
-
-  array_t x = { 42 };
-  std::cout << x.size() << "\n";
-
-  std::string s = "foo";
-  // const char* ptr = s.c_str();
-  const char* ptr = nullptr;
-  ptr = ptr + 4;
-  std::cout << static_cast<const void*>(ptr) << "\n";
+  array_t a { "foo", "bar", "baz" };
+  dump_array(a);
+  dump_array(a.slice(2));
+  dump_array(array_t("qux", a));
 
   return 0;
 }
