@@ -35,9 +35,6 @@
 
 namespace dromozoa {
   namespace runtime {
-    template <bool T_condition, class T = void>
-    using enable_if_t = typename std::enable_if<T_condition, T>::type;
-
     enum class type_t : std::uint8_t {
       nil,
       boolean,
@@ -48,10 +45,38 @@ namespace dromozoa {
       thread,
     };
 
-    class array_t;
+    class value_t;
     class table_t;
     class function_t;
     class thread_t;
+    class thunk_t;
+
+    class array_t {
+    public:
+      array_t();
+      array_t(std::initializer_list<value_t>);
+      array_t(std::initializer_list<value_t>, const array_t&);
+      array_t(const value_t&, const array_t&);
+      const value_t& operator[](std::size_t) const;
+      const value_t* begin() const;
+      const value_t* end() const;
+      std::size_t size() const;
+      array_t slice(std::size_t) const;
+    private:
+      std::shared_ptr<value_t> data_;
+      std::size_t size_;
+    };
+
+    class state_t {
+    public:
+      state_t();
+      std::shared_ptr<table_t> string_metatable() const;
+    private:
+      std::shared_ptr<table_t> string_metatable_;
+      std::shared_ptr<thread_t> thread_;
+    };
+
+    using continuation_t = std::function<std::shared_ptr<thunk_t>(state_t, array_t)>;
 
     class value_t {
       struct access;
@@ -74,7 +99,7 @@ namespace dromozoa {
       value_t(std::shared_ptr<thread_t>);
 
       template <class T>
-      value_t(T value, enable_if_t<std::is_integral<T>::value>* = 0)
+      value_t(T value, typename std::enable_if<std::is_integral<T>::value>::type* = 0)
         : value_t(static_cast<double>(value)) {}
 
       bool operator<(const value_t&) const;
@@ -100,10 +125,14 @@ namespace dromozoa {
 
       std::int64_t optinteger(std::int64_t) const;
 
-      const value_t& rawget(const value_t&) const;
+      bool rawequal(const value_t&) const;
       std::int64_t rawlen() const;
+      const value_t& rawget(const value_t&) const;
       void rawset(const value_t&, const value_t&) const;
       void rawset(const value_t&, const array_t&) const;
+
+      const value_t& getmetafield(const state_t&, const value_t&) const;
+      std::shared_ptr<thunk_t> call(continuation_t, state_t, array_t) const;
 
     private:
       type_t type_;
@@ -117,27 +146,30 @@ namespace dromozoa {
       };
     };
 
-    extern value_t NIL;
-    extern value_t FALSE;
-    extern value_t TRUE;
+    extern const value_t NIL;
+    extern const value_t FALSE;
+    extern const value_t TRUE;
+
+    class var_t {
+    public:
+      var_t();
+      var_t(const value_t&);
+      var_t(value_t&&);
+      const value_t& operator*() const;
+      const value_t* operator->() const;
+    private:
+      value_t value_;
+    };
 
     class ref_t {
     public:
       ref_t();
+      ref_t(const value_t&);
+      ref_t(value_t&&);
+      value_t& operator*() const;
+      value_t* operator->() const;
     private:
-      std::shared_ptr<value_t> data_;
-    };
-
-    class array_t {
-    public:
-      array_t();
-      array_t(std::size_t);
-      value_t& operator[](std::size_t) const;
-      std::size_t size() const;
-      array_t sub(std::size_t) const;
-    private:
-      std::shared_ptr<value_t> data_;
-      std::size_t size_;
+      std::shared_ptr<value_t> value_;
     };
 
     class table_t {
@@ -160,6 +192,9 @@ namespace dromozoa {
     template <class T>
     class thunk_impl : public thunk_t {
     public:
+      thunk_impl(const T& function)
+        : function_(function) {}
+
       thunk_impl(T&& function)
         : function_(std::move(function)) {}
 
@@ -171,17 +206,15 @@ namespace dromozoa {
       T function_;
     };
 
-    template <typename T>
+    template <class T>
     inline std::shared_ptr<thunk_t> make_thunk(T&& function) {
       return std::make_shared<thunk_impl<T>>(std::forward<T>(function));
     }
 
-    using continuation_t = std::function<std::shared_ptr<thunk_t>(std::shared_ptr<thread_t>, array_t)>;
-
     class function_t {
     public:
       virtual ~function_t();
-      virtual std::shared_ptr<thunk_t> operator()(continuation_t, std::shared_ptr<thread_t>, array_t) = 0;
+      virtual std::shared_ptr<thunk_t> operator()(continuation_t, state_t, array_t) = 0;
     };
 
     class thread_t {

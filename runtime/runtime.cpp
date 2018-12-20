@@ -27,6 +27,11 @@
 namespace dromozoa {
   namespace runtime {
     namespace {
+      template <class T>
+      inline value_t* copy(value_t* result, const T& range) {
+        return std::copy(range.begin(), range.end(), result);
+      }
+
       inline int regexp_integer(const std::string& string) {
         int state = 6;
         for (const char c : string) {
@@ -34,22 +39,22 @@ namespace dromozoa {
             case 1: if      ( std::isspace(c))      { state = 2; }
                     else if ( isdigit(c))           { state = 3; }
                     else if ( c == 'X' || c == 'x') { state = 8; }
-                    else                            { return 0;  } break;
-            case 2: if      (!std::isspace(c))      { return 0;  } break;
+                    else                            { return  0; } break;
+            case 2: if      (!std::isspace(c))      { return  0; } break;
             case 3: if      ( std::isspace(c))      { state = 2; }
-                    else if (!std::isdigit(c))      { return 0;  } break;
+                    else if (!std::isdigit(c))      { return  0; } break;
             case 4: if      ( std::isspace(c))      { state = 5; }
-                    else if (!std::isxdigit(c))     { return 0;  } break;
-            case 5: if      (!std::isspace(c))      { return 0;  } break;
+                    else if (!std::isxdigit(c))     { return  0; } break;
+            case 5: if      (!std::isspace(c))      { return  0; } break;
             case 6: if      ( c == '0')             { state = 1; }
                     else if ( std::isdigit(c))      { state = 3; }
                     else if ( c == '+' || c == '-') { state = 7; }
-                    else if (!std::isspace(c))      { return 0;  } break;
+                    else if (!std::isspace(c))      { return  0; } break;
             case 7: if      ( c == '0')             { state = 1; }
                     else if ( std::isdigit(c))      { state = 3; }
-                    else                            { return 0;  } break;
+                    else                            { return  0; } break;
             case 8: if      ( std::isxdigit(c))     { state = 4; }
-                    else                            { return 0;  } break;
+                    else                            { return  0; } break;
           }
         }
         switch (state) {
@@ -159,6 +164,75 @@ namespace dromozoa {
       }
     };
 
+    array_t::array_t()
+      : size_(0) {}
+
+    array_t::array_t(std::initializer_list<value_t> data)
+      : size_(data.size()) {
+      if (size_ > 0) {
+        data_ = std::shared_ptr<value_t>(new value_t[size_], std::default_delete<value_t[]>());
+        copy(data_.get(), data);
+      }
+    }
+
+    array_t::array_t(std::initializer_list<value_t> data, const array_t& that)
+      : size_(data.size() + that.size()) {
+      if (size_ > 0) {
+        data_ = std::shared_ptr<value_t>(new value_t[size_], std::default_delete<value_t[]>());
+        copy(copy(data_.get(), data), that);
+      }
+    }
+
+    array_t::array_t(const value_t& value, const array_t& that)
+      : size_(1 + that.size()) {
+      data_ = std::shared_ptr<value_t>(new value_t[size_], std::default_delete<value_t[]>());
+      auto* ptr = data_.get();
+      *ptr++ = value;
+
+      for (const auto& value : that) {
+        *ptr++ = value;
+      }
+    }
+
+    const value_t& array_t::operator[](std::size_t i) const {
+      if (i < size_) {
+        return data_.get()[i];
+      } else {
+        return NIL;
+      }
+    }
+
+    const value_t* array_t::begin() const {
+      return data_.get();
+    }
+
+    const value_t* array_t::end() const {
+      return data_.get() + size_;
+    }
+
+    std::size_t array_t::size() const {
+      return size_;
+    }
+
+    array_t array_t::slice(std::size_t first) const {
+      if (size_ > first) {
+        array_t that;
+        that.size_ = size_ - first;
+        that.data_ = std::shared_ptr<value_t>(new value_t[that.size_], std::default_delete<value_t[]>());
+        std::copy(begin() + first, end(), that.data_.get());
+        return that;
+      } else {
+        return array_t();
+      }
+    }
+
+    state_t::state_t()
+      : string_metatable_(std::make_shared<table_t>()) {}
+
+    std::shared_ptr<table_t> state_t::string_metatable() const {
+      return string_metatable_;
+    };
+
     value_t::value_t()
       : type_(type_t::nil) {}
 
@@ -189,14 +263,12 @@ namespace dromozoa {
     }
 
     value_t::value_t(bool boolean)
-      : type_(type_t::boolean) {
-      boolean_ = boolean;
-    }
+      : type_(type_t::boolean),
+        boolean_(boolean) {}
 
     value_t::value_t(double number)
-      : type_(type_t::number) {
-      number_ = number;
-    }
+      : type_(type_t::number),
+        number_(number) {}
 
     value_t::value_t(const char* data)
       : type_(type_t::string) {
@@ -398,10 +470,6 @@ namespace dromozoa {
       }
     }
 
-    const value_t& value_t::rawget(const value_t& index) const {
-      return checktable()->get(index);
-    }
-
     std::int64_t value_t::rawlen() const {
       if (isstring()) {
         return string_->size();
@@ -413,6 +481,10 @@ namespace dromozoa {
         }
       }
       throw value_t("attempt to get length of a " + type() + " value");
+    }
+
+    const value_t& value_t::rawget(const value_t& index) const {
+      return checktable()->get(index);
     }
 
     void value_t::rawset(const value_t& index, const value_t& value) const {
@@ -427,44 +499,66 @@ namespace dromozoa {
       }
     }
 
-    value_t NIL;
-    value_t FALSE = false;
-    value_t TRUE = true;
-
-    array_t::array_t()
-      : size_(0) {}
-
-    array_t::array_t(std::size_t size)
-      : array_t() {
-      if (size > 0) {
-        data_ = std::shared_ptr<value_t>(new value_t[size], std::default_delete<value_t[]>());
-        size_ = size;
-      }
-    }
-
-    value_t& array_t::operator[](std::size_t i) const {
-      if (i < size_) {
-        return data_.get()[i];
-      } else {
-        return NIL;
-      }
-    }
-
-    std::size_t array_t::size() const {
-      return size_;
-    }
-
-    array_t array_t::sub(std::size_t begin) const {
-      if (size_ > begin) {
-        array_t that(size_ - begin);
-        std::size_t index = 0;
-        for (std::size_t i = begin; i < size_; ++i) {
-          that[index++] = (*this)[i];
+    const value_t& value_t::getmetafield(const state_t& state, const value_t& event) const {
+      if (isstring()) {
+        return state.string_metatable()->get(event);
+      } else if (istable()) {
+        const auto metatable = table_->getmetatable();
+        if (metatable.istable()) {
+          return metatable.rawget(event);
         }
-        return that;
-      } else {
-        return array_t();
       }
+      return NIL;
+    }
+
+    std::shared_ptr<thunk_t> value_t::call(continuation_t k, state_t state, array_t args) const {
+      if (isfunction()) {
+        return (*function_)(k, state, args);
+      } else {
+        const auto& field = getmetafield(state, "__call");
+        if (field.isfunction()) {
+          return (*field.function_)(k, state, array_t(*this, args));
+        } else {
+          throw value_t("attempt to call a " + type() + " value");
+        }
+      }
+    }
+
+    const value_t NIL;
+    const value_t FALSE = false;
+    const value_t TRUE = true;
+
+    var_t::var_t() {}
+
+    var_t::var_t(const value_t& value)
+      : value_(value) {}
+
+    var_t::var_t(value_t&& value)
+      : value_(std::move(value)) {}
+
+    const value_t& var_t::operator*() const {
+      return value_;
+    }
+
+    const value_t* var_t::operator->() const {
+      return &value_;
+    }
+
+    ref_t::ref_t()
+      : value_(std::make_shared<value_t>()) {}
+
+    ref_t::ref_t(const value_t& value)
+      : value_(std::make_shared<value_t>(value)) {}
+
+    ref_t::ref_t(value_t&& value)
+      : value_(std::make_shared<value_t>(std::move(value))) {}
+
+    value_t& ref_t::operator*() const {
+      return *value_;
+    }
+
+    value_t* ref_t::operator->() const {
+      return value_.get();
     }
 
     const value_t& table_t::get(const value_t& index) const {

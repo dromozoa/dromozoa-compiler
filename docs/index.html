@@ -153,6 +153,7 @@ table.ir tr td:first-child {
   <tr>
     <th>Opcode</th>
     <th>Code</th>
+    <th>Meta</th>
     <th>Description</th>
   </tr>
 
@@ -165,6 +166,7 @@ table.ir tr td:first-child {
   <tr>
     <td><code>GETTABLE A B C</code></td>
     <td><code>A = B[C]</code></td>
+    <td><code>__index</code></td>
     <td></td>
   </tr>
 
@@ -177,18 +179,21 @@ table.ir tr td:first-child {
   <tr>
     <td><code>SETTABLE A B C</code></td>
     <td><code>A[B] = C</code></td>
+    <td><code>__newindex</code></td>
     <td><code>C</code>が配列の場合、<code>B</code>は必ず即値整数で、<code>C</code>は展開される。</td>
   </tr>
 
   <tr>
     <td><code>binop A B C</code></td>
     <td><code>A = B binop C</code></td>
+    <td>すべて</td>
     <td></td>
   </tr>
 
   <tr>
     <td><code>unop A B</code></td>
     <td><code>A = unop B</code></td>
+    <td><code>NOT</code>以外</td>
     <td></td>
   </tr>
 
@@ -198,6 +203,7 @@ table.ir tr td:first-child {
       <code>RESULT C...</code>
     </td>
     <td><code>C... = A(B...)</code></td>
+    <td></td>
     <td>可変長の返り値を扱う場合、<code>C...</code>は配列が1個指定される。</td>
   </tr>
 
@@ -205,43 +211,84 @@ table.ir tr td:first-child {
     <td><code>RETURN A...</code></td>
     <td><code>return A...</code></td>
     <td></td>
+    <td></td>
   </tr>
 
   <tr>
     <td><code>CLOSURE A B C...</code></td>
     <td><code>A = closure(B, C...)</code></td>
+    <td></td>
     <td><code>C</code>は外部変数/参照。</td>
   </tr>
 
   <tr>
     <td><code>LABEL A</code></td>
     <td><code>::A::</code></td>
+    <td></td>
     <td>基本ブロック変換で除去。</td>
   </tr>
 
   <tr>
     <td><code>BREAK</code></td>
     <td><code>break</code></td>
+    <td></td>
     <td>ループ変換で<code>GOTO</code>に置換。</td>
   </tr>
 
   <tr>
     <td><code>GOTO A</code></td>
     <td><code>goto A</code></td>
+    <td></td>
     <td>基本ブロック変換で除去。</td>
   </tr>
 
   <tr>
     <td><code>TONUMBER A B</code></td>
     <td><code>A = tonumber(B)</code></td>
+    <td></td>
     <td>numerical forで利用する。</td>
   </tr>
 
   <tr>
-    <td><code>COND A B C D</code></td>
-    <td><code>if toboolean(A) == B then goto C else goto D end</code></td>
-    <td>基本ブロック変換後は<code>C</code>,<code>D</code>ではなくエッジを参照。</td>
+    <td><code>COND A B C</code></td>
+    <td><code>if toboolean(A) then goto B else goto C end</code></td>
+    <td></td>
+    <td>基本ブロック変換後は<code>B</code>,<code>C</code>ではなくエッジを参照。</td>
   </tr>
+</table>
+
+<h2>metatable</h2>
+
+<table>
+  <tr><th>Event    </th><th>Mode </th><th>Description</th></tr>
+  <tr><td>add      </td><td>binop</td><td><code>+</code></td></tr>
+  <tr><td>sub      </td><td>binop</td><td><code>-</code></td></tr>
+  <tr><td>mul      </td><td>binop</td><td><code>*</code></td></tr>
+  <tr><td>div      </td><td>binop</td><td><code>/</code></td></tr>
+  <tr><td>mod      </td><td>binop</td><td><code>%</code></td></tr>
+  <tr><td>pow      </td><td>binop</td><td><code>^</code></td></tr>
+  <tr><td>unm      </td><td>unop </td><td><code>-</code></td></tr>
+  <tr><td>idiv     </td><td>binop</td><td><code>//</code></td></tr>
+  <tr><td>band     </td><td>binop</td><td><code>&amp;</code></td></tr>
+  <tr><td>bor      </td><td>binop</td><td><code>|</code></td></tr>
+  <tr><td>bxor     </td><td>binop</td><td><code>~</code></td></tr>
+  <tr><td>bnot     </td><td>unop </td><td><code>~</code></td></tr>
+  <tr><td>shl      </td><td>binop</td><td><code>&lt;&lt;</code></td></tr>
+  <tr><td>shr      </td><td>binop</td><td><code>&gt;&gt;</code></td></tr>
+  <tr><td>concat   </td><td>binop</td><td><code>..</code></td></tr>
+  <tr><td>len      </td><td>unop </td><td><code>#</code></td></tr>
+  <tr><td>eq       </td><td>binop</td><td><code>==</code></td></tr>
+  <tr><td>lt       </td><td>binop</td><td><code>&lt;</code></td></tr>
+  <tr><td>le       </td><td>binop</td><td><code>&lt;=</code></td></tr>
+  <tr><td>index    </td><td>     </td><td></td></tr>
+  <tr><td>newindex </td><td>     </td><td></td></tr>
+  <tr><td>call     </td><td>     </td><td></td></tr>
+  <tr><td>gc       </td><td>     </td><td>garbage colleciton</td></tr>
+  <tr><td>mode     </td><td>     </td><td>weak table</td></tr>
+  <tr><td>name     </td><td>     </td><td><code>luaL_newmetatable</code></td></tr>
+  <tr><td>tostring </td><td>     </td><td><code>tostring</code></td></tr>
+  <tr><td>metatable</td><td>     </td><td>protected metatable</td></tr>
+  <tr><td>pairs    </td><td>     </td><td><code>pairs</code></td></tr>
 </table>
 
 <h2>Lua 5.3 basic types</h2>

@@ -18,9 +18,21 @@
 local graph = require "dromozoa.graph"
 local variable = require "dromozoa.compiler.variable"
 
-local function not_assign(name)
-  return name == "SETTABLE" or name == "CALL" or name == "RETURN" or name == "COND"
-end
+local not_split = {
+  MOVE     = true;
+  NEWTABLE = true;
+  NOT      = true;
+  CALL     = true;
+  CLOSURE  = true;
+  TONUMBER = true;
+}
+
+local not_assign = {
+  SETTABLE = true;
+  CALL     = true;
+  RETURN   = true;
+  COND     = true;
+}
 
 local function generate(code_list)
   local g = graph()
@@ -49,7 +61,7 @@ local function generate(code_list)
         blocks[uid] = block
       end
       block[#block + 1] = code
-      if name == "RESULT" or name == "RETURN" or name == "GOTO" or name == "COND" then
+      if not not_split[name] then
         uid = nil
       end
     end
@@ -88,8 +100,8 @@ local function resolve_jumps(blocks, uids, labels)
     elseif name == "RETURN" then
       g:add_edge(this_uid, exit_uid)
     elseif name == "COND" then
-      local then_eid = g:add_edge(this_uid, labels[code[3]])
-      local else_eid = g:add_edge(this_uid, labels[code[4]])
+      local then_eid = g:add_edge(this_uid, labels[code[2]])
+      local else_eid = g:add_edge(this_uid, labels[code[3]])
       jumps[then_eid] = "THEN"
       jumps[else_eid] = "ELSE"
     else
@@ -226,7 +238,7 @@ local function analyze_liveness(blocks, postorder)
         for k = 2, #code do
           analyze_liveness_use(def, use, code[k])
         end
-        if not_assign(name) then
+        if not_assign[name] then
           analyze_liveness_use(def, use, code[1])
         else
           analyze_liveness_def(def, code[1])
@@ -324,7 +336,7 @@ local function resolve_variables(blocks, lives_in, postorder)
         for k = 1, #code do
           resolve_variables_def(defs, refs, uid, code[k])
         end
-      elseif not not_assign(name) then
+      elseif not not_assign[name] then
         resolve_variables_def(defs, refs, uid, code[1])
       end
     end
@@ -447,7 +459,7 @@ local function rename_variables_search(blocks, dom_child, vers, stacks, uid)
       for j = 2, #code do
         rename_variables_use(stacks, code, j)
       end
-      if not_assign(name) then
+      if not_assign[name] then
         rename_variables_use(stacks, code, 1)
       else
         rename_variables_def(vers, stacks, code, 1)
@@ -479,7 +491,7 @@ local function rename_variables_search(blocks, dom_child, vers, stacks, uid)
       for j = 1, #code do
         rename_variables_pop(stacks, code[j], code)
       end
-    elseif not not_assign(name) then
+    elseif not not_assign[name] then
       rename_variables_pop(stacks, code[1], code)
     end
   end
@@ -516,7 +528,7 @@ local function resolve_types(blocks, refs, postorder)
     for j = 1, #block do
       local code = block[j]
       local name = code[0]
-      if name ~= "RESULT" and not not_assign(name) then
+      if name ~= "RESULT" and not not_assign[name] then
         local var = code[1]
         if not params[var:encode_without_index()] then
           var.declare = true

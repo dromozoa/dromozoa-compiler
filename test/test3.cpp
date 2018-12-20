@@ -22,37 +22,37 @@
 namespace {
   using namespace dromozoa::runtime;
 
-  std::shared_ptr<thunk_t> F1(continuation_t k, std::shared_ptr<thread_t> t, array_t args);
-  std::shared_ptr<thunk_t> F2(continuation_t k, std::shared_ptr<thread_t> t, array_t args);
-  std::shared_ptr<thunk_t> F3(continuation_t k, std::shared_ptr<thread_t> t, array_t args);
+  std::shared_ptr<thunk_t> F1(continuation_t k, state_t s, array_t args);
+  std::shared_ptr<thunk_t> F2(continuation_t k, state_t s, array_t args);
+  std::shared_ptr<thunk_t> F3(continuation_t k, state_t s, array_t args);
 
   class F : public function_t {
   public:
-    std::shared_ptr<thunk_t> operator()(continuation_t k, std::shared_ptr<thread_t> t, array_t args) {
+    std::shared_ptr<thunk_t> operator()(continuation_t k, state_t s, array_t args) {
       return make_thunk([=]() {
-        return F1(k, t, args);
+        return F1(k, s, args);
       });
     }
   };
 
-  std::shared_ptr<thunk_t> F1(continuation_t k, std::shared_ptr<thread_t> t, array_t args) {
+  std::shared_ptr<thunk_t> F1(continuation_t k, state_t s, array_t args) {
     std::cout << "foo\n";
     return make_thunk([=]() {
-      return F2(k, t, args);
+      return F2(k, s, args);
     });
   }
 
-  std::shared_ptr<thunk_t> F2(continuation_t k, std::shared_ptr<thread_t> t, array_t args) {
+  std::shared_ptr<thunk_t> F2(continuation_t k, state_t s, array_t args) {
     std::cout << "bar\n";
     return make_thunk([=]() {
-      return F3(k, t, args);
+      return F3(k, s, args);
     });
   }
 
-  std::shared_ptr<thunk_t> F3(continuation_t k, std::shared_ptr<thread_t> t, array_t args) {
+  std::shared_ptr<thunk_t> F3(continuation_t k, state_t s, array_t args) {
     std::cout << "bar\n";
     return make_thunk([=]() {
-      return k(t, args);
+      return k(s, args);
     });
   }
 
@@ -66,22 +66,33 @@ namespace {
       });
     }
   }
+
+  void dump_array(const array_t& data) {
+    bool first = true;
+    for (const auto& value : data) {
+      if (first) {
+        first = false;
+      } else {
+        std::cout << " ";
+      }
+      if (value.isnumber()) {
+        std::cout << value.checknumber();
+      } else if (value.isstring()) {
+        std::cout << value.checkstring();
+      }
+    }
+    std::cout << "\n";
+  }
 }
 
 int main(int, char*[]) {
   using namespace dromozoa::runtime;
 
-  // auto t = make_thunk([]() -> std::shared_ptr<thunk_t> {
-  //   return f(10);
-  // });
-
-  // using continuation_t = std::function<std::shared_ptr<thunk_t>(
-  // std::shared_ptr<thread_t>, array_t)>;
   value_t f(std::make_shared<F>());
-  auto t = (*f.checkfunction())([](std::shared_ptr<thread_t>, array_t) -> std::shared_ptr<thunk_t> {
+  auto t = f.call([](state_t, array_t) -> std::shared_ptr<thunk_t> {
     std::cout << "done\n";
     return nullptr;
-  }, nullptr, array_t());
+  }, {}, array_t());
 
   while (true) {
     std::cout << "trampoline " << t << "\n";
@@ -92,13 +103,10 @@ int main(int, char*[]) {
     }
   }
 
-  // value_t f(std::make_shared<F>());
-  // value_t g(std::make_shared<G>());
-
-  // std::function<void()> r = (*f.checkfunction())([=](std::shared_ptr<thread_t> t, array_t args) {
-  //   (*g.checkfunction())([=](std::shared_ptr<thread_t> t, array_t args) {
-  //   }, nullptr, array_t());
-  // }, nullptr, array_t());
+  array_t a { "foo", "bar", "baz" };
+  dump_array(a);
+  dump_array(a.slice(2));
+  dump_array(array_t("qux", a));
 
   return 0;
 }

@@ -583,6 +583,8 @@ local function resolve_vars(self, node, symbol_table)
     node.vars = lvars
   elseif symbol == symbol_table["function"] then
     node[2].def = node[1].var
+  elseif symbol == symbol_table["while"] then
+    node.var = assign_var(node);
   elseif symbol == symbol_table["for"] then
     if n == 4 then -- numerical for without step
       node.vars = space_separated {
