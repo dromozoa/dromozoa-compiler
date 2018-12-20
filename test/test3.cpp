@@ -68,13 +68,9 @@ namespace {
   }
 
   void dump_array(const array_t& data) {
-    bool first = true;
+    std::cout << data.size() << ":";
     for (const auto& value : data) {
-      if (first) {
-        first = false;
-      } else {
-        std::cout << " ";
-      }
+      std::cout << " ";
       if (value.isnumber()) {
         std::cout << value.checknumber();
       } else if (value.isstring()) {
@@ -104,9 +100,11 @@ int main(int, char*[]) {
   }
 
   array_t a { "foo", "bar", "baz" };
+  dump_array({});
   dump_array(a);
   dump_array(a.slice(2));
   dump_array(array_t("qux", a));
+  dump_array(array_t({ "a", "b", "c" }, a));
 
   return 0;
 }

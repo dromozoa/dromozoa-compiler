@@ -32,6 +32,16 @@ namespace dromozoa {
         return std::copy(range.begin(), range.end(), result);
       }
 
+      inline value_t* copy(value_t* result, const value_t& value) {
+        *result = value;
+        ++result;
+        return result;
+      }
+
+      inline value_t* copy(value_t* result, const value_t* begin, const value_t* end) {
+        return std::copy(begin, end, result);
+      }
+
       inline int regexp_integer(const std::string& string) {
         int state = 6;
         for (const char c : string) {
@@ -186,12 +196,7 @@ namespace dromozoa {
     array_t::array_t(const value_t& value, const array_t& that)
       : size_(1 + that.size()) {
       data_ = std::shared_ptr<value_t>(new value_t[size_], std::default_delete<value_t[]>());
-      auto* ptr = data_.get();
-      *ptr++ = value;
-
-      for (const auto& value : that) {
-        *ptr++ = value;
-      }
+      copy(copy(data_.get(), value), that);
     }
 
     const value_t& array_t::operator[](std::size_t i) const {
@@ -219,10 +224,10 @@ namespace dromozoa {
         array_t that;
         that.size_ = size_ - first;
         that.data_ = std::shared_ptr<value_t>(new value_t[that.size_], std::default_delete<value_t[]>());
-        std::copy(begin() + first, end(), that.data_.get());
+        copy(that.data_.get(), begin() + first, end());
         return that;
       } else {
-        return array_t();
+        return {};
       }
     }
 
