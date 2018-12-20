@@ -27,6 +27,11 @@
 namespace dromozoa {
   namespace runtime {
     namespace {
+      template <class T>
+      inline value_t* copy(value_t* result, const T& range) {
+        return std::copy(range.begin(), range.end(), result);
+      }
+
       inline int regexp_integer(const std::string& string) {
         int state = 6;
         for (const char c : string) {
@@ -166,10 +171,7 @@ namespace dromozoa {
       : size_(data.size()) {
       if (size_ > 0) {
         data_ = std::shared_ptr<value_t>(new value_t[size_], std::default_delete<value_t[]>());
-        auto* ptr = data_.get();
-        for (const auto& value : data) {
-          *ptr++ = value;
-        }
+        copy(data_.get(), data);
       }
     }
 
@@ -177,13 +179,7 @@ namespace dromozoa {
       : size_(data.size() + that.size()) {
       if (size_ > 0) {
         data_ = std::shared_ptr<value_t>(new value_t[size_], std::default_delete<value_t[]>());
-        auto* ptr = data_.get();
-        for (const auto& value : data) {
-          *ptr++ = value;
-        }
-        for (const auto& value : that) {
-          *ptr++ = value;
-        }
+        copy(copy(data_.get(), data), that);
       }
     }
 
@@ -192,6 +188,7 @@ namespace dromozoa {
       data_ = std::shared_ptr<value_t>(new value_t[size_], std::default_delete<value_t[]>());
       auto* ptr = data_.get();
       *ptr++ = value;
+
       for (const auto& value : that) {
         *ptr++ = value;
       }
