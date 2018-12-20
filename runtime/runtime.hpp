@@ -56,13 +56,23 @@ namespace dromozoa {
       array_t(std::size_t);
       value_t& operator[](std::size_t) const;
       std::size_t size() const;
-      array_t sub(std::size_t) const;
+      array_t push_front(const value_t&) const;
+      array_t slice(std::size_t) const;
     private:
       std::shared_ptr<value_t> data_;
       std::size_t size_;
     };
 
-    using continuation_t = std::function<std::shared_ptr<thunk_t>(std::shared_ptr<thread_t>, array_t)>;
+    class state_t {
+    public:
+      state_t();
+      std::shared_ptr<table_t> string_metatable() const;
+    private:
+      std::shared_ptr<table_t> string_metatable_;
+      std::shared_ptr<thread_t> thread_;
+    };
+
+    using continuation_t = std::function<std::shared_ptr<thunk_t>(state_t, array_t)>;
 
     class value_t {
       struct access;
@@ -116,6 +126,9 @@ namespace dromozoa {
       const value_t& rawget(const value_t&) const;
       void rawset(const value_t&, const value_t&) const;
       void rawset(const value_t&, const array_t&) const;
+
+      const value_t& getmetafield(const state_t&, const value_t&) const;
+      std::shared_ptr<thunk_t> call(continuation_t, state_t, array_t) const;
 
     private:
       type_t type_;
@@ -194,17 +207,10 @@ namespace dromozoa {
       return std::make_shared<thunk_impl<T>>(std::forward<T>(function));
     }
 
-    class state {
-    public:
-    private:
-      continuation_t continuation_;
-      std::shared_ptr<thread_t> thread_;
-    };
-
     class function_t {
     public:
       virtual ~function_t();
-      virtual std::shared_ptr<thunk_t> operator()(continuation_t, std::shared_ptr<thread_t>, array_t) = 0;
+      virtual std::shared_ptr<thunk_t> operator()(continuation_t, state_t, array_t) = 0;
     };
 
     class thread_t {
@@ -213,7 +219,6 @@ namespace dromozoa {
     private:
       std::shared_ptr<function_t> body_;
     };
-
   }
 }
 

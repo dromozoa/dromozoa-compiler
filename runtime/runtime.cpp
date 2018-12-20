@@ -182,7 +182,16 @@ namespace dromozoa {
       return size_;
     }
 
-    array_t array_t::sub(std::size_t begin) const {
+    array_t array_t::push_front(const value_t& value) const {
+      array_t that(size_ + 1);
+      that[0] = value;
+      for (std::size_t i = 0; i < size_; ++i) {
+        that[i + 1] = (*this)[i];
+      }
+      return that;
+    }
+
+    array_t array_t::slice(std::size_t begin) const {
       if (size_ > begin) {
         array_t that(size_ - begin);
         std::size_t index = 0;
@@ -194,6 +203,13 @@ namespace dromozoa {
         return array_t();
       }
     }
+
+    state_t::state_t()
+      : string_metatable_(std::make_shared<table_t>()) {}
+
+    std::shared_ptr<table_t> state_t::string_metatable() const {
+      return string_metatable_;
+    };
 
     value_t::value_t()
       : type_(type_t::nil) {}
@@ -458,6 +474,31 @@ namespace dromozoa {
       std::int64_t index = begin.checkinteger();
       for (std::size_t i = 0; i < array.size(); ++i) {
         table->set(index++, array[i]);
+      }
+    }
+
+    const value_t& value_t::getmetafield(const state_t& state, const value_t& event) const {
+      if (isstring()) {
+        return state.string_metatable()->get(event);
+      } else if (istable()) {
+        const auto metatable = table_->getmetatable();
+        if (metatable.istable()) {
+          return metatable.rawget(event);
+        }
+      }
+      return NIL;
+    }
+
+    std::shared_ptr<thunk_t> value_t::call(continuation_t k, state_t state, array_t args) const {
+      if (isfunction()) {
+        return (*function_)(k, state, args);
+      } else {
+        const auto& field = getmetafield(state, "__call");
+        if (field.isfunction()) {
+          return (*field.function_)(k, state, args.push_front(*this));
+        } else {
+          throw value_t("attempt to call a " + type() + " value");
+        }
       }
     }
 

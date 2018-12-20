@@ -22,37 +22,37 @@
 namespace {
   using namespace dromozoa::runtime;
 
-  std::shared_ptr<thunk_t> F1(continuation_t k, std::shared_ptr<thread_t> t, array_t args);
-  std::shared_ptr<thunk_t> F2(continuation_t k, std::shared_ptr<thread_t> t, array_t args);
-  std::shared_ptr<thunk_t> F3(continuation_t k, std::shared_ptr<thread_t> t, array_t args);
+  std::shared_ptr<thunk_t> F1(continuation_t k, state_t s, array_t args);
+  std::shared_ptr<thunk_t> F2(continuation_t k, state_t s, array_t args);
+  std::shared_ptr<thunk_t> F3(continuation_t k, state_t s, array_t args);
 
   class F : public function_t {
   public:
-    std::shared_ptr<thunk_t> operator()(continuation_t k, std::shared_ptr<thread_t> t, array_t args) {
+    std::shared_ptr<thunk_t> operator()(continuation_t k, state_t s, array_t args) {
       return make_thunk([=]() {
-        return F1(k, t, args);
+        return F1(k, s, args);
       });
     }
   };
 
-  std::shared_ptr<thunk_t> F1(continuation_t k, std::shared_ptr<thread_t> t, array_t args) {
+  std::shared_ptr<thunk_t> F1(continuation_t k, state_t s, array_t args) {
     std::cout << "foo\n";
     return make_thunk([=]() {
-      return F2(k, t, args);
+      return F2(k, s, args);
     });
   }
 
-  std::shared_ptr<thunk_t> F2(continuation_t k, std::shared_ptr<thread_t> t, array_t args) {
+  std::shared_ptr<thunk_t> F2(continuation_t k, state_t s, array_t args) {
     std::cout << "bar\n";
     return make_thunk([=]() {
-      return F3(k, t, args);
+      return F3(k, s, args);
     });
   }
 
-  std::shared_ptr<thunk_t> F3(continuation_t k, std::shared_ptr<thread_t> t, array_t args) {
+  std::shared_ptr<thunk_t> F3(continuation_t k, state_t s, array_t args) {
     std::cout << "bar\n";
     return make_thunk([=]() {
-      return k(t, args);
+      return k(s, args);
     });
   }
 
@@ -72,10 +72,10 @@ int main(int, char*[]) {
   using namespace dromozoa::runtime;
 
   value_t f(std::make_shared<F>());
-  auto t = (*f.checkfunction())([](std::shared_ptr<thread_t>, array_t) -> std::shared_ptr<thunk_t> {
+  auto t = f.call([](state_t, array_t) -> std::shared_ptr<thunk_t> {
     std::cout << "done\n";
     return nullptr;
-  }, nullptr, array_t());
+  }, {}, array_t());
 
   while (true) {
     std::cout << "trampoline " << t << "\n";
