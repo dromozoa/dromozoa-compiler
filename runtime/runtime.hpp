@@ -126,8 +126,8 @@ namespace dromozoa {
       var_t();
       var_t(const value_t&);
       var_t(value_t&&);
-      value_t& operator*();
-      value_t* operator->();
+      const value_t& operator*() const;
+      const value_t* operator->() const;
     private:
       value_t value_;
     };

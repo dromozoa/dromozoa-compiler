@@ -189,14 +189,12 @@ namespace dromozoa {
     }
 
     value_t::value_t(bool boolean)
-      : type_(type_t::boolean) {
-      boolean_ = boolean;
-    }
+      : type_(type_t::boolean),
+        boolean_(boolean) {}
 
     value_t::value_t(double number)
-      : type_(type_t::number) {
-      number_ = number;
-    }
+      : type_(type_t::number),
+        number_(number) {}
 
     value_t::value_t(const char* data)
       : type_(type_t::string) {
@@ -439,11 +437,11 @@ namespace dromozoa {
     var_t::var_t(value_t&& value)
       : value_(std::move(value)) {}
 
-    value_t& var_t::operator*() {
+    const value_t& var_t::operator*() const {
       return value_;
     }
 
-    value_t* var_t::operator->() {
+    const value_t* var_t::operator->() const {
       return &value_;
     }
 

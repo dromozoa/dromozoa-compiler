@@ -86,16 +86,6 @@ int main(int, char*[]) {
     }
   }
 
-  using let_t = var_t;
-
-  let_t x = { 42 };
-  let_t y = x;
-  std::cout << x->checknumber() << "\n";
-  std::cout << y->checknumber() << "\n";
-  *x = 69;
-  std::cout << x->checknumber() << "\n";
-  std::cout << y->checknumber() << "\n";
-
   // value_t f(std::make_shared<F>());
   // value_t g(std::make_shared<G>());
 
