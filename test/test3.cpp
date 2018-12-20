@@ -86,13 +86,10 @@ int main(int, char*[]) {
     }
   }
 
-  // value_t f(std::make_shared<F>());
-  // value_t g(std::make_shared<G>());
-
-  // std::function<void()> r = (*f.checkfunction())([=](std::shared_ptr<thread_t> t, array_t args) {
-  //   (*g.checkfunction())([=](std::shared_ptr<thread_t> t, array_t args) {
-  //   }, nullptr, array_t());
-  // }, nullptr, array_t());
+  array_t a(2);
+  a[0] = 42;
+  a[1] = "foo";
+  std::cout << a[0].checknumber() << " " << a[1].checkstring() << " " << a[2].toboolean() << "\n";
 
   return 0;
 }

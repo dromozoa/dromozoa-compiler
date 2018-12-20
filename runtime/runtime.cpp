@@ -159,6 +159,42 @@ namespace dromozoa {
       }
     };
 
+    array_t::array_t()
+      : size_(0) {}
+
+    array_t::array_t(std::size_t size)
+      : array_t() {
+      if (size > 0) {
+        data_ = std::shared_ptr<value_t>(new value_t[size], std::default_delete<value_t[]>());
+        size_ = size;
+      }
+    }
+
+    value_t& array_t::operator[](std::size_t i) const {
+      if (i < size_) {
+        return data_.get()[i];
+      } else {
+        return NIL;
+      }
+    }
+
+    std::size_t array_t::size() const {
+      return size_;
+    }
+
+    array_t array_t::sub(std::size_t begin) const {
+      if (size_ > begin) {
+        array_t that(size_ - begin);
+        std::size_t index = 0;
+        for (std::size_t i = begin; i < size_; ++i) {
+          that[index++] = (*this)[i];
+        }
+        return that;
+      } else {
+        return array_t();
+      }
+    }
+
     value_t::value_t()
       : type_(type_t::nil) {}
 
@@ -460,42 +496,6 @@ namespace dromozoa {
 
     value_t* ref_t::operator->() const {
       return value_.get();
-    }
-
-    array_t::array_t()
-      : size_(0) {}
-
-    array_t::array_t(std::size_t size)
-      : array_t() {
-      if (size > 0) {
-        data_ = std::shared_ptr<value_t>(new value_t[size], std::default_delete<value_t[]>());
-        size_ = size;
-      }
-    }
-
-    value_t& array_t::operator[](std::size_t i) const {
-      if (i < size_) {
-        return data_.get()[i];
-      } else {
-        return NIL;
-      }
-    }
-
-    std::size_t array_t::size() const {
-      return size_;
-    }
-
-    array_t array_t::sub(std::size_t begin) const {
-      if (size_ > begin) {
-        array_t that(size_ - begin);
-        std::size_t index = 0;
-        for (std::size_t i = begin; i < size_; ++i) {
-          that[index++] = (*this)[i];
-        }
-        return that;
-      } else {
-        return array_t();
-      }
     }
 
     const value_t& table_t::get(const value_t& index) const {
