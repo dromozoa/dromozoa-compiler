@@ -528,7 +528,14 @@ local function resolve_types(blocks, refs, postorder)
     for j = 1, #block do
       local code = block[j]
       local name = code[0]
-      if name ~= "RESULT" and not not_assign[name] then
+      if name == "RESULT" then
+        for k = 1, #code do
+          local var = code[k]
+          if not params[var:encode_without_index()] then
+            var.declare = true
+          end
+        end
+      elseif not not_assign[name] then
         local var = code[1]
         if not params[var:encode_without_index()] then
           var.declare = true
@@ -536,8 +543,7 @@ local function resolve_types(blocks, refs, postorder)
       end
       for k = 1, #code do
         local var = code[k]
-        local encoded_var = var:encode_without_index()
-        if refs[encoded_var] then
+        if refs[var:encode_without_index()] then
           var.reference = true
         end
       end

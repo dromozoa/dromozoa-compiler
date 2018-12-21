@@ -19,6 +19,7 @@
 #include <cmath>
 #include <exception>
 #include <iomanip>
+#include <iostream>
 #include <sstream>
 #include <utility>
 
@@ -30,6 +31,16 @@ namespace dromozoa {
       template <class T>
       inline value_t* copy(value_t* result, const T& range) {
         return std::copy(range.begin(), range.end(), result);
+      }
+
+      inline value_t* copy(value_t* result, const value_t& value) {
+        *result = value;
+        ++result;
+        return result;
+      }
+
+      inline value_t* copy(value_t* result, const value_t* begin, const value_t* end) {
+        return std::copy(begin, end, result);
       }
 
       inline int regexp_integer(const std::string& string) {
@@ -186,12 +197,7 @@ namespace dromozoa {
     array_t::array_t(const value_t& value, const array_t& that)
       : size_(1 + that.size()) {
       data_ = std::shared_ptr<value_t>(new value_t[size_], std::default_delete<value_t[]>());
-      auto* ptr = data_.get();
-      *ptr++ = value;
-
-      for (const auto& value : that) {
-        *ptr++ = value;
-      }
+      copy(copy(data_.get(), value), that);
     }
 
     const value_t& array_t::operator[](std::size_t i) const {
@@ -219,19 +225,46 @@ namespace dromozoa {
         array_t that;
         that.size_ = size_ - first;
         that.data_ = std::shared_ptr<value_t>(new value_t[that.size_], std::default_delete<value_t[]>());
-        std::copy(begin() + first, end(), that.data_.get());
+        copy(that.data_.get(), begin() + first, end());
         return that;
       } else {
-        return array_t();
+        return {};
       }
     }
 
     state_t::state_t()
-      : string_metatable_(std::make_shared<table_t>()) {}
+      : string_metatable_(std::make_shared<table_t>()),
+        env_(std::make_shared<table_t>()) {}
 
     std::shared_ptr<table_t> state_t::string_metatable() const {
       return string_metatable_;
     };
+
+    std::shared_ptr<table_t> state_t::env() const {
+      return env_;
+    };
+
+    void state_t::open_base() {
+      env_->set("tostring", make_function([](continuation_t k, state_t state, array_t args) {
+        return k(state, { "-" });
+      }));
+    }
+
+    void state_t::open_io() {
+      value_t module { std::make_shared<table_t>() };
+
+      module.rawset("write", make_function([](continuation_t k, state_t state, array_t args) {
+        for (const auto& value : args) {
+          std::cout << value.checkstring();
+        }
+        return k(state, {});
+      }));
+
+      env_->set("io", module);
+    }
+
+    void state_t::open_string() {
+    }
 
     value_t::value_t()
       : type_(type_t::nil) {}
@@ -513,14 +546,30 @@ namespace dromozoa {
 
     std::shared_ptr<thunk_t> value_t::call(continuation_t k, state_t state, array_t args) const {
       if (isfunction()) {
-        return (*function_)(k, state, args);
+        return (*checkfunction())(k, state, args);
       } else {
         const auto& field = getmetafield(state, "__call");
         if (field.isfunction()) {
-          return (*field.function_)(k, state, array_t(*this, args));
-        } else {
-          throw value_t("attempt to call a " + type() + " value");
+          return (*field.checkfunction())(k, state, array_t(*this, args));
         }
+      }
+      throw value_t("attempt to call a " + type() + " value");
+    }
+
+    std::shared_ptr<thunk_t> value_t::gettable(continuation_t k, state_t state, const value_t& index) const {
+      if (istable()) {
+        const auto& result = rawget(index);
+        if (!result.isnil()) {
+          return k(state, { result });
+        }
+      }
+      const auto& field = getmetafield(state, "__index");
+      if (field.isnil()) {
+        return k(state, { NIL });
+      } else if (field.isfunction()) {
+        return field.call(k, state, { *this, index });
+      } else {
+        return field.gettable(k, state, index);
       }
     }
 
