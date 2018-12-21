@@ -114,10 +114,13 @@ function metatable:__tostring()
 end
 
 return setmetatable(class, {
-  __call = function (_, that)
+  __call = function (_, that, first)
+    if not first then
+      first = 1
+    end
     local self = {}
-    for i = 1, #that do
-      self[i] = that[i]
+    for i = first, #that do
+      self[#self + 1] = that[i]
     end
     return setmetatable(self, metatable)
   end;
