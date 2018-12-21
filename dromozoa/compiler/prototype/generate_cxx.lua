@@ -51,7 +51,7 @@ local templates = {
 local function generate_declations(out, proto_name, blocks, postorder)
   for i = #postorder, 1, -1 do
     local uid = postorder[i]
-    out:write(serializer.template "std::function<void()> %1_%2(%3);\n" (
+    out:write(serializer.template "std::shared_ptr<thunk_t> %1_%2(%3);\n" (
       proto_name,
       uid,
       serializer.entries(blocks[uid].params)
@@ -62,14 +62,13 @@ local function generate_declations(out, proto_name, blocks, postorder)
           elseif var.type == "array" then
             return serializer.tuple("array_t", var)
           else
-            return serializer.tuple("value_t", var)
+            return serializer.tuple("var_t", var)
           end
         end)
         :sort(function (a, b) return a[2] < b[2] end)
         :unshift(
-          serializer.tuple("std::shared_ptr<function_t>", "k"),
-          serializer.tuple("std::shared_ptr<function_t>", "t"),
-          serializer.tuple("std::shared_ptr<function_t>", "h"))
+          serializer.tuple("continuation_t", "k"),
+          serializer.tuple("state_t", "state"))
         :map(serializer.template "%1 %2")
         :separated ", "
     ))
@@ -87,7 +86,7 @@ class %1 : public function_t {
 public:
   %1(%2)%3 {}
 private:
-  std::function<void()> operator()(std::shared_ptr<function_t> k, std::shared_ptr<function_t> t, std::shared_ptr<function_t> h, array_t args) {
+  std::shared_ptr<thunk_t> operator()(continuation_t k, state_t state, array_t args) {
 %4%
     return %1_%5(%6);
   }
@@ -112,10 +111,10 @@ private:
           if var.reference then
             return serializer.tuple("ref_t", var, "[" .. var.number .. "]")
           else
-            return serializer.tuple("value_t", var, "[" .. var.number .. "]")
+            return serializer.tuple("var_t", var, "[" .. var.number .. "]")
           end
         elseif key == "V" then
-          return serializer.tuple("array_t", var, ".sub(" .. self.A .. ")")
+          return serializer.tuple("array_t", var, ".slice(" .. self.A .. ")")
         end
       end)
       :sort(function (a, b) return a[2] < b[2] end)
@@ -126,7 +125,7 @@ private:
         return param[0]
       end)
       :sort()
-      :unshift("k", "t", "h")
+      :unshift("k", "state")
       :separated ", ",
     serializer.sequence(upvalues)
       :map(function (item) return item[1] end)
@@ -139,7 +138,7 @@ local function generate_definitions(out, proto_name, blocks, postorder)
     local uid = postorder[i]
     local block = blocks[uid]
 
-    out:write(serializer.template "std::function<void()> %1_%2(%3) {\n" (
+    out:write(serializer.template "std::shared_ptr<thunk_t> %1_%2(%3) {\n" (
       proto_name,
       uid,
       serializer.entries(block.params)
@@ -150,14 +149,13 @@ local function generate_definitions(out, proto_name, blocks, postorder)
           elseif var.type == "array" then
             return serializer.tuple("array_t", var)
           else
-            return serializer.tuple("value_t", var)
+            return serializer.tuple("var_t", var)
           end
         end)
         :sort(function (a, b) return a[2] < b[2] end)
         :unshift(
-          serializer.tuple("std::shared_ptr<function_t>", "k"),
-          serializer.tuple("std::shared_ptr<function_t>", "t"),
-          serializer.tuple("std::shared_ptr<function_t>", "h"))
+          serializer.tuple("continuation_t", "k"),
+          serializer.tuple("state_t", "state"))
         :map(serializer.template "%1 %2")
         :separated ", "
     ))
@@ -166,23 +164,33 @@ local function generate_definitions(out, proto_name, blocks, postorder)
       local code = block[j]
       local name = code[0]
 
-      local tmpl = templates[name]
-      if tmpl then
-        local var = code[1]
-        if var.declare then
-          out:write "  "
-          if var.reference then
-            out:write "ref_t"
-          elseif var.type == "array" then
-            out:write "array_t"
-          else
-            out:write "value_t"
-          end
-          out:write(" ", tmpl(unpack(code)), ";\n")
-        else
-          out:write("  ", tmpl(unpack(code)), ";\n")
-        end
+      if name == "GETTABLE" then
+        out:write(serializer.template [[
+  return %2.gettable([=](state_t state, array_t args) {
+    %1 = args[0];
+    return XXX(k, state, %1);
+  }, state, %3)
+]] (unpack(code)))
       end
+
+
+      -- local tmpl = templates[name]
+      -- if tmpl then
+      --   local var = code[1]
+      --   if var.declare then
+      --     out:write "  "
+      --     if var.reference then
+      --       out:write "ref_t"
+      --     elseif var.type == "array" then
+      --       out:write "array_t"
+      --     else
+      --       out:write "var_t"
+      --     end
+      --     out:write(" ", tmpl(unpack(code)), ";\n")
+      --   else
+      --     out:write(" ", tmpl(unpack(code)), ";\n")
+      --   end
+      -- end
     end
 
     out:write "}\n"

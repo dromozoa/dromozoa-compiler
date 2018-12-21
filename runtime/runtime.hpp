@@ -71,9 +71,14 @@ namespace dromozoa {
     public:
       state_t();
       std::shared_ptr<table_t> string_metatable() const;
+      std::shared_ptr<table_t> env() const;
+      void open_base();
+      void open_io();
+      void open_string();
     private:
-      std::shared_ptr<table_t> string_metatable_;
       std::shared_ptr<thread_t> thread_;
+      std::shared_ptr<table_t> string_metatable_;
+      std::shared_ptr<table_t> env_;
     };
 
     using continuation_t = std::function<std::shared_ptr<thunk_t>(state_t, array_t)>;
@@ -133,6 +138,7 @@ namespace dromozoa {
 
       const value_t& getmetafield(const state_t&, const value_t&) const;
       std::shared_ptr<thunk_t> call(continuation_t, state_t, array_t) const;
+      std::shared_ptr<thunk_t> gettable(continuation_t, state_t, const value_t&) const;
 
     private:
       type_t type_;
@@ -216,6 +222,28 @@ namespace dromozoa {
       virtual ~function_t();
       virtual std::shared_ptr<thunk_t> operator()(continuation_t, state_t, array_t) = 0;
     };
+
+    template <class T>
+    class function_impl : public function_t {
+    public:
+      function_impl(const T& function)
+        : function_(function) {}
+
+      function_impl(T&& function)
+        : function_(std::move(function)) {}
+
+      virtual std::shared_ptr<thunk_t> operator()(continuation_t k, state_t state, array_t args) {
+        return function_(k, state, args);
+      }
+
+    private:
+      T function_;
+    };
+
+    template <class T>
+    inline std::shared_ptr<function_t> make_function(T&& function) {
+      return std::make_shared<function_impl<T>>(std::forward<T>(function));
+    }
 
     class thread_t {
     public:
