@@ -65,10 +65,43 @@ end
 
 if not os.getenv "NO_COMPILE2" then
   local out = assert(io.open(output_name .. "2.cpp", "w"))
+  out:write [[
+#include <iostream>
+#include "runtime.hpp"
+namespace {
+using namespace dromozoa::runtime;
+]]
+
   for i = #t.protos, 1, -1 do
     local proto = t.protos[i]
     proto:generate_cxx(out)
   end
+
+  out:write [[
+}
+int main(int, char*[]) {
+  using namespace dromozoa::runtime;
+
+  state_t state;
+  state.open_base();
+  state.open_io();
+  ref_t env { state.env() };
+  value_t proto(std::make_shared<P0>(env));
+  try {
+    std::shared_ptr<thunk_t> thunk = proto.call([](state_t, array_t) -> std::shared_ptr<thunk_t>{
+      return nullptr;
+    }, state, {});
+    while (thunk) {
+      thunk = (*thunk)();
+    }
+    return 0;
+  } catch (const value_t& e) {
+    std::cerr << e.checkstring() << "\n";
+    return 1;
+  }
+}
+]]
+
   out:close()
 end
 
