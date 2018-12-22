@@ -200,20 +200,20 @@ namespace dromozoa {
       copy(copy(data_.get(), value), that);
     }
 
-    const value_t& array_t::operator[](std::size_t i) const {
-      if (i < size_) {
-        return data_.get()[i];
-      } else {
-        return NIL;
-      }
-    }
-
     const value_t* array_t::begin() const {
       return data_.get();
     }
 
     const value_t* array_t::end() const {
       return data_.get() + size_;
+    }
+
+    const value_t& array_t::operator[](std::size_t i) const {
+      if (i < size_) {
+        return data_.get()[i];
+      } else {
+        return NIL;
+      }
     }
 
     std::size_t array_t::size() const {
