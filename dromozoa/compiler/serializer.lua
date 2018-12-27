@@ -44,18 +44,18 @@ function class.range(a, b, c)
 end
 
 function class.template(rule)
+  local rule = rule:gsub("%%([%%%d%s])", "%%{%1}")
   return function (...)
     local args = { ... }
-    return (rule:gsub("%%(.)", function (match)
+    return (rule:gsub("%%{(.-)}", function (match)
       if match == "%" then
         return "%"
-      elseif match:find "^%d$" then
+      elseif match:find "^%d+$" then
         return serialize(args[tonumber(match)])
-      elseif match:find "^%s$" then
+      elseif match:find "^%s+$" then
         return ""
       end
-    end):gsub("%%%s", "%%")
-    )
+    end))
   end
 end
 
