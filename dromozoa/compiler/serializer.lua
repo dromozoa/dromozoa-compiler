@@ -68,6 +68,8 @@ function class.template2(rule)
     return (rule:gsub("${(.-)}", function (match)
       if match == "$" then
         return "$"
+      elseif match:find "0" then
+        return serialize(data)
       elseif match:find "^%d+$" then
         return serialize(data[tonumber(match)])
       else
