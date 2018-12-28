@@ -76,7 +76,7 @@ static std::shared_ptr<thunk_t> ${proto_name}_$uid($params) {
 ]]  {
       proto_name = proto_name;
       uid = uid;
-      params = block.cxx_params:map(serializer.template "$1 $2");
+      params = block.cxx_params:map("$1 $2");
     })
 
     for j = 1, #block do
