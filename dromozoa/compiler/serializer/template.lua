@@ -15,28 +15,24 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-local sequence = require "dromozoa.compiler.serializer.sequence";
-local template = require "dromozoa.compiler.serializer.template"
+local serialize = require "dromozoa.compiler.serializer.serialize"
 
-local class = {
-  sequence = sequence;
-  template = template;
-}
-
-function class.entries(that)
-  local self = sequence {}
-  for k, v in pairs(that) do
-    self[#self + 1] = { tuple = true, k, v }
+return function (rule)
+  local rule = rule
+    :gsub("$$", "${$}")
+    :gsub("$([%w_]+)", "${%1}")
+    :gsub("$%s", "")
+  return function (data)
+    return (rule:gsub("${(.-)}", function (match)
+      if match == "$" then
+        return "$"
+      elseif match:find "0" then
+        return serialize(data)
+      elseif match:find "^%d+$" then
+        return serialize(data[tonumber(match)])
+      else
+        return serialize(data[match])
+      end
+    end))
   end
-  return self
 end
-
-function class.range(a, b, c)
-  local self = sequence {}
-  for i = a, b, c do
-    self[#self + 1] = i
-  end
-  return self
-end
-
-return class
