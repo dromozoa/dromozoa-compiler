@@ -46,7 +46,7 @@ local function generate_definitions(out, proto_name, blocks, postorder)
     local uid = postorder[i]
     local block = blocks[uid]
 
-    out:write(serializer.template2 "static std::shared_ptr<thunk_t> ${1}_$2($3) {\n" {
+    out:write(serializer.template "static std::shared_ptr<thunk_t> ${1}_$2($3) {\n" {
       proto_name,
       uid,
       serializer.entries(block.params)
@@ -64,7 +64,7 @@ local function generate_definitions(out, proto_name, blocks, postorder)
         :unshift(
           { "continuation_t", "k" },
           { "state_t", "state" })
-        :map(serializer.template2 "$1 $2")
+        :map(serializer.template "$1 $2")
         :separated ", "
     })
 
@@ -74,16 +74,16 @@ local function generate_definitions(out, proto_name, blocks, postorder)
 
       if name == "GETTABLE" then
         local vid = uv_target[uv_first[uid]]
-        out:write(serializer.template2 "  return $1->gettable([=](state_t state, array_t args) {\n" { code[2] })
+        out:write(serializer.template "  return $1->gettable([=](state_t state, array_t args) {\n" { code[2] })
 
         local var = code[1]
         if var.declare then
-          out:write(serializer.template2 "    $1 $2 { args[0] };\n" { var.reference and "ref_t" or "var_t", var })
+          out:write(serializer.template "    $1 $2 { args[0] };\n" { var.reference and "ref_t" or "var_t", var })
         else
-          out:write(serializer.template2 "    *$1 = args[0];\n" { var })
+          out:write(serializer.template "    *$1 = args[0];\n" { var })
         end
 
-        out:write(serializer.template2 [[
+        out:write(serializer.template [[
     return ${1}_$2($3);
   }, state, *$4);
 ]] {
@@ -101,19 +101,19 @@ local function generate_definitions(out, proto_name, blocks, postorder)
       elseif name == "RESULT" then
         local call = block[j - 1]
         local vid = uv_target[uv_first[uid]]
-        out:write(serializer.template2 "  return $1->call([=](state_t state, array_t args) {\n" { call[1] })
+        out:write(serializer.template "  return $1->call([=](state_t state, array_t args) {\n" { call[1] })
 
         -- TODO handle array_t
         for k = 1, #code do
           local var = code[k]
           if var.declare then
-            out:write(serializer.template2 "    $1 $2 { args[$3] };\n" { var.reference and "ref_t" or "var_t", var, k - 1 })
+            out:write(serializer.template "    $1 $2 { args[$3] };\n" { var.reference and "ref_t" or "var_t", var, k - 1 })
           else
-            out:write(serializer.template2 "    *$1 = args[$2];\n" { var, k - 1 })
+            out:write(serializer.template "    *$1 = args[$2];\n" { var, k - 1 })
           end
         end
 
-        out:write(serializer.template2 [[
+        out:write(serializer.template [[
     return ${1}_$2($3);
   }, state, {$4});
 ]] {
@@ -127,7 +127,7 @@ local function generate_definitions(out, proto_name, blocks, postorder)
             :unshift("k", "state")
             :separated ", ",
           serializer.sequence(call, 2)
-            :map(serializer.template2 "*$0")
+            :map(serializer.template "*$0")
             :if_not_empty(" ", " ")
             :separated ", "
         })
@@ -136,7 +136,7 @@ local function generate_definitions(out, proto_name, blocks, postorder)
 
     if block.entry then
       local vid = uv_target[uv_first[uid]]
-      out:write(serializer.template2 [[
+      out:write(serializer.template [[
   return ${1}_$2($3);
 ]] {
         proto_name,
@@ -169,7 +169,7 @@ local function generate_closure(out, self, postorder)
   local entry_uid = blocks.entry_uid
   local entry_params = blocks[entry_uid].params
 
-  out:write(serializer.template2 [[
+  out:write(serializer.template [[
 class $1 : public function_t {
 public:
   $1($2)$3 {}
@@ -182,11 +182,11 @@ private:
     self[1],
     serializer.sequence(upvalues)
       :map(function (item) return item[1] end)
-      :map(serializer.template2 "ref_t $0")
+      :map(serializer.template "ref_t $0")
       :separated ", ",
     serializer.sequence(upvalues)
       :map(function (item) return item[1] end)
-      :map(serializer.template2 "$0($0)")
+      :map(serializer.template "$0($0)")
       :if_not_empty " : "
       :separated ", ",
     serializer.entries(entry_params)
@@ -204,7 +204,7 @@ private:
         end
       end)
       :sort(function (a, b) return a[2] < b[2] end)
-      :map(serializer.template2 "    $1 $2 = args$3;\n"),
+      :map(serializer.template "    $1 $2 = args$3;\n"),
     entry_uid,
     serializer.entries(entry_params)
       :map(function (encoded_var, param)
@@ -217,7 +217,7 @@ private:
 
   generate_definitions(out, self[1], blocks, postorder)
 
-  out:write(serializer.template2 [[
+  out:write(serializer.template [[
 $1$
 $2$
 };
@@ -225,10 +225,10 @@ $3$
 ]] {
     serializer.sequence(upvalues)
       :map(function (item) return item[1] end)
-      :map(serializer.template2 "  ref_t $0;\n"),
+      :map(serializer.template "  ref_t $0;\n"),
     serializer.sequence(constants)
       :map(function (item) return item[1] end)
-      :map(serializer.template2 "  static const var_t $0;\n"),
+      :map(serializer.template "  static const var_t $0;\n"),
     serializer.sequence(constants)
       :map(function (item)
         if item.type == "string" then
@@ -237,7 +237,7 @@ $3$
           return { self[1], item[1], ("%.17g"):format(tonumber(item.source)) }
         end
       end)
-      :map(serializer.template2 "const var_t $1::$2 { $3 };\n")
+      :map(serializer.template "const var_t $1::$2 { $3 };\n")
   })
 end
 
