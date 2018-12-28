@@ -59,4 +59,22 @@ function class.template(rule)
   end
 end
 
+function class.template2(rule)
+  local rule = rule
+    :gsub("$$", "${$}")
+    :gsub("$([%w_]+)", "${%1}")
+    :gsub("$%s", "")
+  return function (data)
+    return (rule:gsub("${(.-)}", function (match)
+      if match == "$" then
+        return "$"
+      elseif match:find "^%d+$" then
+        return serialize(data[tonumber(match)])
+      else
+        return serialize(data[match])
+      end
+    end))
+  end
+end
+
 return class

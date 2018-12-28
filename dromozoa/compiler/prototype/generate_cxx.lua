@@ -64,10 +64,6 @@ local function encode_string(s)
   return "\"" .. s .. "\""
 end
 
-
-
-
-
 local function generate_definitions(out, proto_name, blocks, postorder)
   local g = blocks.g
   local uv = g.uv
@@ -78,27 +74,27 @@ local function generate_definitions(out, proto_name, blocks, postorder)
     local uid = postorder[i]
     local block = blocks[uid]
 
-    out:write(serializer.template "static std::shared_ptr<thunk_t> %1_%2(%3) {\n" (
+    out:write(serializer.template2 "static std::shared_ptr<thunk_t> ${1}_$2($3) {\n" {
       proto_name,
       uid,
       serializer.entries(block.params)
         :map(function (encoded_var, param)
           local var = param[0]
           if var.reference then
-            return serializer.tuple("ref_t", var)
+            return { "ref_t", var }
           elseif var.type == "array" then
-            return serializer.tuple("array_t", var)
+            return { "array_t", var }
           else
-            return serializer.tuple("var_t", var)
+            return { "var_t", var }
           end
         end)
         :sort(function (a, b) return a[2] < b[2] end)
         :unshift(
-          serializer.tuple("continuation_t", "k"),
-          serializer.tuple("state_t", "state"))
-        :map(serializer.template "%1 %2")
+          { "continuation_t", "k" },
+          { "state_t", "state" })
+        :map(serializer.template2 "$1 $2")
         :separated ", "
-    ))
+    })
 
     for j = 1, #block do
       local code = block[j]
