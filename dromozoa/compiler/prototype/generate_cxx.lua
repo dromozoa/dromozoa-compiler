@@ -46,10 +46,12 @@ local function generate_definitions(out, proto_name, blocks, postorder)
     local uid = postorder[i]
     local block = blocks[uid]
 
-    out:write(serializer.template "static std::shared_ptr<thunk_t> ${1}_$2($3) {\n" {
-      proto_name,
-      uid,
-      serializer.entries(block.params)
+    out:write(serializer.template [[
+static std::shared_ptr<thunk_t> ${proto_name}_$uid($params) {
+]]  {
+      proto_name = proto_name;
+      uid = uid;
+      params = serializer.entries(block.params)
         :map(function (encoded_var, param)
           local var = param[0]
           if var.reference then
@@ -65,7 +67,7 @@ local function generate_definitions(out, proto_name, blocks, postorder)
           { "continuation_t", "k" },
           { "state_t", "state" })
         :map(serializer.template "$1 $2")
-        :separated ", "
+        :separated ", ";
     })
 
     for j = 1, #block do
