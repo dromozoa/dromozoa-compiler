@@ -36,6 +36,31 @@ local function encode_string(s)
   return "\"" .. s .. "\""
 end
 
+local function prepare(self)
+  local blocks = self.blocks
+  local g = blocks.g
+  local postorder, _, color = g:uv_postorder(blocks.entry_uid)
+
+  for i = #postorder, 1, -1 do
+    local uid = postorder[i]
+    local block = blocks[uid]
+    block.cxx_params = serializer.entries(block.params)
+      :map(function (_, param)
+        local var = param[0]
+        if var.reference then
+          return { "ref_t", var }
+        elseif var.type == "array" then
+          return { "array_t", var }
+        else
+          return { "var_t", var }
+        end
+      end)
+      :sort(function (a, b) return a[2] < b[2] end)
+      :unshift({ "continuation_t", "k" }, { "state_t", "state" })
+      :separated ", "
+  end
+end
+
 local function generate_definitions(out, proto_name, blocks, postorder)
   local g = blocks.g
   local uv = g.uv
@@ -51,23 +76,7 @@ static std::shared_ptr<thunk_t> ${proto_name}_$uid($params) {
 ]]  {
       proto_name = proto_name;
       uid = uid;
-      params = serializer.entries(block.params)
-        :map(function (encoded_var, param)
-          local var = param[0]
-          if var.reference then
-            return { "ref_t", var }
-          elseif var.type == "array" then
-            return { "array_t", var }
-          else
-            return { "var_t", var }
-          end
-        end)
-        :sort(function (a, b) return a[2] < b[2] end)
-        :unshift(
-          { "continuation_t", "k" },
-          { "state_t", "state" })
-        :map(serializer.template "$1 $2")
-        :separated ", ";
+      params = block.cxx_params:map(serializer.template "$1 $2");
     })
 
     for j = 1, #block do
@@ -244,9 +253,10 @@ $3$
 end
 
 return function (self, out)
+  prepare(self)
   local blocks = self.blocks
   local g = blocks.g
-  local uv_postorder = g:uv_postorder(blocks.entry_uid)
+  local uv_postorder, _, color = g:uv_postorder(blocks.entry_uid)
   generate_closure(out, self, uv_postorder)
   return out
 end
