@@ -18,8 +18,6 @@
 local serializer = require "dromozoa.compiler.serializer"
 local variable = require "dromozoa.compiler.variable"
 
-local unpack = table.unpack or unpack
-
 local templates = {
   MOVE     = serializer.template "%1 = %2";
   GETTABLE = serializer.template "%1 = gettable(%2, %3)";
@@ -65,6 +63,10 @@ local function encode_string(s)
   local s = s:gsub("[%z\1-\31\127]", char_table)
   return "\"" .. s .. "\""
 end
+
+
+
+
 
 local function generate_definitions(out, proto_name, blocks, postorder)
   local g = blocks.g
