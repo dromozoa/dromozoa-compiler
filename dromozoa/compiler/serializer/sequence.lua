@@ -16,6 +16,7 @@
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
 local serialize = require "dromozoa.compiler.serializer.serialize"
+local template = require "dromozoa.compiler.serializer.template"
 
 local unpack = table.unpack or unpack
 
@@ -63,6 +64,9 @@ function class:filter(f)
 end
 
 function class:map(f)
+  if type(f) == "string" then
+    f = template(f)
+  end
   local that = construct(self)
   for i = 1, #self do
     local item = self[i]

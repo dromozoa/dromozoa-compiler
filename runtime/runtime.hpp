@@ -57,9 +57,9 @@ namespace dromozoa {
       array_t(std::initializer_list<value_t>);
       array_t(std::initializer_list<value_t>, const array_t&);
       array_t(const value_t&, const array_t&);
-      const value_t& operator[](std::size_t) const;
       const value_t* begin() const;
       const value_t* end() const;
+      const value_t& operator[](std::size_t) const;
       std::size_t size() const;
       array_t slice(std::size_t) const;
     private:
