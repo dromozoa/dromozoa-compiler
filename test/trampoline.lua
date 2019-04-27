@@ -87,7 +87,7 @@ function main:b5(k, a, r, i)
   return main:b2(k, a, r, i)
 end
 
-local result
-local k = function (...) result = ... end
+local r
+local k = function (...) r = ... end
 main:start(k, { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 })
-print(result)
+print(r)
