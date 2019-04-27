@@ -39,52 +39,55 @@ end
 print(main({ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }))
 
 --
--- ssa
+-- ssa/cps
 --
 
 local mul = {}
 
-function mul:start(x, y)
-  return self:b1(x, y)
+function mul:start(k, x, y)
+  return self:b1(k, x, y)
 end
 
-function mul:b1(x, y)
-  return x * y
+function mul:b1(k, x, y)
+  return k(x * y)
 end
 
 local main = {}
 
-function main:start(a)
-  return self:b1(a)
+function main:start(k, a)
+  return self:b1(k, a)
 end
 
-function main:b1(a)
+function main:b1(k, a)
   local r = 1
   local i = 1
-  return self:b2(a, r, i)
+  return self:b2(k, a, r, i)
 end
 
-function main:b2(a, r, i)
+function main:b2(k, a, r, i)
   if i == 11 then
-    return r
+    return k(r)
   else
-    return self:b3(a, r, i)
+    return self:b3(k, a, r, i)
   end
 end
 
-function main:b3(a, r, i)
-  r = mul:start(r, a[i])
-  return self:b4(a, r, i)
+function main:b3(k, a, r, i)
+  mul:start(function (...) r = ... end, r, a[i])
+  return self:b4(k, a, r, i)
 end
 
-function main:b4(a, r, i)
+function main:b4(k, a, r, i)
   i = i + 1
-  return main:b5(a, r, i)
+  return main:b5(k, a, r, i)
 end
 
-function main:b5(a, r, i)
+function main:b5(k, a, r, i)
   print(i, r)
-  return main:b2(a, r, i)
+  return main:b2(k, a, r, i)
 end
 
-print(main:start({ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }))
+local result
+local k = function (...) result = ... end
+main:start(k, { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 })
+print(result)
