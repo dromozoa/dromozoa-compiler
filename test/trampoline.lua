@@ -91,3 +91,86 @@ local r
 local k = function (...) r = ... end
 main:start(k, { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 })
 print(r)
+
+--
+-- trampoline
+--
+
+local n = 0
+
+local function run(f)
+  while f do
+    n = n + 1
+    f = f()
+  end
+end
+
+local mul = {}
+
+function mul:start(k, x, y)
+  return function ()
+    return self:b1(k, x, y)
+  end
+end
+
+function mul:b1(k, x, y)
+  return function ()
+    return k(x * y)
+  end
+end
+
+local main = {}
+
+function main:start(k, a)
+  return function ()
+    return self:b1(k, a)
+  end
+end
+
+function main:b1(k, a)
+  return function ()
+    local r = 1
+    local i = 1
+    return self:b2(k, a, r, i)
+  end
+end
+
+function main:b2(k, a, r, i)
+  return function ()
+    if i == 11 then
+      return k(r)
+    else
+      return self:b3(k, a, r, i)
+    end
+  end
+end
+
+function main:b3(k, a, r, i)
+  return function ()
+    run(mul:start(function (...) r = ... end, r, a[i]))
+    return self:b4(k, a, r, i)
+  end
+end
+
+function main:b4(k, a, r, i)
+  return function ()
+    i = i + 1
+    return main:b5(k, a, r, i)
+  end
+end
+
+function main:b5(k, a, r, i)
+  return function ()
+    print(i, r)
+    return main:b2(k, a, r, i)
+  end
+end
+
+local r
+local k = function (...) r = ... end
+local f = function ()
+  return main:start(k, { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 })
+end
+run(f)
+print(r)
+print(n)
