@@ -60,6 +60,7 @@ local class = {
   BREAK    = _"BREAK";
   GOTO     = _"GOTO";
   TONUMBER = _"TONUMBER";
+  ERROR    = _"ERROR";
 }
 local metatable = { __index = class }
 
