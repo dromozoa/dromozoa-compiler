@@ -591,6 +591,8 @@ local function resolve_vars(self, node, symbol_table)
         assign_var(node, "B"); -- var (initial value)
         assign_var(node, "B"); -- limit
         assign_var(node);
+        assign_var(node);
+        assign_var(node);
         ref_constant(node, "string", "'for' initial value must be a number")[1];
         ref_constant(node, "string", "'for' limit must be a number")[1];
       }

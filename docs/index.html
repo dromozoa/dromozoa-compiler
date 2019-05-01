@@ -276,6 +276,50 @@ table.ir tr td:first-child {
   </tr>
 </table>
 
+<h3>numerical for without step</h3>
+
+<pre>
+for u3 = u1, u2 do
+  ...
+end
+</pre>
+
+<pre>
+v1 : B -- var (initial value)
+v2 : B -- limit
+v3 : C
+v4 : C
+v5 : C
+v6 : "'for' initial value must be a number"
+v7 : "'for' limit must be a number"
+</pre>
+
+<pre>
+TONUMBER v1 u1
+TONUMBER v2 u2
+
+NOT v3 v2
+COND_IF v3
+  ERROR v7
+COND_END
+
+NOT v4 v1
+COND_IF v4
+  ERROR v6
+COND_END
+
+SUB v1 v1 1
+LOOP
+  ADD v1 v1 1
+  LT v5 v2 v1
+  COND_IF v5
+    BREAK
+  COND_END
+  MOVE u3 v1
+  ...
+LOOP_END
+</pre>
+
 <h3>numerical forのエラーメッセージ</h3>
 
 <ul>
