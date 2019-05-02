@@ -285,13 +285,13 @@ end
 </pre>
 
 <pre>
-v1 : B -- var (initial value)
-v2 : B -- limit
-v3 : C
-v4 : C
-v5 : C
-v6 : "'for' initial value must be a number"
-v7 : "'for' limit must be a number"
+B v1 var (initial value)
+B v2 limit
+C v3
+C v4
+C v5
+K v6 "'for' initial value must be a number"
+K v7 "'for' limit must be a number"
 </pre>
 
 <pre>
@@ -311,22 +311,85 @@ COND_END
 SUB v1 v1 1
 LOOP
   ADD v1 v1 1
+
   LT v5 v2 v1
   COND_IF v5
     BREAK
   COND_END
+
   MOVE u3 v1
   ...
 LOOP_END
 </pre>
 
-<h3>numerical forのエラーメッセージ</h3>
+<h3>numerical for with step</h3>
 
-<ul>
-  <li><code>'for' step must be a number</code></li>
-  <li><code>'for' limit must be a number</code></li>
-  <li><code>'for' initial value must be a number</code></li>
-</ul>
+<pre>
+for u4 = u1, u2, u3 do
+  ...
+end
+</pre>
+
+<pre>
+B v1 var (initial value)
+B v2 limit
+B v3 step
+C v4
+C v5
+C v6
+C v7
+C v8
+C v9
+C v10
+K v11 "'for' initial value must be a number"
+K v12 "'for' limit must be a number"
+K v13 "'for' step must be a number"
+</pre>
+
+<pre>
+TONUMBER v1 u1
+TONUMBER v2 u2
+TONUMBER v3 u3
+
+NOT v4 v3
+COND_IF v4
+  ERROR v13
+COND_END
+
+NOT v5 v2
+COND_IF v5
+  ERROR v12
+COND_END
+
+NOT v6 v1
+COND_IF v6
+  ERROR v11
+COND_END
+
+SUB v1 v1 v3
+LOOP
+  ADD v1 v1 v3
+
+  LE v7 0 v3
+  COND_IF v7
+    LT v8 v2 v1
+    COND_IF v8
+      BREAK
+    COND_END
+  COND_END
+
+  LT v9 v3 0
+  COND_IF v9
+    LT v10 v1 v2
+    COND_IF v10
+      BREAK
+    COND_END
+  COND_END
+
+  MOVE u4 v1
+  ...
+LOOP_END
+</pre>
 
 <h2>metatable</h2>
 
