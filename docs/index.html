@@ -425,6 +425,52 @@ LOOP_END
   <tr><td>pairs    </td><td>     </td><td>        </td><td><code>pairs</code></td></tr>
 </table>
 
+<h3>arithmetic/bitwise binop</h3>
+
+<pre>
+v1 = u1 {binop} u2
+</pre>
+
+<pre>
+X v1
+B v2
+C v3
+C v4
+C v5
+K v6 "__{binop}"
+-- arithmetic
+K v7 "attempt to perform arithmetic operation on a non-numeric value"
+-- bitwise
+K v7 "attempt to perform bitwise operation on a non-integral value"
+</pre>
+
+<pre>
+-- arithmetic
+TONUMBER v3 u1
+TONUMBER v4 u2
+-- bitwise
+TOINTEGER v3 u1
+TOINTEGER v4 u2
+
+COND_IF v3
+  MOVE v2 v3
+COND_ELSE
+  MOVE v2 v4
+COND_END
+
+COND_IF v2
+  {binop} v1 v3 v4
+COND_ELSE
+  GETMETAFIELD v5 u1 u2 v6
+  COND_IF v6
+    CALL v6 u1 u2
+    RESULT v1
+  COND_ELSE
+    ERROR v7
+  COND_END
+COND_END
+</pre>
+
 <h2>Lua 5.3 basic types</h2>
 
 <pre>
