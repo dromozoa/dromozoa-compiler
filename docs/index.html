@@ -425,7 +425,7 @@ LOOP_END
   <tr><td>pairs    </td><td>     </td><td>        </td><td><code>pairs</code></td></tr>
 </table>
 
-<h3>arithmetic/bitwise binop</h3>
+<h3>arithmetic/bitwise/concatenate binop</h3>
 
 <pre>
 v1 = u1 {binop} u2
@@ -442,6 +442,8 @@ K v6 "__{binop}"
 K v7 "attempt to perform arithmetic operation on a non-numeric value"
 -- bitwise
 K v7 "attempt to perform bitwise operation on a non-integral value"
+-- concatenate
+K v7 "attempt to concatenate a non-string value"
 </pre>
 
 <pre>
@@ -451,6 +453,9 @@ TONUMBER v4 u2
 -- bitwise
 TOINTEGER v3 u1
 TOINTEGER v4 u2
+-- concatenate
+TOSTRING v3 u1
+TOSTRING v4 u2
 
 COND_IF v3
   MOVE v2 v3
