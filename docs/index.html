@@ -4,8 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>dromozoa-compiler</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/2.10.0/github-markdown.min.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.9.0/katex.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/3.0.1/github-markdown.min.css">
 <style>
 .markdown-body {
   box-sizing: border-box;
@@ -28,6 +27,12 @@ table.ir tr td:first-child {
 <div class="markdown-body">
 
 <h1>dromozoa-compiler</h1>
+
+<h2>ドキュメント</h2>
+
+<ul>
+  <li><a href="camera.html">カメラの移動とズーム</a></li>
+</ul>
 
 <h2>文字列から数値型への変換</h2>
 
@@ -246,7 +251,7 @@ table.ir tr td:first-child {
     <td><code>TONUMBER A B</code></td>
     <td><code>A = tonumber(B)</code></td>
     <td></td>
-    <td>numerical forで利用する。</td>
+    <td></td>
   </tr>
 
   <tr>
@@ -255,41 +260,221 @@ table.ir tr td:first-child {
     <td></td>
     <td>基本ブロック変換後は<code>B</code>,<code>C</code>ではなくエッジを参照。</td>
   </tr>
+
+  <tr>
+    <td><code>ERROR A</code></td>
+    <td><code>error(A)</code></td>
+    <td></td>
+    <td>エラーを送出する。</td>
+  </tr>
+
+  <tr>
+    <td><code>GETMETAFIELD A B</code></td>
+    <td><code>A = getmetafield(B)</code></td>
+    <td></td>
+    <td></td>
+  </tr>
 </table>
+
+<h3>numerical for without step</h3>
+
+<pre>
+for u3 = u1, u2 do
+  ...
+end
+</pre>
+
+<pre>
+B v1 var (initial value)
+B v2 limit
+C v3
+C v4
+C v5
+K v6 "'for' initial value must be a number"
+K v7 "'for' limit must be a number"
+</pre>
+
+<pre>
+TONUMBER v1 u1
+TONUMBER v2 u2
+
+NOT v3 v2
+COND_IF v3
+  ERROR v7
+COND_END
+
+NOT v4 v1
+COND_IF v4
+  ERROR v6
+COND_END
+
+SUB v1 v1 1
+LOOP
+  ADD v1 v1 1
+
+  LT v5 v2 v1
+  COND_IF v5
+    BREAK
+  COND_END
+
+  MOVE u3 v1
+  ...
+LOOP_END
+</pre>
+
+<h3>numerical for with step</h3>
+
+<pre>
+for u4 = u1, u2, u3 do
+  ...
+end
+</pre>
+
+<pre>
+B v1 var (initial value)
+B v2 limit
+B v3 step
+C v4
+C v5
+C v6
+C v7
+C v8
+C v9
+C v10
+K v11 "'for' initial value must be a number"
+K v12 "'for' limit must be a number"
+K v13 "'for' step must be a number"
+</pre>
+
+<pre>
+TONUMBER v1 u1
+TONUMBER v2 u2
+TONUMBER v3 u3
+
+NOT v4 v3
+COND_IF v4
+  ERROR v13
+COND_END
+
+NOT v5 v2
+COND_IF v5
+  ERROR v12
+COND_END
+
+NOT v6 v1
+COND_IF v6
+  ERROR v11
+COND_END
+
+SUB v1 v1 v3
+LOOP
+  ADD v1 v1 v3
+
+  LE v7 0 v3
+  COND_IF v7
+    LT v8 v2 v1
+    COND_IF v8
+      BREAK
+    COND_END
+  COND_END
+
+  LT v9 v3 0
+  COND_IF v9
+    LT v10 v1 v2
+    COND_IF v10
+      BREAK
+    COND_END
+  COND_END
+
+  MOVE u4 v1
+  ...
+LOOP_END
+</pre>
 
 <h2>metatable</h2>
 
 <table>
-  <tr><th>Event    </th><th>Mode </th><th>Description</th></tr>
-  <tr><td>add      </td><td>binop</td><td><code>+</code></td></tr>
-  <tr><td>sub      </td><td>binop</td><td><code>-</code></td></tr>
-  <tr><td>mul      </td><td>binop</td><td><code>*</code></td></tr>
-  <tr><td>div      </td><td>binop</td><td><code>/</code></td></tr>
-  <tr><td>mod      </td><td>binop</td><td><code>%</code></td></tr>
-  <tr><td>pow      </td><td>binop</td><td><code>^</code></td></tr>
-  <tr><td>unm      </td><td>unop </td><td><code>-</code></td></tr>
-  <tr><td>idiv     </td><td>binop</td><td><code>//</code></td></tr>
-  <tr><td>band     </td><td>binop</td><td><code>&amp;</code></td></tr>
-  <tr><td>bor      </td><td>binop</td><td><code>|</code></td></tr>
-  <tr><td>bxor     </td><td>binop</td><td><code>~</code></td></tr>
-  <tr><td>bnot     </td><td>unop </td><td><code>~</code></td></tr>
-  <tr><td>shl      </td><td>binop</td><td><code>&lt;&lt;</code></td></tr>
-  <tr><td>shr      </td><td>binop</td><td><code>&gt;&gt;</code></td></tr>
-  <tr><td>concat   </td><td>binop</td><td><code>..</code></td></tr>
-  <tr><td>len      </td><td>unop </td><td><code>#</code></td></tr>
-  <tr><td>eq       </td><td>binop</td><td><code>==</code></td></tr>
-  <tr><td>lt       </td><td>binop</td><td><code>&lt;</code></td></tr>
-  <tr><td>le       </td><td>binop</td><td><code>&lt;=</code></td></tr>
-  <tr><td>index    </td><td>     </td><td></td></tr>
-  <tr><td>newindex </td><td>     </td><td></td></tr>
-  <tr><td>call     </td><td>     </td><td></td></tr>
-  <tr><td>gc       </td><td>     </td><td>garbage colleciton</td></tr>
-  <tr><td>mode     </td><td>     </td><td>weak table</td></tr>
-  <tr><td>name     </td><td>     </td><td><code>luaL_newmetatable</code></td></tr>
-  <tr><td>tostring </td><td>     </td><td><code>tostring</code></td></tr>
-  <tr><td>metatable</td><td>     </td><td>protected metatable</td></tr>
-  <tr><td>pairs    </td><td>     </td><td><code>pairs</code></td></tr>
+  <tr><th>Event    </th><th>Mode </th><th>Behavior</th><th>Description</th></tr>
+  <tr><td>add      </td><td>binop</td><td>(add)   </td><td><code>+</code></td></tr>
+  <tr><td>sub      </td><td>binop</td><td>add     </td><td><code>-</code></td></tr>
+  <tr><td>mul      </td><td>binop</td><td>add     </td><td><code>*</code></td></tr>
+  <tr><td>div      </td><td>binop</td><td>add     </td><td><code>/</code></td></tr>
+  <tr><td>mod      </td><td>binop</td><td>add     </td><td><code>%</code></td></tr>
+  <tr><td>pow      </td><td>binop</td><td>add     </td><td><code>^</code></td></tr>
+  <tr><td>unm      </td><td>unop </td><td>add     </td><td><code>-</code></td></tr>
+  <tr><td>idiv     </td><td>binop</td><td>add     </td><td><code>//</code></td></tr>
+  <tr><td>band     </td><td>binop</td><td>(band)  </td><td><code>&amp;</code></td></tr>
+  <tr><td>bor      </td><td>binop</td><td>band    </td><td><code>|</code></td></tr>
+  <tr><td>bxor     </td><td>binop</td><td>band    </td><td><code>~</code></td></tr>
+  <tr><td>bnot     </td><td>unop </td><td>band    </td><td><code>~</code></td></tr>
+  <tr><td>shl      </td><td>binop</td><td>band    </td><td><code>&lt;&lt;</code></td></tr>
+  <tr><td>shr      </td><td>binop</td><td>band    </td><td><code>&gt;&gt;</code></td></tr>
+  <tr><td>concat   </td><td>binop</td><td>        </td><td><code>..</code></td></tr>
+  <tr><td>len      </td><td>unop </td><td>        </td><td><code>#</code></td></tr>
+  <tr><td>eq       </td><td>binop</td><td>        </td><td><code>==</code></td></tr>
+  <tr><td>lt       </td><td>binop</td><td>        </td><td><code>&lt;</code></td></tr>
+  <tr><td>le       </td><td>binop</td><td>        </td><td><code>&lt;=</code></td></tr>
+  <tr><td>index    </td><td>     </td><td>        </td><td></td></tr>
+  <tr><td>newindex </td><td>     </td><td>        </td><td></td></tr>
+  <tr><td>call     </td><td>     </td><td>        </td><td></td></tr>
+  <tr><td>gc       </td><td>     </td><td>        </td><td>garbage colleciton</td></tr>
+  <tr><td>mode     </td><td>     </td><td>        </td><td>weak table</td></tr>
+  <tr><td>name     </td><td>     </td><td>        </td><td><code>luaL_newmetatable</code></td></tr>
+  <tr><td>tostring </td><td>     </td><td>        </td><td><code>tostring</code></td></tr>
+  <tr><td>metatable</td><td>     </td><td>        </td><td>protected metatable</td></tr>
+  <tr><td>pairs    </td><td>     </td><td>        </td><td><code>pairs</code></td></tr>
 </table>
+
+<h3>arithmetic/bitwise/concatenate binop</h3>
+
+<pre>
+v1 = u1 {binop} u2
+</pre>
+
+<pre>
+X v1
+B v2
+C v3
+C v4
+C v5
+K v6 "__{binop}"
+-- arithmetic
+K v7 "attempt to perform arithmetic operation on a non-numeric value"
+-- bitwise
+K v7 "attempt to perform bitwise operation on a non-integral value"
+-- concatenate
+K v7 "attempt to concatenate a non-string value"
+</pre>
+
+<pre>
+-- arithmetic
+TONUMBER v3 u1
+TONUMBER v4 u2
+-- bitwise
+TOINTEGER v3 u1
+TOINTEGER v4 u2
+-- concatenate
+TOSTRING v3 u1
+TOSTRING v4 u2
+
+COND_IF v3
+  MOVE v2 v3
+COND_ELSE
+  MOVE v2 v4
+COND_END
+
+COND_IF v2
+  {binop} v1 v3 v4
+COND_ELSE
+  GETMETAFIELD v5 u1 u2 v6
+  COND_IF v6
+    CALL v6 u1 u2
+    RESULT v1
+  COND_ELSE
+    ERROR v7
+  COND_END
+COND_END
+</pre>
 
 <h2>Lua 5.3 basic types</h2>
 
@@ -305,142 +490,9 @@ table.ir tr td:first-child {
 #define LUA_TTHREAD		8
 </pre>
 
-<h2>カメラの移動とズーム</h2>
-
-<h3>移動</h3>
-
-<p>
-モデル座標系の\((c_x, c_y)\)をビュー\((w, h)\)の中心にするような移動を考える。
-\[\begin{aligned}
-  \bm{M}
-  &amp;=
-  \begin{pmatrix}
-    s &amp; 0 &amp; x \\
-    0 &amp; s &amp; y \\
-    0 &amp; 0 &amp; 1 \\
-  \end{pmatrix} \\
-
-  \begin{pmatrix}
-    w/2 \\
-    h/2 \\
-    1 \\
-  \end{pmatrix}
-  &amp;=
-  \bm{M}
-  \begin{pmatrix}
-    c_x \\
-    c_y \\
-    1 \\
-  \end{pmatrix} \\
-
-  x &amp;= w/2 - s c_x \\
-  y &amp;= h/2 - s c_y \\
-\end{aligned}\]
-</p>
-
-<h3>ズーム</h3>
-
-<p>
-現在の変換行列が\(\bm{M}_1\)で与えられているとき、
-ビュー座標系の\((v_x, v_y)\)を中心にしたズームを考える。
-\[\begin{aligned}
-  \bm{M}_1
-  &amp;=
-  \begin{pmatrix}
-    s_1 &amp; 0   &amp; x_1 \\
-    0   &amp; s_1 &amp; y_1 \\
-    0   &amp; 0   &amp; 1 \\
-  \end{pmatrix} \\
-
-  \bm{M}_1^{-1}
-  &amp;=
-  \frac{1}{s_1}
-  \begin{pmatrix}
-    1 &amp; 0 &amp; -x_1 \\
-    0 &amp; 1 &amp; -y_1 \\
-    0 &amp; 0 &amp;  s_1 \\
-  \end{pmatrix} \\
-
-  \begin{pmatrix}
-    m_x \\
-    m_y \\
-    1 \\
-  \end{pmatrix}
-  &amp;=
-  \bm{M}_1^{-1}
-  \begin{pmatrix}
-    v_x \\
-    v_y \\
-    1 \\
-  \end{pmatrix} \\
-  &amp;=
-  \frac{1}{s_1}
-  \begin{pmatrix}
-    v_x - x_1 \\
-    v_y - y_1 \\
-    s_1 \\
-  \end{pmatrix} \\
-\end{aligned}\]
-モデル座標系で\((x, y)\)をズームの中心に移動する変換行列\(\bm{V}\)、
-ズームを行う変換行列\(\bm{U}\)、
-元の場所に移動する変換行列\(\bm{T}\)を用いて
-\[\begin{aligned}
-  \bm{V}
-  &amp;=
-  \begin{pmatrix}
-    1 &amp; 0 &amp; -m_x \\
-    0 &amp; 1 &amp; -m_y \\
-    0 &amp; 0 &amp;  1 \\
-  \end{pmatrix} \\
-
-  \bm{U}
-  &amp;=
-  \begin{pmatrix}
-    s_2 &amp; 0   &amp; 0 \\
-    0   &amp; s_2 &amp; 0 \\
-    0   &amp; 0   &amp;  1 \\
-  \end{pmatrix} \\
-
-  \bm{T}
-  &amp;=
-  \begin{pmatrix}
-    1 &amp; 0 &amp; v_x \\
-    0 &amp; 1 &amp; v_y \\
-    0 &amp; 0 &amp; 1 \\
-  \end{pmatrix} \\
-
-  \bm{M}_2
-  &amp;= \bm{T} \bm{U} \bm{V} \\
-  &amp;=
-  \begin{pmatrix}
-    s_2 &amp; 0   &amp; v_x - m_x s_2 \\
-    0   &amp; s_2 &amp; v_y - m_y s_2 \\
-    0   &amp; 0   &amp; 1 \\
-  \end{pmatrix} \\
-  &amp;=
-  \begin{pmatrix}
-    s_2 &amp; 0   &amp; x_2 \\
-    0   &amp; s_2 &amp; y_2 \\
-    0   &amp; 0   &amp; 1 \\
-  \end{pmatrix} \\
-
-  x_2
-  &amp;= v_x - s_2 m_x \\
-  &amp;= v_x + \frac{s_2}{s_1}(x_1 - v_x) \\
-
-  y_2
-  &amp;= v_y - s_2 m_y \\
-  &amp;= v_y + \frac{s_2}{s_1}(y_1 - v_y) \\
-\end{aligned}\]
-</p>
+<code>
+</code>
 
 </div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.9.0/katex.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.9.0/contrib/auto-render.min.js"></script>
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-  renderMathInElement(document.body);
-});
-</script>
 </body>
 </html>

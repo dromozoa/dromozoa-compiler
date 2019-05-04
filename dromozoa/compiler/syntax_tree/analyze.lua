@@ -1,4 +1,4 @@
--- Copyright (C) 2018 Tomoyuki Fujimori <moyu@dromozoa.com>
+-- Copyright (C) 2018,2019 Tomoyuki Fujimori <moyu@dromozoa.com>
 --
 -- This file is part of dromozoa-compiler.
 --
@@ -588,19 +588,29 @@ local function resolve_vars(self, node, symbol_table)
   elseif symbol == symbol_table["for"] then
     if n == 4 then -- numerical for without step
       node.vars = space_separated {
-        assign_var(node, "B"); -- var
+        assign_var(node, "B"); -- var (initial value)
         assign_var(node, "B"); -- limit
         assign_var(node);
+        assign_var(node);
+        assign_var(node);
+        ref_constant(node, "string", "'for' initial value must be a number")[1];
+        ref_constant(node, "string", "'for' limit must be a number")[1];
       }
     elseif n == 5 then -- numerical for with step
       node.vars = space_separated {
-        assign_var(node, "B"); -- var
+        assign_var(node, "B"); -- var (initial value)
         assign_var(node, "B"); -- limit
         assign_var(node, "B"); -- step
         assign_var(node);
         assign_var(node);
         assign_var(node);
         assign_var(node);
+        assign_var(node);
+        assign_var(node);
+        assign_var(node);
+        ref_constant(node, "string", "'for' initial value must be a number")[1];
+        ref_constant(node, "string", "'for' limit must be a number")[1];
+        ref_constant(node, "string", "'for' step must be a number")[1];
       }
     else -- generic for
       node.vars = space_separated {
