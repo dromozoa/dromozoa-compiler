@@ -59,7 +59,10 @@ local class = {
   LABEL        = _"LABEL";
   BREAK        = _"BREAK";
   GOTO         = _"GOTO";
+  TYPE         = _"TYPE";
   TONUMBER     = _"TONUMBER";
+  TOINTEGER    = _"TOINTEGER";
+  TOSTRING     = _"TOSTRING";
   ERROR        = _"ERROR";
   GETMETAFIELD = _"GETMETAFIELD";
 }

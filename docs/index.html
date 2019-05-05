@@ -446,39 +446,48 @@ C v4
 C v5
 C v6
 K v7 "__{binop}"
--- arithmetic
-K v8 "attempt to perform arithmetic operation on a non-numeric value"
--- bitwise
-K v8 "attempt to perform bitwise operation on a non-integral value"
--- concatenate
-K v8 "attempt to concatenate a non-string value"
+if opmode == arithmetic then
+K v8 "attempt to perform arithmetic operation on a "
+elseif opmode == bitwise then
+K v8 "attempt to perform bitwise operation on a "
+elseif opmode == concatenate then
+K v8 "attempt to perform concatenate on a "
+end
+K v9 " value"
 </pre>
 
 <pre>
--- arithmetic
-TONUMBER v3 u1
-TONUMBER v4 u2
--- bitwise
-TOINTEGER v3 u1
-TOINTEGER v4 u2
--- concatenate
-TOSTRING v3 u1
-TOSTRING v4 u2
+if opmode == arithmetic then
+TONUMBER v4 u1
+TONUMBER v5 u2
+elseif opmode == bitwise then
+TOINTEGER v4 u1
+TOINTEGER v5 u2
+elseif opmode == concatenate then
+TOSTRING v4 u1
+TOSTRING v5 u2
+end
 
-COND_IF v3
-  MOVE v2 v3
-COND_ELSE
+COND_IF v4
   MOVE v2 v4
+COND_ELSE
+  MOVE v2 v5
 COND_END
 
 COND_IF v2
-  {binop} v1 v3 v4
+  {binop} v1 v4 v5
 COND_ELSE
-  GETMETAFIELD v5 u1 u2 v6
-  COND_IF v6
-    CALL v6 u1 u2
+  GETMETAFILED v3 u1 v7
+  COND_IF v3
+    :
+  COND_ELSE
+    GETMETAFILED v3 u2 v7
+  COND_END
+  COND_IF v3
+    CALL v3 u1 u2
     RESULT v1
   COND_ELSE
+
     ERROR v7
   COND_END
 COND_END

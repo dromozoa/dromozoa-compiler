@@ -249,7 +249,7 @@ _"exp"
   :_ "exp" "|"   "exp" {[2]={1,3}} :attr("binop", "BOR")    :attr("opmode", "bitwise")
   :_ "exp" ">>"  "exp" {[2]={1,3}} :attr("binop", "SHR")    :attr("opmode", "bitwise")
   :_ "exp" "<<"  "exp" {[2]={1,3}} :attr("binop", "SHL")    :attr("opmode", "bitwise")
-  :_ "exp" ".."  "exp" {[2]={1,3}} :attr("binop", "CONCAT") :attr("opmode", "string")
+  :_ "exp" ".."  "exp" {[2]={1,3}} :attr("binop", "CONCAT") :attr("opmode", "concatenate")
   :_ "exp" "<"   "exp" {[2]={1,3}} :attr("binop", "LT")
   :_ "exp" "<="  "exp" {[2]={1,3}} :attr("binop", "LE")
   :_ "exp" ">"   "exp" {[2]={1,3}} :attr("binop", "GT")
