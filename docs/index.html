@@ -158,7 +158,6 @@ table.ir tr td:first-child {
   <tr>
     <th>Opcode</th>
     <th>Code</th>
-    <th>Meta</th>
     <th>Description</th>
   </tr>
 
@@ -171,7 +170,6 @@ table.ir tr td:first-child {
   <tr>
     <td><code>GETTABLE A B C</code></td>
     <td><code>A = B[C]</code></td>
-    <td><code>__index</code></td>
     <td></td>
   </tr>
 
@@ -184,21 +182,18 @@ table.ir tr td:first-child {
   <tr>
     <td><code>SETTABLE A B C</code></td>
     <td><code>A[B] = C</code></td>
-    <td><code>__newindex</code></td>
     <td><code>C</code>が配列の場合、<code>B</code>は必ず即値整数で、<code>C</code>は展開される。</td>
   </tr>
 
   <tr>
     <td><code>binop A B C</code></td>
     <td><code>A = B binop C</code></td>
-    <td>すべて</td>
     <td></td>
   </tr>
 
   <tr>
     <td><code>unop A B</code></td>
     <td><code>A = unop B</code></td>
-    <td><code>NOT</code>以外</td>
     <td></td>
   </tr>
 
@@ -208,7 +203,6 @@ table.ir tr td:first-child {
       <code>RESULT C...</code>
     </td>
     <td><code>C... = A(B...)</code></td>
-    <td></td>
     <td>可変長の返り値を扱う場合、<code>C...</code>は配列が1個指定される。</td>
   </tr>
 
@@ -216,63 +210,66 @@ table.ir tr td:first-child {
     <td><code>RETURN A...</code></td>
     <td><code>return A...</code></td>
     <td></td>
-    <td></td>
   </tr>
 
   <tr>
     <td><code>CLOSURE A B C...</code></td>
     <td><code>A = closure(B, C...)</code></td>
-    <td></td>
     <td><code>C</code>は外部変数/参照。</td>
   </tr>
 
   <tr>
     <td><code>LABEL A</code></td>
     <td><code>::A::</code></td>
-    <td></td>
     <td>基本ブロック変換で除去。</td>
   </tr>
 
   <tr>
     <td><code>BREAK</code></td>
     <td><code>break</code></td>
-    <td></td>
     <td>ループ変換で<code>GOTO</code>に置換。</td>
   </tr>
 
   <tr>
     <td><code>GOTO A</code></td>
     <td><code>goto A</code></td>
-    <td></td>
     <td>基本ブロック変換で除去。</td>
   </tr>
 
   <tr>
     <td><code>TONUMBER A B</code></td>
     <td><code>A = tonumber(B)</code></td>
-    <td></td>
-    <td></td>
+    <td>数値か数値に変換可能な文字列でなければ<code>nil</code>を返す。</td>
+  </tr>
+
+  <tr>
+    <td><code>TOINTEGER A B</code></td>
+    <td><code>A = tointeger(B)</code></td>
+    <td>整数か整数に変換可能な文字列でなければ<code>nil</code>を返す。</td>
+  </tr>
+
+  <tr>
+    <td><code>TOSTRING A B</code></td>
+    <td><code>A = tostring(B)</code></td>
+    <td>数値か文字列でなければ<code>nil</code>を返す。<code>__tostring</code>メタメソッドは考慮しない。</td>
   </tr>
 
   <tr>
     <td><code>COND A B C</code></td>
     <td><code>if toboolean(A) then goto B else goto C end</code></td>
-    <td></td>
     <td>基本ブロック変換後は<code>B</code>,<code>C</code>ではなくエッジを参照。</td>
   </tr>
 
   <tr>
     <td><code>ERROR A</code></td>
     <td><code>error(A)</code></td>
-    <td></td>
     <td>エラーを送出する。</td>
   </tr>
 
   <tr>
-    <td><code>GETMETAFIELD A B</code></td>
-    <td><code>A = getmetafield(B)</code></td>
-    <td></td>
-    <td></td>
+    <td><code>GETMETAFIELD A B C</code></td>
+    <td><code>A = getmetafield(B, C)</code></td>
+    <td><code>B</code>のメタテーブルが存在し、イベント<code>C</code>のフィールドがあるかを検査する。</td>
   </tr>
 </table>
 
