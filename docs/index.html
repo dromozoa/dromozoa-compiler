@@ -154,6 +154,10 @@ table.ir tr td:first-child {
 
 <h2>IR</h2>
 
+<p>
+<code>TYPE</code>以外はメタフィールドを考慮しない。
+</p>
+
 <table class="ir">
   <tr>
     <th>Opcode</th>
@@ -237,6 +241,12 @@ table.ir tr td:first-child {
   </tr>
 
   <tr>
+    <td><code>TYPE A B</code></td>
+    <td><code>A = type(B)</code></td>
+    <td>型の名前を取得する。<code>__name</code>メタフィールドを考慮する。</td>
+  </tr>
+
+  <tr>
     <td><code>TONUMBER A B</code></td>
     <td><code>A = tonumber(B)</code></td>
     <td>数値か数値に変換可能な文字列でなければ<code>nil</code>を返す。</td>
@@ -251,7 +261,7 @@ table.ir tr td:first-child {
   <tr>
     <td><code>TOSTRING A B</code></td>
     <td><code>A = tostring(B)</code></td>
-    <td>数値か文字列でなければ<code>nil</code>を返す。<code>__tostring</code>メタメソッドは考慮しない。</td>
+    <td>数値か文字列でなければ<code>nil</code>を返す。</td>
   </tr>
 
   <tr>
@@ -431,16 +441,17 @@ v1 = u1 {binop} u2
 <pre>
 X v1
 B v2
-C v3
+B v3
 C v4
 C v5
-K v6 "__{binop}"
+C v6
+K v7 "__{binop}"
 -- arithmetic
-K v7 "attempt to perform arithmetic operation on a non-numeric value"
+K v8 "attempt to perform arithmetic operation on a non-numeric value"
 -- bitwise
-K v7 "attempt to perform bitwise operation on a non-integral value"
+K v8 "attempt to perform bitwise operation on a non-integral value"
 -- concatenate
-K v7 "attempt to concatenate a non-string value"
+K v8 "attempt to concatenate a non-string value"
 </pre>
 
 <pre>
