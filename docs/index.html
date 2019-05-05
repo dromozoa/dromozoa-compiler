@@ -446,24 +446,24 @@ C v4
 C v5
 C v6
 K v7 "__{binop}"
-if opmode == arithmetic then
+if opname == arithmetic then
 K v8 "attempt to perform arithmetic operation on a "
-elseif opmode == bitwise then
+elseif opname == bitwise then
 K v8 "attempt to perform bitwise operation on a "
-elseif opmode == concatenate then
+elseif opname == concatenate then
 K v8 "attempt to perform concatenate on a "
 end
 K v9 " value"
 </pre>
 
 <pre>
-if opmode == arithmetic then
+if opname == arithmetic then
 TONUMBER v4 u1
 TONUMBER v5 u2
-elseif opmode == bitwise then
+elseif opname == bitwise then
 TOINTEGER v4 u1
 TOINTEGER v5 u2
-elseif opmode == concatenate then
+elseif opname == concatenate then
 TOSTRING v4 u1
 TOSTRING v5 u2
 end
