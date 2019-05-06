@@ -344,12 +344,9 @@ C v4
 C v5
 C v6
 C v7
-C v8
-C v9
-C v10
-K v11 "'for' initial value must be a number"
-K v12 "'for' limit must be a number"
-K v13 "'for' step must be a number"
+K v8 "'for' initial value must be a number"
+K v9 "'for' limit must be a number"
+K v10 "'for' step must be a number"
 </pre>
 
 <pre>
@@ -357,37 +354,40 @@ TONUMBER v1 u1
 TONUMBER v2 u2
 TONUMBER v3 u3
 
-NOT v4 v3
-COND_IF v4
-  ERROR v13
+COND_IF v3
+  ;
+COND_ELSE
+  ERROR v10
 COND_END
 
-NOT v5 v2
-COND_IF v5
-  ERROR v12
+COND_IF v2
+  ;
+COND_ELSE
+  ERROR v9
 COND_END
 
-NOT v6 v1
-COND_IF v6
-  ERROR v11
+COND_IF v1
+  ;
+COND_ELSE
+  ERROR v8
 COND_END
 
 SUB v1 v1 v3
 LOOP
   ADD v1 v1 v3
 
-  LE v7 0 v3
-  COND_IF v7
-    LT v8 v2 v1
-    COND_IF v8
+  LE v4 0 v3
+  COND_IF v4
+    LT v5 v2 v1
+    COND_IF v5
       BREAK
     COND_END
   COND_END
 
-  LT v9 v3 0
-  COND_IF v9
-    LT v10 v1 v2
-    COND_IF v10
+  LT v6 v3 0
+  COND_IF v6
+    LT v7 v1 v2
+    COND_IF v7
       BREAK
     COND_END
   COND_END
