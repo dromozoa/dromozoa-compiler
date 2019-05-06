@@ -154,7 +154,7 @@ table.ir tr td:first-child {
 <h2>IR</h2>
 
 <p>
-<code>TYPE</code>以外はメタフィールドを考慮しない。
+<code>TYPENAME</code>以外はメタフィールドを考慮しない。
 </p>
 
 <table class="ir">
@@ -241,6 +241,12 @@ table.ir tr td:first-child {
 
   <tr>
     <td><code>TYPE A B</code></td>
+    <td><code>A = lua_type(B)</code></td>
+    <td>型を整数で取得する。返される値は<a href="#basic-types">Lua 5.3 basic types</a>を参照。</td>
+  </tr>
+
+  <tr>
+    <td><code>TYPENAME A B</code></td>
     <td><code>A = type(B)</code></td>
     <td>型の名前を取得する。<code>__name</code>メタフィールドを考慮する。</td>
   </tr>
@@ -401,34 +407,34 @@ LOOP_END
 
 <table>
   <tr><th>Event    </th><th>Mode </th><th>Behavior</th><th>Description</th></tr>
-  <tr><td>add      </td><td>binop</td><td>(add)   </td><td><code>+</code></td></tr>
-  <tr><td>sub      </td><td>binop</td><td>add     </td><td><code>-</code></td></tr>
-  <tr><td>mul      </td><td>binop</td><td>add     </td><td><code>*</code></td></tr>
-  <tr><td>div      </td><td>binop</td><td>add     </td><td><code>/</code></td></tr>
-  <tr><td>mod      </td><td>binop</td><td>add     </td><td><code>%</code></td></tr>
-  <tr><td>pow      </td><td>binop</td><td>add     </td><td><code>^</code></td></tr>
-  <tr><td>unm      </td><td>unop </td><td>add     </td><td><code>-</code></td></tr>
-  <tr><td>idiv     </td><td>binop</td><td>add     </td><td><code>//</code></td></tr>
-  <tr><td>band     </td><td>binop</td><td>(band)  </td><td><code>&amp;</code></td></tr>
-  <tr><td>bor      </td><td>binop</td><td>band    </td><td><code>|</code></td></tr>
-  <tr><td>bxor     </td><td>binop</td><td>band    </td><td><code>~</code></td></tr>
-  <tr><td>bnot     </td><td>unop </td><td>band    </td><td><code>~</code></td></tr>
-  <tr><td>shl      </td><td>binop</td><td>band    </td><td><code>&lt;&lt;</code></td></tr>
-  <tr><td>shr      </td><td>binop</td><td>band    </td><td><code>&gt;&gt;</code></td></tr>
-  <tr><td>concat   </td><td>binop</td><td>        </td><td><code>..</code></td></tr>
-  <tr><td>len      </td><td>unop </td><td>        </td><td><code>#</code></td></tr>
-  <tr><td>eq       </td><td>binop</td><td>        </td><td><code>==</code></td></tr>
-  <tr><td>lt       </td><td>binop</td><td>        </td><td><code>&lt;</code></td></tr>
-  <tr><td>le       </td><td>binop</td><td>        </td><td><code>&lt;=</code></td></tr>
-  <tr><td>index    </td><td>     </td><td>        </td><td></td></tr>
-  <tr><td>newindex </td><td>     </td><td>        </td><td></td></tr>
-  <tr><td>call     </td><td>     </td><td>        </td><td></td></tr>
-  <tr><td>gc       </td><td>     </td><td>        </td><td>garbage colleciton</td></tr>
-  <tr><td>mode     </td><td>     </td><td>        </td><td>weak table</td></tr>
-  <tr><td>name     </td><td>     </td><td>        </td><td><code>luaL_newmetatable</code></td></tr>
-  <tr><td>tostring </td><td>     </td><td>        </td><td><code>tostring</code></td></tr>
-  <tr><td>metatable</td><td>     </td><td>        </td><td>protected metatable</td></tr>
-  <tr><td>pairs    </td><td>     </td><td>        </td><td><code>pairs</code></td></tr>
+  <tr><td>add      </td><td>binop</td><td>arithmetic </td><td><code>+</code></td></tr>
+  <tr><td>sub      </td><td>binop</td><td>arithmetic </td><td><code>-</code></td></tr>
+  <tr><td>mul      </td><td>binop</td><td>arithmetic </td><td><code>*</code></td></tr>
+  <tr><td>div      </td><td>binop</td><td>arithmetic </td><td><code>/</code></td></tr>
+  <tr><td>mod      </td><td>binop</td><td>arithmetic </td><td><code>%</code></td></tr>
+  <tr><td>pow      </td><td>binop</td><td>arithmetic </td><td><code>^</code></td></tr>
+  <tr><td>unm      </td><td>unop </td><td>arithmetic </td><td><code>-</code></td></tr>
+  <tr><td>idiv     </td><td>binop</td><td>arithmetic </td><td><code>//</code></td></tr>
+  <tr><td>band     </td><td>binop</td><td>bitwise    </td><td><code>&amp;</code></td></tr>
+  <tr><td>bor      </td><td>binop</td><td>bitwise    </td><td><code>|</code></td></tr>
+  <tr><td>bxor     </td><td>binop</td><td>bitwise    </td><td><code>~</code></td></tr>
+  <tr><td>bnot     </td><td>unop </td><td>bitwise    </td><td><code>~</code></td></tr>
+  <tr><td>shl      </td><td>binop</td><td>bitwise    </td><td><code>&lt;&lt;</code></td></tr>
+  <tr><td>shr      </td><td>binop</td><td>bitwise    </td><td><code>&gt;&gt;</code></td></tr>
+  <tr><td>concat   </td><td>binop</td><td>concatenate</td><td><code>..</code></td></tr>
+  <tr><td>len      </td><td>unop </td><td>length     </td><td><code>#</code></td></tr>
+  <tr><td>eq       </td><td>binop</td><td>           </td><td><code>==</code></td></tr>
+  <tr><td>lt       </td><td>binop</td><td>           </td><td><code>&lt;</code></td></tr>
+  <tr><td>le       </td><td>binop</td><td>           </td><td><code>&lt;=</code></td></tr>
+  <tr><td>index    </td><td>     </td><td>           </td><td></td></tr>
+  <tr><td>newindex </td><td>     </td><td>           </td><td></td></tr>
+  <tr><td>call     </td><td>     </td><td>           </td><td></td></tr>
+  <tr><td>gc       </td><td>     </td><td>           </td><td>garbage colleciton</td></tr>
+  <tr><td>mode     </td><td>     </td><td>           </td><td>weak table</td></tr>
+  <tr><td>name     </td><td>     </td><td>           </td><td><code>luaL_newmetatable</code></td></tr>
+  <tr><td>tostring </td><td>     </td><td>           </td><td><code>tostring</code></td></tr>
+  <tr><td>metatable</td><td>     </td><td>           </td><td>protected metatable</td></tr>
+  <tr><td>pairs    </td><td>     </td><td>           </td><td><code>pairs</code></td></tr>
 </table>
 
 <h3>arithmetic/bitwise/concatenate binop</h3>
@@ -490,9 +496,9 @@ COND_ELSE
     RESULT v1
   COND_ELSE
     COND_IF v5
-      TYPE v4 u2
+      TYPENAME v4 u2
     COND_ELSE
-      TYPE v4 u1
+      TYPENAME v4 u1
     COND_END
     CONCAT v7 v10 v4
     CONCAT v8 v7 v11
@@ -501,7 +507,53 @@ COND_ELSE
 COND_END
 </pre>
 
-<h2>Lua 5.3 basic types</h2>
+<h3>arithmetic/bitwise unop</h3>
+
+<pre>
+v1 = {unop} u1
+</pre>
+
+<pre>
+X v1
+C v2
+C v3
+C v4
+C v5
+C v6
+K v7 "__{event}"
+[if {opname} == "arithmetic" then]
+K v8 "attempt to perform arithmetic operation on a "
+[elseif {opname} == "bitwise" then]
+K v8 "attempt to perform bitwise operation on a "
+[end]
+K v9 " value"
+</pre>
+
+<pre>
+[if {opname} == "arithmetic" then]
+TONUMBER v2 u1
+[elseif {opname} == "bitwise" then]
+TOINTEGER v2 u1
+[end]
+
+COND_IF v2
+  {unop} v1 v2
+COND_ELSE
+  GETMETAFILED v3 u1 v7
+
+  COND_IF v3
+    CALL v3 u1
+    RESULT v1
+  COND_ELSE
+    TYPENAME v4 u1
+    CONCAT v5 v8 v4
+    CONCAT v6 v4 v9
+    ERROR v6
+  COND_END
+COND_END
+</pre>
+
+<h2 id="basic-types">Lua 5.3 basic types</h2>
 
 <pre>
 #define LUA_TNIL		0
