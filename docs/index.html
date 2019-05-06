@@ -441,53 +441,62 @@ v1 = u1 {binop} u2
 X v1
 B v2
 B v3
-C v4
+B v4
 C v5
 C v6
-K v7 "__{binop}"
-if opname == arithmetic then
-K v8 "attempt to perform arithmetic operation on a "
-elseif opname == bitwise then
-K v8 "attempt to perform bitwise operation on a "
-elseif opname == concatenate then
-K v8 "attempt to perform concatenate on a "
-end
-K v9 " value"
+C v7
+C v8
+K v9 "__{event}"
+[if {opname} == "arithmetic" then]
+K v10 "attempt to perform arithmetic operation on a "
+[elseif {opname} == "bitwise" then]
+K v10 "attempt to perform bitwise operation on a "
+[elseif {opname} == "concatenate" then]
+K v10 "attempt to perform concatenate on a "
+[end]
+K v11 " value"
 </pre>
 
 <pre>
-if opname == arithmetic then
-TONUMBER v4 u1
-TONUMBER v5 u2
-elseif opname == bitwise then
-TOINTEGER v4 u1
-TOINTEGER v5 u2
-elseif opname == concatenate then
-TOSTRING v4 u1
-TOSTRING v5 u2
-end
+[if {opname} == "arithmetic" then]
+TONUMBER v5 u1
+TONUMBER v6 u2
+[elseif {opname} == "bitwise" then]
+TOINTEGER v5 u1
+TOINTEGER v6 u2
+[elseif {opname} == "concatenate" then]
+TOSTRING v5 u1
+TOSTRING v6 u2
+[end]
 
-COND_IF v4
-  MOVE v2 v4
-COND_ELSE
+COND_IF v5
   MOVE v2 v5
+COND_ELSE
+  MOVE v2 v6
 COND_END
 
 COND_IF v2
-  {binop} v1 v4 v5
+  {binop} v1 v5 v6
 COND_ELSE
-  GETMETAFILED v3 u1 v7
+  GETMETAFILED v3 u1 v9
   COND_IF v3
-    :
+    ;
   COND_ELSE
-    GETMETAFILED v3 u2 v7
+    GETMETAFILED v3 u2 v9
   COND_END
+
   COND_IF v3
     CALL v3 u1 u2
     RESULT v1
   COND_ELSE
-
-    ERROR v7
+    COND_IF v5
+      TYPE v4 u2
+    COND_ELSE
+      TYPE v4 u1
+    COND_END
+    CONCAT v7 v10 v4
+    CONCAT v8 v7 v11
+    ERROR v8
   COND_END
 COND_END
 </pre>
