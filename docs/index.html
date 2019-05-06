@@ -294,32 +294,32 @@ end
 B v1 var (initial value)
 B v2 limit
 C v3
-C v4
-C v5
-K v6 "'for' initial value must be a number"
-K v7 "'for' limit must be a number"
+K v4 "'for' initial value must be a number"
+K v5 "'for' limit must be a number"
 </pre>
 
 <pre>
 TONUMBER v1 u1
 TONUMBER v2 u2
 
-NOT v3 v2
-COND_IF v3
-  ERROR v7
+COND_IF v2
+  ;
+COND_ELSE
+  ERROR v5
 COND_END
 
-NOT v4 v1
-COND_IF v4
-  ERROR v6
+COND_IF v1
+  ;
+COND_ELSE
+  ERROR v4
 COND_END
 
 SUB v1 v1 1
 LOOP
   ADD v1 v1 1
 
-  LT v5 v2 v1
-  COND_IF v5
+  LT v3 v2 v1
+  COND_IF v3
     BREAK
   COND_END
 
