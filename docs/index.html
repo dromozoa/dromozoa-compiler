@@ -440,76 +440,79 @@ LOOP_END
 <h3>arithmetic/bitwise/concatenate binop</h3>
 
 <pre>
-u1 = u2 {binop} u3
+u = u1 {binop} u2
 </pre>
 
 <pre>
 B v1
 B v2
 B v3
-C v4
+B v4
 C v5
 C v6
 C v7
-K v8 "__{event}"
+C v8
+K v9 "__{event}"
 [if {opname} == "arithmetic" then]
-K v9 "attempt to perform arithmetic operation on a "
+K v10 "attempt to perform arithmetic operation on a "
 [elseif {opname} == "bitwise" then]
-K v9 "attempt to perform bitwise operation on a "
+K v10 "attempt to perform bitwise operation on a "
 [elseif {opname} == "concatenate" then]
-K v9 "attempt to perform concatenate on a "
+K v10 "attempt to perform concatenate on a "
 [end]
-K v10 " value"
+K v11 " value"
 </pre>
 
 <pre>
 [if {opname} == "arithmetic" then]
-TONUMBER v4 u2
-TONUMBER v5 u3
+TONUMBER v5 u1
+TONUMBER v6 u2
 [elseif {opname} == "bitwise" then]
-TOINTEGER v4 u2
-TOINTEGER v5 u3
+TOINTEGER v5 u1
+TOINTEGER v6 u2
 [elseif {opname} == "concatenate" then]
-TOSTRING v4 u2
-TOSTRING v5 u3
+TOSTRING v5 u1
+TOSTRING v6 u2
 [end]
 
-COND_IF v4
-  MOVE v1 v4
+COND_IF v5
+  MOVE v1 v6
 COND_ELSE
   MOVE v1 v5
 COND_END
 
 COND_IF v1
-  {binop} u1 v4 v5
+  {binop} v2 v5 v6
 COND_ELSE
-  GETMETAFILED v2 u2 v8
-  COND_IF v2
+  GETMETAFILED v3 u1 v9
+  COND_IF v3
     ;
   COND_ELSE
-    GETMETAFILED v2 u3 v8
+    GETMETAFILED v3 u2 v9
   COND_END
 
-  COND_IF v2
-    CALL v2 u2 u3
-    RESULT u1
+  COND_IF v3
+    CALL v3 u1 u2
+    RESULT v2
   COND_ELSE
-    COND_IF v4
-      TYPENAME v3 u2
+    COND_IF v5
+      TYPENAME v4 u2
     COND_ELSE
-      TYPENAME v3 u1
+      TYPENAME v4 u1
     COND_END
-    CONCAT v6 v9 v3
-    CONCAT v7 v6 v10
-    ERROR v7 0
+    CONCAT v7 v10 v4
+    CONCAT v8 v6 v11
+    ERROR v8 0
   COND_END
 COND_END
+
+MOVE u v2
 </pre>
 
 <h3>arithmetic/bitwise unop</h3>
 
 <pre>
-u1 = {unop} u2
+u = {unop} u1
 </pre>
 
 <pre>
@@ -529,21 +532,21 @@ K v8 " value"
 
 <pre>
 [if {opname} == "arithmetic" then]
-TONUMBER v1 u2
+TONUMBER v1 u1
 [elseif {opname} == "bitwise" then]
-TOINTEGER v1 u2
+TOINTEGER v1 u1
 [end]
 
 COND_IF v1
-  {unop} u1 v1
+  {unop} u v1
 COND_ELSE
-  GETMETAFILED v2 u2 v6
+  GETMETAFILED v2 u1 v6
 
   COND_IF v2
-    CALL v2 u2
-    RESULT u1
+    CALL v2 u1
+    RESULT u
   COND_ELSE
-    TYPENAME v3 u2
+    TYPENAME v3 u1
     CONCAT v4 v7 v3
     CONCAT v5 v4 v8
     ERROR v5 0

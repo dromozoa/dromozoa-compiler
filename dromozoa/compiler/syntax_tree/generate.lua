@@ -20,6 +20,16 @@ local variable = require "dromozoa.compiler.variable"
 
 local unpack = table.unpack or unpack
 
+local function opname_to_convert(opname)
+  if opname == "arithmetic" then
+    return "TONUMBER"
+  elseif opname == "bitwise" then
+    return "TOINTEGER"
+  else
+    return "TOSTRING"
+  end
+end
+
 local function generate(stack, node, symbol_table)
   local proto = node.proto
   if proto then
@@ -42,6 +52,7 @@ local function generate(stack, node, symbol_table)
   local inorder = node.inorder
   local binop = node.binop
   local unop = node.unop
+  local opname = node.opname
   local _ = code_builder(stack, node)
 
   if symbol == symbol_table["function"] then
@@ -219,7 +230,42 @@ local function generate(stack, node, symbol_table)
     _:MOVE(node.var, node[2].var)
      :COND_END()
   elseif binop then
-    _[binop](_, node.var, node[1].var, node[2].var)
+    if opname then
+      local vars = node.vars
+      local convert = opname_to_convert(opname)
+      _[convert](_, vars[5], node[1].var)
+      _[convert](_, vars[6], node[2].var)
+      _:COND_IF(vars[5])
+       :  MOVE(vars[1], vars[6])
+       :COND_ELSE()
+       :  MOVE(vars[1], vars[5])
+       :COND_END()
+       :COND_IF(vars[1])
+      _[binop](_, vars[2], vars[5], vars[6])
+      _:COND_ELSE()
+       :  GETMETAFIELD(vars[3], node[1].var, vars[9])
+       :  COND_IF(vars[3])
+       :  COND_ELSE()
+       :    GETMETAFIELD(vars[3], node[2].var, vars[9])
+       :  COND_END()
+       :  COND_IF(vars[3])
+       :    CALL(vars[3], node[1].var, node[2].var)
+       :    RESULT(vars[2])
+       :  COND_ELSE()
+       :    COND_IF(vars[5])
+       :      TYPENAME(vars[4], node[2].var)
+       :    COND_ELSE()
+       :      TYPENAME(vars[4], node[1].var)
+       :    COND_END()
+       :    CONCAT(vars[7], vars[10], vars[4])
+       :    CONCAT(vars[8], vars[6], vars[11])
+       :    ERROR(vars[8], variable(0))
+       :  COND_END()
+       :COND_END()
+       :MOVE(node.var, vars[2])
+    else
+      _[binop](_, node.var, node[1].var, node[2].var)
+    end
   elseif unop then
     _[unop](_, node.var, node[1].var)
   elseif symbol == symbol_table.functioncall then

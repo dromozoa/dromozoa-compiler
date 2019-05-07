@@ -568,6 +568,7 @@ local function resolve_vars(self, node, symbol_table)
   local symbol = node[0]
   local n = #node
   local binop = node.binop
+  local unop = node.unop
   local opname = node.opname
 
   for i = 1, n do
@@ -687,6 +688,7 @@ local function resolve_vars(self, node, symbol_table)
       assign_var(node, "B");
       assign_var(node, "B");
       assign_var(node, "B");
+      assign_var(node, "B");
       assign_var(node);
       assign_var(node);
       assign_var(node);
@@ -695,7 +697,7 @@ local function resolve_vars(self, node, symbol_table)
       ref_constant(node, "string", opname_to_message(opname))[1];
       ref_constant(node, "string", " value")[1];
     }
-  elseif symbol == symbol_table.fieldlist or binop or node.unop then
+  elseif symbol == symbol_table.fieldlist or binop or unop then
     node.var = assign_var(node)
   end
 end

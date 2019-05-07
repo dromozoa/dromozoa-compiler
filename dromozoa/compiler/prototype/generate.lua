@@ -18,13 +18,16 @@
 local graph = require "dromozoa.graph"
 local variable = require "dromozoa.compiler.variable"
 
+-- TODO update
 local not_split = {
-  MOVE     = true;
-  NEWTABLE = true;
-  NOT      = true;
-  CALL     = true;
-  CLOSURE  = true;
-  TONUMBER = true;
+  MOVE      = true;
+  NEWTABLE  = true;
+  NOT       = true;
+  CALL      = true;
+  CLOSURE   = true;
+  TONUMBER  = true;
+  TOINTEGER = true;
+  TOSTRING  = true;
 }
 
 local not_assign = {
@@ -32,6 +35,7 @@ local not_assign = {
   CALL     = true;
   RETURN   = true;
   COND     = true;
+  ERROR    = true;
 }
 
 local function generate(code_list)
