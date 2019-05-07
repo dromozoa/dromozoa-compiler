@@ -267,7 +267,28 @@ local function generate(stack, node, symbol_table)
       _[binop](_, node.var, node[1].var, node[2].var)
     end
   elseif unop then
-    _[unop](_, node.var, node[1].var)
+    if opname then
+      local vars = node.vars
+      local convert = opname_to_convert(opname)
+      _[convert](_, vars[2], node[1].var)
+      _:COND_IF(vars[2])
+      _[unop](_, vars[1], vars[2])
+      _:COND_ELSE()
+       :  GETMETAFIELD(vars[3], node[1].var, vars[7])
+       :  COND_IF(vars[3])
+       :    CALL(vars[3], node[1].var)
+       :    RESULT(vars[1])
+       :  COND_ELSE()
+       :    TYPENAME(vars[4], node[1].var)
+       :    CONCAT(vars[5], vars[8], vars[4])
+       :    CONCAT(vars[6], vars[5], vars[9])
+       :    ERROR(vars[6], variable(0))
+       :  COND_END()
+       :COND_END()
+       :MOVE(node.var, vars[1])
+    else
+      _[unop](_, node.var, node[1].var)
+    end
   elseif symbol == symbol_table.functioncall then
     local that = node[2]
     local args = {}

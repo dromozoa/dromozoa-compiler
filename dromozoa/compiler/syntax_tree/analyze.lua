@@ -697,6 +697,19 @@ local function resolve_vars(self, node, symbol_table)
       ref_constant(node, "string", opname_to_message(opname))[1];
       ref_constant(node, "string", " value")[1];
     }
+  elseif unop and opname then
+    node.var = assign_var(node)
+    node.vars = space_separated {
+      assign_var(node, "B");
+      assign_var(node);
+      assign_var(node);
+      assign_var(node);
+      assign_var(node);
+      assign_var(node);
+      ref_constant(node, "string", "__" .. unop:lower())[1];
+      ref_constant(node, "string", opname_to_message(opname))[1];
+      ref_constant(node, "string", " value")[1];
+    }
   elseif symbol == symbol_table.fieldlist or binop or unop then
     node.var = assign_var(node)
   end
