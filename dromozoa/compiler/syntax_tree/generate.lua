@@ -20,6 +20,16 @@ local variable = require "dromozoa.compiler.variable"
 
 local unpack = table.unpack or unpack
 
+local function opname_to_convert(opname)
+  if opname == "arithmetic" then
+    return "TONUMBER"
+  elseif opname == "bitwise" then
+    return "TOINTEGER"
+  else
+    return "TOSTRING"
+  end
+end
+
 local function generate(stack, node, symbol_table)
   local proto = node.proto
   if proto then
@@ -42,6 +52,7 @@ local function generate(stack, node, symbol_table)
   local inorder = node.inorder
   local binop = node.binop
   local unop = node.unop
+  local opname = node.opname
   local _ = code_builder(stack, node)
 
   if symbol == symbol_table["function"] then
@@ -66,19 +77,19 @@ local function generate(stack, node, symbol_table)
           local vars = node.vars
           _:TONUMBER(vars[1], node[1].var)
            :TONUMBER(vars[2], node[2].var)
-           :NOT(vars[3], vars[2])
-           :COND_IF(vars[3])
-           :  ERROR(vars[7])
+           :COND_IF(vars[2])
+           :COND_ELSE()
+           :  ERROR(vars[5], variable(0))
            :COND_END()
-           :NOT(vars[4], vars[1])
-           :COND_IF(vars[4])
-           :  ERROR(vars[6])
+           :COND_IF(vars[1])
+           :COND_ELSE()
+           :  ERROR(vars[4], variable(0))
            :COND_END()
            :SUB(vars[1], vars[1], variable(1))
            :LOOP()
            :  ADD(vars[1], vars[1], variable(1))
-           :  LT(vars[5], vars[2], vars[1])
-           :  COND_IF(vars[5])
+           :  LT(vars[3], vars[2], vars[1])
+           :  COND_IF(vars[3])
            :    BREAK()
            :  COND_END()
            :  MOVE(node[3].var, vars[1])
@@ -87,32 +98,32 @@ local function generate(stack, node, symbol_table)
           _:TONUMBER(vars[1], node[1].var)
            :TONUMBER(vars[2], node[2].var)
            :TONUMBER(vars[3], node[3].var)
-           :NOT(vars[4], vars[3])
-           :COND_IF(vars[4])
-           :  ERROR(vars[13])
+           :COND_IF(vars[3])
+           :COND_ELSE()
+           :  ERROR(vars[10], variable(0))
            :COND_END()
-           :NOT(vars[5], vars[2])
-           :COND_IF(vars[5])
-           :  ERROR(vars[12])
+           :COND_IF(vars[2])
+           :COND_ELSE()
+           :  ERROR(vars[9], variable(0))
            :COND_END()
-           :NOT(vars[6], vars[1])
-           :COND_IF(vars[6])
-           :  ERROR(vars[11])
+           :COND_IF(vars[1])
+           :COND_ELSE()
+           :  ERROR(vars[8], variable(0))
            :COND_END()
            :SUB(vars[1], vars[1], vars[3])
            :LOOP()
            :  ADD(vars[1], vars[1], vars[3])
-           :  LE(vars[7], variable(0), vars[3])
-           :  COND_IF(vars[7])
-           :    LT(vars[8], vars[2], vars[1])
-           :    COND_IF(vars[8])
+           :  LE(vars[4], variable(0), vars[3])
+           :  COND_IF(vars[4])
+           :    LT(vars[5], vars[2], vars[1])
+           :    COND_IF(vars[5])
            :      BREAK()
            :    COND_END()
            :  COND_END()
-           :  LT(vars[9], vars[3], variable(0))
-           :  COND_IF(vars[9])
-           :    LT(vars[10], vars[1], vars[2])
-           :    COND_IF(vars[10])
+           :  LT(vars[6], vars[3], variable(0))
+           :  COND_IF(vars[6])
+           :    LT(vars[7], vars[1], vars[2])
+           :    COND_IF(vars[7])
            :      BREAK()
            :    COND_END()
            :  COND_END()
@@ -219,9 +230,65 @@ local function generate(stack, node, symbol_table)
     _:MOVE(node.var, node[2].var)
      :COND_END()
   elseif binop then
-    _[binop](_, node.var, node[1].var, node[2].var)
+    if opname then
+      local vars = node.vars
+      local convert = opname_to_convert(opname)
+      _[convert](_, vars[5], node[1].var)
+      _[convert](_, vars[6], node[2].var)
+      _:COND_IF(vars[5])
+       :  MOVE(vars[1], vars[6])
+       :COND_ELSE()
+       :  MOVE(vars[1], vars[5])
+       :COND_END()
+       :COND_IF(vars[1])
+      _[binop](_, vars[2], vars[5], vars[6])
+      _:COND_ELSE()
+       :  GETMETAFIELD(vars[3], node[1].var, vars[9])
+       :  COND_IF(vars[3])
+       :  COND_ELSE()
+       :    GETMETAFIELD(vars[3], node[2].var, vars[9])
+       :  COND_END()
+       :  COND_IF(vars[3])
+       :    CALL(vars[3], node[1].var, node[2].var)
+       :    RESULT(vars[2])
+       :  COND_ELSE()
+       :    COND_IF(vars[5])
+       :      TYPENAME(vars[4], node[2].var)
+       :    COND_ELSE()
+       :      TYPENAME(vars[4], node[1].var)
+       :    COND_END()
+       :    CONCAT(vars[7], vars[10], vars[4])
+       :    CONCAT(vars[8], vars[7], vars[11])
+       :    ERROR(vars[8], variable(0))
+       :  COND_END()
+       :COND_END()
+       :MOVE(node.var, vars[2])
+    else
+      _[binop](_, node.var, node[1].var, node[2].var)
+    end
   elseif unop then
-    _[unop](_, node.var, node[1].var)
+    if opname then
+      local vars = node.vars
+      local convert = opname_to_convert(opname)
+      _[convert](_, vars[2], node[1].var)
+      _:COND_IF(vars[2])
+      _[unop](_, vars[1], vars[2])
+      _:COND_ELSE()
+       :  GETMETAFIELD(vars[3], node[1].var, vars[7])
+       :  COND_IF(vars[3])
+       :    CALL(vars[3], node[1].var)
+       :    RESULT(vars[1])
+       :  COND_ELSE()
+       :    TYPENAME(vars[4], node[1].var)
+       :    CONCAT(vars[5], vars[8], vars[4])
+       :    CONCAT(vars[6], vars[5], vars[9])
+       :    ERROR(vars[6], variable(0))
+       :  COND_END()
+       :COND_END()
+       :MOVE(node.var, vars[1])
+    else
+      _[unop](_, node.var, node[1].var)
+    end
   elseif symbol == symbol_table.functioncall then
     local that = node[2]
     local args = {}

@@ -556,10 +556,20 @@ local function resolve_names(self, node, symbol_table)
   return node
 end
 
+local function opname_to_message(opname)
+  if opname == "arithmetic" or opname == "bitwise" then
+    return "attempt to perform " .. opname .. " operation on a "
+  else
+    return "attempt to perform " .. opname .. " on a "
+  end
+end
+
 local function resolve_vars(self, node, symbol_table)
   local symbol = node[0]
   local n = #node
   local binop = node.binop
+  local unop = node.unop
+  local opname = node.opname
 
   for i = 1, n do
     resolve_vars(self, node[i], symbol_table)
@@ -589,9 +599,7 @@ local function resolve_vars(self, node, symbol_table)
     if n == 4 then -- numerical for without step
       node.vars = space_separated {
         assign_var(node, "B"); -- var (initial value)
-        assign_var(node, "B"); -- limit
-        assign_var(node);
-        assign_var(node);
+        assign_var(node);      -- limit
         assign_var(node);
         ref_constant(node, "string", "'for' initial value must be a number")[1];
         ref_constant(node, "string", "'for' limit must be a number")[1];
@@ -599,11 +607,8 @@ local function resolve_vars(self, node, symbol_table)
     elseif n == 5 then -- numerical for with step
       node.vars = space_separated {
         assign_var(node, "B"); -- var (initial value)
-        assign_var(node, "B"); -- limit
-        assign_var(node, "B"); -- step
-        assign_var(node);
-        assign_var(node);
-        assign_var(node);
+        assign_var(node);      -- limit
+        assign_var(node);      -- step
         assign_var(node);
         assign_var(node);
         assign_var(node);
@@ -677,7 +682,35 @@ local function resolve_vars(self, node, symbol_table)
     node.var = assign_var(node.parent)
   elseif binop == "AND" or binop == "OR" then
     node.var = assign_var(node, "B")
-  elseif symbol == symbol_table.fieldlist or binop or node.unop then
+  elseif binop and opname then
+    node.var = assign_var(node)
+    node.vars = space_separated {
+      assign_var(node, "B");
+      assign_var(node, "B");
+      assign_var(node, "B");
+      assign_var(node, "B");
+      assign_var(node);
+      assign_var(node);
+      assign_var(node);
+      assign_var(node);
+      ref_constant(node, "string", "__" .. binop:lower())[1];
+      ref_constant(node, "string", opname_to_message(opname))[1];
+      ref_constant(node, "string", " value")[1];
+    }
+  elseif unop and opname then
+    node.var = assign_var(node)
+    node.vars = space_separated {
+      assign_var(node, "B");
+      assign_var(node);
+      assign_var(node);
+      assign_var(node);
+      assign_var(node);
+      assign_var(node);
+      ref_constant(node, "string", "__" .. unop:lower())[1];
+      ref_constant(node, "string", opname_to_message(opname))[1];
+      ref_constant(node, "string", " value")[1];
+    }
+  elseif symbol == symbol_table.fieldlist or binop or unop then
     node.var = assign_var(node)
   end
 end

@@ -28,6 +28,7 @@ local _ = element
 local keys = {
   "binop";
   "unop";
+  "opmode";
   "self";
   "vararg";
   "inorder";

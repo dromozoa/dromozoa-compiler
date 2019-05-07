@@ -42,8 +42,7 @@ table.ir tr td:first-child {
 
 <p>
 整数への変換は前後のホワイトスペースを無視したうえで、整数の字句表現に従う。
-8進数リテラルがないので、
-リテラル<code>070</code>は10進数の整数<code>70</code>に等しい。
+8進数リテラルがないので、リテラル<code>070</code>は10進数の整数<code>70</code>に等しい。
 また、リテラル<code>34e1</code>は16進数の整数<code>0x34e1 = 520</code>はなく、
 浮動小数点数<code>34.0e1 = 340</code>に等しいことに注意する。
 </p>
@@ -154,11 +153,14 @@ table.ir tr td:first-child {
 
 <h2>IR</h2>
 
+<p>
+<code>TYPENAME</code>以外はメタフィールドを考慮しない。
+</p>
+
 <table class="ir">
   <tr>
     <th>Opcode</th>
     <th>Code</th>
-    <th>Meta</th>
     <th>Description</th>
   </tr>
 
@@ -171,7 +173,6 @@ table.ir tr td:first-child {
   <tr>
     <td><code>GETTABLE A B C</code></td>
     <td><code>A = B[C]</code></td>
-    <td><code>__index</code></td>
     <td></td>
   </tr>
 
@@ -184,21 +185,18 @@ table.ir tr td:first-child {
   <tr>
     <td><code>SETTABLE A B C</code></td>
     <td><code>A[B] = C</code></td>
-    <td><code>__newindex</code></td>
     <td><code>C</code>が配列の場合、<code>B</code>は必ず即値整数で、<code>C</code>は展開される。</td>
   </tr>
 
   <tr>
     <td><code>binop A B C</code></td>
     <td><code>A = B binop C</code></td>
-    <td>すべて</td>
     <td></td>
   </tr>
 
   <tr>
     <td><code>unop A B</code></td>
     <td><code>A = unop B</code></td>
-    <td><code>NOT</code>以外</td>
     <td></td>
   </tr>
 
@@ -208,7 +206,6 @@ table.ir tr td:first-child {
       <code>RESULT C...</code>
     </td>
     <td><code>C... = A(B...)</code></td>
-    <td></td>
     <td>可変長の返り値を扱う場合、<code>C...</code>は配列が1個指定される。</td>
   </tr>
 
@@ -216,65 +213,124 @@ table.ir tr td:first-child {
     <td><code>RETURN A...</code></td>
     <td><code>return A...</code></td>
     <td></td>
-    <td></td>
   </tr>
 
   <tr>
     <td><code>CLOSURE A B C...</code></td>
     <td><code>A = closure(B, C...)</code></td>
-    <td></td>
     <td><code>C</code>は外部変数/参照。</td>
   </tr>
 
   <tr>
     <td><code>LABEL A</code></td>
     <td><code>::A::</code></td>
-    <td></td>
     <td>基本ブロック変換で除去。</td>
   </tr>
 
   <tr>
     <td><code>BREAK</code></td>
     <td><code>break</code></td>
-    <td></td>
     <td>ループ変換で<code>GOTO</code>に置換。</td>
   </tr>
 
   <tr>
     <td><code>GOTO A</code></td>
     <td><code>goto A</code></td>
-    <td></td>
     <td>基本ブロック変換で除去。</td>
-  </tr>
-
-  <tr>
-    <td><code>TONUMBER A B</code></td>
-    <td><code>A = tonumber(B)</code></td>
-    <td></td>
-    <td></td>
   </tr>
 
   <tr>
     <td><code>COND A B C</code></td>
     <td><code>if toboolean(A) then goto B else goto C end</code></td>
-    <td></td>
     <td>基本ブロック変換後は<code>B</code>,<code>C</code>ではなくエッジを参照。</td>
   </tr>
 
   <tr>
-    <td><code>ERROR A</code></td>
-    <td><code>error(A)</code></td>
-    <td></td>
-    <td>エラーを送出する。</td>
+    <td><code>TYPE A B</code></td>
+    <td><code>A = lua_type(B)</code></td>
+    <td>型を整数で取得する。返される値は<a href="#basic-types">Lua 5.3 basic types</a>を参照。</td>
   </tr>
 
   <tr>
-    <td><code>GETMETAFIELD A B</code></td>
-    <td><code>A = getmetafield(B)</code></td>
-    <td></td>
-    <td></td>
+    <td><code>TYPENAME A B</code></td>
+    <td><code>A = type(B)</code></td>
+    <td>型の名前を取得する。<code>__name</code>メタフィールドを考慮する。</td>
+  </tr>
+
+  <tr>
+    <td><code>TONUMBER A B</code></td>
+    <td><code>A = tonumber(B)</code></td>
+    <td>数値か数値に変換可能な文字列でなければ<code>nil</code>を返す。</td>
+  </tr>
+
+  <tr>
+    <td><code>TOINTEGER A B</code></td>
+    <td><code>A = tointeger(B)</code></td>
+    <td>整数か整数に変換可能な文字列でなければ<code>nil</code>を返す。</td>
+  </tr>
+
+  <tr>
+    <td><code>TOSTRING A B</code></td>
+    <td><code>A = tostring(B)</code></td>
+    <td>数値か文字列でなければ<code>nil</code>を返す。</td>
+  </tr>
+
+  <tr>
+    <td><code>ERROR A B</code></td>
+    <td><code>error(A, B)</code></td>
+    <td>エラーを送出する。Bは必ず即値整数である。</td>
+  </tr>
+
+  <tr>
+    <td><code>GETMETAFIELD A B C</code></td>
+    <td><code>A = getmetafield(B, C)</code></td>
+    <td><code>B</code>のメタテーブルが存在し、イベント<code>C</code>のフィールドがあるかを検査する。</td>
   </tr>
 </table>
+
+<h3>and</h3>
+
+<pre>
+a = b and c
+</pre>
+
+<pre>
+if b then
+  a = c
+else
+  a = b
+end
+</pre>
+
+<pre>
+COND_IF b
+  MOVE a c
+COND_ELSE
+  MOVE a b
+COND_END
+</pre>
+
+<h3>or</h3>
+
+<pre>
+a = b or c
+</pre>
+
+<pre>
+if b then
+  a = b
+else
+  a = c
+end
+</pre>
+
+<pre>
+COND_IF b
+  MOVE a b
+COND_ELSE
+  MOVE a c
+END
+</pre>
 
 <h3>numerical for without step</h3>
 
@@ -286,34 +342,34 @@ end
 
 <pre>
 B v1 var (initial value)
-B v2 limit
+C v2 limit
 C v3
-C v4
-C v5
-K v6 "'for' initial value must be a number"
-K v7 "'for' limit must be a number"
+K v4 "'for' initial value must be a number"
+K v5 "'for' limit must be a number"
 </pre>
 
 <pre>
 TONUMBER v1 u1
 TONUMBER v2 u2
 
-NOT v3 v2
-COND_IF v3
-  ERROR v7
+COND_IF v2
+  ;
+COND_ELSE
+  ERROR v5 0
 COND_END
 
-NOT v4 v1
-COND_IF v4
-  ERROR v6
+COND_IF v1
+  ;
+COND_ELSE
+  ERROR v4 0
 COND_END
 
 SUB v1 v1 1
 LOOP
   ADD v1 v1 1
 
-  LT v5 v2 v1
-  COND_IF v5
+  LT v3 v2 v1
+  COND_IF v3
     BREAK
   COND_END
 
@@ -332,18 +388,15 @@ end
 
 <pre>
 B v1 var (initial value)
-B v2 limit
-B v3 step
+C v2 limit
+C v3 step
 C v4
 C v5
 C v6
 C v7
-C v8
-C v9
-C v10
-K v11 "'for' initial value must be a number"
-K v12 "'for' limit must be a number"
-K v13 "'for' step must be a number"
+K v8 "'for' initial value must be a number"
+K v9 "'for' limit must be a number"
+K v10 "'for' step must be a number"
 </pre>
 
 <pre>
@@ -351,37 +404,40 @@ TONUMBER v1 u1
 TONUMBER v2 u2
 TONUMBER v3 u3
 
-NOT v4 v3
-COND_IF v4
-  ERROR v13
+COND_IF v3
+  ;
+COND_ELSE
+  ERROR v10 0
 COND_END
 
-NOT v5 v2
-COND_IF v5
-  ERROR v12
+COND_IF v2
+  ;
+COND_ELSE
+  ERROR v9 0
 COND_END
 
-NOT v6 v1
-COND_IF v6
-  ERROR v11
+COND_IF v1
+  ;
+COND_ELSE
+  ERROR v8 0
 COND_END
 
 SUB v1 v1 v3
 LOOP
   ADD v1 v1 v3
 
-  LE v7 0 v3
-  COND_IF v7
-    LT v8 v2 v1
-    COND_IF v8
+  LE v4 0 v3
+  COND_IF v4
+    LT v5 v2 v1
+    COND_IF v5
       BREAK
     COND_END
   COND_END
 
-  LT v9 v3 0
-  COND_IF v9
-    LT v10 v1 v2
-    COND_IF v10
+  LT v6 v3 0
+  COND_IF v6
+    LT v7 v1 v2
+    COND_IF v7
       BREAK
     COND_END
   COND_END
@@ -395,88 +451,158 @@ LOOP_END
 
 <table>
   <tr><th>Event    </th><th>Mode </th><th>Behavior</th><th>Description</th></tr>
-  <tr><td>add      </td><td>binop</td><td>(add)   </td><td><code>+</code></td></tr>
-  <tr><td>sub      </td><td>binop</td><td>add     </td><td><code>-</code></td></tr>
-  <tr><td>mul      </td><td>binop</td><td>add     </td><td><code>*</code></td></tr>
-  <tr><td>div      </td><td>binop</td><td>add     </td><td><code>/</code></td></tr>
-  <tr><td>mod      </td><td>binop</td><td>add     </td><td><code>%</code></td></tr>
-  <tr><td>pow      </td><td>binop</td><td>add     </td><td><code>^</code></td></tr>
-  <tr><td>unm      </td><td>unop </td><td>add     </td><td><code>-</code></td></tr>
-  <tr><td>idiv     </td><td>binop</td><td>add     </td><td><code>//</code></td></tr>
-  <tr><td>band     </td><td>binop</td><td>(band)  </td><td><code>&amp;</code></td></tr>
-  <tr><td>bor      </td><td>binop</td><td>band    </td><td><code>|</code></td></tr>
-  <tr><td>bxor     </td><td>binop</td><td>band    </td><td><code>~</code></td></tr>
-  <tr><td>bnot     </td><td>unop </td><td>band    </td><td><code>~</code></td></tr>
-  <tr><td>shl      </td><td>binop</td><td>band    </td><td><code>&lt;&lt;</code></td></tr>
-  <tr><td>shr      </td><td>binop</td><td>band    </td><td><code>&gt;&gt;</code></td></tr>
-  <tr><td>concat   </td><td>binop</td><td>        </td><td><code>..</code></td></tr>
-  <tr><td>len      </td><td>unop </td><td>        </td><td><code>#</code></td></tr>
-  <tr><td>eq       </td><td>binop</td><td>        </td><td><code>==</code></td></tr>
-  <tr><td>lt       </td><td>binop</td><td>        </td><td><code>&lt;</code></td></tr>
-  <tr><td>le       </td><td>binop</td><td>        </td><td><code>&lt;=</code></td></tr>
-  <tr><td>index    </td><td>     </td><td>        </td><td></td></tr>
-  <tr><td>newindex </td><td>     </td><td>        </td><td></td></tr>
-  <tr><td>call     </td><td>     </td><td>        </td><td></td></tr>
-  <tr><td>gc       </td><td>     </td><td>        </td><td>garbage colleciton</td></tr>
-  <tr><td>mode     </td><td>     </td><td>        </td><td>weak table</td></tr>
-  <tr><td>name     </td><td>     </td><td>        </td><td><code>luaL_newmetatable</code></td></tr>
-  <tr><td>tostring </td><td>     </td><td>        </td><td><code>tostring</code></td></tr>
-  <tr><td>metatable</td><td>     </td><td>        </td><td>protected metatable</td></tr>
-  <tr><td>pairs    </td><td>     </td><td>        </td><td><code>pairs</code></td></tr>
+  <tr><td>add      </td><td>binop</td><td>arithmetic </td><td><code>+</code></td></tr>
+  <tr><td>sub      </td><td>binop</td><td>arithmetic </td><td><code>-</code></td></tr>
+  <tr><td>mul      </td><td>binop</td><td>arithmetic </td><td><code>*</code></td></tr>
+  <tr><td>div      </td><td>binop</td><td>arithmetic </td><td><code>/</code></td></tr>
+  <tr><td>mod      </td><td>binop</td><td>arithmetic </td><td><code>%</code></td></tr>
+  <tr><td>pow      </td><td>binop</td><td>arithmetic </td><td><code>^</code></td></tr>
+  <tr><td>unm      </td><td>unop </td><td>arithmetic </td><td><code>-</code></td></tr>
+  <tr><td>idiv     </td><td>binop</td><td>arithmetic </td><td><code>//</code></td></tr>
+  <tr><td>band     </td><td>binop</td><td>bitwise    </td><td><code>&amp;</code></td></tr>
+  <tr><td>bor      </td><td>binop</td><td>bitwise    </td><td><code>|</code></td></tr>
+  <tr><td>bxor     </td><td>binop</td><td>bitwise    </td><td><code>~</code></td></tr>
+  <tr><td>bnot     </td><td>unop </td><td>bitwise    </td><td><code>~</code></td></tr>
+  <tr><td>shl      </td><td>binop</td><td>bitwise    </td><td><code>&lt;&lt;</code></td></tr>
+  <tr><td>shr      </td><td>binop</td><td>bitwise    </td><td><code>&gt;&gt;</code></td></tr>
+  <tr><td>concat   </td><td>binop</td><td>concatenate</td><td><code>..</code></td></tr>
+  <tr><td>len      </td><td>unop </td><td>length     </td><td><code>#</code></td></tr>
+  <tr><td>eq       </td><td>binop</td><td>           </td><td><code>==</code></td></tr>
+  <tr><td>lt       </td><td>binop</td><td>           </td><td><code>&lt;</code></td></tr>
+  <tr><td>le       </td><td>binop</td><td>           </td><td><code>&lt;=</code></td></tr>
+  <tr><td>index    </td><td>     </td><td>           </td><td></td></tr>
+  <tr><td>newindex </td><td>     </td><td>           </td><td></td></tr>
+  <tr><td>call     </td><td>     </td><td>           </td><td></td></tr>
+  <tr><td>gc       </td><td>     </td><td>           </td><td>garbage colleciton</td></tr>
+  <tr><td>mode     </td><td>     </td><td>           </td><td>weak table</td></tr>
+  <tr><td>name     </td><td>     </td><td>           </td><td><code>luaL_newmetatable</code></td></tr>
+  <tr><td>tostring </td><td>     </td><td>           </td><td><code>tostring</code></td></tr>
+  <tr><td>metatable</td><td>     </td><td>           </td><td>protected metatable</td></tr>
+  <tr><td>pairs    </td><td>     </td><td>           </td><td><code>pairs</code></td></tr>
 </table>
 
 <h3>arithmetic/bitwise/concatenate binop</h3>
 
 <pre>
-v1 = u1 {binop} u2
+u = u1 {binop} u2
 </pre>
 
 <pre>
-X v1
+if "{opname}" == "arithmetic" then
+  message = "attempt to perform arithmetic operation on a "
+  convert = TONUMBER
+elseif "{opname}" == "bitwise" then
+  message = "attempt to perform bitwise operation on a "
+  convert = TOINTEGER
+elseif "{opname}" == "concatenate" then
+  message = "attempt to perform concatenate on a "
+  convert = TOSTRING
+end
+</pre>
+
+<pre>
+B v1
 B v2
+B v3
+B v4
+C v5
+C v6
+C v7
+C v8
+K v9 "__{binop:lower()}"
+K v10 "{message}"
+K v11 " value"
+</pre>
+
+<pre>
+{convert} v5 u1
+{convert} v6 u2
+
+COND_IF v5
+  MOVE v1 v6
+COND_ELSE
+  MOVE v1 v5
+COND_END
+
+COND_IF v1
+  {binop} v2 v5 v6
+COND_ELSE
+  GETMETAFILED v3 u1 v9
+  COND_IF v3
+    ;
+  COND_ELSE
+    GETMETAFILED v3 u2 v9
+  COND_END
+
+  COND_IF v3
+    CALL v3 u1 u2
+    RESULT v2
+  COND_ELSE
+    COND_IF v5
+      TYPENAME v4 u2
+    COND_ELSE
+      TYPENAME v4 u1
+    COND_END
+    CONCAT v7 v10 v4
+    CONCAT v8 v7 v11
+    ERROR v8 0
+  COND_END
+COND_END
+
+MOVE u v2
+</pre>
+
+<h3>arithmetic/bitwise unop</h3>
+
+<pre>
+u = {unop} u1
+</pre>
+
+<pre>
+if "{opname}" == "arithmetic" then
+  message = "attempt to perform arithmetic operation on a "
+  convert = TONUMBER
+elseif "{opname}" == "bitwise" then
+  message = "attempt to perform bitwise operation on a "
+  convert = TOINTEGER
+end
+</pre>
+
+<pre>
+B v1
+C v2
 C v3
 C v4
 C v5
-K v6 "__{binop}"
--- arithmetic
-K v7 "attempt to perform arithmetic operation on a non-numeric value"
--- bitwise
-K v7 "attempt to perform bitwise operation on a non-integral value"
--- concatenate
-K v7 "attempt to concatenate a non-string value"
+C v6
+K v7 "__{unop:lower()}"
+K v8 "{message}"
+K v9 " value"
 </pre>
 
 <pre>
--- arithmetic
-TONUMBER v3 u1
-TONUMBER v4 u2
--- bitwise
-TOINTEGER v3 u1
-TOINTEGER v4 u2
--- concatenate
-TOSTRING v3 u1
-TOSTRING v4 u2
-
-COND_IF v3
-  MOVE v2 v3
-COND_ELSE
-  MOVE v2 v4
-COND_END
+{convert} v2 u1
 
 COND_IF v2
-  {binop} v1 v3 v4
+  {unop} v1 v2
 COND_ELSE
-  GETMETAFIELD v5 u1 u2 v6
-  COND_IF v6
-    CALL v6 u1 u2
+  GETMETAFILED v3 u1 v7
+
+  COND_IF v3
+    CALL v3 u1
     RESULT v1
   COND_ELSE
-    ERROR v7
+    TYPENAME v4 u1
+    CONCAT v5 v8 v4
+    CONCAT v6 v5 v9
+    ERROR v6 0
   COND_END
 COND_END
+
+MOVE u v1
 </pre>
 
-<h2>Lua 5.3 basic types</h2>
+<h2 id="basic-types">Lua 5.3 basic types</h2>
 
 <pre>
 #define LUA_TNIL		0
@@ -489,9 +615,6 @@ COND_END
 #define LUA_TUSERDATA		7
 #define LUA_TTHREAD		8
 </pre>
-
-<code>
-</code>
 
 </div>
 </body>
