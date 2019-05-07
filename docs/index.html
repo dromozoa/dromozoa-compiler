@@ -276,9 +276,9 @@ table.ir tr td:first-child {
   </tr>
 
   <tr>
-    <td><code>ERROR A</code></td>
-    <td><code>error(A)</code></td>
-    <td>エラーを送出する。</td>
+    <td><code>ERROR A B</code></td>
+    <td><code>error(A, B)</code></td>
+    <td>エラーを送出する。Bは必ず即値整数である。</td>
   </tr>
 
   <tr>
@@ -311,13 +311,13 @@ TONUMBER v2 u2
 COND_IF v2
   ;
 COND_ELSE
-  ERROR v5
+  ERROR v5 0
 COND_END
 
 COND_IF v1
   ;
 COND_ELSE
-  ERROR v4
+  ERROR v4 0
 COND_END
 
 SUB v1 v1 1
@@ -363,19 +363,19 @@ TONUMBER v3 u3
 COND_IF v3
   ;
 COND_ELSE
-  ERROR v10
+  ERROR v10 0
 COND_END
 
 COND_IF v2
   ;
 COND_ELSE
-  ERROR v9
+  ERROR v9 0
 COND_END
 
 COND_IF v1
   ;
 COND_ELSE
-  ERROR v8
+  ERROR v8 0
 COND_END
 
 SUB v1 v1 v3
@@ -502,7 +502,7 @@ COND_ELSE
     COND_END
     CONCAT v7 v10 v4
     CONCAT v8 v7 v11
-    ERROR v8
+    ERROR v8 0
   COND_END
 COND_END
 </pre>
@@ -548,7 +548,7 @@ COND_ELSE
     TYPENAME v4 u1
     CONCAT v5 v8 v4
     CONCAT v6 v4 v9
-    ERROR v6
+    ERROR v6 0
   COND_END
 COND_END
 </pre>
