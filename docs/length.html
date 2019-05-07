@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<title>dromozoa-compiler</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/3.0.1/github-markdown.min.css">
+<style>
+.markdown-body {
+  box-sizing: border-box;
+  min-width: 200px;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 45px;
+}
+@media (max-width: 767px) {
+  .markdown-body {
+    padding: 15px;
+  }
+}
+table.ir tr td:first-child {
+  white-space: nowrap;
+}
+</style>
+</head>
+<body>
+<div class="markdown-body">
+
+<h1>dromozoa-compiler</h1>
+
+<h2>length</h2>
+
+<pre>
+u = #u1
+</pre>
+
+<pre>
+k1 = "__len"
+k2 = "attempt to get length of a "
+k3 = " value"
+
+TYPE c1 u1
+EQ c2 c1 LUA_TSTRING
+
+COND_IF c2
+  LEN b1 u1
+COND_ELSE
+  GETMETAFIELD c3 u1 k1
+  COND_IF c3
+    CALL c3 u1
+    RESULT b1
+  COND_ELSE
+    EQ c4 c1 LUA_TTABLE
+    COND_IF c4
+      LEN b1 u1
+    COND_ELSE
+      TYPENAME c5 u1
+      CONCAT c6 k2 c5
+      CONCAT c7 c6 k3
+      ERROR c7 0
+    COND_END
+  COND_END
+COND_END
+
+MOVE u b1
+</pre>
+
+<pre>
+B v1  b1
+C v2  c1
+C v3  c2
+C v4  c3
+C v5  c4
+C v6  c5
+C v7  c6
+C v8  c7
+K v9  k1 "__len"
+K v10 k2 "attempt to get length of a "
+K v11 k3 " value"
+</pre>
+
+<pre>
+-- [TODO] translate
+</pre>
+
+</div>
+</body>
+</html>
