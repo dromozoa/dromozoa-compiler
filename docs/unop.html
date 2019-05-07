@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<title>dromozoa-compiler</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/3.0.1/github-markdown.min.css">
+<style>
+.markdown-body {
+  box-sizing: border-box;
+  min-width: 200px;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 45px;
+}
+@media (max-width: 767px) {
+  .markdown-body {
+    padding: 15px;
+  }
+}
+table.ir tr td:first-child {
+  white-space: nowrap;
+}
+</style>
+</head>
+<body>
+<div class="markdown-body">
+
+<h1>dromozoa-compiler</h1>
+
+<h2>arithmetic/bitwise unop</h2>
+
+<pre>
+u = {unop} u1
+</pre>
+
+<pre>
+if "{opname}" == "arithmetic" then
+  message = "attempt to perform arithmetic operation on a "
+  convert = TONUMBER
+elseif "{opname}" == "bitwise" then
+  message = "attempt to perform bitwise operation on a "
+  convert = TOINTEGER
+end
+</pre>
+
+<pre>
+B v1
+C v2
+C v3
+C v4
+C v5
+C v6
+K v7 "__{unop:lower()}"
+K v8 "{message}"
+K v9 " value"
+</pre>
+
+<pre>
+{convert} v2 u1
+
+COND_IF v2
+  {unop} v1 v2
+COND_ELSE
+  GETMETAFILED v3 u1 v7
+
+  COND_IF v3
+    CALL v3 u1
+    RESULT v1
+  COND_ELSE
+    TYPENAME v4 u1
+    CONCAT v5 v8 v4
+    CONCAT v6 v5 v9
+    ERROR v6 0
+  COND_END
+COND_END
+
+MOVE u v1
+</pre>
+
+</div>
+</body>
+</html>
