@@ -488,6 +488,19 @@ u = u1 {binop} u2
 </pre>
 
 <pre>
+if "{opname}" == "arithmetic" then
+  message = "attempt to perform arithmetic operation on a "
+  convert = TONUMBER
+elseif "{opname}" == "bitwise" then
+  message = "attempt to perform bitwise operation on a "
+  convert = TOINTEGER
+elseif "{opname}" == "concatenate" then
+  message = "attempt to perform concatenate on a "
+  convert = TOSTRING
+end
+</pre>
+
+<pre>
 B v1
 B v2
 B v3
@@ -496,28 +509,14 @@ C v5
 C v6
 C v7
 C v8
-K v9 "__{event}"
-[if {opname} == "arithmetic" then]
-K v10 "attempt to perform arithmetic operation on a "
-[elseif {opname} == "bitwise" then]
-K v10 "attempt to perform bitwise operation on a "
-[elseif {opname} == "concatenate" then]
-K v10 "attempt to perform concatenate on a "
-[end]
+K v9 "__{binop:lower()}"
+K v10 "{message}"
 K v11 " value"
 </pre>
 
 <pre>
-[if {opname} == "arithmetic" then]
-TONUMBER v5 u1
-TONUMBER v6 u2
-[elseif {opname} == "bitwise" then]
-TOINTEGER v5 u1
-TOINTEGER v6 u2
-[elseif {opname} == "concatenate" then]
-TOSTRING v5 u1
-TOSTRING v6 u2
-[end]
+{convert} v5 u1
+{convert} v6 u2
 
 COND_IF v5
   MOVE v1 v6
@@ -545,7 +544,7 @@ COND_ELSE
       TYPENAME v4 u1
     COND_END
     CONCAT v7 v10 v4
-    CONCAT v8 v6 v11
+    CONCAT v8 v7 v11
     ERROR v8 0
   COND_END
 COND_END
@@ -560,42 +559,47 @@ u = {unop} u1
 </pre>
 
 <pre>
-C v1
+if "{opname}" == "arithmetic" then
+  message = "attempt to perform arithmetic operation on a "
+  convert = TONUMBER
+elseif "{opname}" == "bitwise" then
+  message = "attempt to perform bitwise operation on a "
+  convert = TOINTEGER
+end
+</pre>
+
+<pre>
+B v1
 C v2
 C v3
 C v4
 C v5
-K v6 "__{event}"
-[if {opname} == "arithmetic" then]
-K v7 "attempt to perform arithmetic operation on a "
-[elseif {opname} == "bitwise" then]
-K v7 "attempt to perform bitwise operation on a "
-[end]
-K v8 " value"
+C v6
+K v7 "__{unop:lower()}"
+K v8 "{message}"
+K v9 " value"
 </pre>
 
 <pre>
-[if {opname} == "arithmetic" then]
-TONUMBER v1 u1
-[elseif {opname} == "bitwise" then]
-TOINTEGER v1 u1
-[end]
+{convert} v2 u1
 
-COND_IF v1
-  {unop} u v1
+COND_IF v2
+  {unop} v1 v2
 COND_ELSE
-  GETMETAFILED v2 u1 v6
+  GETMETAFILED v3 u1 v7
 
-  COND_IF v2
-    CALL v2 u1
-    RESULT u
+  COND_IF v3
+    CALL v3 u1
+    RESULT v1
   COND_ELSE
-    TYPENAME v3 u1
-    CONCAT v4 v7 v3
-    CONCAT v5 v4 v8
-    ERROR v5 0
+    TYPENAME v4 u1
+    CONCAT v5 v8 v4
+    CONCAT v6 v5 v9
+    ERROR v6 0
   COND_END
 COND_END
+
+MOVE u v1
 </pre>
 
 <h2 id="basic-types">Lua 5.3 basic types</h2>
