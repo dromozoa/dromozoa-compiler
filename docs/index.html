@@ -240,6 +240,12 @@ table.ir tr td:first-child {
   </tr>
 
   <tr>
+    <td><code>COND A B C</code></td>
+    <td><code>if toboolean(A) then goto B else goto C end</code></td>
+    <td>基本ブロック変換後は<code>B</code>,<code>C</code>ではなくエッジを参照。</td>
+  </tr>
+
+  <tr>
     <td><code>TYPE A B</code></td>
     <td><code>A = lua_type(B)</code></td>
     <td>型を整数で取得する。返される値は<a href="#basic-types">Lua 5.3 basic types</a>を参照。</td>
@@ -267,12 +273,6 @@ table.ir tr td:first-child {
     <td><code>TOSTRING A B</code></td>
     <td><code>A = tostring(B)</code></td>
     <td>数値か文字列でなければ<code>nil</code>を返す。</td>
-  </tr>
-
-  <tr>
-    <td><code>COND A B C</code></td>
-    <td><code>if toboolean(A) then goto B else goto C end</code></td>
-    <td>基本ブロック変換後は<code>B</code>,<code>C</code>ではなくエッジを参照。</td>
   </tr>
 
   <tr>
