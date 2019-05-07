@@ -288,6 +288,50 @@ table.ir tr td:first-child {
   </tr>
 </table>
 
+<h3>and</h3>
+
+<pre>
+a = b and c
+</pre>
+
+<pre>
+if b then
+  a = c
+else
+  a = b
+end
+</pre>
+
+<pre>
+COND_IF b
+  MOVE a c
+COND_ELSE
+  MOVE a b
+COND_END
+</pre>
+
+<h3>or</h3>
+
+<pre>
+a = b or c
+</pre>
+
+<pre>
+if b then
+  a = b
+else
+  a = c
+end
+</pre>
+
+<pre>
+COND_IF b
+  MOVE a b
+COND_ELSE
+  MOVE a c
+END
+</pre>
+
 <h3>numerical for without step</h3>
 
 <pre>
@@ -298,7 +342,7 @@ end
 
 <pre>
 B v1 var (initial value)
-B v2 limit
+C v2 limit
 C v3
 K v4 "'for' initial value must be a number"
 K v5 "'for' limit must be a number"
@@ -344,8 +388,8 @@ end
 
 <pre>
 B v1 var (initial value)
-B v2 limit
-B v3 step
+C v2 limit
+C v3 step
 C v4
 C v5
 C v6

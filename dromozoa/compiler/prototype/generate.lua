@@ -18,7 +18,7 @@
 local graph = require "dromozoa.graph"
 local variable = require "dromozoa.compiler.variable"
 
--- TODO update
+-- TODO メタメソッドのインライン化に追随する
 local not_split = {
   MOVE      = true;
   NEWTABLE  = true;
