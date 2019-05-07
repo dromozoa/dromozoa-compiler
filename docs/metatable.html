@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<title>dromozoa-compiler</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/3.0.1/github-markdown.min.css">
+<style>
+.markdown-body {
+  box-sizing: border-box;
+  min-width: 200px;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 45px;
+}
+@media (max-width: 767px) {
+  .markdown-body {
+    padding: 15px;
+  }
+}
+table.ir tr td:first-child {
+  white-space: nowrap;
+}
+</style>
+</head>
+<body>
+<div class="markdown-body">
+
+<h1>dromozoa-compiler</h1>
+
+<h2>metatable</h2>
+
+<table>
+  <tr><th>Event    </th><th>Mode </th><th>Behavior</th><th>Description</th></tr>
+  <tr><td>add      </td><td>binop</td><td>arithmetic </td><td><code>+</code></td></tr>
+  <tr><td>sub      </td><td>binop</td><td>arithmetic </td><td><code>-</code></td></tr>
+  <tr><td>mul      </td><td>binop</td><td>arithmetic </td><td><code>*</code></td></tr>
+  <tr><td>div      </td><td>binop</td><td>arithmetic </td><td><code>/</code></td></tr>
+  <tr><td>mod      </td><td>binop</td><td>arithmetic </td><td><code>%</code></td></tr>
+  <tr><td>pow      </td><td>binop</td><td>arithmetic </td><td><code>^</code></td></tr>
+  <tr><td>unm      </td><td>unop </td><td>arithmetic </td><td><code>-</code></td></tr>
+  <tr><td>idiv     </td><td>binop</td><td>arithmetic </td><td><code>//</code></td></tr>
+  <tr><td>band     </td><td>binop</td><td>bitwise    </td><td><code>&amp;</code></td></tr>
+  <tr><td>bor      </td><td>binop</td><td>bitwise    </td><td><code>|</code></td></tr>
+  <tr><td>bxor     </td><td>binop</td><td>bitwise    </td><td><code>~</code></td></tr>
+  <tr><td>bnot     </td><td>unop </td><td>bitwise    </td><td><code>~</code></td></tr>
+  <tr><td>shl      </td><td>binop</td><td>bitwise    </td><td><code>&lt;&lt;</code></td></tr>
+  <tr><td>shr      </td><td>binop</td><td>bitwise    </td><td><code>&gt;&gt;</code></td></tr>
+  <tr><td>concat   </td><td>binop</td><td>concatenate</td><td><code>..</code></td></tr>
+  <tr><td>len      </td><td>unop </td><td>length     </td><td><code>#</code></td></tr>
+  <tr><td>eq       </td><td>binop</td><td>           </td><td><code>==</code></td></tr>
+  <tr><td>lt       </td><td>binop</td><td>           </td><td><code>&lt;</code></td></tr>
+  <tr><td>le       </td><td>binop</td><td>           </td><td><code>&lt;=</code></td></tr>
+  <tr><td>index    </td><td>     </td><td>           </td><td></td></tr>
+  <tr><td>newindex </td><td>     </td><td>           </td><td></td></tr>
+  <tr><td>call     </td><td>     </td><td>           </td><td></td></tr>
+  <tr><td>gc       </td><td>     </td><td>           </td><td>garbage colleciton</td></tr>
+  <tr><td>mode     </td><td>     </td><td>           </td><td>weak table</td></tr>
+  <tr><td>name     </td><td>     </td><td>           </td><td><code>luaL_newmetatable</code></td></tr>
+  <tr><td>tostring </td><td>     </td><td>           </td><td><code>tostring</code></td></tr>
+  <tr><td>metatable</td><td>     </td><td>           </td><td>protected metatable</td></tr>
+  <tr><td>pairs    </td><td>     </td><td>           </td><td><code>pairs</code></td></tr>
+</table>
+
+<h3>arithmetic/bitwise/concatenate binop</h3>
+
+<pre>
+u = u1 {binop} u2
+</pre>
+
+<pre>
+if "{opname}" == "arithmetic" then
+  message = "attempt to perform arithmetic operation on a "
+  convert = TONUMBER
+elseif "{opname}" == "bitwise" then
+  message = "attempt to perform bitwise operation on a "
+  convert = TOINTEGER
+elseif "{opname}" == "concatenate" then
+  message = "attempt to perform concatenate on a "
+  convert = TOSTRING
+end
+</pre>
+
+<pre>
+B v1
+B v2
+B v3
+B v4
+C v5
+C v6
+C v7
+C v8
+K v9 "__{binop:lower()}"
+K v10 "{message}"
+K v11 " value"
+</pre>
+
+<pre>
+{convert} v5 u1
+{convert} v6 u2
+
+COND_IF v5
+  MOVE v1 v6
+COND_ELSE
+  MOVE v1 v5
+COND_END
+
+COND_IF v1
+  {binop} v2 v5 v6
+COND_ELSE
+  GETMETAFILED v3 u1 v9
+  COND_IF v3
+    ;
+  COND_ELSE
+    GETMETAFILED v3 u2 v9
+  COND_END
+
+  COND_IF v3
+    CALL v3 u1 u2
+    RESULT v2
+  COND_ELSE
+    COND_IF v5
+      TYPENAME v4 u2
+    COND_ELSE
+      TYPENAME v4 u1
+    COND_END
+    CONCAT v7 v10 v4
+    CONCAT v8 v7 v11
+    ERROR v8 0
+  COND_END
+COND_END
+
+MOVE u v2
+</pre>
+
+<h3>arithmetic/bitwise unop</h3>
+
+<pre>
+u = {unop} u1
+</pre>
+
+<pre>
+if "{opname}" == "arithmetic" then
+  message = "attempt to perform arithmetic operation on a "
+  convert = TONUMBER
+elseif "{opname}" == "bitwise" then
+  message = "attempt to perform bitwise operation on a "
+  convert = TOINTEGER
+end
+</pre>
+
+<pre>
+B v1
+C v2
+C v3
+C v4
+C v5
+C v6
+K v7 "__{unop:lower()}"
+K v8 "{message}"
+K v9 " value"
+</pre>
+
+<pre>
+{convert} v2 u1
+
+COND_IF v2
+  {unop} v1 v2
+COND_ELSE
+  GETMETAFILED v3 u1 v7
+
+  COND_IF v3
+    CALL v3 u1
+    RESULT v1
+  COND_ELSE
+    TYPENAME v4 u1
+    CONCAT v5 v8 v4
+    CONCAT v6 v5 v9
+    ERROR v6 0
+  COND_END
+COND_END
+
+MOVE u v1
+</pre>
+
+</div>
+</body>
+</html>
