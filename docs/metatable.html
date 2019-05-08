@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<title>dromozoa-compiler</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/3.0.1/github-markdown.min.css">
+<style>
+.markdown-body {
+  box-sizing: border-box;
+  min-width: 200px;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 45px;
+}
+@media (max-width: 767px) {
+  .markdown-body {
+    padding: 15px;
+  }
+}
+table.ir tr td:first-child {
+  white-space: nowrap;
+}
+</style>
+</head>
+<body>
+<div class="markdown-body">
+
+<h1>dromozoa-compiler</h1>
+
+<h2>metatable</h2>
+
+<table>
+  <tr><th>Event    </th><th>Mode </th><th>Behavior</th><th>Description</th></tr>
+  <tr><td>add      </td><td>binop</td><td>arithmetic </td><td><code>+</code></td></tr>
+  <tr><td>sub      </td><td>binop</td><td>arithmetic </td><td><code>-</code></td></tr>
+  <tr><td>mul      </td><td>binop</td><td>arithmetic </td><td><code>*</code></td></tr>
+  <tr><td>div      </td><td>binop</td><td>arithmetic </td><td><code>/</code></td></tr>
+  <tr><td>mod      </td><td>binop</td><td>arithmetic </td><td><code>%</code></td></tr>
+  <tr><td>pow      </td><td>binop</td><td>arithmetic </td><td><code>^</code></td></tr>
+  <tr><td>unm      </td><td>unop </td><td>arithmetic </td><td><code>-</code></td></tr>
+  <tr><td>idiv     </td><td>binop</td><td>arithmetic </td><td><code>//</code></td></tr>
+  <tr><td>band     </td><td>binop</td><td>bitwise    </td><td><code>&amp;</code></td></tr>
+  <tr><td>bor      </td><td>binop</td><td>bitwise    </td><td><code>|</code></td></tr>
+  <tr><td>bxor     </td><td>binop</td><td>bitwise    </td><td><code>~</code></td></tr>
+  <tr><td>bnot     </td><td>unop </td><td>bitwise    </td><td><code>~</code></td></tr>
+  <tr><td>shl      </td><td>binop</td><td>bitwise    </td><td><code>&lt;&lt;</code></td></tr>
+  <tr><td>shr      </td><td>binop</td><td>bitwise    </td><td><code>&gt;&gt;</code></td></tr>
+  <tr><td>concat   </td><td>binop</td><td>concatenate</td><td><code>..</code></td></tr>
+  <tr><td>len      </td><td>unop </td><td>length     </td><td><code>#</code></td></tr>
+  <tr><td>eq       </td><td>binop</td><td>           </td><td><code>==</code></td></tr>
+  <tr><td>lt       </td><td>binop</td><td>           </td><td><code>&lt;</code></td></tr>
+  <tr><td>le       </td><td>binop</td><td>           </td><td><code>&lt;=</code></td></tr>
+  <tr><td>index    </td><td>     </td><td>           </td><td></td></tr>
+  <tr><td>newindex </td><td>     </td><td>           </td><td></td></tr>
+  <tr><td>call     </td><td>     </td><td>           </td><td></td></tr>
+  <tr><td>gc       </td><td>     </td><td>           </td><td>garbage colleciton</td></tr>
+  <tr><td>mode     </td><td>     </td><td>           </td><td>weak table</td></tr>
+  <tr><td>name     </td><td>     </td><td>           </td><td><code>luaL_newmetatable</code></td></tr>
+  <tr><td>tostring </td><td>     </td><td>           </td><td><code>tostring</code></td></tr>
+  <tr><td>metatable</td><td>     </td><td>           </td><td>protected metatable</td></tr>
+  <tr><td>pairs    </td><td>     </td><td>           </td><td><code>pairs</code></td></tr>
+</table>
+
+</div>
+</body>
+</html>

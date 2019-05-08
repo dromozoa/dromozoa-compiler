@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<title>dromozoa-compiler</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/3.0.1/github-markdown.min.css">
+<style>
+.markdown-body {
+  box-sizing: border-box;
+  min-width: 200px;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 45px;
+}
+@media (max-width: 767px) {
+  .markdown-body {
+    padding: 15px;
+  }
+}
+table.ir tr td:first-child {
+  white-space: nowrap;
+}
+</style>
+</head>
+<body>
+<div class="markdown-body">
+
+<h1>dromozoa-compiler</h1>
+
+<h2>eq (ne)</h2>
+
+<pre>
+u = u1 == u2
+</pre>
+
+<pre>
+EQ b1 u1 u2
+
+COND_IF b1
+COND_ELSE
+  TYPE c1 u1
+
+
+COND_END
+
+-- eq
+TOBOOLEAN u b1
+-- ne
+NOT u b1
+</pre>
+
+<pre>
+B v1  b1
+C v2  c1
+C v3  c2
+C v4  c3
+C v5  c4
+C v6  c5
+C v7  c6
+C v8  c7
+K v9  k1 "__len"
+K v10 k2 "attempt to get length of a "
+K v11 k3 " value"
+</pre>
+
+<pre>
+-- [TODO] translate
+</pre>
+
+</div>
+</body>
+</html>
