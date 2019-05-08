@@ -29,3 +29,6 @@ local b = -a
 
 print(a[1])
 print(b[1])
+
+local r, c = pcall(unm, { 69 })
+print(c[1])
