@@ -28,41 +28,26 @@ table.ir tr td:first-child {
 
 <h1>dromozoa-compiler</h1>
 
-<h2>length</h2>
+<h2>eq (ne)</h2>
 
 <pre>
-u = #u1
+u = u1 == u2
 </pre>
 
 <pre>
-k1 = "__len"
-k2 = "attempt to get length of a "
-k3 = " value"
+EQ b1 u1 u2
 
-TYPE c1 u1
-EQ c2 c1 LUA_TSTRING
-
-COND_IF c2
-  LEN b1 u1
+COND_IF b1
 COND_ELSE
-  GETMETAFIELD c3 u1 k1
-  COND_IF c3
-    CALL c3 u1
-    RESULT b1
-  COND_ELSE
-    EQ c4 c1 LUA_TTABLE
-    COND_IF c4
-      LEN b1 u1
-    COND_ELSE
-      TYPENAME c5 u1
-      CONCAT c6 k2 c5
-      CONCAT c7 c6 k3
-      ERROR c7 0
-    COND_END
-  COND_END
+  TYPE c1 u1
+
+
 COND_END
 
-MOVE u b1
+-- eq
+TOBOOLEAN u b1
+-- ne
+NOT u b1
 </pre>
 
 <pre>
