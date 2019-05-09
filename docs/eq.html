@@ -35,17 +35,38 @@ u = u1 == u2
 </pre>
 
 <pre>
+k1 = "__eq"
+
 EQ b1 u1 u2
-
 COND_IF b1
+  -- b1 == true
 COND_ELSE
+  -- b1 == false
   TYPE c1 u1
-
-
+  EQ c2 c1 LUA_TTABLE
+  COND_IF c2
+    TYPE c3 u2
+    EQ c4 c3 LUA_TTABLE
+    COND_IF c4
+      GETMETAFIELD b2 u1 k1
+      COND_IF b2
+        ;
+      COND_ELSE
+        GETMETAFIELD b2 u2 k1
+      COND_END
+      COND_IF b2
+        CALL b2 u1 u2
+        RESULT c5
+        COND_IF c5
+          MOVE b1 true
+        COND_END
+      COND_END
+    COND_END
+  COND_END
 COND_END
 
 -- eq
-TOBOOLEAN u b1
+MOVE u b1
 -- ne
 NOT u b1
 </pre>
