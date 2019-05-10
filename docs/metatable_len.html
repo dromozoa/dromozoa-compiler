@@ -34,7 +34,7 @@ table.ir tr td:first-child {
 u = #u1
 </pre>
 
-<pre>
+<pre class="code">
 k1 = "__len"
 k2 = "attempt to get length of a "
 k3 = " value"
@@ -66,21 +66,48 @@ MOVE u b1
 </pre>
 
 <pre>
-B v1  b1
-C v2  c1
-C v3  c2
-C v4  c3
-C v5  c4
-C v6  c5
-C v7  c6
-C v8  c7
-K v9  k1 "__len"
+B v1 b1
+C v2 c1
+C v3 c2
+C v4 c3
+C v5 c4
+C v6 c5
+C v7 c6
+C v8 c7
+K v9 k1 "__len"
 K v10 k2 "attempt to get length of a "
 K v11 k3 " value"
 </pre>
 
 <pre>
--- [TODO] translate
+k1 = "__len"
+k2 = "attempt to get length of a "
+k3 = " value"
+
+TYPE v2 u1
+EQ v3 v2 LUA_TSTRING
+
+COND_IF v3
+  LEN v1 u1
+COND_ELSE
+  GETMETAFIELD v4 u1 v9
+  COND_IF v4
+    CALL v4 u1
+    RESULT v1
+  COND_ELSE
+    EQ v5 v2 LUA_TTABLE
+    COND_IF v5
+      LEN v1 u1
+    COND_ELSE
+      TYPENAME v6 u1
+      CONCAT v7 v10 v6
+      CONCAT v8 v7 v11
+      ERROR v8 0
+    COND_END
+  COND_END
+COND_END
+
+MOVE u v1
 </pre>
 
 </div>

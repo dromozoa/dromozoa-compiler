@@ -34,7 +34,7 @@ table.ir tr td:first-child {
 u = u1[u2]
 </pre>
 
-<pre>
+<pre class="code">
 k1 = "__index"
 k2 = "attempt to index a "
 k3 = " value"
@@ -83,7 +83,68 @@ MOVE u b2
 </pre>
 
 <pre>
--- [TODO] translate
+B v1 b1
+B v2 b2
+B v3 b3
+C v4 c1
+C v5 c2
+C v6 c3
+C v7 c4
+C v8 c5
+C v9 c6
+C v10 c7
+C v11 c8
+K v12 k1 "__index"
+K v13 k2 "attempt to index a "
+K v14 k3 " value"
+</pre>
+
+<pre>
+k1 = "__index"
+k2 = "attempt to index a "
+k3 = " value"
+
+MOVE v1 u1
+LOOP
+  TYPE v4 v1
+  EQ v5 v4 LUA_TTABLE
+  COND_IF v5
+    GETTABLE v2 v1 u2
+    EQ v6 v2 NIL
+    COND_IF v6
+      GETMETAFIELD v3 v1 v12
+      COND_IF v3
+        ;
+      COND_ELSE
+        BREAK
+      COND_END
+    COND_ELSE
+      BREAK
+    COND_END
+  COND_ELSE
+    GETMETAFIELD v3 v1 v12
+    COND_IF v3
+      ;
+    COND_ELSE
+      TYPENAME v7 v1
+      CONCAT v8 v13 v7
+      CONCAT v9 v8 v14
+      ERROR v9 0
+    COND_END
+  COND_END
+
+  TYPE v10 v3
+  EQ v11 v10 LUA_TFUNCTION
+  COND_IF v11
+    CALL v11 v1 u2
+    RESULT v2
+    BREAK
+  COND_ELSE
+    MOVE v1 v11
+  COND_END
+LOOP_END
+
+MOVE u v2
 </pre>
 
 </div>
