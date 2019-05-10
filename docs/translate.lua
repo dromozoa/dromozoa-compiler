@@ -88,30 +88,35 @@ end
 out:write "</pre>\n\n<pre>\n"
 for i = 1, #buffer do
   local line = buffer[i]
-  local indent, name, data = line:match "^(%s*)([A-Z][A-Z_]*)(.*)"
-  if indent then
-    out:write((" :%s%s("):format(indent, name))
-
-    local args = {}
-    for token in data:gmatch "%S+" do
-      if token:find "^LUA_T" then
-        args[#args + 1] = ("variable.%s"):format(token)
-      elseif token:find "^%d+$" then
-        args[#args + 1] = ("variable(%d)"):format(token)
-      elseif token:find "^[bck]%d+$" then
-        args[#args + 1] = ("vars[%d]"):format(assert(tmap[token]))
-      elseif token == "u" then
-        args[#args + 1] = "node.var"
-      else
-        local u = token:match "^u(%d+)$"
-        if u then
-          args[#args + 1] = ("node[%d].var"):format(u)
+  if line:find "^%s*%-%-" then
+    out:write(line, "\n")
+  else
+    local indent, name, data = line:match "^(%s*)([A-Z][A-Z_]*)(.*)"
+    if indent then
+      out:write((" :%s%s("):format(indent, name))
+      local args = {}
+      for token in data:gmatch "%S+" do
+        if token:find "^LUA_T" then
+          args[#args + 1] = ("variable.%s"):format(token)
+        elseif token:find "^%d+$" then
+          args[#args + 1] = ("variable(%d)"):format(token)
+        elseif token:find "^[bck]%d+$" then
+          args[#args + 1] = ("vars[%d]"):format(assert(tmap[token]))
+        elseif token == "u" then
+          args[#args + 1] = "node.var"
+        elseif token == "true" or token == "false" or token == "nil" then
+          args[#args + 1] = ("variable.%s"):format(token:upper())
         else
-          error("unknown token ", token)
+          local u = token:match "^u(%d+)$"
+          if u then
+            args[#args + 1] = ("node[%d].var"):format(u)
+          else
+            error("unknown token " .. token)
+          end
         end
       end
+      out:write(table.concat(args, ", "), ")\n")
     end
-    out:write(table.concat(args, ", "), ")\n")
   end
 end
 out:write "</pre>\n"
