@@ -28,6 +28,16 @@ local class = {
   NIL   = setmetatable({ type = "immediate", key = "NIL"   }, metatable);
   FALSE = setmetatable({ type = "immediate", key = "FALSE" }, metatable);
   TRUE  = setmetatable({ type = "immediate", key = "TRUE"  }, metatable);
+  -- Lua 5.3 basic types
+  LUA_TNIL           = setmetatable({ type = "immediate", key = "I", number = 0 }, metatable);
+  LUA_TBOOLEAN       = setmetatable({ type = "immediate", key = "I", number = 1 }, metatable);
+  LUA_TLIGHTUSERDATA = setmetatable({ type = "immediate", key = "I", number = 2 }, metatable);
+  LUA_TNUMBER        = setmetatable({ type = "immediate", key = "I", number = 3 }, metatable);
+  LUA_TSTRING        = setmetatable({ type = "immediate", key = "I", number = 4 }, metatable);
+  LUA_TTABLE         = setmetatable({ type = "immediate", key = "I", number = 5 }, metatable);
+  LUA_TFUNCTION      = setmetatable({ type = "immediate", key = "I", number = 6 }, metatable);
+  LUA_TUSERDATA      = setmetatable({ type = "immediate", key = "I", number = 7 }, metatable);
+  LUA_TTHREAD        = setmetatable({ type = "immediate", key = "I", number = 8 }, metatable);
 }
 
 local function _(type, key)
