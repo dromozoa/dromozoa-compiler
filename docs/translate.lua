@@ -61,9 +61,7 @@ table.sort(vars)
 
 local tmap = {}
 for i = 1, #vars do
-  local var = vars[i]
-  local t = ("v%d"):format(i)
-  tmap[var] = t
+  tmap[vars[i]] = i
 end
 
 out:write "<pre>\n"
@@ -78,15 +76,42 @@ for i = 1, #vars do
   out:write "\n"
 end
 out:write "</pre>\n\n<pre>\n"
-
-local state
 for i = 1, #buffer do
   local line = buffer[i]
   out:write((line:gsub("(%s)([bck]%d+)", function (u, v)
-    local t = tmap[v]
-    if t then
-      return " " .. t
+    local i = tmap[v]
+    if i then
+      return ("%sv%d"):format(u, i)
     end
   end)), "\n")
+end
+out:write "</pre>\n\n<pre>\n"
+for i = 1, #buffer do
+  local line = buffer[i]
+  local indent, name, data = line:match "^(%s*)([A-Z][A-Z_]*)(.*)"
+  if indent then
+    out:write((" :%s%s("):format(indent, name))
+
+    local args = {}
+    for token in data:gmatch "%S+" do
+      if token:find "^LUA_T" then
+        args[#args + 1] = ("variable.%s"):format(token)
+      elseif token:find "^%d+$" then
+        args[#args + 1] = ("variable(%d)"):format(token)
+      elseif token:find "^[bck]%d+$" then
+        args[#args + 1] = ("vars[%d]"):format(assert(tmap[token]))
+      elseif token == "u" then
+        args[#args + 1] = "node.var"
+      else
+        local u = token:match "^u(%d+)$"
+        if u then
+          args[#args + 1] = ("node[%d].var"):format(u)
+        else
+          error("unknown token ", token)
+        end
+      end
+    end
+    out:write(table.concat(args, ", "), ")\n")
+  end
 end
 out:write "</pre>\n"
