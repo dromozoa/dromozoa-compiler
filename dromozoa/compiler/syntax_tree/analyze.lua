@@ -698,6 +698,18 @@ local function resolve_vars(self, node, symbol_table)
         ref_constant(node, "string", opname_to_message(opname))[1];
         ref_constant(node, "string", " value")[1];
       }
+    elseif binop == "EQ" or binop == "NE" then
+      node.var = assign_var(node)
+      node.vars = space_separated {
+        assign_var(node, "B");
+        assign_var(node, "B");
+        assign_var(node);
+        assign_var(node);
+        assign_var(node);
+        assign_var(node);
+        assign_var(node);
+        ref_constant(node, "string", "__eq")[1];
+      }
     else
       node.var = assign_var(node)
     end

@@ -263,6 +263,37 @@ local function generate(stack, node, symbol_table)
        :  COND_END()
        :COND_END()
        :MOVE(node.var, vars[2])
+    elseif binop == "EQ" or binop == "NE" then
+      local vars = node.vars
+      _:EQ(vars[1], node[1].var, node[2].var)
+       :COND_IF(vars[1])
+       :COND_ELSE()
+       :  TYPE(vars[3], node[1].var)
+       :  EQ(vars[4], vars[3], variable.LUA_TTABLE)
+       :  COND_IF(vars[4])
+       :    TYPE(vars[5], node[2].var)
+       :    EQ(vars[6], vars[5], variable.LUA_TTABLE)
+       :    COND_IF(vars[6])
+       :      GETMETAFIELD(vars[2], node[1].var, vars[8])
+       :      COND_IF(vars[2])
+       :      COND_ELSE()
+       :        GETMETAFIELD(vars[2], node[2].var, vars[8])
+       :      COND_END()
+       :      COND_IF(vars[2])
+       :        CALL(vars[2], node[1].var, node[2].var)
+       :        RESULT(vars[7])
+       :        COND_IF(vars[7])
+       :          MOVE(vars[1], variable.TRUE)
+       :        COND_END()
+       :      COND_END()
+       :    COND_END()
+       :  COND_END()
+       :COND_END()
+      if binop == "EQ" then
+        _:MOVE(node.var, vars[1])
+      else
+        _:NOT(node.var, vars[1])
+      end
     else
       _[binop](_, node.var, node[1].var, node[2].var)
     end
