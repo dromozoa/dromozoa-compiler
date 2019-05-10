@@ -28,48 +28,59 @@ table.ir tr td:first-child {
 
 <h1>dromozoa-compiler</h1>
 
-<h2>eq (ne)</h2>
+<h2>lt</h2>
 
 <pre>
-u = u1 == u2
-u = u1 ~= u2
+u = u1 &lt; u2
 </pre>
 
 <pre>
-k1 = "__eq"
+k1 = "__lt"
+k2 = "attempt to compare "
+k3 = " with "
 
-EQ b1 u1 u2
+TYPE c1 u1
+EQ b1 c1 LUA_TNUMBER
 COND_IF b1
-  -- b1 == true
+  ;
 COND_ELSE
-  -- b1 == false
-  TYPE c1 u1
-  EQ c2 c1 LUA_TTABLE
-  COND_IF c2
-    TYPE c3 u2
-    EQ c4 c3 LUA_TTABLE
-    COND_IF c4
-      GETMETAFIELD b2 u1 k1
-      COND_IF b2
-        ;
-      COND_ELSE
-        GETMETAFIELD b2 u2 k1
-      COND_END
-      COND_IF b2
-        CALL b2 u1 u2
-        RESULT c5
-        COND_IF c5
-          MOVE b1 true
-        COND_END
-      COND_END
+  EQ b1 c1 LUA_TSTRING
+COND_END
+
+COND_IF b1
+  TYPE c2 u2
+  EQ b1 c1 c2
+COND_END
+
+COND_IF b1
+  LT b2 u1 u2
+COND_ELSE
+  GETMETAFIELD b3 u1 k1
+  COND_IF b3
+    ;
+  COND_ELSE
+    GETMETAFIELD b3 u2 k1
+  COND_END
+
+  COND_IF b3
+    CALL b3 u1 u2
+    RESULT c3
+    COND_IF c3
+      MOVE b2 true
+    COND_ELSE
+      MOVE b2 false
     COND_END
+  COND_ELSE
+    TYPENAME c4 u1
+    TYPENAME c5 u2
+    CONCAT c6 k2 c4
+    CONCAT c7 c6 k3
+    CONCAT c8 c7 c5
+    ERROR c8 0
   COND_END
 COND_END
 
--- eq
-MOVE u b1
--- ne
-NOT u b1
+MOVE u b2
 </pre>
 
 <pre>
