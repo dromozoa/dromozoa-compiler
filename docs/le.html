@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<title>dromozoa-compiler</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/3.0.1/github-markdown.min.css">
+<style>
+.markdown-body {
+  box-sizing: border-box;
+  min-width: 200px;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 45px;
+}
+@media (max-width: 767px) {
+  .markdown-body {
+    padding: 15px;
+  }
+}
+table.ir tr td:first-child {
+  white-space: nowrap;
+}
+</style>
+</head>
+<body>
+<div class="markdown-body">
+
+<h1>dromozoa-compiler</h1>
+
+<h2>le</h2>
+
+<pre>
+u = u1 &lt;= u2
+</pre>
+
+<pre>
+k1 = "__le"
+k2 = "__lt"
+k3 = "attempt to compare "
+k4 = " with "
+
+TYPE c1 u1
+EQ b1 c1 LUA_TNUMBER
+COND_IF b1
+  ;
+COND_ELSE
+  EQ b1 c1 LUA_TSTRING
+COND_END
+
+COND_IF b1
+  TYPE c2 u2
+  EQ b1 c1 c2
+COND_END
+
+COND_IF b1
+  LE b2 u1 u2
+COND_ELSE
+  GETMETAFIELD b3 u1 k1
+  COND_IF b3
+    ;
+  COND_ELSE
+    GETMETAFIELD b3 u2 k1
+  COND_END
+
+  COND_IF b3
+    CALL b3 u1 u2
+    RESULT c3
+    COND_IF c3
+      MOVE b2 true
+    COND_ELSE
+      MOVE b2 false
+    COND_END
+  COND_ELSE
+    -- not (u2 &lt; u1)
+    GETMETAFIELD b4 u2 k2
+    COND_IF b4
+      ;
+    COND_ELSE
+      GETMETAFIELD b4 u1 k2
+    COND_END
+
+    COND_IF b4
+      CALL b4 u2 u1
+      RESULT c4
+      NOT b2 c4
+    COND_ELSE
+      TYPENAME c5 u1
+      TYPENAME c6 u2
+      CONCAT c7 k2 c5
+      CONCAT c8 c7 k3
+      CONCAT c9 c8 c6
+      ERROR c9 0
+    COND_END
+  COND_END
+COND_END
+
+MOVE u b2
+</pre>
+
+<pre>
+-- [TODO] translate
+</pre>
+
+</div>
+</body>
+</html>
