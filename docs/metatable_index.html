@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<title>dromozoa-compiler</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/3.0.1/github-markdown.min.css">
+<style>
+.markdown-body {
+  box-sizing: border-box;
+  min-width: 200px;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 45px;
+}
+@media (max-width: 767px) {
+  .markdown-body {
+    padding: 15px;
+  }
+}
+table.ir tr td:first-child {
+  white-space: nowrap;
+}
+</style>
+</head>
+<body>
+<div class="markdown-body">
+
+<h1>dromozoa-compiler</h1>
+
+<h2>index</h2>
+
+<pre>
+u = u1[u2]
+</pre>
+
+<pre>
+k1 = "__index"
+k2 = "attempt to index a "
+k3 = " value"
+
+MOVE b1 u1
+LOOP
+  TYPE c1 b1
+  EQ c2 c1 LUA_TTABLE
+  COND_IF c2
+    GETTABLE b2 b1 u2
+    EQ c3 b2 NIL
+    COND_IF c3
+      GETMETAFIELD b3 b1 k1
+      COND_IF b3
+        ;
+      COND_ELSE
+        BREAK
+      COND_END
+    COND_ELSE
+      BREAK
+    COND_END
+  COND_ELSE
+    GETMETAFIELD b3 b1 k1
+    COND_IF b3
+      ;
+    COND_ELSE
+      TYPENAME c4 b1
+      CONCAT c5 k2 c4
+      CONCAT c6 c5 k3
+      ERROR c6 0
+    COND_END
+  COND_END
+
+  TYPE c7 b3
+  EQ c8 c7 LUA_TFUNCTION
+  COND_IF c8
+    CALL c8 b1 u2
+    RESULT b2
+    BREAK
+  COND_ELSE
+    MOVE b1 c8
+  COND_END
+LOOP_END
+
+MOVE u b2
+</pre>
+
+<pre>
+-- [TODO] translate
+</pre>
+
+</div>
+</body>
+</html>
