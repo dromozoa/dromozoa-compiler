@@ -35,14 +35,12 @@ u = u1 == u2
 u = u1 ~= u2
 </pre>
 
-<pre>
+<pre class="code">
 k1 = "__eq"
 
 EQ b1 u1 u2
 COND_IF b1
-  -- b1 == true
 COND_ELSE
-  -- b1 == false
   TYPE c1 u1
   EQ c2 c1 LUA_TTABLE
   COND_IF c2
@@ -73,7 +71,49 @@ NOT u b1
 </pre>
 
 <pre>
--- [TODO] translate
+B v1 b1
+B v2 b2
+C v3 c1
+C v4 c2
+C v5 c3
+C v6 c4
+C v7 c5
+K v8 k1 "__eq"
+</pre>
+
+<pre>
+k1 = "__eq"
+
+EQ v1 u1 u2
+COND_IF v1
+COND_ELSE
+  TYPE v3 u1
+  EQ v4 v3 LUA_TTABLE
+  COND_IF v4
+    TYPE v5 u2
+    EQ v6 v5 LUA_TTABLE
+    COND_IF v6
+      GETMETAFIELD v2 u1 v8
+      COND_IF v2
+        ;
+      COND_ELSE
+        GETMETAFIELD v2 u2 v8
+      COND_END
+      COND_IF v2
+        CALL v2 u1 u2
+        RESULT v7
+        COND_IF v7
+          MOVE v1 true
+        COND_END
+      COND_END
+    COND_END
+  COND_END
+COND_END
+
+-- eq
+MOVE u v1
+-- ne
+NOT u v1
 </pre>
 
 </div>

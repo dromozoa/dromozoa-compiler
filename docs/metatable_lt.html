@@ -34,7 +34,7 @@ table.ir tr td:first-child {
 u = u1 &lt; u2
 </pre>
 
-<pre>
+<pre class="code">
 k1 = "__lt"
 k2 = "attempt to compare "
 k3 = " with "
@@ -84,7 +84,69 @@ MOVE u b2
 </pre>
 
 <pre>
--- [TODO] translate
+B v1 b1
+B v2 b2
+B v3 b3
+C v4 c1
+C v5 c2
+C v6 c3
+C v7 c4
+C v8 c5
+C v9 c6
+C v10 c7
+C v11 c8
+K v12 k1 "__lt"
+K v13 k2 "attempt to compare "
+K v14 k3 " with "
+</pre>
+
+<pre>
+k1 = "__lt"
+k2 = "attempt to compare "
+k3 = " with "
+
+TYPE v4 u1
+EQ v1 v4 LUA_TNUMBER
+COND_IF v1
+  ;
+COND_ELSE
+  EQ v1 v4 LUA_TSTRING
+COND_END
+
+COND_IF v1
+  TYPE v5 u2
+  EQ v1 v4 v5
+COND_END
+
+COND_IF v1
+  LT v2 u1 u2
+COND_ELSE
+  GETMETAFIELD v3 u1 v12
+  COND_IF v3
+    ;
+  COND_ELSE
+    GETMETAFIELD v3 u2 v12
+  COND_END
+
+  COND_IF v3
+    CALL v3 u1 u2
+    RESULT v6
+    COND_IF v6
+      MOVE v2 true
+    COND_ELSE
+      MOVE v2 false
+    COND_END
+  COND_ELSE
+    TYPENAME v7 u1
+    TYPENAME v8 u2
+    CONCAT v9 v13 v7
+    CONCAT v10 v9 v14
+    CONCAT v11 v10 v8
+    ERROR v11 0
+  COND_END
+COND_END
+
+MOVE u v2
 </pre>
 
 </div>

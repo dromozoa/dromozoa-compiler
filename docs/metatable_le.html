@@ -34,7 +34,7 @@ table.ir tr td:first-child {
 u = u1 &lt;= u2
 </pre>
 
-<pre>
+<pre class="code">
 k1 = "__le"
 k2 = "__lt"
 k3 = "attempt to compare "
@@ -99,7 +99,86 @@ MOVE u b2
 </pre>
 
 <pre>
--- [TODO] translate
+B v1 b1
+B v2 b2
+B v3 b3
+B v4 b4
+C v5 c1
+C v6 c2
+C v7 c3
+C v8 c4
+C v9 c5
+C v10 c6
+C v11 c7
+C v12 c8
+C v13 c9
+K v14 k1 "__le"
+K v15 k2 "__lt"
+K v16 k3 "attempt to compare "
+</pre>
+
+<pre>
+k1 = "__le"
+k2 = "__lt"
+k3 = "attempt to compare "
+k4 = " with "
+
+TYPE v5 u1
+EQ v1 v5 LUA_TNUMBER
+COND_IF v1
+  ;
+COND_ELSE
+  EQ v1 v5 LUA_TSTRING
+COND_END
+
+COND_IF v1
+  TYPE v6 u2
+  EQ v1 v5 v6
+COND_END
+
+COND_IF v1
+  LE v2 u1 u2
+COND_ELSE
+  GETMETAFIELD v3 u1 v14
+  COND_IF v3
+    ;
+  COND_ELSE
+    GETMETAFIELD v3 u2 v14
+  COND_END
+
+  COND_IF v3
+    CALL v3 u1 u2
+    RESULT v7
+    COND_IF v7
+      MOVE v2 true
+    COND_ELSE
+      MOVE v2 false
+    COND_END
+  COND_ELSE
+    -- not (u2 &lt; u1)
+    GETMETAFIELD v4 u2 v15
+    COND_IF v4
+      ;
+    COND_ELSE
+      GETMETAFIELD v4 u1 v15
+    COND_END
+
+    COND_IF v4
+      CALL v4 u2 u1
+      RESULT v8
+      NOT v2 v8
+    COND_ELSE
+      TYPENAME v9 u1
+      TYPENAME v10 u2
+      CONCAT v11 v15 v9
+      CONCAT v12 v11 v16
+      CONCAT v13 v12 v10
+      ERROR v13 0
+    COND_END
+  COND_END
+COND_END
+
+MOVE u v2
 </pre>
 
 </div>
