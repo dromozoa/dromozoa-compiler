@@ -72,7 +72,6 @@ COND_ELSE
       MOVE b2 false
     COND_END
   COND_ELSE
-    -- not (u2 &lt; u1)
     GETMETAFIELD b4 u2 k2
     COND_IF b4
       ;
@@ -87,8 +86,8 @@ COND_ELSE
     COND_ELSE
       TYPENAME c5 u1
       TYPENAME c6 u2
-      CONCAT c7 k2 c5
-      CONCAT c8 c7 k3
+      CONCAT c7 k3 c5
+      CONCAT c8 c7 k4
       CONCAT c9 c8 c6
       ERROR c9 0
     COND_END
@@ -115,6 +114,7 @@ C v13 c9
 K v14 k1 "__le"
 K v15 k2 "__lt"
 K v16 k3 "attempt to compare "
+K v17 k4 " with "
 </pre>
 
 <pre>
@@ -155,7 +155,6 @@ COND_ELSE
       MOVE v2 false
     COND_END
   COND_ELSE
-    -- not (u2 &lt; u1)
     GETMETAFIELD v4 u2 v15
     COND_IF v4
       ;
@@ -170,8 +169,8 @@ COND_ELSE
     COND_ELSE
       TYPENAME v9 u1
       TYPENAME v10 u2
-      CONCAT v11 v15 v9
-      CONCAT v12 v11 v16
+      CONCAT v11 v16 v9
+      CONCAT v12 v11 v17
       CONCAT v13 v12 v10
       ERROR v13 0
     COND_END
@@ -179,6 +178,56 @@ COND_ELSE
 COND_END
 
 MOVE u v2
+</pre>
+
+<pre>
+ :TYPE(vars[5], node[1].var)
+ :EQ(vars[1], vars[5], variable.LUA_TNUMBER)
+ :COND_IF(vars[1])
+ :COND_ELSE()
+ :  EQ(vars[1], vars[5], variable.LUA_TSTRING)
+ :COND_END()
+ :COND_IF(vars[1])
+ :  TYPE(vars[6], node[2].var)
+ :  EQ(vars[1], vars[5], vars[6])
+ :COND_END()
+ :COND_IF(vars[1])
+ :  LE(vars[2], node[1].var, node[2].var)
+ :COND_ELSE()
+ :  GETMETAFIELD(vars[3], node[1].var, vars[14])
+ :  COND_IF(vars[3])
+ :  COND_ELSE()
+ :    GETMETAFIELD(vars[3], node[2].var, vars[14])
+ :  COND_END()
+ :  COND_IF(vars[3])
+ :    CALL(vars[3], node[1].var, node[2].var)
+ :    RESULT(vars[7])
+ :    COND_IF(vars[7])
+ :      MOVE(vars[2], variable.TRUE)
+ :    COND_ELSE()
+ :      MOVE(vars[2], variable.FALSE)
+ :    COND_END()
+ :  COND_ELSE()
+ :    GETMETAFIELD(vars[4], node[2].var, vars[15])
+ :    COND_IF(vars[4])
+ :    COND_ELSE()
+ :      GETMETAFIELD(vars[4], node[1].var, vars[15])
+ :    COND_END()
+ :    COND_IF(vars[4])
+ :      CALL(vars[4], node[2].var, node[1].var)
+ :      RESULT(vars[8])
+ :      NOT(vars[2], vars[8])
+ :    COND_ELSE()
+ :      TYPENAME(vars[9], node[1].var)
+ :      TYPENAME(vars[10], node[2].var)
+ :      CONCAT(vars[11], vars[16], vars[9])
+ :      CONCAT(vars[12], vars[11], vars[17])
+ :      CONCAT(vars[13], vars[12], vars[10])
+ :      ERROR(vars[13], variable(0))
+ :    COND_END()
+ :  COND_END()
+ :COND_END()
+ :MOVE(node.var, vars[2])
 </pre>
 
 </div>
