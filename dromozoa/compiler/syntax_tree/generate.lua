@@ -222,8 +222,6 @@ local function generate(stack, node, symbol_table)
         end
       end
     end
-  elseif binop == "GT" then
-    _:LT(node.var, node[2].var, node[1].var)
   elseif binop == "GE" then
     _:LE(node.var, node[2].var, node[1].var)
   elseif binop == "AND" or binop == "OR" then
@@ -294,6 +292,53 @@ local function generate(stack, node, symbol_table)
       else
         _:NOT(node.var, vars[1])
       end
+    elseif binop == "LT" or binop == "GT" then
+      local vars = node.vars
+      local var1
+      local var2
+      if binop == "LT" then
+        var1 = node[1].var
+        var2 = node[2].var
+      else
+        var1 = node[2].var
+        var2 = node[1].var
+      end
+      _:TYPE(vars[4], var1)
+       :EQ(vars[1], vars[4], variable.LUA_TNUMBER)
+       :COND_IF(vars[1])
+       :COND_ELSE()
+       :  EQ(vars[1], vars[4], variable.LUA_TSTRING)
+       :COND_END()
+       :COND_IF(vars[1])
+       :  TYPE(vars[5], var2)
+       :  EQ(vars[1], vars[4], vars[5])
+       :COND_END()
+       :COND_IF(vars[1])
+       :  LT(vars[2], var1, var2)
+       :COND_ELSE()
+       :  GETMETAFIELD(vars[3], var1, vars[12])
+       :  COND_IF(vars[3])
+       :  COND_ELSE()
+       :    GETMETAFIELD(vars[3], var2, vars[12])
+       :  COND_END()
+       :  COND_IF(vars[3])
+       :    CALL(vars[3], var1, var2)
+       :    RESULT(vars[6])
+       :    COND_IF(vars[6])
+       :      MOVE(vars[2], variable.TRUE)
+       :    COND_ELSE()
+       :      MOVE(vars[2], variable.FALSE)
+       :    COND_END()
+       :  COND_ELSE()
+       :    TYPENAME(vars[7], var1)
+       :    TYPENAME(vars[8], var2)
+       :    CONCAT(vars[9], vars[13], vars[7])
+       :    CONCAT(vars[10], vars[9], vars[14])
+       :    CONCAT(vars[11], vars[10], vars[8])
+       :    ERROR(vars[11], variable(0))
+       :  COND_END()
+       :COND_END()
+       :MOVE(node.var, vars[2])
     else
       _[binop](_, node.var, node[1].var, node[2].var)
     end

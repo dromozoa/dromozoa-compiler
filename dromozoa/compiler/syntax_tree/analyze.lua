@@ -710,6 +710,24 @@ local function resolve_vars(self, node, symbol_table)
         assign_var(node);
         ref_constant(node, "string", "__eq")[1];
       }
+    elseif binop == "LT" or binop == "GT" then
+      node.var = assign_var(node)
+      node.vars = space_separated {
+        assign_var(node, "B");
+        assign_var(node, "B");
+        assign_var(node, "B");
+        assign_var(node);
+        assign_var(node);
+        assign_var(node);
+        assign_var(node);
+        assign_var(node);
+        assign_var(node);
+        assign_var(node);
+        assign_var(node);
+        ref_constant(node, "string", "__lt")[1];
+        ref_constant(node, "string", "attempt to compare ")[1];
+        ref_constant(node, "string", " with ")[1];
+      }
     else
       node.var = assign_var(node)
     end
