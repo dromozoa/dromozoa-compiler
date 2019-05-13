@@ -185,6 +185,7 @@ local function dump_graph(proto, width, height)
     matrix = matrix3(80, 0, 40, 0, 50, 25, 0, 0, 1);
     u_labels = u_labels;
     e_labels = blocks.jumps;
+    skip_promote_vertices = true;
   }
 
   local u_paths = root[1]

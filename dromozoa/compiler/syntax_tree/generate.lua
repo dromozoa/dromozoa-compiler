@@ -201,12 +201,97 @@ local function generate(stack, node, symbol_table)
     if node.def then
       if n == 2 then
         _:SETTABLE(node[1].var, node[2].var, node.def)
+
+--[[
+        local vars = node.vars
+        _:MOVE(vars[1], node[1].var)
+         :LOOP()
+         :  TYPE(vars[3], vars[1])
+         :  EQ(vars[4], vars[3], variable.LUA_TTABLE)
+         :  COND_IF(vars[4])
+         :    GETTABLE(vars[5], vars[1], node[2].var)
+         :    EQ(vars[6], vars[5], variable.NIL)
+         :    COND_IF(vars[6])
+         :      GETMETAFIELD(vars[2], vars[1], vars[12])
+         :      COND_IF(vars[2])
+         :      COND_ELSE()
+         :        SETTABLE(vars[1], node[2].var, node.def)
+         :        BREAK()
+         :      COND_END()
+         :    COND_ELSE()
+         :      SETTABLE(vars[1], node[2].var, node.def)
+         :      BREAK()
+         :    COND_END()
+         :  COND_ELSE()
+         :    GETMETAFIELD(vars[2], vars[1], vars[12])
+         :    COND_IF(vars[2])
+         :    COND_ELSE()
+         :      TYPENAME(vars[7], vars[1])
+         :      CONCAT(vars[8], vars[13], vars[7])
+         :      CONCAT(vars[9], vars[8], vars[14])
+         :      ERROR(vars[9], variable(0))
+         :    COND_END()
+         :  COND_END()
+         :  TYPE(vars[10], vars[2])
+         :  EQ(vars[11], vars[10], variable.LUA_TFUNCTION)
+         :  COND_IF(vars[11])
+         :    CALL(vars[11], vars[1], node[2].var, node.def)
+         :    RESULT()
+         :    BREAK()
+         :  COND_ELSE()
+         :    MOVE(vars[1], vars[11])
+         :  COND_END()
+         :LOOP_END()
+]]
+
       else
         _:MOVE(node[1].var, node.def)
       end
     else
       if n == 2 then
-        _:GETTABLE(node.var, node[1].var, node[2].var)
+--        _:GETTABLE(node.var, node[1].var, node[2].var)
+
+
+        local vars = node.vars
+        _:MOVE(vars[1], node[1].var)
+         :LOOP()
+         :  TYPE(vars[4], vars[1])
+         :  EQ(vars[5], vars[4], variable.LUA_TTABLE)
+         :  COND_IF(vars[5])
+         :    GETTABLE(vars[2], vars[1], node[2].var)
+         :    EQ(vars[6], vars[2], variable.NIL)
+         :    COND_IF(vars[6])
+         :      GETMETAFIELD(vars[3], vars[1], vars[12])
+         :      COND_IF(vars[3])
+         :      COND_ELSE()
+         :        BREAK()
+         :      COND_END()
+         :    COND_ELSE()
+         :      BREAK()
+         :    COND_END()
+         :  COND_ELSE()
+         :    GETMETAFIELD(vars[3], vars[1], vars[12])
+         :    COND_IF(vars[3])
+         :    COND_ELSE()
+         :      TYPENAME(vars[7], vars[1])
+         :      CONCAT(vars[8], vars[13], vars[7])
+         :      CONCAT(vars[9], vars[8], vars[14])
+         :      ERROR(vars[9], variable(0))
+         :    COND_END()
+         :  COND_END()
+         :  TYPE(vars[10], vars[3])
+         :  EQ(vars[11], vars[10], variable.LUA_TFUNCTION)
+         :  COND_IF(vars[11])
+         :    CALL(vars[11], vars[1], node[2].var)
+         :    RESULT(vars[2])
+         :    BREAK()
+         :  COND_ELSE()
+         :    MOVE(vars[1], vars[11])
+         :  COND_END()
+         :LOOP_END()
+         :MOVE(node.var, vars[2])
+
+
       end
     end
   elseif symbol == symbol_table.explist then

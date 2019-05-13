@@ -628,8 +628,46 @@ local function resolve_vars(self, node, symbol_table)
   elseif symbol == symbol_table.funcname or symbol == symbol_table.var then
     if n == 1 then
       node.var = node[1].var
-    elseif not node.def then
-      node.var = assign_var(node)
+    else
+      assert(n == 2)
+      if node.def then
+        -- SETTABLE
+        node.vars = space_separated {
+          assign_var(node, "B");
+          assign_var(node, "B");
+          assign_var(node);
+          assign_var(node);
+          assign_var(node);
+          assign_var(node);
+          assign_var(node);
+          assign_var(node);
+          assign_var(node);
+          assign_var(node);
+          assign_var(node);
+          ref_constant(node, "string", "__newindex")[1];
+          ref_constant(node, "string", "attempt to index a ")[1];
+          ref_constant(node, "string", " value")[1];
+        }
+      else
+        -- GETTABLE
+        node.var = assign_var(node)
+        node.vars = space_separated {
+          assign_var(node, "B");
+          assign_var(node, "B");
+          assign_var(node, "B");
+          assign_var(node);
+          assign_var(node);
+          assign_var(node);
+          assign_var(node);
+          assign_var(node);
+          assign_var(node);
+          assign_var(node);
+          assign_var(node);
+          ref_constant(node, "string", "__index")[1];
+          ref_constant(node, "string", "attempt to index a ")[1];
+          ref_constant(node, "string", " value")[1];
+        }
+      end
     end
   elseif symbol == symbol_table.explist then
     local adjust = node.adjust
