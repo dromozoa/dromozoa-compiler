@@ -42,11 +42,11 @@ function class:dump_code_list(buffer)
   return dump_code_list(buffer, self, "")
 end
 
-function class:dump(out)
+function class:dump(out, skip_promote_vertices)
   if type(out) == "string" then
-    return dump(self, assert(io.open(out, "w"))):close()
+    return dump(self, assert(io.open(out, "w")), skip_promote_vertices):close()
   else
-    return dump(self, out)
+    return dump(self, out, skip_promote_vertices)
   end
 end
 

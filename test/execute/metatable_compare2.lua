@@ -15,20 +15,20 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-local unm = setmetatable({}, {
-  __call = function (self, that)
-    return { -that[1] }
-  end
+local t1 = setmetatable({}, {
+  __lt = function ()
+    print "t1"
+    return true
+  end;
 })
 
-local a = setmetatable({ 42 }, {
-  __unm = unm;
+local t2 = setmetatable({}, {
+  __lt = function ()
+    print "t2"
+    return false
+  end;
 })
 
-local b = -a
-
-print(a[1])
-print(b[1])
-
-local r, c = pcall(unm, { 69 })
-print(c[1])
+local lt = t1 < t2
+local le = t1 <= t2
+print(lt, le)

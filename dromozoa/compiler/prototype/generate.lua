@@ -18,16 +18,39 @@
 local graph = require "dromozoa.graph"
 local variable = require "dromozoa.compiler.variable"
 
--- TODO メタメソッドのインライン化に追随する
 local not_split = {
-  MOVE      = true;
-  NEWTABLE  = true;
-  NOT       = true;
-  CALL      = true;
-  CLOSURE   = true;
-  TONUMBER  = true;
-  TOINTEGER = true;
-  TOSTRING  = true;
+  MOVE         = true;
+  GETTABLE     = true;
+  SETTABLE     = true;
+  NEWTABLE     = true;
+  ADD          = true;
+  SUB          = true;
+  MUL          = true;
+  MOD          = true;
+  POW          = true;
+  DIV          = true;
+  IDIV         = true;
+  BAND         = true;
+  BOR          = true;
+  BXOR         = true;
+  SHL          = true;
+  SHR          = true;
+  UNM          = true;
+  BNOT         = true;
+  NOT          = true;
+  LEN          = true;
+  CONCAT       = true;
+  EQ           = true;
+  LT           = true;
+  LE           = true;
+  CALL         = true;
+  CLOSURE      = true;
+  TYPE         = true;
+  TYPENAME     = true;
+  TONUMBER     = true;
+  TOINTEGER    = true;
+  TOSTRING     = true;
+  GETMETAFIELD = true;
 }
 
 local not_assign = {

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<title>dromozoa-compiler</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/3.0.1/github-markdown.min.css">
+<style>
+.markdown-body {
+  box-sizing: border-box;
+  min-width: 200px;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 45px;
+}
+@media (max-width: 767px) {
+  .markdown-body {
+    padding: 15px;
+  }
+}
+table.ir tr td:first-child {
+  white-space: nowrap;
+}
+</style>
+</head>
+<body>
+<div class="markdown-body">
+
+<h1>dromozoa-compiler</h1>
+
+<h2>index</h2>
+
+<pre>
+u = u1[u2]
+</pre>
+
+<pre class="code">
+k1 = "__index"
+k2 = "attempt to index a "
+k3 = " value"
+
+MOVE b1 u1
+LOOP
+  TYPE c1 b1
+  EQ c2 c1 LUA_TTABLE
+  COND_IF c2
+    GETTABLE b2 b1 u2
+    EQ c3 b2 nil
+    COND_IF c3
+      GETMETAFIELD b3 b1 k1
+      COND_IF b3
+        ;
+      COND_ELSE
+        BREAK
+      COND_END
+    COND_ELSE
+      BREAK
+    COND_END
+  COND_ELSE
+    GETMETAFIELD b3 b1 k1
+    COND_IF b3
+      ;
+    COND_ELSE
+      TYPENAME c4 b1
+      CONCAT c5 k2 c4
+      CONCAT c6 c5 k3
+      ERROR c6 0
+    COND_END
+  COND_END
+
+  TYPE c7 b3
+  EQ c8 c7 LUA_TFUNCTION
+  COND_IF c8
+    CALL c8 b1 u2
+    RESULT b2
+    BREAK
+  COND_ELSE
+    MOVE b1 c8
+  COND_END
+LOOP_END
+
+MOVE u b2
+</pre>
+
+<pre>
+B v1 b1
+B v2 b2
+B v3 b3
+C v4 c1
+C v5 c2
+C v6 c3
+C v7 c4
+C v8 c5
+C v9 c6
+C v10 c7
+C v11 c8
+K v12 k1 "__index"
+K v13 k2 "attempt to index a "
+K v14 k3 " value"
+</pre>
+
+<pre>
+k1 = "__index"
+k2 = "attempt to index a "
+k3 = " value"
+
+MOVE v1 u1
+LOOP
+  TYPE v4 v1
+  EQ v5 v4 LUA_TTABLE
+  COND_IF v5
+    GETTABLE v2 v1 u2
+    EQ v6 v2 nil
+    COND_IF v6
+      GETMETAFIELD v3 v1 v12
+      COND_IF v3
+        ;
+      COND_ELSE
+        BREAK
+      COND_END
+    COND_ELSE
+      BREAK
+    COND_END
+  COND_ELSE
+    GETMETAFIELD v3 v1 v12
+    COND_IF v3
+      ;
+    COND_ELSE
+      TYPENAME v7 v1
+      CONCAT v8 v13 v7
+      CONCAT v9 v8 v14
+      ERROR v9 0
+    COND_END
+  COND_END
+
+  TYPE v10 v3
+  EQ v11 v10 LUA_TFUNCTION
+  COND_IF v11
+    CALL v11 v1 u2
+    RESULT v2
+    BREAK
+  COND_ELSE
+    MOVE v1 v11
+  COND_END
+LOOP_END
+
+MOVE u v2
+</pre>
+
+<pre>
+ :MOVE(vars[1], node[1].var)
+ :LOOP()
+ :  TYPE(vars[4], vars[1])
+ :  EQ(vars[5], vars[4], variable.LUA_TTABLE)
+ :  COND_IF(vars[5])
+ :    GETTABLE(vars[2], vars[1], node[2].var)
+ :    EQ(vars[6], vars[2], variable.NIL)
+ :    COND_IF(vars[6])
+ :      GETMETAFIELD(vars[3], vars[1], vars[12])
+ :      COND_IF(vars[3])
+ :      COND_ELSE()
+ :        BREAK()
+ :      COND_END()
+ :    COND_ELSE()
+ :      BREAK()
+ :    COND_END()
+ :  COND_ELSE()
+ :    GETMETAFIELD(vars[3], vars[1], vars[12])
+ :    COND_IF(vars[3])
+ :    COND_ELSE()
+ :      TYPENAME(vars[7], vars[1])
+ :      CONCAT(vars[8], vars[13], vars[7])
+ :      CONCAT(vars[9], vars[8], vars[14])
+ :      ERROR(vars[9], variable(0))
+ :    COND_END()
+ :  COND_END()
+ :  TYPE(vars[10], vars[3])
+ :  EQ(vars[11], vars[10], variable.LUA_TFUNCTION)
+ :  COND_IF(vars[11])
+ :    CALL(vars[11], vars[1], node[2].var)
+ :    RESULT(vars[2])
+ :    BREAK()
+ :  COND_ELSE()
+ :    MOVE(vars[1], vars[11])
+ :  COND_END()
+ :LOOP_END()
+ :MOVE(node.var, vars[2])
+</pre>
+
+</div>
+</body>
+</html>

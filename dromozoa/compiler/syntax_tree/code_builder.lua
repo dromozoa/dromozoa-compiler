@@ -49,7 +49,6 @@ local class = {
   LEN          = _"LEN";
   CONCAT       = _"CONCAT";
   EQ           = _"EQ";
-  NE           = _"NE";
   LT           = _"LT";
   LE           = _"LE";
   CALL         = _"CALL";

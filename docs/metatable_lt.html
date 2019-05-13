@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<title>dromozoa-compiler</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/3.0.1/github-markdown.min.css">
+<style>
+.markdown-body {
+  box-sizing: border-box;
+  min-width: 200px;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 45px;
+}
+@media (max-width: 767px) {
+  .markdown-body {
+    padding: 15px;
+  }
+}
+table.ir tr td:first-child {
+  white-space: nowrap;
+}
+</style>
+</head>
+<body>
+<div class="markdown-body">
+
+<h1>dromozoa-compiler</h1>
+
+<h2>lt</h2>
+
+<pre>
+u = u1 &lt; u2
+</pre>
+
+<pre class="code">
+k1 = "__lt"
+k2 = "attempt to compare "
+k3 = " with "
+
+TYPE c1 u1
+EQ b1 c1 LUA_TNUMBER
+COND_IF b1
+  ;
+COND_ELSE
+  EQ b1 c1 LUA_TSTRING
+COND_END
+
+COND_IF b1
+  TYPE c2 u2
+  EQ b1 c1 c2
+COND_END
+
+COND_IF b1
+  LT b2 u1 u2
+COND_ELSE
+  GETMETAFIELD b3 u1 k1
+  COND_IF b3
+    ;
+  COND_ELSE
+    GETMETAFIELD b3 u2 k1
+  COND_END
+
+  COND_IF b3
+    CALL b3 u1 u2
+    RESULT c3
+    COND_IF c3
+      MOVE b2 true
+    COND_ELSE
+      MOVE b2 false
+    COND_END
+  COND_ELSE
+    TYPENAME c4 u1
+    TYPENAME c5 u2
+    CONCAT c6 k2 c4
+    CONCAT c7 c6 k3
+    CONCAT c8 c7 c5
+    ERROR c8 0
+  COND_END
+COND_END
+
+MOVE u b2
+</pre>
+
+<pre>
+B v1 b1
+B v2 b2
+B v3 b3
+C v4 c1
+C v5 c2
+C v6 c3
+C v7 c4
+C v8 c5
+C v9 c6
+C v10 c7
+C v11 c8
+K v12 k1 "__lt"
+K v13 k2 "attempt to compare "
+K v14 k3 " with "
+</pre>
+
+<pre>
+k1 = "__lt"
+k2 = "attempt to compare "
+k3 = " with "
+
+TYPE v4 u1
+EQ v1 v4 LUA_TNUMBER
+COND_IF v1
+  ;
+COND_ELSE
+  EQ v1 v4 LUA_TSTRING
+COND_END
+
+COND_IF v1
+  TYPE v5 u2
+  EQ v1 v4 v5
+COND_END
+
+COND_IF v1
+  LT v2 u1 u2
+COND_ELSE
+  GETMETAFIELD v3 u1 v12
+  COND_IF v3
+    ;
+  COND_ELSE
+    GETMETAFIELD v3 u2 v12
+  COND_END
+
+  COND_IF v3
+    CALL v3 u1 u2
+    RESULT v6
+    COND_IF v6
+      MOVE v2 true
+    COND_ELSE
+      MOVE v2 false
+    COND_END
+  COND_ELSE
+    TYPENAME v7 u1
+    TYPENAME v8 u2
+    CONCAT v9 v13 v7
+    CONCAT v10 v9 v14
+    CONCAT v11 v10 v8
+    ERROR v11 0
+  COND_END
+COND_END
+
+MOVE u v2
+</pre>
+
+<pre>
+ :TYPE(vars[4], node[1].var)
+ :EQ(vars[1], vars[4], variable.LUA_TNUMBER)
+ :COND_IF(vars[1])
+ :COND_ELSE()
+ :  EQ(vars[1], vars[4], variable.LUA_TSTRING)
+ :COND_END()
+ :COND_IF(vars[1])
+ :  TYPE(vars[5], node[2].var)
+ :  EQ(vars[1], vars[4], vars[5])
+ :COND_END()
+ :COND_IF(vars[1])
+ :  LT(vars[2], node[1].var, node[2].var)
+ :COND_ELSE()
+ :  GETMETAFIELD(vars[3], node[1].var, vars[12])
+ :  COND_IF(vars[3])
+ :  COND_ELSE()
+ :    GETMETAFIELD(vars[3], node[2].var, vars[12])
+ :  COND_END()
+ :  COND_IF(vars[3])
+ :    CALL(vars[3], node[1].var, node[2].var)
+ :    RESULT(vars[6])
+ :    COND_IF(vars[6])
+ :      MOVE(vars[2], variable.TRUE)
+ :    COND_ELSE()
+ :      MOVE(vars[2], variable.FALSE)
+ :    COND_END()
+ :  COND_ELSE()
+ :    TYPENAME(vars[7], node[1].var)
+ :    TYPENAME(vars[8], node[2].var)
+ :    CONCAT(vars[9], vars[13], vars[7])
+ :    CONCAT(vars[10], vars[9], vars[14])
+ :    CONCAT(vars[11], vars[10], vars[8])
+ :    ERROR(vars[11], variable(0))
+ :  COND_END()
+ :COND_END()
+ :MOVE(node.var, vars[2])
+</pre>
+
+</div>
+</body>
+</html>

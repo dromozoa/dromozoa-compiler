@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<title>dromozoa-compiler</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/3.0.1/github-markdown.min.css">
+<style>
+.markdown-body {
+  box-sizing: border-box;
+  min-width: 200px;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 45px;
+}
+@media (max-width: 767px) {
+  .markdown-body {
+    padding: 15px;
+  }
+}
+table.ir tr td:first-child {
+  white-space: nowrap;
+}
+</style>
+</head>
+<body>
+<div class="markdown-body">
+
+<h1>dromozoa-compiler</h1>
+
+<h2>eq (ne)</h2>
+
+<pre>
+u = u1 == u2
+u = u1 ~= u2
+</pre>
+
+<pre class="code">
+k1 = "__eq"
+
+EQ b1 u1 u2
+COND_IF b1
+COND_ELSE
+  TYPE c1 u1
+  EQ c2 c1 LUA_TTABLE
+  COND_IF c2
+    TYPE c3 u2
+    EQ c4 c3 LUA_TTABLE
+    COND_IF c4
+      GETMETAFIELD b2 u1 k1
+      COND_IF b2
+        ;
+      COND_ELSE
+        GETMETAFIELD b2 u2 k1
+      COND_END
+      COND_IF b2
+        CALL b2 u1 u2
+        RESULT c5
+        COND_IF c5
+          MOVE b1 true
+        COND_END
+      COND_END
+    COND_END
+  COND_END
+COND_END
+
+-- eq
+MOVE u b1
+-- ne
+NOT u b1
+</pre>
+
+<pre>
+B v1 b1
+B v2 b2
+C v3 c1
+C v4 c2
+C v5 c3
+C v6 c4
+C v7 c5
+K v8 k1 "__eq"
+</pre>
+
+<pre>
+k1 = "__eq"
+
+EQ v1 u1 u2
+COND_IF v1
+COND_ELSE
+  TYPE v3 u1
+  EQ v4 v3 LUA_TTABLE
+  COND_IF v4
+    TYPE v5 u2
+    EQ v6 v5 LUA_TTABLE
+    COND_IF v6
+      GETMETAFIELD v2 u1 v8
+      COND_IF v2
+        ;
+      COND_ELSE
+        GETMETAFIELD v2 u2 v8
+      COND_END
+      COND_IF v2
+        CALL v2 u1 u2
+        RESULT v7
+        COND_IF v7
+          MOVE v1 true
+        COND_END
+      COND_END
+    COND_END
+  COND_END
+COND_END
+
+-- eq
+MOVE u v1
+-- ne
+NOT u v1
+</pre>
+
+<pre>
+ :EQ(vars[1], node[1].var, node[2].var)
+ :COND_IF(vars[1])
+ :COND_ELSE()
+ :  TYPE(vars[3], node[1].var)
+ :  EQ(vars[4], vars[3], variable.LUA_TTABLE)
+ :  COND_IF(vars[4])
+ :    TYPE(vars[5], node[2].var)
+ :    EQ(vars[6], vars[5], variable.LUA_TTABLE)
+ :    COND_IF(vars[6])
+ :      GETMETAFIELD(vars[2], node[1].var, vars[8])
+ :      COND_IF(vars[2])
+ :      COND_ELSE()
+ :        GETMETAFIELD(vars[2], node[2].var, vars[8])
+ :      COND_END()
+ :      COND_IF(vars[2])
+ :        CALL(vars[2], node[1].var, node[2].var)
+ :        RESULT(vars[7])
+ :        COND_IF(vars[7])
+ :          MOVE(vars[1], variable.TRUE)
+ :        COND_END()
+ :      COND_END()
+ :    COND_END()
+ :  COND_END()
+ :COND_END()
+-- eq
+ :MOVE(node.var, vars[1])
+-- ne
+ :NOT(node.var, vars[1])
+</pre>
+
+</div>
+</body>
+</html>

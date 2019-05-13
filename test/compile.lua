@@ -110,7 +110,7 @@ if not os.getenv "NO_DUMP" then
   t:dump_protos(output_name .. "-protos.html")
   for i = 1, #t.protos do
     local proto = t.protos[i]
-    proto:dump(output_name .. "-" .. proto[1]:encode() .. ".html")
+    proto:dump(output_name .. "-" .. proto[1]:encode() .. ".html", true)
   end
 end
 

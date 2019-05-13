@@ -201,12 +201,97 @@ local function generate(stack, node, symbol_table)
     if node.def then
       if n == 2 then
         _:SETTABLE(node[1].var, node[2].var, node.def)
+
+--[[
+        local vars = node.vars
+        _:MOVE(vars[1], node[1].var)
+         :LOOP()
+         :  TYPE(vars[3], vars[1])
+         :  EQ(vars[4], vars[3], variable.LUA_TTABLE)
+         :  COND_IF(vars[4])
+         :    GETTABLE(vars[5], vars[1], node[2].var)
+         :    EQ(vars[6], vars[5], variable.NIL)
+         :    COND_IF(vars[6])
+         :      GETMETAFIELD(vars[2], vars[1], vars[12])
+         :      COND_IF(vars[2])
+         :      COND_ELSE()
+         :        SETTABLE(vars[1], node[2].var, node.def)
+         :        BREAK()
+         :      COND_END()
+         :    COND_ELSE()
+         :      SETTABLE(vars[1], node[2].var, node.def)
+         :      BREAK()
+         :    COND_END()
+         :  COND_ELSE()
+         :    GETMETAFIELD(vars[2], vars[1], vars[12])
+         :    COND_IF(vars[2])
+         :    COND_ELSE()
+         :      TYPENAME(vars[7], vars[1])
+         :      CONCAT(vars[8], vars[13], vars[7])
+         :      CONCAT(vars[9], vars[8], vars[14])
+         :      ERROR(vars[9], variable(0))
+         :    COND_END()
+         :  COND_END()
+         :  TYPE(vars[10], vars[2])
+         :  EQ(vars[11], vars[10], variable.LUA_TFUNCTION)
+         :  COND_IF(vars[11])
+         :    CALL(vars[11], vars[1], node[2].var, node.def)
+         :    RESULT()
+         :    BREAK()
+         :  COND_ELSE()
+         :    MOVE(vars[1], vars[11])
+         :  COND_END()
+         :LOOP_END()
+]]
+
       else
         _:MOVE(node[1].var, node.def)
       end
     else
       if n == 2 then
-        _:GETTABLE(node.var, node[1].var, node[2].var)
+--        _:GETTABLE(node.var, node[1].var, node[2].var)
+
+
+        local vars = node.vars
+        _:MOVE(vars[1], node[1].var)
+         :LOOP()
+         :  TYPE(vars[4], vars[1])
+         :  EQ(vars[5], vars[4], variable.LUA_TTABLE)
+         :  COND_IF(vars[5])
+         :    GETTABLE(vars[2], vars[1], node[2].var)
+         :    EQ(vars[6], vars[2], variable.NIL)
+         :    COND_IF(vars[6])
+         :      GETMETAFIELD(vars[3], vars[1], vars[12])
+         :      COND_IF(vars[3])
+         :      COND_ELSE()
+         :        BREAK()
+         :      COND_END()
+         :    COND_ELSE()
+         :      BREAK()
+         :    COND_END()
+         :  COND_ELSE()
+         :    GETMETAFIELD(vars[3], vars[1], vars[12])
+         :    COND_IF(vars[3])
+         :    COND_ELSE()
+         :      TYPENAME(vars[7], vars[1])
+         :      CONCAT(vars[8], vars[13], vars[7])
+         :      CONCAT(vars[9], vars[8], vars[14])
+         :      ERROR(vars[9], variable(0))
+         :    COND_END()
+         :  COND_END()
+         :  TYPE(vars[10], vars[3])
+         :  EQ(vars[11], vars[10], variable.LUA_TFUNCTION)
+         :  COND_IF(vars[11])
+         :    CALL(vars[11], vars[1], node[2].var)
+         :    RESULT(vars[2])
+         :    BREAK()
+         :  COND_ELSE()
+         :    MOVE(vars[1], vars[11])
+         :  COND_END()
+         :LOOP_END()
+         :MOVE(node.var, vars[2])
+
+
       end
     end
   elseif symbol == symbol_table.explist then
@@ -222,10 +307,6 @@ local function generate(stack, node, symbol_table)
         end
       end
     end
-  elseif binop == "GT" then
-    _:LT(node.var, node[2].var, node[1].var)
-  elseif binop == "GE" then
-    _:LE(node.var, node[2].var, node[1].var)
   elseif binop == "AND" or binop == "OR" then
     _:MOVE(node.var, node[2].var)
      :COND_END()
@@ -263,6 +344,142 @@ local function generate(stack, node, symbol_table)
        :  COND_END()
        :COND_END()
        :MOVE(node.var, vars[2])
+    elseif binop == "EQ" or binop == "NE" then
+      local vars = node.vars
+      _:EQ(vars[1], node[1].var, node[2].var)
+       :COND_IF(vars[1])
+       :COND_ELSE()
+       :  TYPE(vars[3], node[1].var)
+       :  EQ(vars[4], vars[3], variable.LUA_TTABLE)
+       :  COND_IF(vars[4])
+       :    TYPE(vars[5], node[2].var)
+       :    EQ(vars[6], vars[5], variable.LUA_TTABLE)
+       :    COND_IF(vars[6])
+       :      GETMETAFIELD(vars[2], node[1].var, vars[8])
+       :      COND_IF(vars[2])
+       :      COND_ELSE()
+       :        GETMETAFIELD(vars[2], node[2].var, vars[8])
+       :      COND_END()
+       :      COND_IF(vars[2])
+       :        CALL(vars[2], node[1].var, node[2].var)
+       :        RESULT(vars[7])
+       :        COND_IF(vars[7])
+       :          MOVE(vars[1], variable.TRUE)
+       :        COND_END()
+       :      COND_END()
+       :    COND_END()
+       :  COND_END()
+       :COND_END()
+      if binop == "EQ" then
+        _:MOVE(node.var, vars[1])
+      else
+        _:NOT(node.var, vars[1])
+      end
+    elseif binop == "LT" or binop == "GT" then
+      local vars = node.vars
+      local var1
+      local var2
+      if binop == "LT" then
+        var1 = node[1].var
+        var2 = node[2].var
+      else
+        var1 = node[2].var
+        var2 = node[1].var
+      end
+      _:TYPE(vars[4], var1)
+       :EQ(vars[1], vars[4], variable.LUA_TNUMBER)
+       :COND_IF(vars[1])
+       :COND_ELSE()
+       :  EQ(vars[1], vars[4], variable.LUA_TSTRING)
+       :COND_END()
+       :COND_IF(vars[1])
+       :  TYPE(vars[5], var2)
+       :  EQ(vars[1], vars[4], vars[5])
+       :COND_END()
+       :COND_IF(vars[1])
+       :  LT(vars[2], var1, var2)
+       :COND_ELSE()
+       :  GETMETAFIELD(vars[3], var1, vars[12])
+       :  COND_IF(vars[3])
+       :  COND_ELSE()
+       :    GETMETAFIELD(vars[3], var2, vars[12])
+       :  COND_END()
+       :  COND_IF(vars[3])
+       :    CALL(vars[3], var1, var2)
+       :    RESULT(vars[6])
+       :    COND_IF(vars[6])
+       :      MOVE(vars[2], variable.TRUE)
+       :    COND_ELSE()
+       :      MOVE(vars[2], variable.FALSE)
+       :    COND_END()
+       :  COND_ELSE()
+       :    TYPENAME(vars[7], var1)
+       :    TYPENAME(vars[8], var2)
+       :    CONCAT(vars[9], vars[13], vars[7])
+       :    CONCAT(vars[10], vars[9], vars[14])
+       :    CONCAT(vars[11], vars[10], vars[8])
+       :    ERROR(vars[11], variable(0))
+       :  COND_END()
+       :COND_END()
+       :MOVE(node.var, vars[2])
+    elseif binop == "LE" or binop == "GE" then
+      local vars = node.vars
+      local var1
+      local var2
+      if binop == "LE" then
+        var1 = node[1].var
+        var2 = node[2].var
+      else
+        var1 = node[2].var
+        var2 = node[1].var
+      end
+      _:TYPE(vars[5], var1)
+       :EQ(vars[1], vars[5], variable.LUA_TNUMBER)
+       :COND_IF(vars[1])
+       :COND_ELSE()
+       :  EQ(vars[1], vars[5], variable.LUA_TSTRING)
+       :COND_END()
+       :COND_IF(vars[1])
+       :  TYPE(vars[6], var2)
+       :  EQ(vars[1], vars[5], vars[6])
+       :COND_END()
+       :COND_IF(vars[1])
+       :  LE(vars[2], var1, var2)
+       :COND_ELSE()
+       :  GETMETAFIELD(vars[3], var1, vars[14])
+       :  COND_IF(vars[3])
+       :  COND_ELSE()
+       :    GETMETAFIELD(vars[3], var2, vars[14])
+       :  COND_END()
+       :  COND_IF(vars[3])
+       :    CALL(vars[3], var1, var2)
+       :    RESULT(vars[7])
+       :    COND_IF(vars[7])
+       :      MOVE(vars[2], variable.TRUE)
+       :    COND_ELSE()
+       :      MOVE(vars[2], variable.FALSE)
+       :    COND_END()
+       :  COND_ELSE()
+       :    GETMETAFIELD(vars[4], var2, vars[15])
+       :    COND_IF(vars[4])
+       :    COND_ELSE()
+       :      GETMETAFIELD(vars[4], var1, vars[15])
+       :    COND_END()
+       :    COND_IF(vars[4])
+       :      CALL(vars[4], var2, var1)
+       :      RESULT(vars[8])
+       :      NOT(vars[2], vars[8])
+       :    COND_ELSE()
+       :      TYPENAME(vars[9], var1)
+       :      TYPENAME(vars[10], var2)
+       :      CONCAT(vars[11], vars[16], vars[9])
+       :      CONCAT(vars[12], vars[11], vars[17])
+       :      CONCAT(vars[13], vars[12], vars[10])
+       :      ERROR(vars[13], variable(0))
+       :    COND_END()
+       :  COND_END()
+       :COND_END()
+       :MOVE(node.var, vars[2])
     else
       _[binop](_, node.var, node[1].var, node[2].var)
     end
@@ -283,6 +500,30 @@ local function generate(stack, node, symbol_table)
        :    CONCAT(vars[5], vars[8], vars[4])
        :    CONCAT(vars[6], vars[5], vars[9])
        :    ERROR(vars[6], variable(0))
+       :  COND_END()
+       :COND_END()
+       :MOVE(node.var, vars[1])
+    elseif unop == "LEN" then
+      local vars = node.vars
+      _:TYPE(vars[2], node[1].var)
+       :EQ(vars[3], vars[2], variable.LUA_TSTRING)
+       :COND_IF(vars[3])
+       :  LEN(vars[1], node[1].var)
+       :COND_ELSE()
+       :  GETMETAFIELD(vars[4], node[1].var, vars[9])
+       :  COND_IF(vars[4])
+       :    CALL(vars[4], node[1].var)
+       :    RESULT(vars[1])
+       :  COND_ELSE()
+       :    EQ(vars[5], vars[2], variable.LUA_TTABLE)
+       :    COND_IF(vars[5])
+       :      LEN(vars[1], node[1].var)
+       :    COND_ELSE()
+       :      TYPENAME(vars[6], node[1].var)
+       :      CONCAT(vars[7], vars[10], vars[6])
+       :      CONCAT(vars[8], vars[7], vars[11])
+       :      ERROR(vars[8], variable(0))
+       :    COND_END()
        :  COND_END()
        :COND_END()
        :MOVE(node.var, vars[1])

@@ -628,8 +628,46 @@ local function resolve_vars(self, node, symbol_table)
   elseif symbol == symbol_table.funcname or symbol == symbol_table.var then
     if n == 1 then
       node.var = node[1].var
-    elseif not node.def then
-      node.var = assign_var(node)
+    else
+      assert(n == 2)
+      if node.def then
+        -- SETTABLE
+        node.vars = space_separated {
+          assign_var(node, "B");
+          assign_var(node, "B");
+          assign_var(node);
+          assign_var(node);
+          assign_var(node);
+          assign_var(node);
+          assign_var(node);
+          assign_var(node);
+          assign_var(node);
+          assign_var(node);
+          assign_var(node);
+          ref_constant(node, "string", "__newindex")[1];
+          ref_constant(node, "string", "attempt to index a ")[1];
+          ref_constant(node, "string", " value")[1];
+        }
+      else
+        -- GETTABLE
+        node.var = assign_var(node)
+        node.vars = space_separated {
+          assign_var(node, "B");
+          assign_var(node, "B");
+          assign_var(node, "B");
+          assign_var(node);
+          assign_var(node);
+          assign_var(node);
+          assign_var(node);
+          assign_var(node);
+          assign_var(node);
+          assign_var(node);
+          assign_var(node);
+          ref_constant(node, "string", "__index")[1];
+          ref_constant(node, "string", "attempt to index a ")[1];
+          ref_constant(node, "string", " value")[1];
+        }
+      end
     end
   elseif symbol == symbol_table.explist then
     local adjust = node.adjust
@@ -682,35 +720,110 @@ local function resolve_vars(self, node, symbol_table)
     node.var = assign_var(node.parent)
   elseif binop == "AND" or binop == "OR" then
     node.var = assign_var(node, "B")
-  elseif binop and opname then
-    node.var = assign_var(node)
-    node.vars = space_separated {
-      assign_var(node, "B");
-      assign_var(node, "B");
-      assign_var(node, "B");
-      assign_var(node, "B");
-      assign_var(node);
-      assign_var(node);
-      assign_var(node);
-      assign_var(node);
-      ref_constant(node, "string", "__" .. binop:lower())[1];
-      ref_constant(node, "string", opname_to_message(opname))[1];
-      ref_constant(node, "string", " value")[1];
-    }
-  elseif unop and opname then
-    node.var = assign_var(node)
-    node.vars = space_separated {
-      assign_var(node, "B");
-      assign_var(node);
-      assign_var(node);
-      assign_var(node);
-      assign_var(node);
-      assign_var(node);
-      ref_constant(node, "string", "__" .. unop:lower())[1];
-      ref_constant(node, "string", opname_to_message(opname))[1];
-      ref_constant(node, "string", " value")[1];
-    }
-  elseif symbol == symbol_table.fieldlist or binop or unop then
+  elseif binop then
+    if opname then
+      node.var = assign_var(node)
+      node.vars = space_separated {
+        assign_var(node, "B");
+        assign_var(node, "B");
+        assign_var(node, "B");
+        assign_var(node, "B");
+        assign_var(node);
+        assign_var(node);
+        assign_var(node);
+        assign_var(node);
+        ref_constant(node, "string", "__" .. binop:lower())[1];
+        ref_constant(node, "string", opname_to_message(opname))[1];
+        ref_constant(node, "string", " value")[1];
+      }
+    elseif binop == "EQ" or binop == "NE" then
+      node.var = assign_var(node)
+      node.vars = space_separated {
+        assign_var(node, "B");
+        assign_var(node, "B");
+        assign_var(node);
+        assign_var(node);
+        assign_var(node);
+        assign_var(node);
+        assign_var(node);
+        ref_constant(node, "string", "__eq")[1];
+      }
+    elseif binop == "LT" or binop == "GT" then
+      node.var = assign_var(node)
+      node.vars = space_separated {
+        assign_var(node, "B");
+        assign_var(node, "B");
+        assign_var(node, "B");
+        assign_var(node);
+        assign_var(node);
+        assign_var(node);
+        assign_var(node);
+        assign_var(node);
+        assign_var(node);
+        assign_var(node);
+        assign_var(node);
+        ref_constant(node, "string", "__lt")[1];
+        ref_constant(node, "string", "attempt to compare ")[1];
+        ref_constant(node, "string", " with ")[1];
+      }
+    elseif binop == "LE" or binop == "GE" then
+      node.var = assign_var(node)
+      node.vars = space_separated {
+        assign_var(node, "B");
+        assign_var(node, "B");
+        assign_var(node, "B");
+        assign_var(node, "B");
+        assign_var(node);
+        assign_var(node);
+        assign_var(node);
+        assign_var(node);
+        assign_var(node);
+        assign_var(node);
+        assign_var(node);
+        assign_var(node);
+        assign_var(node);
+        ref_constant(node, "string", "__lt")[1];
+        ref_constant(node, "string", "__le")[1];
+        ref_constant(node, "string", "attempt to compare ")[1];
+        ref_constant(node, "string", " with ")[1];
+      }
+    else
+      node.var = assign_var(node)
+    end
+  elseif unop then
+    if opname then
+      node.var = assign_var(node)
+      node.vars = space_separated {
+        assign_var(node, "B");
+        assign_var(node);
+        assign_var(node);
+        assign_var(node);
+        assign_var(node);
+        assign_var(node);
+        ref_constant(node, "string", "__" .. unop:lower())[1];
+        ref_constant(node, "string", opname_to_message(opname))[1];
+        ref_constant(node, "string", " value")[1];
+      }
+    elseif unop == "LEN" then
+      node.var = assign_var(node)
+      node.vars = space_separated {
+        assign_var(node, "B");
+        assign_var(node);
+        assign_var(node);
+        assign_var(node);
+        assign_var(node);
+        assign_var(node);
+        assign_var(node);
+        assign_var(node);
+        ref_constant(node, "string", "__len")[1];
+        ref_constant(node, "string", "attempt to get length of a ")[1];
+        ref_constant(node, "string", " value")[1];
+      }
+    else
+      assert(unop == "NOT")
+      node.var = assign_var(node)
+    end
+  elseif symbol == symbol_table.fieldlist then
     node.var = assign_var(node)
   end
 end
