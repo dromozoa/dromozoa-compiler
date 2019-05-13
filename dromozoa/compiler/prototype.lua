@@ -19,6 +19,7 @@ local element = require "dromozoa.dom.element"
 local dump = require "dromozoa.compiler.prototype.dump"
 local dump_code_list = require "dromozoa.compiler.prototype.dump_code_list"
 local generate = require "dromozoa.compiler.prototype.generate"
+local generate_lua = require "dromozoa.compiler.prototype.generate_lua"
 
 local _ = element
 
@@ -27,6 +28,14 @@ local metatable = { __index = class }
 
 function class:generate()
   return generate(self)
+end
+
+function class:generate_lua(out)
+  if type(out) == "string" then
+    return generate_lua(self, assert(io.open(out, "w"))):close()
+  else
+    return generate_lua(self, out)
+  end
 end
 
 function class:dump_code_list(buffer)

@@ -75,6 +75,14 @@ local function compile(source_file, output_name)
   return t
 end
 
+local function generate_lua(t, output_name)
+  local out = assert(io.open(output_name .. ".lua", "w"))
+  for i = #t.protos, 1, -1 do
+    t.protos[i]:generate_lua(out)
+  end
+  out:close()
+end
+
 local output_dir = ...
 local out = assert(io.open(output_dir .. "/index.html", "w"))
 out:setvbuf "no"
@@ -116,9 +124,10 @@ for i = 2, #arg do
 
   io.write(("compiling %s...\n"):format(source_file))
   local t = compile(source_file, output_name, out)
-  local protos = t.protos
 
-  -- generate lua
+  io.write(("generating %s (lua)...\n"):format(source_file))
+  generate_lua(t, output_name)
+
   -- generate cxx
   -- generate es
 
@@ -138,8 +147,8 @@ for i = 2, #arg do
     <a href="%s-protos.html">protos</a>,
     bb:
 ]]):format(source_name, source_name, source_name))
-  for i = 1, #protos do
-    local proto_name = protos[i][1]:encode()
+  for i = 1, #t.protos do
+    local proto_name = t.protos[i][1]:encode()
     out:write(([[
     <a href="%s-%s.html">%s</a>,
 ]]):format(source_name, proto_name, proto_name))
