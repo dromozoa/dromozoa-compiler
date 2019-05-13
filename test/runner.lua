@@ -65,7 +65,7 @@ local function compile(source_file, output_name)
     t.protos[i]:generate()
   end
 
-  t:dump_tree(output_name .. ".html")
+  t:dump_tree(output_name .. "-tree.html")
   t:dump_protos(output_name .. "-protos.html")
   for i = 1, #t.protos do
     local proto = t.protos[i]
