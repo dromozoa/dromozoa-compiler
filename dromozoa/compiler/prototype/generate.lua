@@ -124,7 +124,7 @@ local function resolve_jumps(blocks, uids, labels)
       local label = code[1]
       block["goto"] = label
       g:add_edge(this_uid, labels[label])
-    elseif name == "RETURN" then
+    elseif name == "RETURN" or name == "ERROR" then
       g:add_edge(this_uid, exit_uid)
     elseif name == "COND" then
       local then_eid = g:add_edge(this_uid, labels[code[2]])
