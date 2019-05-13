@@ -22,4 +22,4 @@ export LUA_PATH
 
 mkdir -p result/execute
 cp docs/dromozoa-compiler.* result/execute
-lua test/compile.lua result/execute test/execute/*.lua
+lua test/runner.lua result/execute test/execute/*.lua
