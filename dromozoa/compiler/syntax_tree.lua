@@ -58,22 +58,6 @@ function class:dump_tree(out)
   end
 end
 
-function class:compile_es(out, ...)
-  if type(out) == "string" then
-    return compile_es(self, assert(io.open(out, "w")), ...):close()
-  else
-    return compile_es(self, out, ...)
-  end
-end
-
-function class:compile_cxx(out, ...)
-  if type(out) == "string" then
-    return compile_cxx(self, assert(io.open(out, "w")), ...):close()
-  else
-    return compile_cxx(self, out, ...)
-  end
-end
-
 return setmetatable(class, {
   __call = function (_, parser, source, terminal_nodes, accepted_node)
     local self = {
