@@ -47,20 +47,11 @@ if not result then
   error(error_message(message, source, i, source_file))
 end
 
-local opts = {
-  mode = os.getenv "MODE"
-}
-
 if not os.getenv "NO_GENERATE" then
   t:generate()
   for i = 1, #t.protos do
     t.protos[i]:generate()
   end
-end
-
-if not os.getenv "NO_COMPILE" then
-  t:compile_es(output_name .. ".js", opts)
-  t:compile_cxx(output_name .. ".cpp", opts)
 end
 
 if not os.getenv "NO_COMPILE2" then
