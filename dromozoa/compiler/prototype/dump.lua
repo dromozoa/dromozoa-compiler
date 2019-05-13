@@ -168,7 +168,7 @@ local function dump_code(self)
   return html
 end
 
-local function dump_graph(proto, width, height)
+local function dump_graph(proto, width, height, skip_promote_vertices)
   local blocks = proto.blocks
   local g = blocks.g
   local u = g.u
@@ -185,7 +185,7 @@ local function dump_graph(proto, width, height)
     matrix = matrix3(80, 0, 40, 0, 50, 25, 0, 0, 1);
     u_labels = u_labels;
     e_labels = blocks.jumps;
-    skip_promote_vertices = true;
+    skip_promote_vertices = skip_promote_vertices;
   }
 
   local u_paths = root[1]
@@ -238,7 +238,7 @@ local function dump_graph(proto, width, height)
   }
 end
 
-return function (self, out)
+return function (self, out, skip_promote_vertices)
   local doc = html5_document(_"html" {
     head;
     _"body" {
@@ -246,7 +246,7 @@ return function (self, out)
         class = "root";
         dump_code(self);
       };
-      dump_graph(self, 800, 640);
+      dump_graph(self, 800, 640, skip_promote_vertices);
     };
   })
   doc:serialize(out)
