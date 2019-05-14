@@ -200,9 +200,6 @@ local function generate(stack, node, symbol_table)
   elseif symbol == symbol_table.funcname or symbol == symbol_table.var then
     if node.def then
       if n == 2 then
-        _:SETTABLE(node[1].var, node[2].var, node.def)
-
---[[
         local vars = node.vars
         _:MOVE(vars[1], node[1].var)
          :LOOP()
@@ -242,16 +239,11 @@ local function generate(stack, node, symbol_table)
          :    MOVE(vars[1], vars[11])
          :  COND_END()
          :LOOP_END()
-]]
-
       else
         _:MOVE(node[1].var, node.def)
       end
     else
       if n == 2 then
---        _:GETTABLE(node.var, node[1].var, node[2].var)
-
-
         local vars = node.vars
         _:MOVE(vars[1], node[1].var)
          :LOOP()
@@ -290,8 +282,6 @@ local function generate(stack, node, symbol_table)
          :  COND_END()
          :LOOP_END()
          :MOVE(node.var, vars[2])
-
-
       end
     end
   elseif symbol == symbol_table.explist then

@@ -17,6 +17,8 @@
 
 local serializer = require "dromozoa.compiler.serializer"
 
+local _ = serializer.template
+
 local char_table = {
   ["\""] = [[\"]]; -- 34
   ["\\"] = [[\\]]; -- 92
@@ -45,6 +47,46 @@ local function encode_number(source)
   return ("%.17g"):format(assert(tonumber(source)))
 end
 
+local function encode_assign_var(var)
+  if var.declare then
+    if var.reference then
+      return ("local %s = {}; %s[1]"):format(var, var)
+    else
+      return ("local %s"):format(var)
+    end
+  else
+    if var.reference then
+      return ("%s[1]"):format(var)
+    else
+      return ("%s"):format(var)
+    end
+  end
+end
+
+local function encode_var(var)
+  -- assert(not var.declare)
+  if var.reference then
+    return ("%s[1]"):format(var)
+  elseif var.key == "K" then
+    return ("self.%s"):format(var)
+  else
+    return ("%s"):format(var)
+  end
+end
+
+local templates = {
+  MOVE         = _"$1 = $2";
+  GETTABLE     = _"$1 = $2[$3]";
+  NEWTABLE     = _"$1 = {}";
+  ADD          = _"$1 = $2 + $3";
+  CONCAT       = _"$1 = $2 .. $3";
+  EQ           = _"$1 = $2 == $3";
+  TYPE         = _"$1 = type($2)";
+  TYPENAME     = _"$1 = TYPENAME($2)";
+  TONUMBER     = _"$1 = tonumber($2)";
+  GETMETAFIELD = _"$1 = GETMETAFIELD($2, $3)";
+}
+
 local function generate_proto(out, self)
   out:write(serializer.template [[
 local $1 = {
@@ -69,13 +111,51 @@ local function generate_block(out, self, uid)
   local block = assert(blocks[uid])
 
   out:write(serializer.template [[
-function $1:b$2()
-end
+function $1:b$2($3)
 ]] {
     self[1];
     uid;
+    serializer.entries(block.params)
+      :map(function (_, param)
+        return param[0]
+      end)
+      :sort()
+      :unshift("cont", "catch", "coro")
+      :separated ", "
   })
 
+  for i = 1, #block do
+    local code = block[i]
+    local name = code[0]
+
+    if name == "SETTABLE" then
+      out:write(serializer.template "  $1[$2] = $3\n" {
+        encode_var(code[1]);
+        encode_var(code[2]);
+        encode_var(code[3]);
+      })
+    elseif name == "CALL" then
+      -- noop
+    elseif name == "RESULT" then
+    elseif name == "RETURN" then
+    elseif name == "COND" then
+    elseif name == "ERROR" then
+    else
+      local tmpl = templates[name]
+      local data = { encode_assign_var(code[1]) }
+      for j = 2, #code do
+        -- print(name, j, code[j])
+        data[j] = encode_var(code[j])
+      end
+      if tmpl then
+        out:write("  ", tmpl(data), "\n")
+      else
+        out:write("--", name, "\n")
+      end
+    end
+  end
+
+  out:write "end\n"
 end
 
 local function generate_blocks(out, self)
