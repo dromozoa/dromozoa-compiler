@@ -65,6 +65,15 @@ local function compile(source_file, output_name)
     t.protos[i]:generate()
   end
 
+  local out = assert(io.open(output_name .. ".lua", "w"))
+  for i = #t.protos, 1, -1 do
+    t.protos[i]:generate_lua(out)
+  end
+  out:close()
+
+  -- generate cxx
+  -- generate es
+
   t:dump_tree(output_name .. "-tree.html")
   t:dump_protos(output_name .. "-protos.html")
   for i = 1, #t.protos do
@@ -73,14 +82,6 @@ local function compile(source_file, output_name)
   end
 
   return t
-end
-
-local function generate_lua(t, output_name)
-  local out = assert(io.open(output_name .. ".lua", "w"))
-  for i = #t.protos, 1, -1 do
-    t.protos[i]:generate_lua(out)
-  end
-  out:close()
 end
 
 local output_dir = ...
@@ -124,12 +125,6 @@ for i = 2, #arg do
 
   io.write(("compiling %s...\n"):format(source_file))
   local t = compile(source_file, output_name, out)
-
-  io.write(("generating %s (lua)...\n"):format(source_file))
-  generate_lua(t, output_name)
-
-  -- generate cxx
-  -- generate es
 
   io.write(("executing %s...\n"):format(source_file))
   local result = os.execute(("lua %s >%s 2>&1"):format(

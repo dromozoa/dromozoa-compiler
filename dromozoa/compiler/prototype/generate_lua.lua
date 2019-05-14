@@ -47,13 +47,11 @@ end
 
 local function generate_proto(out, self)
   out:write(serializer.template [[
-local ${1}_t = {
-  K = {
+local $1 = {
 $2$
-  };
 }
 ]] {
-    self[1],
+    self[1];
     serializer.sequence(self.constants)
       :map(function (item)
         if item.type == "string" then
@@ -62,15 +60,39 @@ $2$
           return { item[1], encode_number(item.source) }
         end
       end)
-      :map(serializer.template "    $1 = $2;\n")
+      :map(serializer.template "  $1 = $2;\n");
   })
 end
 
-local function generate_closure(out, self)
+local function generate_block(out, self, uid)
+  local blocks = self.blocks
+  local block = assert(blocks[uid])
+
+  out:write(serializer.template [[
+function $1:b$2()
+end
+]] {
+    self[1];
+    uid;
+  })
+
+end
+
+local function generate_blocks(out, self)
+  local blocks = self.blocks
+  local g = blocks.g
+  local u = g.u
+  local u_after = u.after
+
+  local uid = u.first
+  while uid do
+    generate_block(out, self, uid)
+    uid = u_after[uid]
+  end
 end
 
 return function (self, out)
   generate_proto(out, self)
-  generate_closure(out, self)
+  generate_blocks(out, self)
   return out
 end
