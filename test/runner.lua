@@ -61,6 +61,10 @@ local function compile(source_file, output_name)
   end
 
   t:generate()
+
+  t:dump_tree(output_name .. "-tree.html")
+  t:dump_protos(output_name .. "-protos.html")
+
   for i = 1, #t.protos do
     t.protos[i]:generate()
   end
@@ -74,8 +78,6 @@ local function compile(source_file, output_name)
   -- generate cxx
   -- generate es
 
-  t:dump_tree(output_name .. "-tree.html")
-  t:dump_protos(output_name .. "-protos.html")
   for i = 1, #t.protos do
     local proto = t.protos[i]
     proto:dump(output_name .. "-" .. proto[1]:encode() .. ".html", true)
