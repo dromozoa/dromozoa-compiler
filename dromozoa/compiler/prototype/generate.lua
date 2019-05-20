@@ -217,6 +217,23 @@ local function analyze_dominators(blocks, postorder)
   return idom, dom_child, df
 end
 
+local function analyze_refs(upvalues, names)
+  local refs = {}
+
+  for i = 1, #upvalues do
+    refs[upvalues[i][1]:encode_without_index()] = true
+  end
+
+  for i = 1, #names do
+    local name = names[i]
+    if #name.updef > 0 or #name.upuse > 0 then
+      refs[name[1]:encode_without_index()] = true
+    end
+  end
+
+  return refs
+end
+
 local function analyze_liveness_def(def, var)
   local t = var.type
   if t == "value" or t == "array" then
@@ -584,6 +601,7 @@ return function (self)
   local uv_postorder, reachables = g:uv_postorder(blocks.entry_uid)
   remove_unreachables(blocks, reachables)
   local idom, dom_child, df = analyze_dominators(blocks, uv_postorder)
+  local refs = analyze_refs(self.upvalues, self.names)
   local lives_in = analyze_liveness(blocks, g:vu_postorder(blocks.exit_uid))
   local defs, refs, vers = resolve_variables(blocks, lives_in, uv_postorder)
   insert_phi_functions(blocks, df, defs, vers, uv_postorder)

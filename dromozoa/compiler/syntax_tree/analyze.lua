@@ -301,7 +301,7 @@ local function prepare_protos(node, symbol_table, protos)
       upvalues = {};
       names = { env_name };
       self = false; vararg = false;
-      M = 0; A = 0; B = 1; C = 0; T = 0; V = 0;
+      M = 0; A = 0; B = 1; C = 0; V = 0; T = 0;
     }
 
     local external_scope = {
