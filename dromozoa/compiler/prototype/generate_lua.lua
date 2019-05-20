@@ -16,6 +16,7 @@
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
 local serializer = require "dromozoa.compiler.serializer"
+local variable = require "dromozoa.compiler.variable"
 
 local _ = serializer.template
 
@@ -102,7 +103,67 @@ $2$
           return { item[1], encode_number(item.source) }
         end
       end)
-      :map(serializer.template "  $1 = $2;\n");
+      :map "  $1 = $2;\n";
+  })
+end
+
+local function generate_closure(out, self)
+  local blocks = self.blocks
+
+  local refs = serializer.entries(blocks.refs)
+    :map(function (encoded_var)
+      return variable.decode(encoded_var)
+    end)
+    :sort()
+
+  out:write(serializer.template [[
+$1.closure = function ($2)
+  return {
+    __index = $1;
+$3$
+  }
+end
+]] {
+    self[1];
+    serializer.sequence(refs)
+      :filter(function (var)
+        return var.key == "U"
+      end)
+      :separated ", ";
+    serializer.sequence(refs)
+      :map(function (var)
+        if var.key == "U" then
+          return { var, var }
+        else
+          return { var, "{}" }
+        end
+      end)
+      :map "    $1 = $2;\n";
+  })
+end
+
+local function generate_call(out, self)
+
+  local params = serializer.sequence(self.names)
+    :map(function (item)
+      local var = item[1]
+      if var.key == "A" then
+        return var
+      end
+    end)
+    :sort()
+  if self.vararg then
+    params[#params + 1] = "..."
+  end
+
+  out:write(serializer.template [[
+function $1:call($2)
+end
+]] {
+    self[1];
+    params
+      :unshift("cont", "catch", "coro")
+      :separated ", ";
   })
 end
 
@@ -173,6 +234,8 @@ end
 
 return function (self, out)
   generate_proto(out, self)
+  generate_closure(out, self)
+  generate_call(out, self)
   generate_blocks(out, self)
   return out
 end
