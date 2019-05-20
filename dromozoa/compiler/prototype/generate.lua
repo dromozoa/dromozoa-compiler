@@ -340,6 +340,7 @@ end
 
 local function resolve_variables(blocks, lives_in, postorder)
   local entry_uid = blocks.entry_uid
+  local n = #postorder
 
   local refs = {}
   local defs = {}
@@ -348,7 +349,7 @@ local function resolve_variables(blocks, lives_in, postorder)
     resolve_variables_def(defs, refs, entry_uid, variable.decode(encoded_var), encoded_var)
   end
 
-  for i = #postorder, 1, -1 do
+  for i = n, 1, -1 do
     local uid = postorder[i]
     local block = blocks[uid]
     for j = 1, #block do
@@ -367,10 +368,16 @@ local function resolve_variables(blocks, lives_in, postorder)
         resolve_variables_def(defs, refs, uid, code[1])
       end
     end
+  end
 
+  for i = n, 1, -1 do
+    local uid = postorder[i]
+    local block = blocks[uid]
     local params = {}
     for encoded_var in pairs(lives_in[uid]) do
-      params[encoded_var] = true
+      if not refs[encoded_var] then
+        params[encoded_var] = true
+      end
     end
     block.params = params
   end
@@ -382,7 +389,8 @@ local function resolve_variables(blocks, lives_in, postorder)
     end
   end
 
-  return defs, refs, vers
+  blocks.refs = refs
+  return defs, vers
 end
 
 local function insert_phi_functions(blocks, df, defs, vers, postorder)
@@ -532,7 +540,9 @@ local function rename_variables(blocks, dom_child, vers)
   rename_variables_search(blocks, dom_child, vers, stacks, blocks.entry_uid)
 end
 
-local function resolve_types(blocks, refs, postorder)
+local function resolve_types(blocks, postorder)
+  local refs = blocks.refs
+
   for i = #postorder, 1, -1 do
     local uid = postorder[i]
     local block = blocks[uid]
@@ -585,10 +595,10 @@ return function (self)
   remove_unreachables(blocks, reachables)
   local idom, dom_child, df = analyze_dominators(blocks, uv_postorder)
   local lives_in = analyze_liveness(blocks, g:vu_postorder(blocks.exit_uid))
-  local defs, refs, vers = resolve_variables(blocks, lives_in, uv_postorder)
+  local defs, vers = resolve_variables(blocks, lives_in, uv_postorder)
   insert_phi_functions(blocks, df, defs, vers, uv_postorder)
   rename_variables(blocks, dom_child, vers)
-  resolve_types(blocks, refs, uv_postorder)
+  resolve_types(blocks, uv_postorder)
   self.blocks = blocks
   return self
 end

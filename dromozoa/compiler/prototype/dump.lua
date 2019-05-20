@@ -50,6 +50,26 @@ local marker = _"marker" {
   };
 }
 
+local function dump_refs(html, blocks)
+  local refs = blocks.refs
+  local vars = {}
+  for encoded_var in pairs(refs) do
+    vars[#vars + 1] = {
+      var = variable.decode(encoded_var);
+      encoded_var;
+    }
+  end
+  local n = #vars
+  if n > 0 then
+    table.sort(vars, function (a, b) return a.var < b.var end)
+    html[#html + 1] = "  refs {\n"
+    for i = 1, n do
+      html[#html + 1] = ("    %s\n"):format(vars[i][1])
+    end
+    html[#html + 1] = "  }\n"
+  end
+end
+
 local function dump_block(blocks, uid, block)
   local g = blocks.g
   local uv = g.uv
@@ -157,6 +177,7 @@ local function dump_code(self)
     _"span" { ("%s {\n"):format(self[1]:encode()) };
   }
   dump_header(html, self, "  ")
+  dump_refs(html, blocks)
 
   local uid = u.first
   while uid do
