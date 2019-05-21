@@ -108,13 +108,8 @@ $2$
 end
 
 local function generate_closure(out, self)
+  local upvalues = self.upvalues
   local blocks = self.blocks
-
-  local refs = serializer.entries(blocks.refs)
-    :map(function (encoded_var)
-      return variable.decode(encoded_var)
-    end)
-    :sort()
 
   out:write(serializer.template [[
 $1.closure = function ($2)
@@ -125,20 +120,16 @@ $3$
 end
 ]] {
     self[1];
-    serializer.sequence(refs)
-      :filter(function (var)
-        return var.key == "U"
+    serializer.sequence(upvalues)
+      :map(function (item)
+        return item[1]
       end)
       :separated ", ";
-    serializer.sequence(refs)
-      :map(function (var)
-        if var.key == "U" then
-          return { var, var }
-        else
-          return { var, "{}" }
-        end
+    serializer.sequence(upvalues)
+      :map(function (item)
+        return item[1]
       end)
-      :map "    $1 = $2;\n";
+      :map "    $0 = $0;\n";
   })
 end
 
