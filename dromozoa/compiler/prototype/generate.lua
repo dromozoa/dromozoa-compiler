@@ -248,11 +248,15 @@ local function analyze_dominators(blocks, postorder)
   return idom, dom_child, df
 end
 
-local function analyze_liveness_def(def, var)
+local function analyze_liveness_def(refs, def, use, var)
   local t = var.type
   if t == "value" or t == "array" then
     local encoded_var = var:encode_without_index()
-    def[encoded_var] = true
+    if refs[encoded_var] then
+      use[encoded_var] = true
+    else
+      def[encoded_var] = true
+    end
   end
 end
 
@@ -274,6 +278,7 @@ local function analyze_liveness(blocks, postorder)
   local uv_target = uv.target
   local n = #postorder
 
+  local refs = blocks.refs
   local defs = {}
   local uses = {}
   local lives_in = {}
@@ -290,7 +295,7 @@ local function analyze_liveness(blocks, postorder)
       local name = code[0]
       if name == "RESULT" then
         for k = 1, #code do
-          analyze_liveness_def(def, code[k])
+          analyze_liveness_def(refs, def, use, code[k])
         end
       else
         for k = 2, #code do
@@ -299,7 +304,7 @@ local function analyze_liveness(blocks, postorder)
         if not_assign[name] then
           analyze_liveness_use(def, use, code[1])
         else
-          analyze_liveness_def(def, code[1])
+          analyze_liveness_def(refs, def, use, code[1])
         end
       end
     end
@@ -351,30 +356,32 @@ local function analyze_liveness(blocks, postorder)
   return lives_in, lives_out
 end
 
-local function resolve_variables_def(defs, uid, var, encoded_var)
+local function resolve_variables_def(refs, defs, uid, var, encoded_var)
   local t = var.type
   if t == "value" or t == "array" then
     if not encoded_var then
       encoded_var = var:encode_without_index()
     end
-    local def = defs[encoded_var]
-    if def then
-      def[#def + 1] = uid
-    else
-      defs[encoded_var] = { uid }
+    if not refs[encoded_var] then
+      local def = defs[encoded_var]
+      if def then
+        def[#def + 1] = uid
+      else
+        defs[encoded_var] = { uid }
+      end
     end
   end
 end
 
 local function resolve_variables(blocks, lives_in, postorder)
   local entry_uid = blocks.entry_uid
-  local refs = blocks.refs
   local n = #postorder
 
+  local refs = blocks.refs
   local defs = {}
 
   for encoded_var in pairs(lives_in[entry_uid]) do
-    resolve_variables_def(defs, entry_uid, variable.decode(encoded_var), encoded_var)
+    resolve_variables_def(refs, defs, entry_uid, variable.decode(encoded_var), encoded_var)
   end
 
   for i = n, 1, -1 do
@@ -385,10 +392,10 @@ local function resolve_variables(blocks, lives_in, postorder)
       local name = code[0]
       if name == "RESULT" then
         for k = 1, #code do
-          resolve_variables_def(defs, uid, code[k])
+          resolve_variables_def(refs, defs, uid, code[k])
         end
       elseif not not_assign[name] then
-        resolve_variables_def(defs, uid, code[1])
+        resolve_variables_def(refs, defs, uid, code[1])
       end
     end
   end
@@ -398,16 +405,14 @@ local function resolve_variables(blocks, lives_in, postorder)
     local block = blocks[uid]
     local params = {}
     for encoded_var in pairs(lives_in[uid]) do
-      if not refs[encoded_var] then
-        params[encoded_var] = true
-      end
+      params[encoded_var] = true
     end
     block.params = params
   end
 
   local vers = {}
   for encoded_var, def in pairs(defs) do
-    if #def > 1 and not refs[encoded_var] then
+    if #def > 1 then
       vers[encoded_var] = 0
     end
   end
