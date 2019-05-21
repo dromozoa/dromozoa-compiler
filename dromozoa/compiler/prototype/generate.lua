@@ -175,6 +175,37 @@ local function remove_unreachables(blocks, reachables)
   end
 end
 
+local function analyze_references_ref(refs, var)
+  if var.key == "U" then
+    refs[var:encode_without_index()] = true
+  end
+end
+
+local function analyze_references(blocks, postorder)
+  local refs = {}
+
+  for i = #postorder, 1, -1 do
+    local uid = postorder[i]
+    local block = blocks[uid]
+    for j = 1, #block do
+      local code = block[j]
+      local name = code[0]
+      if name == "CLOSURE" then
+        analyze_references_ref(refs, code[1])
+        for k = 3, #code do
+          refs[code[k]:encode_without_index()] = true
+        end
+      else
+        for k = 1, #code do
+          analyze_references_ref(refs, code[k])
+        end
+      end
+    end
+  end
+
+  blocks.refs = refs
+end
+
 local function analyze_dominators(blocks, postorder)
   local g = blocks.g
   local entry_uid = blocks.entry_uid
@@ -320,7 +351,7 @@ local function analyze_liveness(blocks, postorder)
   return lives_in, lives_out
 end
 
-local function resolve_variables_def(defs, refs, uid, var, encoded_var)
+local function resolve_variables_def(defs, uid, var, encoded_var)
   local t = var.type
   if t == "value" or t == "array" then
     if not encoded_var then
@@ -332,21 +363,18 @@ local function resolve_variables_def(defs, refs, uid, var, encoded_var)
     else
       defs[encoded_var] = { uid }
     end
-    if var.key == "U" then
-      refs[encoded_var] = true
-    end
   end
 end
 
 local function resolve_variables(blocks, lives_in, postorder)
   local entry_uid = blocks.entry_uid
+  local refs = blocks.refs
   local n = #postorder
 
-  local refs = {}
   local defs = {}
 
   for encoded_var in pairs(lives_in[entry_uid]) do
-    resolve_variables_def(defs, refs, entry_uid, variable.decode(encoded_var), encoded_var)
+    resolve_variables_def(defs, entry_uid, variable.decode(encoded_var), encoded_var)
   end
 
   for i = n, 1, -1 do
@@ -355,17 +383,12 @@ local function resolve_variables(blocks, lives_in, postorder)
     for j = 1, #block do
       local code = block[j]
       local name = code[0]
-      if name == "CLOSURE" then
-        resolve_variables_def(defs, refs, uid, code[1])
-        for k = 3, #code do
-          refs[code[k]:encode_without_index()] = true
-        end
-      elseif name == "RESULT" then
+      if name == "RESULT" then
         for k = 1, #code do
-          resolve_variables_def(defs, refs, uid, code[k])
+          resolve_variables_def(defs, uid, code[k])
         end
       elseif not not_assign[name] then
-        resolve_variables_def(defs, refs, uid, code[1])
+        resolve_variables_def(defs, uid, code[1])
       end
     end
   end
@@ -389,7 +412,6 @@ local function resolve_variables(blocks, lives_in, postorder)
     end
   end
 
-  blocks.refs = refs
   return defs, vers
 end
 
@@ -593,6 +615,7 @@ return function (self)
   local g = blocks.g
   local uv_postorder, reachables = g:uv_postorder(blocks.entry_uid)
   remove_unreachables(blocks, reachables)
+  analyze_references(blocks, uv_postorder)
   local idom, dom_child, df = analyze_dominators(blocks, uv_postorder)
   local lives_in = analyze_liveness(blocks, g:vu_postorder(blocks.exit_uid))
   local defs, vers = resolve_variables(blocks, lives_in, uv_postorder)
