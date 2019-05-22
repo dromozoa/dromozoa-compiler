@@ -49,29 +49,24 @@ local function encode_number(source)
 end
 
 local function encode_assign_var(var)
-  if var.declare then
-    if var.reference then
-      return ("local %s = {}; %s[1]"):format(var, var)
-    else
-      return ("local %s"):format(var)
-    end
+  if var.reference then
+    return ("%s[1]"):format(var:encode_without_index())
+  elseif var.declare then
+    return ("local %s"):format(var:encode_without_index())
   else
-    if var.reference then
-      return ("%s[1]"):format(var)
-    else
-      return ("%s"):format(var)
-    end
+    return ("%s"):format(var:encode_without_index())
   end
 end
 
 local function encode_var(var)
-  -- assert(not var.declare)
   if var.reference then
-    return ("%s[1]"):format(var)
+    return ("%s[1]"):format(var:encode_without_index())
+  elseif var.type == "array" then
+    return ("%s"):format(var:encode())
   elseif var.key == "K" then
-    return ("self.%s"):format(var)
+    return ("self.%s"):format(var:encode())
   else
-    return ("%s"):format(var)
+    return ("%s"):format(var:encode_without_index())
   end
 end
 
@@ -82,7 +77,7 @@ local templates = {
   ADD          = _"$1 = $2 + $3";
   CONCAT       = _"$1 = $2 .. $3";
   EQ           = _"$1 = $2 == $3";
-  TYPE         = _"$1 = type($2)";
+  TYPE         = _"$1 = TYPE($2)";
   TYPENAME     = _"$1 = TYPENAME($2)";
   TONUMBER     = _"$1 = tonumber($2)";
   GETMETAFIELD = _"$1 = GETMETAFIELD($2, $3)";
@@ -134,6 +129,8 @@ end
 end
 
 local function generate_call(out, self)
+  local blocks = self.blocks
+  local entry_uid = blocks.entry_uid
 
   local params = serializer.sequence(self.names)
     :map(function (item)
@@ -149,18 +146,56 @@ local function generate_call(out, self)
 
   out:write(serializer.template [[
 function $1:call($2)
+$3$
+$4$
+  return self:b$5($6)
 end
 ]] {
     self[1];
     params
       :unshift("cont", "catch", "coro")
       :separated ", ";
+    serializer.entries(blocks.refs)
+      :map(function (encoded_var)
+        return variable.decode(encoded_var)
+      end)
+      :sort()
+      :map(function (var)
+        if var.key == "U" then
+          return { var, "self.", "" }
+        else
+          return { var, "" }
+        end
+      end)
+      :map "  local $1 = ref($2$1)\n";
+    self.vararg
+      and "  local V0 = vararg(...)\n"
+      or "";
+    entry_uid;
+    serializer.entries(blocks[entry_uid].params)
+      :map(function (_, param)
+        return param[0]:encode_without_index()
+      end)
+      :sort()
+      :unshift("cont", "catch", "coro")
+      :separated ", "
   })
 end
 
 local function generate_block(out, self, uid)
   local blocks = self.blocks
+  local g = blocks.g
+  local uv = g.uv
+  local uv_after = uv.after
+  local uv_target = uv.target
   local block = assert(blocks[uid])
+
+  local succ = {}
+  local eid = uv.first[uid]
+  while eid do
+    succ[#succ + 1] = uv_target[eid]
+    eid = uv_after[eid]
+  end
 
   out:write(serializer.template [[
 function $1:b$2($3)
@@ -169,7 +204,7 @@ function $1:b$2($3)
     uid;
     serializer.entries(block.params)
       :map(function (_, param)
-        return param[0]
+        return param[0]:encode_without_index()
       end)
       :sort()
       :unshift("cont", "catch", "coro")
@@ -191,7 +226,43 @@ function $1:b$2($3)
     elseif name == "RESULT" then
     elseif name == "RETURN" then
     elseif name == "COND" then
+      local vid = assert(succ[1])
+      local wid = assert(succ[2])
+      succ = nil
+      out:write(serializer.template [[
+  if $1 then
+    return self:b$2($3)
+  else
+    return self:b$4($5)
+  end
+]] {
+        code[1];
+        vid;
+        serializer.entries(blocks[vid].params)
+          :map(function (_, param)
+            return param[0]:encode_without_index()
+          end)
+          :sort()
+          :unshift("cont", "catch", "coro")
+          :separated ", ";
+        wid;
+        serializer.entries(blocks[wid].params)
+          :map(function (_, param)
+            return param[0]:encode_without_index()
+          end)
+          :sort()
+          :unshift("cont", "catch", "coro")
+          :separated ", ";
+      })
+
     elseif name == "ERROR" then
+      succ = nil
+      out:write(serializer.template [[
+  return catch($1, $2)
+]] {
+        code[1];
+        code[2];
+      })
     else
       local tmpl = templates[name]
       local data = { encode_assign_var(code[1]) }
@@ -205,6 +276,22 @@ function $1:b$2($3)
         out:write("--", name, "\n")
       end
     end
+  end
+
+  if succ and not block.exit then
+    local vid = assert(succ[1])
+    out:write(serializer.template [[
+  return self:b$1($2)
+]] {
+      vid;
+      serializer.entries(blocks[vid].params)
+        :map(function (_, param)
+          return param[0]:encode_without_index()
+        end)
+        :sort()
+        :unshift("cont", "catch", "coro")
+        :separated ", "
+    })
   end
 
   out:write "end\n"
