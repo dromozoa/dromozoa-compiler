@@ -1,4 +1,4 @@
--- Copyright (C) 2018 Tomoyuki Fujimori <moyu@dromozoa.com>
+-- Copyright (C) 2018,2019 Tomoyuki Fujimori <moyu@dromozoa.com>
 --
 -- This file is part of dromozoa-compiler.
 --
@@ -16,8 +16,6 @@
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
 local analyze = require "dromozoa.compiler.syntax_tree.analyze"
--- local compile_cxx = require "dromozoa.compiler.syntax_tree.compile_cxx"
--- local compile_es = require "dromozoa.compiler.syntax_tree.compile_es"
 local dump_protos = require "dromozoa.compiler.syntax_tree.dump_protos"
 local dump_tree = require "dromozoa.compiler.syntax_tree.dump_tree"
 local generate = require "dromozoa.compiler.syntax_tree.generate"
@@ -57,22 +55,6 @@ function class:dump_tree(out)
     return dump_tree(self, assert(io.open(out, "w"))):close()
   else
     return dump_tree(self, out)
-  end
-end
-
-function class:compile_es(out, ...)
-  if type(out) == "string" then
-    return compile_es(self, assert(io.open(out, "w")), ...):close()
-  else
-    return compile_es(self, out, ...)
-  end
-end
-
-function class:compile_cxx(out, ...)
-  if type(out) == "string" then
-    return compile_cxx(self, assert(io.open(out, "w")), ...):close()
-  else
-    return compile_cxx(self, out, ...)
   end
 end
 

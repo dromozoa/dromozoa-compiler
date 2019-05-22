@@ -1,4 +1,4 @@
--- Copyright (C) 2018 Tomoyuki Fujimori <moyu@dromozoa.com>
+-- Copyright (C) 2018,2019 Tomoyuki Fujimori <moyu@dromozoa.com>
 --
 -- This file is part of dromozoa-compiler.
 --
@@ -19,7 +19,7 @@ local element = require "dromozoa.dom.element"
 local dump = require "dromozoa.compiler.prototype.dump"
 local dump_code_list = require "dromozoa.compiler.prototype.dump_code_list"
 local generate = require "dromozoa.compiler.prototype.generate"
-local generate_cxx = require "dromozoa.compiler.prototype.generate_cxx"
+local generate_lua = require "dromozoa.compiler.prototype.generate_lua"
 
 local _ = element
 
@@ -30,11 +30,11 @@ function class:generate()
   return generate(self)
 end
 
-function class:generate_cxx(out)
+function class:generate_lua(out)
   if type(out) == "string" then
-    return generate_cxx(self, assert(io.open(out, "w"))):close()
+    return generate_lua(self, assert(io.open(out, "w"))):close()
   else
-    return generate_cxx(self, out)
+    return generate_lua(self, out)
   end
 end
 
