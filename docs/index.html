@@ -44,30 +44,9 @@ table.ir tr td:first-child {
       <li><a href="metatable_newindex.html">newindex</a></li>
     </ul>
   </li>
+  <li><a href="tonumber.html">文字列から数値型への変換</a></li>
   <li><a href="camera.html">カメラの移動とズーム</a></li>
 </ul>
-
-<h2>文字列から数値型への変換</h2>
-
-<p>
-整数への変換を試行してから浮動小数点数への変換を試行する。
-</p>
-
-<p>
-整数への変換は前後のホワイトスペースを無視したうえで、整数の字句表現に従う。
-8進数リテラルがないので、リテラル<code>070</code>は10進数の整数<code>70</code>に等しい。
-また、リテラル<code>34e1</code>は16進数の整数<code>0x34e1 = 520</code>はなく、
-浮動小数点数<code>34.0e1 = 340</code>に等しいことに注意する。
-</p>
-
-<pre>
-10進数整数リテラル: [+\-]?[0-9]+
-16進数整数リテラル: [+\-]?0[xX][0-9A-Fa-f]+
-</pre>
-
-<p>
-浮動小数点数への変換は<code>strtod</code>と等価である。
-</p>
 
 <h2>Variables</h2>
 

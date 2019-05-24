@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<title>dromozoa-compiler</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/3.0.1/github-markdown.min.css">
+<style>
+.markdown-body {
+  box-sizing: border-box;
+  min-width: 200px;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 45px;
+}
+@media (max-width: 767px) {
+  .markdown-body {
+    padding: 15px;
+  }
+}
+table.ir tr td:first-child {
+  white-space: nowrap;
+}
+</style>
+</head>
+<body>
+<div class="markdown-body">
+
+<h1>dromozoa-compiler</h1>
+
+<ul>
+  <li><a href="https://twilog.org/vaporoid/date-181030/asc">メモ</a></li>
+</ul>
+
+<h2>文字列から数値型への変換</h2>
+
+<p>
+整数への変換を試行してから浮動小数点数への変換を試行する。
+</p>
+
+<p>
+整数への変換は前後のホワイトスペースを無視したうえで、整数の字句表現に従う。
+8進数リテラルがないので、リテラル<code>070</code>は10進数の整数<code>70</code>に等しい。
+また、リテラル<code>34e1</code>は16進数の整数<code>0x34e1 = 520</code>はなく、
+浮動小数点数<code>34.0e1 = 340</code>に等しいことに注意する。
+</p>
+
+<pre>
+10進数整数リテラル: [+\-]?[0-9]+
+16進数整数リテラル: [+\-]?0[xX][0-9A-Fa-f]+
+</pre>
+
+<p>
+浮動小数点数への変換は<code>strtod</code>と等価である。
+システムの<code>strtod</code>が16進数浮動小数点数リテラルをサポートしない場合、
+代替実装を用意することになる。
+16進数浮動小数点数では丸めを考慮する必要ないらしい。
+</p>
+
+</div>
+</body>
+</html>
