@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<title>dromozoa-compiler</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/3.0.1/github-markdown.min.css">
+<style>
+.markdown-body {
+  box-sizing: border-box;
+  min-width: 200px;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 45px;
+}
+@media (max-width: 767px) {
+  .markdown-body {
+    padding: 15px;
+  }
+}
+table.ir tr td:first-child {
+  white-space: nowrap;
+}
+</style>
+</head>
+<body>
+<div class="markdown-body">
+
+<h1>dromozoa-compiler</h1>
+
+<h2>変数</h2>
+
+<table>
+  <tr>
+    <th>Code</th>
+    <th>Type</th>
+    <th>Mode</th>
+    <th>Description</th>
+  </tr>
+  <tr>
+    <td><code>n</code></td>
+    <td>immediate</td>
+    <td>read only</td>
+    <td>unsigned integer</td>
+  <tr>
+  <tr>
+    <td><code>NIL</code></td>
+    <td>immediate</td>
+    <td>read only</td>
+    <td>nil</td>
+  </tr>
+  <tr>
+    <td><code>FALSE</code></td>
+    <td>immediate</td>
+    <td>read only</td>
+    <td>false</td>
+  </tr>
+  <tr>
+    <td><code>TRUE</code></td>
+    <td>immediate</td>
+    <td>read only</td>
+    <td>true</td>
+  </tr>
+  <tr>
+    <td><code>Pn</code></td>
+    <td>proto</td>
+    <td>read only</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td><code>Ln</code></td>
+    <td>label</td>
+    <td>read only</td>
+    <td>named label</td>
+  </tr>
+  <tr>
+    <td><code>Mn</code></td>
+    <td>label</td>
+    <td>read only</td>
+    <td>unnamed label</td>
+  </tr>
+  <tr>
+    <td><code>Kn</code></td>
+    <td>constant</td>
+    <td>read only</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td><code>Un</code></td>
+    <td>value</td>
+    <td>reference</td>
+    <td>upvalue</td>
+  </tr>
+  <tr>
+    <td><code>An</code>, <code>An_v</code></td>
+    <td>value</td>
+    <td>reference?</td>
+    <td>parameter</td>
+  </tr>
+  <tr>
+    <td><code>Bn</code>, <code>Bn_v</code></td>
+    <td>value</td>
+    <td>reference?</td>
+    <td>named value</td>
+  </tr>
+  <tr>
+    <td><code>Cn</code></td>
+    <td>value</td>
+    <td>single assigned</td>
+    <td>unnamed value</td>
+  </tr>
+  <tr>
+    <td><code>V0</code>, <code>V0[i]</code></td>
+    <td>array</td>
+    <td>read only</td>
+    <td>vararg</td>
+  </tr>
+  <tr>
+    <td><code>Tn</code></td>
+    <td>array</td>
+    <td>single assigned</td>
+    <td>results</td>
+  </tr>
+</table>
+
+</div>
+</body>
+</html>
