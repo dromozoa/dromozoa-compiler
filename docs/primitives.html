@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<title>dromozoa-compiler</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/3.0.1/github-markdown.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.2/katex.min.css">
+<style>
+.markdown-body {
+  box-sizing: border-box;
+  min-width: 200px;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 45px;
+}
+@media (max-width: 767px) {
+  .markdown-body {
+    padding: 15px;
+  }
+}
+</style>
+</head>
+<body>
+<div class="markdown-body">
+
+<h1>dromozoa-compiler</h1>
+
+<h2>符号無し64bit整数</h2>
+
+<p>
+倍精度浮動小数点数しか使えない環境では、符号無し64bit整数をソフトウェアで実装する必要がある。かかる環境では、53bitの整数をただしく扱うことができ、実用上は充分であることが多い（だからこそ、そのように決定された）。
+</p>
+
+<h3>乗算</h3>
+
+<p>
+\[\begin{aligned}
+  X &amp;= x_1 k^2 + x_2 k + x_3 \\
+  Y &amp;= y_1 k^2 + y_2 k + y_3 \\
+  k &amp;= 2^{24} \\
+  X Y
+  &amp;= (x_1 k^2 + x_2 k + x_3) (y_1 k^2 + y_2 k + y_3) \\
+  &amp;= x_1 y_1 k^4 + x_2 y_1 k^3 + x_3 y_1 k^2
+       + x_1 y_2 k^3 + x_2 y_2 k^2 + x_3 y_2 k
+       + x_1 y_3 k^2 + x_2 y_3 k   + x_3 y_3 \\
+  &amp;= x_1 y_1 k^4
+       + (x_2 y_1 + x_1 y_2) k^3
+       + (x_3 y_1 + x_2 y_2 + x_1 y_3) k^2
+       + (x_3 y_2 + x_2 y_3 ) k
+       + x_3 y_3 \\
+\end{aligned}\]
+\(k^4, k^3\)は\(2^{64}\)より大きいので無視できる。
+\[
+  X Y = (x_3 y_1 + x_2 y_2 + x_1 y_3) k^2 + (x_3 y_2 + x_2 y_3) k + x_3 y_3
+\]
+</p>
+
+<h4>カラツバ法</h4>
+
+<p>
+<a href="https://ja.wikipedia.org/wiki/%E3%82%AB%E3%83%A9%E3%83%84%E3%83%90%E6%B3%95">カラツバ法</a>で
+\[\begin{aligned}
+  X &amp;= x_1 k + x_2 \\
+  Y &amp;= y_1 k + y_2 \\
+  X Y &amp;= x_1 y_1 k^2 + (x_1 y_2 + x_2 y_1) k + x_2 y_2 \\
+  z_1 &amp;= x_1 y_1 \\
+  z_2 &amp;= x_1 y_1 + x_2 y_1 \\
+  z_3 &amp;= x_2 y_2 \\
+  X Y &amp;= z_1 k^2 + z_2 k + z_3 \\
+  z_2 &amp;= z_1 + z_2 - (x_2 - x_1) (y_2 - y_1) \\
+\end{aligned}\]
+乗算の回数を減らすことができる。ただし、倍精度浮動小数点数しか使えない環境、逐次実行環境や仮想機械環境では、加減算が乗算より速いとは限らない。
+</p>
+
+<h4>カラツバ法の適用</h4>
+
+<p>
+\[\begin{aligned}
+  X Y &amp;= (x_3 y_1 + x_2 y_2 + x_1 y_3) k^2 + (x_3 y_2 + x_2 y_3) k + x_3 y_3 \\
+  z_1 &amp;= x_2 y_2 \\
+  z_2 &amp;= x_3 y_2 + x_2 y_3 \\
+  z_3 &amp;= x_3 y_3 \\
+  X Y &amp;= (x_3 y_1 + z_1 + x_1 y_3) k^2 + z_2 k + z_3 \\
+  z_2 &amp;= z_1 + z_2 - (x_3 - x_2) (y_3 - y_2) \\
+\end{aligned}\]
+</p>
+
+<h3>除算</h3>
+
+<h4>筆算 (1)</h4>
+
+<p>
+\[\begin{aligned}
+  X &amp;= x_1 k + x_2 \\
+  Y &amp;= y_1 k + y_2 \\
+  k &amp;= 2^{48} \\
+\end{aligned}\]
+\(0 \lt y_1 \lt x_1\)の場合を考える。
+\[\begin{aligned}
+  \frac{X}{Y}
+    &amp;\gt \frac{X}{(y_1 + 1) k} \\
+    &amp;= \frac{x_1}{y_1 + 1} + \frac{x_2}{y_1 + 1} k^{-1} \\
+  \frac{X}{Y} &amp;\gt \rm{floor}\left(\frac{x_1}{y_1 + 1}\right) \\
+\end{aligned}\]
+\(X := X - \rm{floor}\left(\frac{x_1}{y_1 + 1}\right)\)で繰りかえして筆算する。
+</p>
+
+<h4>筆算 (2)</h4>
+
+<p>
+\[\begin{aligned}
+  X &amp;= x_1 k^2 + x_2 k + x_3 \\
+  Y &amp;= y_1 k^2 + y_2 k + y_3 \\
+  k &amp;= 2^{24} \\
+  Z &amp;= y_1 k + y_2 \\
+  Z k &amp;\le Y \lt (Z + 1) k \\
+  \frac{X}{(Z + 1) k} &amp;\lt \frac{X}{Y} \le \frac{Z}{Z k} \\
+  \frac{X}{Y} - \frac{X}{(Z + 1) k} &amp;= d X \\
+  d &amp;= \left( \frac{1}{Y} - \frac{1}{(Z + 1) k} \right) \\
+    &amp;= \frac{(Z + 1) k - Y}{(Z + 1) k Y} \\
+    &amp;= \frac{k - y_3}{(y_1 k^2 + y_2 k + k)(y_1 k^2 + y_2 k + y_3)} \\
+\end{aligned}\]
+\((y_1 = 1, y_2 = 0, y_3 = 0)\)のとき、\(d = \frac{1}{k^3+k}\)になる。
+\((y_1 = 0, y_2 = 1, y_3 = 0)\)のとき、\(d = \frac{1}{2k}\)になる。
+</p>
+
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.2/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.2/contrib/auto-render.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  renderMathInElement(document.body);
+});
+</script>
+</body>
+</html>
