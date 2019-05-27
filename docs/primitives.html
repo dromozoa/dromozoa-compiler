@@ -46,7 +46,7 @@
 \end{aligned}\]
 </p>
 
-<h4>2-タプル形式</h4>
+<h4>2-タプル形式 (1)</h4>
 
 <p>
 \[\begin{aligned}
@@ -54,6 +54,41 @@
   0 &amp;\le y_2 \lt 2^{16} \\
   0 &amp;\le y_1 \lt k^2 \\
   k &amp;= 2^{24} \\
+\end{aligned}\]
+</p>
+
+<h4>2-タプル形式 (2)</h4>
+
+<p>
+\[\begin{aligned}
+  Z &amp;= z_2 k + z_1 \\
+  0 &amp;\le z_2 \lt 2^{40} \\
+  0 &amp;\le z_1 \lt k \\
+  k &amp;= 2^{24} \\
+\end{aligned}\]
+</p>
+
+
+<h3>十進数表記のための除算</h3>
+
+<p>
+\[\begin{aligned}
+  X &amp;= x_2 k + x_1 \\
+  k &amp;= 2^{24} \\
+  x_2 &amp;\lt 2^{40} \\
+  x_1 &amp;\lt 2^{24} \\
+  d &amp;= 1000000 \\
+  x_2 &amp;= q_1 d + r_1 \\
+  q_1 &amp;\lt 2^{40 - log_2 d} \\
+  r_1 &amp;\lt d \\
+  X &amp;= q_1 d k + r_1 k + x_1 \\
+  z &amp;= r_1 k + x_1 \\
+  z &amp;\lt 2^{24 + log_2 d} \\
+  z &amp;= q_2 d + r_2 \\
+  q_2 &amp;\lt 2^{24} \\
+  r_2 &amp;\lt d \\
+  X &amp;= d (q_1 k + q_2) + r_2
+
 \end{aligned}\]
 </p>
 
