@@ -66,28 +66,31 @@ local function tostring_dec(x)
   local x1 = x[1]
   local x2 = x[2]
 
-  -- y1 = x1 & 0xFFFFFF
-  -- y2 = x2 << 24 | x1 >> 24
+  -- y1 = x1 & 0xFFFFFF       (< 2^24)
+  -- y2 = x2 << 24 | x1 >> 24 (< 2^48)
   local y1 = x1 % SHIFT24
   local y2 = x2 * SHIFT24 + (x1 - y1) / SHIFT24
 
-  -- b = y2 % 10000000
-  -- a = y2 / 10000000
-  local b = y2 % POW10_7
-  local a = (y2 - b) / POW10_7
+  -- z1 = y2 % 10000000 (< 2^24)
+  -- z2 = y2 / 10000000 (< 2^25)
+  local z1 = y2 % POW10_7
+  local z2 = (y2 - z1) / POW10_7
 
-  -- c = b << 24 | y1
-  -- d = c % 10000000
-  -- e = c / 10000000
-  local c = b * SHIFT24 + y1
-  local d = c % POW10_7
-  local e = (c - d) / POW10_7
+  -- z1 = z1 << 24 | y1 (< 2^48)
+  z1 = z1 * SHIFT24 + y1
 
-  local f = a * SHIFT24 + e
-  if f == 0 then
-    return ("%d"):format(d)
+  -- r = z1 % 10000000 (< 2^24)
+  -- q = z1 / 10000000 (< 2^25)
+  local r = z1 % POW10_7
+  local q = (z1 - r) / POW10_7
+
+  -- q = q | z2 << 24
+  q = q + z2 * SHIFT24
+
+  if q == 0 then
+    return ("%d"):format(r)
   else
-    return ("%d%07d"):format(f, d)
+    return ("%d%07d"):format(q, r)
   end
 end
 
