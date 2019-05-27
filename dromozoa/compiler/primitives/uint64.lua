@@ -22,7 +22,8 @@ local MASK24 = 0xFFFFFF
 local MASK48 = 0xFFFFFFFFFFFF
 local POW10_7 = 10000000
 
-local function construct(x1, x2)
+-- TODO impl n
+local function construct(x1, x2, n)
   if not x1 then
     x1 = 0
   end
@@ -66,31 +67,23 @@ local function tostring_dec(x)
   local x1 = x[1]
   local x2 = x[2]
 
-  -- y1 = x1 & 0xFFFFFF       (< 2^24)
-  -- y2 = x2 << 24 | x1 >> 24 (< 2^48)
   local y1 = x1 % SHIFT24
   local y2 = x2 * SHIFT24 + (x1 - y1) / SHIFT24
 
-  -- z1 = y2 % 10000000 (< 2^24)
-  -- z2 = y2 / 10000000 (< 2^25)
-  local z1 = y2 % POW10_7
-  local z2 = (y2 - z1) / POW10_7
+  local r1 = y2 % POW10_7
+  local q1 = (y2 - r1) / POW10_7
 
-  -- z1 = z1 << 24 | y1 (< 2^48)
-  z1 = z1 * SHIFT24 + y1
+  local u1 = r1 * SHIFT24 + y1
+  local r2 = u1 % POW10_7
+  local q2 = (u1 - r2) / POW10_7
 
-  -- r = z1 % 10000000 (< 2^24)
-  -- q = z1 / 10000000 (< 2^25)
-  local r = z1 % POW10_7
-  local q = (z1 - r) / POW10_7
+  local z2 = q1 * SHIFT24 + q2
+  local z1 = r2
 
-  -- q = q | z2 << 24
-  q = q + z2 * SHIFT24
-
-  if q == 0 then
-    return ("%d"):format(r)
+  if z2 == 0 then
+    return ("%d"):format(z1)
   else
-    return ("%d%07d"):format(q, r)
+    return ("%d%07d"):format(z2, z1)
   end
 end
 
@@ -109,6 +102,45 @@ local metatable = {
   __eq = eq;
   __tostring = tostring_impl;
 }
+
+function class:mul(x, y)
+  if type(x) ~= "table" then
+    x = construct(x)
+  end
+  if type(y) ~= "table" then
+    y = construct(y)
+  end
+
+  local u = x[1]
+  local x1 = u % SHIFT24
+  local x2 = (u - x1) / SHIFT24
+  local x3 = x[2]
+
+  local u = y[1]
+  local y1 = u % SHIFT24
+  local y2 = (u - y1) / SHIFT24
+  local y3 = y[2]
+
+  local z1 = x1 * y1
+  local z2 = x1 * y2 + x2 * y1
+  local z3 = x1 * y3 + x2 * y2 + x3 * y1
+
+  local r1 = z1 % SHIFT24
+  local q1 = (z1 - r1) / SHIFT24
+
+  z1 = r1
+  z2 = z2 + q1
+
+  local r2 = z2 % SHIFT24
+  local q2 = (z2 - r2) / SHIFT24
+
+  z2 = r2
+  z3 = z3 + q2
+
+  self[1] = z2 * SHIFT24 + z1
+  self[2] = z3 % SHIFT16
+  return self
+end
 
 return setmetatable(class, {
   __call = function (_, lower, upper)

@@ -73,22 +73,21 @@
 
 <p>
 \[\begin{aligned}
-  X &amp;= x_2 k + x_1 \\
+  Y &amp;= y_2 k + y_1 \\
   k &amp;= 2^{24} \\
-  x_2 &amp;\lt 2^{40} \\
-  x_1 &amp;\lt 2^{24} \\
+  y_2 &amp;\lt 2^{40} \\
+  y_1 &amp;\lt 2^{24} \\
   d &amp;= 1000000 \\
-  x_2 &amp;= q_1 d + r_1 \\
+  y_2 &amp;= q_1 d + r_1 \\
   q_1 &amp;\lt 2^{40 - log_2 d} \\
   r_1 &amp;\lt d \\
-  X &amp;= q_1 d k + r_1 k + x_1 \\
-  z &amp;= r_1 k + x_1 \\
-  z &amp;\lt 2^{24 + log_2 d} \\
-  z &amp;= q_2 d + r_2 \\
+  y &amp;= q_1 d k + r_1 k + y_1 \\
+  u &amp;= r_1 k + y_1 \\
+  u &amp;\lt 2^{24 + log_2 d} \\
+  u &amp;= q_2 d + r_2 \\
   q_2 &amp;\lt 2^{24} \\
   r_2 &amp;\lt d \\
-  X &amp;= d (q_1 k + q_2) + r_2
-
+  Y &amp;= d (q_1 k + q_2) + r_2
 \end{aligned}\]
 </p>
 
@@ -96,23 +95,23 @@
 
 <p>
 \[\begin{aligned}
-  X &amp;= x_1 k^2 + x_2 k + x_3 \\
-  Y &amp;= y_1 k^2 + y_2 k + y_3 \\
+  X &amp;= x_3 k^2 + x_2 k + x_1 \\
+  Y &amp;= y_3 k^2 + y_2 k + y_1 \\
   k &amp;= 2^{24} \\
   X Y
-  &amp;= (x_1 k^2 + x_2 k + x_3) (y_1 k^2 + y_2 k + y_3) \\
-  &amp;= x_1 y_1 k^4 + x_2 y_1 k^3 + x_3 y_1 k^2
-       + x_1 y_2 k^3 + x_2 y_2 k^2 + x_3 y_2 k
-       + x_1 y_3 k^2 + x_2 y_3 k   + x_3 y_3 \\
-  &amp;= x_1 y_1 k^4
-       + (x_2 y_1 + x_1 y_2) k^3
-       + (x_3 y_1 + x_2 y_2 + x_1 y_3) k^2
-       + (x_3 y_2 + x_2 y_3 ) k
-       + x_3 y_3 \\
+  &amp;= (x_3 k^2 + x_2 k + x_1) (y_3 k^2 + y_2 k + y_1) \\
+  &amp;= x_3 y_3 k^4 + x_2 y_3 k^3 + x_1 y_3 k^2
+       + x_3 y_2 k^3 + x_2 y_2 k^2 + x_1 y_2 k
+       + x_3 y_1 k^2 + x_2 y_1 k   + x_1 y_1 \\
+  &amp;= x_3 y_3 k^4
+       + (x_2 y_3 + x_3 y_2) k^3
+       + (x_1 y_3 + x_2 y_2 + x_3 y_1) k^2
+       + (x_1 y_2 + x_2 y_1 ) k
+       + x_1 y_1 \\
 \end{aligned}\]
 \(k^4, k^3\)は\(2^{64}\)より大きいので無視できる。
 \[
-  X Y = (x_3 y_1 + x_2 y_2 + x_1 y_3) k^2 + (x_3 y_2 + x_2 y_3) k + x_3 y_3
+  X Y = (x_1 y_3 + x_2 y_2 + x_3 y_1) k^2 + (x_1 y_2 + x_2 y_1) k + x_1 y_1
 \]
 </p>
 

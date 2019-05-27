@@ -29,3 +29,6 @@ assert(uint64(0x1000000000000, 0xFFFF) == zero)
 assert(uint64(0x1000000000000, 0xFFFE) == uint64(0x000000000000, 0xFFFF))
 
 assert(uint64(0xBEEFFEEDFACE, 0xDEAD):tostring_hex() == "0xDEADBEEFFEEDFACE")
+
+local uint64_max = uint64(0xFFFFFFFFFFFF, 0xFFFF)
+assert(uint64():mul(uint64_max, uint64_max) == uint64(1))
