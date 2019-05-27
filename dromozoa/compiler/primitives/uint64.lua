@@ -22,6 +22,7 @@ local MASK24 = 0xFFFFFF
 local MASK48 = 0xFFFFFFFFFFFF
 local POW10_7 = 10000000
 
+
 -- TODO impl n
 local function construct(x1, x2, n)
   if not x1 then
@@ -63,27 +64,39 @@ local function lt(x, y)
   end
 end
 
+local function mul(x, y, z)
+  local v1 = x[1]
+  local x1 = v1 % SHIFT24
+  local x2 = (v1 - x1) / SHIFT24
+  local v2 = y[1]
+  local y1 = v2 % SHIFT24
+  local y2 = (v2 - y1) / SHIFT24
+  local z1 = x1 * y1
+  local z2 = x1 * y2 + x2 * y1
+  local z3 = x1 * y[2] + x2 * y2 + x[2] * y1
+  local r1 = z1 % SHIFT24
+  local v3 = z2 + (z1 - r1) / SHIFT24
+  local r2 = v3 % SHIFT24
+  local q2 = (v3 - r2) / SHIFT24
+  z[1] = r2 * SHIFT24 + r1
+  z[2] = (z3 + q2) % SHIFT16
+  return z
+end
+
 local function tostring_dec(x)
-  local x1 = x[1]
-  local x2 = x[2]
-
-  local y1 = x1 % SHIFT24
-  local y2 = x2 * SHIFT24 + (x1 - y1) / SHIFT24
-
-  local r1 = y2 % POW10_7
-  local q1 = (y2 - r1) / POW10_7
-
-  local u1 = r1 * SHIFT24 + y1
-  local r2 = u1 % POW10_7
-  local q2 = (u1 - r2) / POW10_7
-
-  local z2 = q1 * SHIFT24 + q2
-  local z1 = r2
-
-  if z2 == 0 then
-    return ("%d"):format(z1)
+  local v1 = x[1]
+  local x1 = v1 % SHIFT24
+  local x2 = x[2] * SHIFT24 + (v1 - x1) / SHIFT24
+  local r1 = x2 % POW10_7
+  local q1 = (x2 - r1) / POW10_7
+  local v2 = r1 * SHIFT24 + x1
+  local r2 = v2 % POW10_7
+  local q2 = (v2 - r2) / POW10_7
+  local v3 = q1 * SHIFT24 + q2
+  if v3 == 0 then
+    return ("%d"):format(v3)
   else
-    return ("%d%07d"):format(z2, z1)
+    return ("%d%07d"):format(v3, r2)
   end
 end
 
@@ -100,46 +113,21 @@ local class = {
 local metatable = {
   __index = class;
   __eq = eq;
-  __tostring = tostring_impl;
+  __tostring = tostring_dec;
 }
 
-function class:mul(x, y)
+local function new()
+  return setmetatable({}, metatable)
+end
+
+function metatable.__mul(x, y)
   if type(x) ~= "table" then
     x = construct(x)
   end
   if type(y) ~= "table" then
     y = construct(y)
   end
-
-  local u = x[1]
-  local x1 = u % SHIFT24
-  local x2 = (u - x1) / SHIFT24
-  local x3 = x[2]
-
-  local u = y[1]
-  local y1 = u % SHIFT24
-  local y2 = (u - y1) / SHIFT24
-  local y3 = y[2]
-
-  local z1 = x1 * y1
-  local z2 = x1 * y2 + x2 * y1
-  local z3 = x1 * y3 + x2 * y2 + x3 * y1
-
-  local r1 = z1 % SHIFT24
-  local q1 = (z1 - r1) / SHIFT24
-
-  z1 = r1
-  z2 = z2 + q1
-
-  local r2 = z2 % SHIFT24
-  local q2 = (z2 - r2) / SHIFT24
-
-  z2 = r2
-  z3 = z3 + q2
-
-  self[1] = z2 * SHIFT24 + z1
-  self[2] = z3 % SHIFT16
-  return self
+  return mul(x, y, new())
 end
 
 return setmetatable(class, {

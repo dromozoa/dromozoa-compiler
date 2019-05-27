@@ -34,60 +34,64 @@
 
 <h3>形式</h3>
 
-<h4>3-タプル形式</h4>
+<p>
+下位24ビットと上位40ビットで分割して保持すると計算しやすいように思われる。
+</p>
+
+<h4>3-タプル形式 (16,24,24)</h4>
 
 <p>
 \[\begin{aligned}
   X &amp;= x_3 k^2 + x_2 k + x_1 \\
   0 &amp;\le x_3 \lt 2^{16} \\
-  0 &amp;\le x_2 \lt k \\
-  0 &amp;\le x_1 \lt k \\
+  0 &amp;\le x_2 \lt 2^{24} \\
+  0 &amp;\le x_1 \lt 2^{24} \\
   k &amp;= 2^{24} \\
 \end{aligned}\]
 </p>
 
-<h4>2-タプル形式 (1)</h4>
+<h4>2-タプル形式 (16,48)</h4>
 
 <p>
 \[\begin{aligned}
-  Y &amp;= y_2 k^2 + y_1 \\
-  0 &amp;\le y_2 \lt 2^{16} \\
-  0 &amp;\le y_1 \lt k^2 \\
+  X &amp;= x_2 k^2 + x_1 \\
+  0 &amp;\le x_2 \lt 2^{16} \\
+  0 &amp;\le x_1 \lt 2^{48} \\
   k &amp;= 2^{24} \\
 \end{aligned}\]
 </p>
 
-<h4>2-タプル形式 (2)</h4>
+<h4>2-タプル形式 (40,24)</h4>
 
 <p>
 \[\begin{aligned}
-  Z &amp;= z_2 k + z_1 \\
-  0 &amp;\le z_2 \lt 2^{40} \\
-  0 &amp;\le z_1 \lt k \\
+  X &amp;= x_2 k + x_1 \\
+  0 &amp;\le x_2 \lt 2^{40} \\
+  0 &amp;\le x_1 \lt 2^{24} \\
   k &amp;= 2^{24} \\
 \end{aligned}\]
 </p>
-
 
 <h3>十進数表記のための除算</h3>
 
 <p>
 \[\begin{aligned}
-  Y &amp;= y_2 k + y_1 \\
+  X &amp;= x_2 k + x_1 \\
   k &amp;= 2^{24} \\
-  y_2 &amp;\lt 2^{40} \\
-  y_1 &amp;\lt 2^{24} \\
-  d &amp;= 1000000 \\
-  y_2 &amp;= q_1 d + r_1 \\
-  q_1 &amp;\lt 2^{40 - log_2 d} \\
-  r_1 &amp;\lt d \\
-  y &amp;= q_1 d k + r_1 k + y_1 \\
-  u &amp;= r_1 k + y_1 \\
-  u &amp;\lt 2^{24 + log_2 d} \\
+  0 &amp;\le x_2 \lt 2^{40} \\
+  0 &amp;\le x_1 \lt 2^{24} \\
+  d &amp;= 10000000 \\
+  log_2 d &amp;= 23.25349666421 \ldots \\
+  x_2 &amp;= q_1 d + r_1 \\
+  0 &amp;\le q_1 \lt 2^{40 - log_2 d} \\
+  0 &amp;\le r_1 \lt d \\
+  X &amp;= q_1 d k + r_1 k + x_1 \\
+  u &amp;= r_1 k + x_1 \\
+  0 &amp;\le u \lt 2^{24 + log_2 d} \\
   u &amp;= q_2 d + r_2 \\
-  q_2 &amp;\lt 2^{24} \\
-  r_2 &amp;\lt d \\
-  Y &amp;= d (q_1 k + q_2) + r_2
+  0 &amp;\le q_2 \lt 2^{24} \\
+  0 &amp;\le r_2 \lt d \\
+  X &amp;= d (q_1 k + q_2) + r_2
 \end{aligned}\]
 </p>
 
@@ -110,39 +114,18 @@
        + x_1 y_1 \\
 \end{aligned}\]
 \(k^4, k^3\)は\(2^{64}\)より大きいので無視できる。
-\[
-  X Y = (x_1 y_3 + x_2 y_2 + x_3 y_1) k^2 + (x_1 y_2 + x_2 y_1) k + x_1 y_1
-\]
-</p>
-
-<h4>カラツバ法</h4>
-
-<p>
-<a href="https://ja.wikipedia.org/wiki/%E3%82%AB%E3%83%A9%E3%83%84%E3%83%90%E6%B3%95">カラツバ法</a>で
 \[\begin{aligned}
-  X &amp;= x_1 k + x_2 \\
-  Y &amp;= y_1 k + y_2 \\
-  X Y &amp;= x_1 y_1 k^2 + (x_1 y_2 + x_2 y_1) k + x_2 y_2 \\
+  X Y
+    &amp;= (x_1 y_3 + x_2 y_2 + x_3 y_1) k^2 + (x_1 y_2 + x_2 y_1) k + x_1 y_1 \\
+    &amp;= z_3 k^2 + z_2 k + z_1 \\
+  z_3 &amp;= x_1 y_3 + x_2 y_2 + x_3 y_1 \\
+  z_2 &amp;= x_1 y_2 + x_2 y_1 \\
   z_1 &amp;= x_1 y_1 \\
-  z_2 &amp;= x_1 y_1 + x_2 y_1 \\
-  z_3 &amp;= x_2 y_2 \\
-  X Y &amp;= z_1 k^2 + z_2 k + z_3 \\
-  z_2 &amp;= z_1 + z_2 - (x_2 - x_1) (y_2 - y_1) \\
+  0 &amp;\le z_3 \lt 2^{40} + 2^{48} + 2^{40} \lt 2^{49} \\
+  0 &amp;\le z_2 \lt 2^{48} + 2^{48} \lt 2^{49} \\
+  0 &amp;\le z_1 \lt 2^{48} \\
 \end{aligned}\]
-乗算の回数を減らすことができる。ただし、倍精度浮動小数点数しか使えない環境、逐次実行環境や仮想機械環境では、加減算が乗算より速いとは限らない。
-</p>
-
-<h4>カラツバ法の適用</h4>
-
-<p>
-\[\begin{aligned}
-  X Y &amp;= (x_3 y_1 + x_2 y_2 + x_1 y_3) k^2 + (x_3 y_2 + x_2 y_3) k + x_3 y_3 \\
-  z_1 &amp;= x_2 y_2 \\
-  z_2 &amp;= x_3 y_2 + x_2 y_3 \\
-  z_3 &amp;= x_3 y_3 \\
-  X Y &amp;= (x_3 y_1 + z_1 + x_1 y_3) k^2 + z_2 k + z_3 \\
-  z_2 &amp;= z_1 + z_2 - (x_3 - x_2) (y_3 - y_2) \\
-\end{aligned}\]
+<a href="https://ja.wikipedia.org/wiki/%E3%82%AB%E3%83%A9%E3%83%84%E3%83%90%E6%B3%95">カラツバ法</a>で乗算の回数を減らすことができる。ただし、倍精度浮動小数点数しか使えない環境、逐次実行環境や仮想機械環境では、加減算が乗算より速いとは限らない。
 </p>
 
 <h3>除算</h3>
