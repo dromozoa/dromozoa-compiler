@@ -17,16 +17,15 @@
 
 local uint64 = require "dromozoa.compiler.primitives.uint64"
 
--- assert(tostring(uint64()) == "0")
--- assert(tostring(uint64(0)) == "0")
--- assert(tostring(uint64(0, 0)) == "0")
--- assert(tostring(uint64(0x100000000, 0xFFFFFFFF)) == "0")
--- assert(tostring(uint64(0xFEEDFACE, 0xDEADBEEF)) == "16045690985374415566")
+assert(uint64():tostring_dec() == "0")
+assert(uint64(0):tostring_dec() == "0")
+assert(uint64(0, 0):tostring_dec() == "0")
+assert(uint64(0xBEEFFEEDFACE, 0xDEAD):tostring_dec() == "16045690985374415566")
 
 local zero = uint64()
 assert(uint64(0) == zero)
 assert(uint64(0, 0) == zero)
-assert(uint64(0x100000000, 0xFFFFFFFF) == zero)
-assert(uint64(0x100000000, 0xFFFFFFFE) == uint64(0x00000000, 0xFFFFFFFF))
+assert(uint64(0x1000000000000, 0xFFFF) == zero)
+assert(uint64(0x1000000000000, 0xFFFE) == uint64(0x000000000000, 0xFFFF))
 
-assert(uint64(0xFEEDFACE, 0xDEADBEEF):tostring_hex() == "0xDEADBEEFFEEDFACE")
+assert(uint64(0xBEEFFEEDFACE, 0xDEAD):tostring_hex() == "0xDEADBEEFFEEDFACE")
