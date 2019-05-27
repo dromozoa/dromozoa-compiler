@@ -61,6 +61,32 @@ local function lt(self, that)
   end
 end
 
+local function to_string(self)
+  local x1 = self[2]
+  local x2 = self[1]
+  local x3 = x2 % 0x1000000
+  x2 = (x2 - x3) / 0x1000000
+
+  --  8388608 = 2^23
+  -- 10000000 = 2^23.253496664211547
+  -- 16777215 = 2^24
+
+  local a2 = x1 % 10000000
+  local a1 = (x1 - a2) / 10000000
+  a2 = a2 * 0x1000000 + x2
+  local a3 = a2 % 10000000
+  a2 = (a2 - a3) / 10000000
+  a3 = a3 * 0x1000000 + x3
+  local a4 = a3 % 10000000
+  a3 = (a3 - a4) / 10000000
+
+  local b2 = a1 % 10000000
+  local b1 = (a1 - b2) / 10000000
+  b2 = b2 * 0x1000000 + a2
+  local b3 = b2 % 10000000
+  b2 = (b2 - b3) / 10000000
+end
+
 -- local function tostring_impl(self)
 --   local a = self[1]
 --   local b = a % 1000000000
