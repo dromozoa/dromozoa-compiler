@@ -51,9 +51,9 @@ local function lt(x1, x2, y1, y2)
   end
 end
 
-local function tostring_dec(x1, x3)
-  local x2 = x3 % K24
-  local x1 = x1 * K24 + (x3 - x2) / K24
+local function tostring_dec(x1, X2)
+  local x2 = X2 % K24
+  local x1 = x1 * K24 + (X2 - x2) / K24
 
   local r1 = x1 % KD
   local q1 = (x1 - r1) / KD
@@ -78,6 +78,20 @@ end
 
 local class = {}
 local metatable = { __index = class }
+
+local function normalize(x1, X2)
+  if X2 then
+    local x2 = X2 % K48
+    local x1 = (x1 + (X2 - x2) / K48) % K16
+    return x1, x2
+  elseif x1 then
+    local x2 = x1 % K48
+    local x1 = (x1 - x2) / K48 % K16
+    return x1, x2
+  else
+    return 0, 0
+  end
+end
 
 local function construct(x1, x2)
   return setmetatable({ x1, x2 }, metatable)
@@ -109,6 +123,6 @@ end
 
 return setmetatable(class, {
   __call = function (_, ...)
-    return construct(...)
+    return construct(normalize(...))
   end;
 })
