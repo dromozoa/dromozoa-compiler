@@ -20,131 +20,95 @@ local K24 = 0x1000000
 local K48 = 0x1000000000000
 local KD = 10000000
 
-local function mul(X1, X2, Y1, Y2)
+local function mul(x1, x2, y1, y2)
+  local x3 = x2 % K24
+  local x2 = (x2 - x3) / K24
+  local y3 = y2 % K24
+  local y2 = (y2 - y3) / K24
+
+  local u1 = x3 * y1 + x2 * y2 + x1 * y3
+  local u2 = x3 * y2 + x2 * y3
+  local u3 = x3 * y3
+
+  local v3 = u3 % K24
+  u2 = u2 + (u3 - v3) / K24
+  local v2 = u2 % K24
+  u1 = u1 + (u2 - v2) / K24
+  local v1 = u1 % K16
+
+  return v1, v2 * K24 + v3
 end
 
-
-
-
-
-
-
-local SHIFT16 = 0x10000
-local SHIFT24 = 0x1000000
-local SHIFT48 = 0x1000000000000
-local MASK24 = 0xFFFFFF
-local MASK48 = 0xFFFFFFFFFFFF
-local POW10_7 = 10000000
-
--- TODO impl n
-local function construct(x1, x2, n)
-  if not x1 then
-    x1 = 0
-  end
-  assert(x1 % 1 == 0)
-  assert(x1 >= 0)
-
-  if not x2 then
-    x2 = 0
-  end
-  assert(x2 % 1 == 0)
-  assert(x2 >= 0)
-
-  if x1 >= SHIFT48 then
-    local y1 = x1 % SHIFT48
-    x2 = x2 + (x1 - y1) / SHIFT48
-    x1 = y1
-  end
-
-  if x2 >= SHIFT16 then
-    x2 = x2 % SHIFT16
-  end
-
-  return { x1, x2 }
+local function eq(x1, x2, y1, y2)
+  return x1 == y1 and x2 == y2
 end
 
-local function eq(x, y)
-  return x[1] == y[1] and x[2] == y[2]
-end
-
-local function lt(x, y)
-  local x2 = x[2]
-  local y2 = y[2]
-  if x2 == y2 then
-    return x[1] < y[1]
-  else
+local function lt(x1, x2, y1, y2)
+  if x1 == y1 then
     return x2 < y2
-  end
-end
-
-local function mul(x, y, z)
-  local v1 = x[1]
-  local x1 = v1 % SHIFT24
-  local x2 = (v1 - x1) / SHIFT24
-  local v2 = y[1]
-  local y1 = v2 % SHIFT24
-  local y2 = (v2 - y1) / SHIFT24
-  local z1 = x1 * y1
-  local z2 = x1 * y2 + x2 * y1
-  local z3 = x1 * y[2] + x2 * y2 + x[2] * y1
-  local r1 = z1 % SHIFT24
-  local v3 = z2 + (z1 - r1) / SHIFT24
-  local r2 = v3 % SHIFT24
-  local q2 = (v3 - r2) / SHIFT24
-  z[1] = r2 * SHIFT24 + r1
-  z[2] = (z3 + q2) % SHIFT16
-  return z
-end
-
-local function tostring_dec(x)
-  local v1 = x[1]
-  local x1 = v1 % SHIFT24
-  local x2 = x[2] * SHIFT24 + (v1 - x1) / SHIFT24
-  local r1 = x2 % POW10_7
-  local q1 = (x2 - r1) / POW10_7
-  local v2 = r1 * SHIFT24 + x1
-  local r2 = v2 % POW10_7
-  local q2 = (v2 - r2) / POW10_7
-  local v3 = q1 * SHIFT24 + q2
-  if v3 == 0 then
-    return ("%d"):format(v3)
   else
-    return ("%d%07d"):format(v3, r2)
+    return x1 < y1
   end
 end
 
-local function tostring_hex(x)
-  return ("0x%04X%012X"):format(x[2], x[1])
+local function tostring_dec(x1, x3)
+  local x2 = x3 % K24
+  local x1 = x1 * K24 + (x3 - x2) / K24
+
+  local r1 = x1 % KD
+  local q1 = (x1 - r1) / KD
+
+  local u2 = x2 + r1 * K24
+
+  local r2 = u2 % KD
+  local q2 = (u2 - r2) / KD
+
+  local u1 = q1 * K24 + q2
+
+  if u1 == 0 then
+    return ("%d"):format(r2)
+  else
+    return ("%d%07d"):format(u1, r2)
+  end
 end
 
-local class = {
-  eq = eq;
-  tostring_dec = tostring_dec;
-  tostring_hex = tostring_hex;
-}
+local function tostring_hex(x1, x2)
+  return ("0x%04X%012X"):format(x1, x2)
+end
 
-local metatable = {
-  __index = class;
-  __eq = eq;
-  __tostring = tostring_dec;
-}
+local class = {}
+local metatable = { __index = class }
 
-local function new()
-  return setmetatable({}, metatable)
+local function construct(x1, x2)
+  return setmetatable({ x1, x2 }, metatable)
+end
+
+function class.tostring_dec(x)
+  return tostring_dec(x[1], x[2])
+end
+
+function class.tostring_hex(x)
+  return tostring_hex(x[1], x[2])
 end
 
 function metatable.__mul(x, y)
-  if type(x) ~= "table" then
-    x = construct(x)
-  end
-  if type(y) ~= "table" then
-    y = construct(y)
-  end
-  return mul(x, y, new())
+  return construct(mul(x[1], x[2], y[1], y[2]))
+end
+
+function metatable.__eq(x, y)
+  return eq(x[1], x[2], y[1], y[2])
+end
+
+function metatable.__lt(x, y)
+  return lt(x[1], x[2], y[1], y[2])
+end
+
+function metatable.__tostring(x)
+  return tostring_dec(x[1], x[2])
 end
 
 return setmetatable(class, {
-  __call = function (_, lower, upper)
-    return setmetatable(construct(lower, upper), metatable)
+  __call = function (_, ...)
+    return construct(...)
   end;
 })
