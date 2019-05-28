@@ -35,17 +35,17 @@
 <h3>形式</h3>
 
 <p>
-下位24ビットと上位40ビットで分割して保持すると計算しやすいように思われる。
+上位16ビットと下位48ビットで分割して保持する。
 </p>
 
 <h4>3-タプル形式 (16,24,24)</h4>
 
 <p>
 \[\begin{aligned}
-  X &amp;= x_3 k^2 + x_2 k + x_1 \\
-  0 &amp;\le x_3 \lt 2^{16} \\
+  X &amp;= x_1 k^2 + x_2 k + x_3 \\
+  0 &amp;\le x_1 \lt 2^{16} \\
   0 &amp;\le x_2 \lt 2^{24} \\
-  0 &amp;\le x_1 \lt 2^{24} \\
+  0 &amp;\le x_3 \lt 2^{24} \\
   k &amp;= 2^{24} \\
 \end{aligned}\]
 </p>
@@ -54,9 +54,9 @@
 
 <p>
 \[\begin{aligned}
-  X &amp;= x_2 k^2 + x_1 \\
-  0 &amp;\le x_2 \lt 2^{16} \\
-  0 &amp;\le x_1 \lt 2^{48} \\
+  X &amp;= x_1 k^2 + x_2 \\
+  0 &amp;\le x_1 \lt 2^{16} \\
+  0 &amp;\le x_2 \lt 2^{48} \\
   k &amp;= 2^{24} \\
 \end{aligned}\]
 </p>
@@ -65,9 +65,9 @@
 
 <p>
 \[\begin{aligned}
-  X &amp;= x_2 k + x_1 \\
-  0 &amp;\le x_2 \lt 2^{40} \\
-  0 &amp;\le x_1 \lt 2^{24} \\
+  X &amp;= x_1 k + x_2 \\
+  0 &amp;\le x_1 \lt 2^{40} \\
+  0 &amp;\le x_2 \lt 2^{24} \\
   k &amp;= 2^{24} \\
 \end{aligned}\]
 </p>
@@ -76,19 +76,17 @@
 
 <p>
 \[\begin{aligned}
-  X &amp;= x_2 k + x_1 \\
+  X &amp;= x_1 k + x_2 \\
   k &amp;= 2^{24} \\
-  0 &amp;\le x_2 \lt 2^{40} \\
-  0 &amp;\le x_1 \lt 2^{24} \\
+  0 &amp;\le x_1 \lt 2^{40} \\
+  0 &amp;\le x_2 \lt 2^{24} \\
   d &amp;= 10000000 \\
   log_2 d &amp;= 23.25349666421 \ldots \\
-  x_2 &amp;= q_1 d + r_1 \\
+  (q_1, r_1) &amp;= x_1 \div d \\
   0 &amp;\le q_1 \lt 2^{40 - log_2 d} \\
   0 &amp;\le r_1 \lt d \\
-  X &amp;= q_1 d k + r_1 k + x_1 \\
-  u &amp;= r_1 k + x_1 \\
-  0 &amp;\le u \lt 2^{24 + log_2 d} \\
-  u &amp;= q_2 d + r_2 \\
+  X &amp;= q_1 d k + r_1 k + x_2 \\
+  (q_2, r_2) &amp;= (r_1 k + x_2) \div d \\
   0 &amp;\le q_2 \lt 2^{24} \\
   0 &amp;\le r_2 \lt d \\
   X &amp;= d (q_1 k + q_2) + r_2
@@ -99,72 +97,70 @@
 
 <p>
 \[\begin{aligned}
-  X &amp;= x_3 k^2 + x_2 k + x_1 \\
-  Y &amp;= y_3 k^2 + y_2 k + y_1 \\
+  X &amp;= x_1 k^2 + x_2 k + x_3 \\
+  Y &amp;= y_1 k^2 + y_2 k + y_3 \\
   k &amp;= 2^{24} \\
   X Y
-  &amp;= (x_3 k^2 + x_2 k + x_1) (y_3 k^2 + y_2 k + y_1) \\
-  &amp;= x_3 y_3 k^4 + x_2 y_3 k^3 + x_1 y_3 k^2
-       + x_3 y_2 k^3 + x_2 y_2 k^2 + x_1 y_2 k
-       + x_3 y_1 k^2 + x_2 y_1 k   + x_1 y_1 \\
-  &amp;= x_3 y_3 k^4
-       + (x_2 y_3 + x_3 y_2) k^3
-       + (x_1 y_3 + x_2 y_2 + x_3 y_1) k^2
-       + (x_1 y_2 + x_2 y_1 ) k
-       + x_1 y_1 \\
+  &amp;= (x_1 k^2 + x_2 k + x_3) (y_1 k^2 + y_2 k + y_3) \\
+  &amp;= x_1 y_1 k^4 + x_2 y_1 k^3 + x_3 y_1 k^2
+       + x_1 y_2 k^3 + x_2 y_2 k^2 + x_3 y_2 k
+       + x_1 y_3 k^2 + x_3 y_1 k   + x_3 y_3 \\
+  &amp;= x_1 y_1 k^4
+       + (x_2 y_1 + x_1 y_2) k^3
+       + (x_3 y_1 + x_2 y_2 + x_1 y_3) k^2
+       + (x_3 y_2 + x_2 y_3 ) k
+       + x_3 y_3 \\
 \end{aligned}\]
-\(k^4, k^3\)は\(2^{64}\)より大きいので無視できる。
+\(k^4, k^3\)は\(2^{64}\)より大きいので無視する。
 \[\begin{aligned}
   X Y
-    &amp;= (x_1 y_3 + x_2 y_2 + x_3 y_1) k^2 + (x_1 y_2 + x_2 y_1) k + x_1 y_1 \\
-    &amp;= z_3 k^2 + z_2 k + z_1 \\
-  z_3 &amp;= x_1 y_3 + x_2 y_2 + x_3 y_1 \\
-  z_2 &amp;= x_1 y_2 + x_2 y_1 \\
-  z_1 &amp;= x_1 y_1 \\
-  0 &amp;\le z_3 \lt 2^{40} + 2^{48} + 2^{40} \lt 2^{49} \\
+    &amp;= (x_3 y_1 + x_2 y_2 + x_1 y_3) k^2 + (x_3 y_2 + x_2 y_3) k + x_3 y_3 \\
+    &amp;= z_1 k^2 + z_2 k + z_3 \\
+  z_1 &amp;= x_3 y_1 + x_2 y_2 + x_1 y_3 \\
+  z_2 &amp;= x_3 y_2 + x_2 y_3 \\
+  z_3 &amp;= x_3 y_3 \\
+  0 &amp;\le z_1 \lt 2^{40} + 2^{48} + 2^{40} \lt 2^{49} \\
   0 &amp;\le z_2 \lt 2^{48} + 2^{48} \lt 2^{49} \\
-  0 &amp;\le z_1 \lt 2^{48} \\
+  0 &amp;\le z_3 \lt 2^{48} \\
 \end{aligned}\]
 <a href="https://ja.wikipedia.org/wiki/%E3%82%AB%E3%83%A9%E3%83%84%E3%83%90%E6%B3%95">カラツバ法</a>で乗算の回数を減らすことができる。ただし、倍精度浮動小数点数しか使えない環境、逐次実行環境や仮想機械環境では、加減算が乗算より速いとは限らない。
 </p>
 
 <h3>除算</h3>
 
-<h4>筆算 (1)</h4>
-
 <p>
+\(X \div Y\)を考える。\(0 \le Y \lt 2^{24}\)の場合、分岐と繰り返しなしで値が求まる。
 \[\begin{aligned}
   X &amp;= x_1 k + x_2 \\
-  Y &amp;= y_1 k + y_2 \\
-  k &amp;= 2^{48} \\
+  k &amp;= 2^{24} \\
+  0 &amp;\le x_1 \lt 2^{40} \\
+  0 &amp;\le x_2 \lt 2^{24} \\
+  0 &amp;\le Y \lt 2^{24} \\
+  (q_1, r_1) &amp;= x_1 \div Y \\
+  0 &amp;\le q_1 \lt 2^{40} \\
+  0 &amp;\le r_1 \lt 2^{24} \\
+  (q_2, r_2) &amp;= (r_1 k + x_2) \div Y \\
+  0 &amp;\le q_2 \lt 2^{48} \\
+  0 &amp;\le r_2 \lt 2^{24} \\
+  (Q, R) &amp;= X \div Y \\
+  Q &amp;= q_1 k + q_2 \\
+  R &amp;= r_2 \\
 \end{aligned}\]
-\(0 \lt y_1 \lt x_1\)の場合を考える。
-\[\begin{aligned}
-  \frac{X}{Y}
-    &amp;\gt \frac{X}{(y_1 + 1) k} \\
-    &amp;= \frac{x_1}{y_1 + 1} + \frac{x_2}{y_1 + 1} k^{-1} \\
-  \frac{X}{Y} &amp;\gt \rm{floor}\left(\frac{x_1}{y_1 + 1}\right) \\
-\end{aligned}\]
-\(X := X - \rm{floor}\left(\frac{x_1}{y_1 + 1}\right)\)で繰りかえして筆算する。
 </p>
 
-<h4>筆算 (2)</h4>
-
 <p>
+\(2^{24} \le Y \lt 2^{48}\)の場合を考える。
 \[\begin{aligned}
-  X &amp;= x_1 k^2 + x_2 k + x_3 \\
-  Y &amp;= y_1 k^2 + y_2 k + y_3 \\
+  X &amp;= x_1 k + x_2 \\
   k &amp;= 2^{24} \\
-  Z &amp;= y_1 k + y_2 \\
-  Z k &amp;\le Y \lt (Z + 1) k \\
-  \frac{X}{(Z + 1) k} &amp;\lt \frac{X}{Y} \le \frac{Z}{Z k} \\
-  \frac{X}{Y} - \frac{X}{(Z + 1) k} &amp;= d X \\
-  d &amp;= \left( \frac{1}{Y} - \frac{1}{(Z + 1) k} \right) \\
-    &amp;= \frac{(Z + 1) k - Y}{(Z + 1) k Y} \\
-    &amp;= \frac{k - y_3}{(y_1 k^2 + y_2 k + k)(y_1 k^2 + y_2 k + y_3)} \\
+  0 &amp;\le x_1 \lt 2^{40} \\
+  0 &amp;\le x_2 \lt 2^{24} \\
+  2^{24} &amp;\le Y \lt 2^{48} \\
+  (q_1, r_1) &amp;= x_1 \div Y \\
+  0 &amp;\le q_1 \lt 2^{40} \\
+  0 &amp;\le r_1 \lt 2^{48} \\
 \end{aligned}\]
-\((y_1 = 1, y_2 = 0, y_3 = 0)\)のとき、\(d = \frac{1}{k^3+k}\)になる。
-\((y_1 = 0, y_2 = 1, y_3 = 0)\)のとき、\(d = \frac{1}{2k}\)になる。
+倍精度浮動小数点数は\(2^{53}\)までの整数を表現できるので、\(r_1 \lt 2^{28}\)の場合は前段落の手順で値を求めることができる。そうでない場合は、繰り返し計算を行う。
 </p>
 
 <h3>数表</h3>

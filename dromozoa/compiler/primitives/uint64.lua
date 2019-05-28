@@ -15,13 +15,26 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
+local K16 = 0x10000
+local K24 = 0x1000000
+local K48 = 0x1000000000000
+local KD = 10000000
+
+local function mul(X1, X2, Y1, Y2)
+end
+
+
+
+
+
+
+
 local SHIFT16 = 0x10000
 local SHIFT24 = 0x1000000
 local SHIFT48 = 0x1000000000000
 local MASK24 = 0xFFFFFF
 local MASK48 = 0xFFFFFFFFFFFF
 local POW10_7 = 10000000
-
 
 -- TODO impl n
 local function construct(x1, x2, n)
