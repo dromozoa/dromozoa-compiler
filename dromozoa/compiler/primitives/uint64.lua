@@ -51,7 +51,7 @@ local function lt(x1, x2, y1, y2)
   end
 end
 
-local function tostring_dec(x1, X2)
+local function encode_dec(x1, X2)
   local x2 = X2 % K24
   local x1 = x1 * K24 + (X2 - x2) / K24
 
@@ -72,7 +72,7 @@ local function tostring_dec(x1, X2)
   end
 end
 
-local function tostring_hex(x1, x2)
+local function encode_hex(x1, x2)
   return ("0x%04X%012X"):format(x1, x2)
 end
 
@@ -97,12 +97,12 @@ local function construct(x1, x2)
   return setmetatable({ x1, x2 }, metatable)
 end
 
-function class.tostring_dec(x)
-  return tostring_dec(x[1], x[2])
+function class.encode_dec(x)
+  return encode_dec(x[1], x[2])
 end
 
-function class.tostring_hex(x)
-  return tostring_hex(x[1], x[2])
+function class.encode_hex(x)
+  return encode_hex(x[1], x[2])
 end
 
 function metatable.__mul(x, y)
@@ -118,7 +118,7 @@ function metatable.__lt(x, y)
 end
 
 function metatable.__tostring(x)
-  return tostring_dec(x[1], x[2])
+  return encode_dec(x[1], x[2])
 end
 
 return setmetatable(class, {
