@@ -76,7 +76,9 @@ local function encode_hex(x1, x2)
   return ("0x%04X%012X"):format(x1, x2)
 end
 
-local class = {}
+local class = {
+  mul = mul;
+}
 local metatable = { __index = class }
 
 local function normalize(x1, X2)
