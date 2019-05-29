@@ -78,6 +78,10 @@ end
 
 local class = {
   mul = mul;
+  eq = eq;
+  lt = lt;
+  encode_dec = encode_dec;
+  encode_hex = encode_hex;
 }
 local metatable = { __index = class }
 
@@ -97,14 +101,6 @@ end
 
 local function construct(x1, x2)
   return setmetatable({ x1, x2 }, metatable)
-end
-
-function class.encode_dec(x)
-  return encode_dec(x[1], x[2])
-end
-
-function class.encode_hex(x)
-  return encode_hex(x[1], x[2])
 end
 
 function metatable.__mul(x, y)
