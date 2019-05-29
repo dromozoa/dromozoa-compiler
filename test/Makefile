@@ -26,7 +26,7 @@ TARGET = uint64_data.lua
 all: $(TARGET)
 
 clean:
-	rm -f *.o uint64_data
+	rm -f *.o uint64_data $(TARGET)
 
 uint64_data.lua: uint64_data
 	./uint64_data >$@
