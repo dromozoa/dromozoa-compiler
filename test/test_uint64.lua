@@ -45,8 +45,16 @@ assert(uint64.encode_dec(0xFFFF, 0xFFFFFFFFFFFF) == "18446744073709551615")
 assert(uint64.encode_dec(0xDEAD, 0xBEEFFEEDFACE) == "16045690985374415566")
 
 local uint64_max = uint64(0xFFFF, 0xFFFFFFFFFFFF)
-assert(uint64_max * uint64_max == uint64(0, 1))
-assert(uint64_max * uint64(0, 2) == uint64(0xFFFF, 0xFFFFFFFFFFFE))
+assert(uint64_max * uint64_max == uint64(1))
+assert(uint64_max * uint64(2) == uint64(0xFFFF, 0xFFFFFFFFFFFE))
+
+assert(uint64_max / uint64(1) == uint64_max)
+assert(uint64_max % uint64(1) == uint64(0))
+assert(uint64_max / uint64(2) == uint64(0x7FFF, 0xFFFFFFFFFFFF))
+assert(uint64_max % uint64(2) == uint64(1))
+assert(uint64_max / uint64(0x8000, 0) == uint64(1))
+assert(uint64_max % uint64(0x8000, 0) == uint64(0x7FFF, 0xFFFFFFFFFFFF))
+assert(uint64(1, 0) / uint64(1, 0) == uint64(1))
 
 if uint64_data then
   local source = uint64_data.source
@@ -67,9 +75,22 @@ if uint64_data then
         local y = source[j]
         local z = result[k]
 
-        local z1, z2 = f(x[1], x[2], y[1], y[2])
-        assert(z1 == z[1])
-        assert(z2 == z[2])
+        if op == "div" then
+          if y[1] ~= 0 or y[2] ~= 0 then
+            local p = z[1]
+            local r = z[2]
+
+            local p1, p2, r1, r2 = f(x[1], x[2], y[1], y[2])
+            assert(p1 == p[1])
+            assert(p2 == p[2])
+            assert(r1 == r[1])
+            assert(r2 == r[2])
+          end
+        else
+          local z1, z2 = f(x[1], x[2], y[1], y[2])
+          assert(z1 == z[1])
+          assert(z2 == z[2])
+        end
       end
     end
 
@@ -78,5 +99,8 @@ if uint64_data then
     end
   end
 
+  test_binop "add"
+  test_binop "sub"
   test_binop "mul"
+  test_binop "div"
 end

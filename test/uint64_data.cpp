@@ -48,12 +48,24 @@ void write_binop(const std::string op, const std::vector<std::uint64_t>& data) {
     std::uint64_t x = data[i];
     for (std::size_t j = 0; j < data.size(); ++j) {
       std::uint64_t y = data[j];
-      std::uint64_t z = 0;
-      if (op == "mul") {
-        z = x * y;
-      }
       std::cout << "  ";
-      write_value(z);
+      if (op == "add") {
+        write_value(x + y);
+      } else if (op == "sub") {
+        write_value(x - y);
+      } else if (op == "mul") {
+        write_value(x * y);
+      } else if (op == "div") {
+        if (y == 0) {
+          std::cout << "{}";
+        } else {
+          std::cout << "{ ";
+          write_value(x / y);
+          std::cout << ", ";
+          write_value(x % y);
+          std::cout << " }";
+        }
+      }
       std::cout << ";\n";
     }
   }
@@ -102,12 +114,18 @@ int main(int, char*[]) {
   }
   std::cout << "}\n";
 
+  write_binop("add", data);
   write_binop("mul", data);
+  write_binop("sub", data);
+  write_binop("div", data);
 
   std::cout
       << "return {\n"
       << "  source = source;\n"
+      << "  add = add;\n"
+      << "  sub = sub;\n"
       << "  mul = mul;\n"
+      << "  div = div;\n"
       << "}\n";
 
   return 0;
