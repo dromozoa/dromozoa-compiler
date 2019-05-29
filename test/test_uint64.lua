@@ -16,6 +16,7 @@
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
 local uint64 = require "dromozoa.compiler.primitives.uint64"
+local uint64_data = require "test.uint64_data"
 
 assert(uint64() == uint64(0, 0))
 assert(uint64(0) == uint64(0, 0))
