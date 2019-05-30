@@ -26,9 +26,9 @@ local function add(x1, x2, y1, y2)
   local u1 = x1 + y1
 
   local v2 = u2 % K48
-  local v1 = u1 + (u2 - v2) / K48
+  u1 = u1 + (u2 - v2) / K48
 
-  return v1 % K16, v2
+  return u1 % K16, v2
 end
 
 local function sub(x1, x2, y1, y2)
@@ -46,23 +46,22 @@ local function sub(x1, x2, y1, y2)
   return u1, u2
 end
 
-local function mul(x1, x2, y1, y2)
-  local x3 = x2 % K24
-  local x2 = (x2 - x3) / K24
-  local y3 = y2 % K24
-  local y2 = (y2 - y3) / K24
+local function mul(x1, X2, y1, Y2)
+  local x3 = X2 % K24
+  local x2 = (X2 - x3) / K24
+  local y3 = Y2 % K24
+  local y2 = (Y2 - y3) / K24
 
-  local u1 = x3 * y1 + x2 * y2 + x1 * y3
-  local u2 = x3 * y2 + x2 * y3
   local u3 = x3 * y3
+  local u2 = x3 * y2 + x2 * y3
+  local u1 = x3 * y1 + x2 * y2 + x1 * y3
 
   local v3 = u3 % K24
   u2 = u2 + (u3 - v3) / K24
   local v2 = u2 % K24
   u1 = u1 + (u2 - v2) / K24
-  local v1 = u1 % K16
 
-  return v1, v2 * K24 + v3
+  return u1 % K16, v2 * K24 + v3
 end
 
 local function div(X1, X2, y1, y2)
