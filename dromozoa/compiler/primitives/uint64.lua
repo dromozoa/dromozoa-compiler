@@ -128,6 +128,14 @@ local function lt(x1, x2, y1, y2)
   end
 end
 
+local function le(x1, x2, y1, y2)
+  if x1 == y1 then
+    return x2 <= y2
+  else
+    return x1 <= y1
+  end
+end
+
 local function encode_dec(x1, X2)
   local x2 = X2 % K24
   local x1 = x1 * K24 + (X2 - x2) / K24

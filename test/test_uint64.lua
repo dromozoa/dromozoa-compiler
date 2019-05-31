@@ -19,9 +19,11 @@ local uint64 = require "dromozoa.compiler.primitives.uint64"
 local unix = require "dromozoa.unix"
 
 local uint64_data
-local result, module = pcall(require, "test.uint64_data")
+local result, module_or_message = pcall(require, "test.uint64_data")
 if result then
-  uint64_data = module
+  uint64_data = module_or_message
+else
+  print(module_or_message)
 end
 
 local verbose = os.getenv "VERBOSE" == "1"
