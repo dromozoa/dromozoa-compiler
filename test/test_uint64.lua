@@ -58,14 +58,33 @@ local function read_dataset(filename)
   if not handle then
     return
   end
+
+  local op = assert(filename:match "uint64_data_([^%.]+)%.txt")
+
   timer:start()
   local dataset = {}
-  for line in handle:lines() do
-    local data = {}
-    for item in line:gmatch "(0x%x+)" do
-      data[#data + 1] = tonumber(item)
+  if op == "div" then
+    for line in handle:lines() do
+      if line == "" then
+        dataset[#dataset + 1] = {}
+      else
+        local a, b, c, d = assert(line:match "^(0x%x+)\t(0x%x+)\t(0x%x+)\t(0x%x+)$")
+        dataset[#dataset + 1] = {
+          tonumber(a);
+          tonumber(b);
+          tonumber(c);
+          tonumber(d);
+        }
+      end
     end
-    dataset[#dataset + 1] = data
+  else
+    for line in handle:lines() do
+      local a, b = assert(line:match "^(0x%x+)\t(0x%x+)$")
+      dataset[#dataset + 1] = {
+        tonumber(a);
+        tonumber(b);
+      }
+    end
   end
   timer:stop()
 
@@ -91,6 +110,9 @@ if not source then
 end
 
 local n = #source
+if verbose then
+  print(n)
+end
 
 local function test_binop(op)
   local result = uint64_data[op]
@@ -125,7 +147,7 @@ local function test_binop(op)
   timer:stop()
 
   if verbose then
-    print("test_binop", op, timer:elapsed())
+    print("test_binop", op, #result, timer:elapsed())
   end
 end
 
