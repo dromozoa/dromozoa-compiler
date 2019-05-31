@@ -129,19 +129,20 @@
 <h3>除算</h3>
 
 <p>
-\(X \div Y\)を考える。\(0 \le Y \lt 2^{24}\)の場合、分岐と繰り返しなしで値が求まる。
+\(X \div Y\)を求める。\(0 \lt Y \lt 2^{40}\)の場合を考える。
 \[\begin{aligned}
   X &amp;= x_1 k + x_2 \\
-  k &amp;= 2^{24} \\
-  0 &amp;\le x_1 \lt 2^{40} \\
-  0 &amp;\le x_2 \lt 2^{24} \\
-  0 &amp;\le Y \lt 2^{24} \\
+  k &amp;= 2^{12} \\
+  0 &amp;\le x_1 \lt 2^{52} \\
+  0 &amp;\le x_2 \lt 2^{12} \\
+  0 &amp;\lt Y \lt 2^{40} \\
   (q_1, r_1) &amp;= x_1 \div Y \\
-  0 &amp;\le q_1 \lt 2^{40} \\
-  0 &amp;\le r_1 \lt 2^{24} \\
+  0 &amp;\le q_1 \lt 2^{52} \\
+  0 &amp;\le r_1 \lt 2^{40} \\
+  0 &amp;\le r_1 k + x_2 \lt 2^{52} \\
   (q_2, r_2) &amp;= (r_1 k + x_2) \div Y \\
-  0 &amp;\le q_2 \lt 2^{48} \\
-  0 &amp;\le r_2 \lt 2^{24} \\
+  0 &amp;\le q_2 \lt 2^{52} \\
+  0 &amp;\le r_2 \lt 2^{40} \\
   (Q, R) &amp;= X \div Y \\
   Q &amp;= q_1 k + q_2 \\
   R &amp;= r_2 \\
@@ -149,18 +150,43 @@
 </p>
 
 <p>
-\(2^{24} \le Y \lt 2^{48}\)の場合を考える。
+\(2^{40} \le Y \le 2^{64}\)の場合を考える。
 \[\begin{aligned}
   X &amp;= x_1 k + x_2 \\
-  k &amp;= 2^{24} \\
-  0 &amp;\le x_1 \lt 2^{40} \\
-  0 &amp;\le x_2 \lt 2^{24} \\
-  2^{24} &amp;\le Y \lt 2^{48} \\
-  (q_1, r_1) &amp;= x_1 \div Y \\
-  0 &amp;\le q_1 \lt 2^{16} \\
-  0 &amp;\le r_1 \lt 2^{40} \\
+  Y &amp;= y_1 k + y_2 \\
+  k &amp;= 2^{12} \\
+  0 &amp;\le x_1 \lt 2^{52} \\
+  0 &amp;\le x_2 \lt 2^{12} \\
+  2^{28} &amp;\le y_1 \lt 2^{52} \\
+  0 &amp;\le y_2 \lt 2^{12} \\
+  d &amp;= \frac{x_1 k + x_2}{y_1 k + y_2} - \frac{x_1 k}{y_1 k + 1} \\
+    &amp;= \frac{
+        (x_1 k + x_2) (y_1 k + 1) - x_1 k (y_1 k + y_2)
+      }{
+        (y_1 k + y_2) (y_1 k + 1)
+      } \\
+    &amp;= \frac{
+        (x_2 y_1 + x_1 - x_1 y_2) k + x_2
+      }{
+        y_1^2 k^2 + y_1 (y_2 + 1) k + y_2
+      } \\
+    &amp;= \frac{d_1}{d_2} \\
+  d_1
+    &amp;= (x_2 y_1 + x_1 - x_1 y_2) k + x_2 \\
+    &amp;\lt y_1 2^{12} + 2^{64} + 2^{12} \\
+    &amp;\lt 2^{65} \\
+  d_2
+    &amp;= y_1^2 k^2 + y_1 (y_2 + 1) k + y_2 \\
+    &amp;\gt y_1^2 2^{24} \\
+    &amp;\gt 2^{80} \\
+  d &amp;\lt 2^{-15} \\
+  q &amp;= x_1 \div y_1 \\
+  Z &amp;= X - q Y \\
+  0 &amp;\le Z \lt 2 Y \\
+  (Q, R) &amp;= X \div Y \\
 \end{aligned}\]
-倍精度浮動小数点数は\(2^{53}\)までの整数を表現できるので、\(r_1 \lt 2^{28}\)の場合は前段落の手順で値を求める。そうでない場合、\(x_2\)から12ビットを持ってきて処理する。
+\(Z \lt Y\)の場合、\((Q, R) = (q, Z)\)になる。\(Z \ge Y\)の場合、\((Q, R) = (q + 1, Z - Y)\)になる。
+\end{aligned}\]
 </p>
 
 <h3>数表</h3>
