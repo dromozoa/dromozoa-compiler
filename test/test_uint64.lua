@@ -18,14 +18,6 @@
 local uint64 = require "dromozoa.compiler.primitives.uint64"
 local unix = require "dromozoa.unix"
 
-local uint64_data
-local result, module_or_message = pcall(require, "test.uint64_data")
-if result then
-  uint64_data = module_or_message
-else
-  print(module_or_message)
-end
-
 local verbose = os.getenv "VERBOSE" == "1"
 
 assert(uint64() == uint64(0, 0))
@@ -59,53 +51,85 @@ assert(uint64_max / uint64(0x8000, 0) == uint64(1))
 assert(uint64_max % uint64(0x8000, 0) == uint64(0x7FFF, 0xFFFFFFFFFFFF))
 assert(uint64(1, 0) / uint64(1, 0) == uint64(1))
 
-if uint64_data then
-  local source = uint64_data.source
-  local n = #source
-  local timer = unix.timer()
+local timer = unix.timer()
 
-  local function test_binop(op)
-    local result = uint64_data[op]
-    local f = uint64[op]
-
-    timer:start()
-
-    local k = 0
-    for i = 1, n do
-      for j = 1, n do
-        k = k + 1
-        local x = source[i]
-        local y = source[j]
-        local z = result[k]
-
-        if op == "div" then
-          if y[1] ~= 0 or y[2] ~= 0 then
-            local p = z[1]
-            local r = z[2]
-
-            local p1, p2, r1, r2 = f(x[1], x[2], y[1], y[2])
-            assert(p1 == p[1])
-            assert(p2 == p[2])
-            assert(r1 == r[1])
-            assert(r2 == r[2])
-          end
-        else
-          local z1, z2 = f(x[1], x[2], y[1], y[2])
-          assert(z1 == z[1])
-          assert(z2 == z[2])
-        end
-      end
+local function read_dataset(filename)
+  local handle = io.open(filename)
+  if not handle then
+    return
+  end
+  timer:start()
+  local dataset = {}
+  for line in handle:lines() do
+    local data = {}
+    for item in line:gmatch "(0x%x+)" do
+      data[#data + 1] = tonumber(item)
     end
+    dataset[#dataset + 1] = data
+  end
+  timer:stop()
 
-    timer:stop()
+  if verbose then
+    print("read_dataset", filename, timer:elapsed())
+  end
 
-    if verbose then
-      print("test_binop", op, timer:elapsed())
+  handle:close()
+  return dataset
+end
+
+local uint64_data = {
+  source = read_dataset "test/uint64_data_source.txt";
+  add = read_dataset "test/uint64_data_add.txt";
+  sub = read_dataset "test/uint64_data_sub.txt";
+  mul = read_dataset "test/uint64_data_mul.txt";
+  div = read_dataset "test/uint64_data_div.txt";
+}
+
+local source = uint64_data.source
+if not source then
+  os.exit()
+end
+
+local n = #source
+
+local function test_binop(op)
+  local result = uint64_data[op]
+  local f = uint64[op]
+
+  timer:start()
+
+  local k = 0
+  for i = 1, n do
+    for j = 1, n do
+      k = k + 1
+      local x = source[i]
+      local y = source[j]
+      local z = result[k]
+
+      if op == "div" then
+        if y[1] ~= 0 or y[2] ~= 0 then
+          local p1, p2, r1, r2 = f(x[1], x[2], y[1], y[2])
+          assert(p1 == z[1])
+          assert(p2 == z[2])
+          assert(r1 == z[3])
+          assert(r2 == z[4])
+        end
+      else
+        local z1, z2 = f(x[1], x[2], y[1], y[2])
+        assert(z1 == z[1])
+        assert(z2 == z[2])
+      end
     end
   end
 
-  test_binop "add"
-  test_binop "sub"
-  test_binop "mul"
-  test_binop "div"
+  timer:stop()
+
+  if verbose then
+    print("test_binop", op, timer:elapsed())
+  end
 end
+
+test_binop "add"
+test_binop "sub"
+test_binop "mul"
+test_binop "div"
