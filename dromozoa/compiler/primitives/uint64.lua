@@ -126,6 +126,90 @@ local function div(X1, X2, Y1, Y2)
     end
 
     return z1 % K16, z2, 0, r2
+  else
+    local y2 = Y2 % K12
+    local y1 = Y1 * K36 + (Y2 - y2) / K12
+
+    local q = x1 / (y1 + 1)
+    local q = q - q % 1
+
+    -- local U1, U2 = mul(Y1, Y2, 0, q)
+    local y3 = Y2 % K24
+    local y2 = (Y2 - y3) / K24
+
+    local u3 = y3 * q
+    local u2 = y2 * q
+    local u1 = Y1 * q
+
+    local v2 = u2 % K24
+    local v1 = (u2 - v2) / K24
+
+    local U2 = v2 * K24 + u3
+    local U1 = u1 + v1
+
+    if U2 >= K48 then
+      U2 = U2 - K48
+      U1 = U1 + 1
+    end
+
+    -- local V1, V2 = sub(X1, X2, U1, U2)
+    local V2 = X2 - U2
+    local V1 = X1 - U1
+
+    if V2 < 0 then
+      V2 = V2 + K48
+      V1 = V1 - 1
+    end
+
+    if V1 == Y1 then
+      if V2 < Y2 then
+        return 0, q, V1, V2
+      end
+    else
+      if V1 < Y1 then
+        return 0, q, V1, V2
+      end
+    end
+
+    -- local V1, V2 = sub(V1, V2, Y1, Y2)
+    local V2 = V2 - Y2
+    local V1 = V1 - Y1
+    if V2 < 0 then
+      V2 = V2 + K48
+      V1 = V1 - 1
+    end
+    return 0, q + 1, V1, V2
+  end
+end
+
+local function __div(X1, X2, Y1, Y2)
+  local x2 = X2 % K12
+  local x1 = X1 * K36 + (X2 - x2) / K12
+
+  if Y1 == 0 and Y2 < K40 then
+    local r1 = x1 % Y2
+    local q1 = (x1 - r1) / Y2
+
+    local u = r1 * K12 + x2
+
+    local r2 = u % Y2
+    local q2 = (u - r2) / Y2
+
+    local v2 = q1 % K36
+    local v1 = (q1 - v2) / K36
+
+    local w2 = q2 % K48
+    local w1 = (q2 - w2) / K48
+
+    local z2 = v2 * K12 + w2
+    local z1 = v1 + w1
+
+    if z2 >= K48 then
+      z2 = z2 - K48
+      z1 = z1 + 1
+    end
+
+    return z1 % K16, z2, 0, r2
   end
 
   local y2 = Y2 % K12
