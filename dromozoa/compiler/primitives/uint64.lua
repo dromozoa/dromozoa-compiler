@@ -87,25 +87,15 @@ local function mul(x1, x2, y1, y2)
   local v2 = u2 % K24
   local v1 = (u2 - v2) / K24
 
-  v2 = v2 * K24 + u3
-  v1 = u1 + v1
+  local w2 = v2 * K24 + u3
+  local w1 = u1 + v1
 
-  if v2 >= K48 then
-    v2 = v2 - K48
-    v1 = v1 + 1
+  if w2 >= K48 then
+    w2 = w2 - K48
+    w1 = w1 + 1
   end
 
-  return v1 % K16, v2
-
-
---[[
-  local v3 = u3 % K24
-  u2 = u2 + (u3 - v3) / K24
-  local v2 = u2 % K24
-  u1 = u1 + (u2 - v2) / K24
-
-  return u1 % K16, v2 * K24 + v3
-]]
+  return w1 % K16, w2
 end
 
 local function div(X1, X2, Y1, Y2)
@@ -164,17 +154,17 @@ local function encode_dec(x1, X2)
   local r1 = x1 % KD
   local q1 = (x1 - r1) / KD
 
-  local u2 = x2 + r1 * K24
+  local u = r1 * K24 + x2
 
-  local r2 = u2 % KD
-  local q2 = (u2 - r2) / KD
+  local r2 = u % KD
+  local q2 = (u - r2) / KD
 
-  local u1 = q1 * K24 + q2
+  local v = q1 * K24 + q2
 
-  if u1 == 0 then
+  if v == 0 then
     return ("%d"):format(r2)
   else
-    return ("%d%07d"):format(u1, r2)
+    return ("%d%07d"):format(v, r2)
   end
 end
 
