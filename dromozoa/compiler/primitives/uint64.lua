@@ -106,22 +106,24 @@ local function div(X1, X2, Y1, Y2)
     local r1 = x1 % Y2
     local q1 = (x1 - r1) / Y2
 
-    local u2 = r1 * K12 + x2
+    local u = r1 * K12 + x2
 
-    local r2 = u2 % Y2
-    local q2 = (u2 - r2) / Y2
+    local r2 = u % Y2
+    local q2 = (u - r2) / Y2
 
-    local r3 = q1 % K36
-    local q3 = (q1 - r3) / K36
+    local v2 = q1 % K36
+    local v1 = (q1 - v2) / K36
 
-    local r4 = q2 % K48
-    local q4 = (q2 - r4) / K48
+    local w2 = q2 % K48
+    local w1 = (q2 - w2) / K48
 
-    local v2 = r3 * K12 + r4
-    local v1 = q3 + q4
+    local z2 = v2 * K12 + w2
+    local z1 = v1 + w1
 
-    local z2 = v2 % K48
-    local z1 = v1 + (v2 - z2) / K48
+    if z2 >= K48 then
+      z2 = z2 - K48
+      z1 = z1 + 1
+    end
 
     return z1 % K16, z2, 0, r2
   end
@@ -147,9 +149,9 @@ local function div(X1, X2, Y1, Y2)
   return 0, q, v1, v2
 end
 
-local function encode_dec(x1, X2)
+local function encode_dec(X1, X2)
   local x2 = X2 % K24
-  local x1 = x1 * K24 + (X2 - x2) / K24
+  local x1 = X1 * K24 + (X2 - x2) / K24
 
   local r1 = x1 % KD
   local q1 = (x1 - r1) / KD
