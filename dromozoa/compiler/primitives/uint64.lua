@@ -24,6 +24,26 @@ local K40 = 0x10000000000
 local K48 = 0x1000000000000
 local KD = 10000000
 
+local function eq(x1, x2, y1, y2)
+  return x1 == y1 and x2 == y2
+end
+
+local function lt(x1, x2, y1, y2)
+  if x1 == y1 then
+    return x2 < y2
+  else
+    return x1 < y1
+  end
+end
+
+local function le(x1, x2, y1, y2)
+  if x1 == y1 then
+    return x2 <= y2
+  else
+    return x1 <= y1
+  end
+end
+
 local function add(x1, x2, y1, y2)
   local u2 = x2 + y2
   local u1 = x1 + y1
@@ -116,26 +136,6 @@ local function div(X1, X2, Y1, Y2)
   return 0, q, v1, v2
 end
 
-local function eq(x1, x2, y1, y2)
-  return x1 == y1 and x2 == y2
-end
-
-local function lt(x1, x2, y1, y2)
-  if x1 == y1 then
-    return x2 < y2
-  else
-    return x1 < y1
-  end
-end
-
-local function le(x1, x2, y1, y2)
-  if x1 == y1 then
-    return x2 <= y2
-  else
-    return x1 <= y1
-  end
-end
-
 local function encode_dec(x1, X2)
   local x2 = X2 % K24
   local x1 = x1 * K24 + (X2 - x2) / K24
@@ -168,6 +168,7 @@ local class = {
   div = div;
   eq = eq;
   lt = lt;
+  le = le;
   encode_dec = encode_dec;
   encode_hex = encode_hex;
 }
@@ -219,6 +220,10 @@ end
 
 function metatable.__lt(x, y)
   return lt(x[1], x[2], y[1], y[2])
+end
+
+function metatable.__le(x, y)
+  return le(x[1], x[2], y[1], y[2])
 end
 
 function metatable.__tostring(x)
