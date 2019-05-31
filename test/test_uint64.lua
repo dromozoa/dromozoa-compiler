@@ -20,26 +20,60 @@ local unix = require "dromozoa.unix"
 
 local verbose = os.getenv "VERBOSE" == "1"
 
+local uint64_max = uint64(0xFFFF, 0xFFFFFFFFFFFF)
+
 assert(uint64() == uint64(0, 0))
 assert(uint64(0) == uint64(0, 0))
 assert(uint64(0, 0) == uint64(0, 0))
 assert(uint64(0xFFFFFFFF) == uint64(0x0000, 0x0000FFFFFFFF))
 assert(uint64(0xFFFFFFFFFFFF) == uint64(0x0000, 0xFFFFFFFFFFFF))
-assert(uint64(0xFFFE, 0x1FFFFFFFFFFFF) == uint64(0xFFFF, 0xFFFFFFFFFFFF))
-assert(uint64(0xFFFD, 0x2FFFFFFFFFFFF) == uint64(0xFFFF, 0xFFFFFFFFFFFF))
-assert(uint64(0xFFFC, 0x3FFFFFFFFFFFF) == uint64(0xFFFF, 0xFFFFFFFFFFFF))
+assert(uint64(0xFFFE, 0x1FFFFFFFFFFFF) == uint64_max)
+assert(uint64(0xFFFD, 0x2FFFFFFFFFFFF) == uint64_max)
+assert(uint64(0xFFFC, 0x3FFFFFFFFFFFF) == uint64_max)
 
+assert(uint64 {} == uint64(0, 0))
+assert(uint64 { 0 } == uint64(0, 0))
+assert(uint64 { 0, 0 } == uint64(0, 0))
+assert(uint64 { 0xFFFFFFFF } == uint64(0x0000, 0x0000FFFFFFFF))
+assert(uint64 { 0xFFFFFFFFFFFF } == uint64(0x0000, 0xFFFFFFFFFFFF))
+assert(uint64 { 0xFFFE, 0x1FFFFFFFFFFFF } == uint64_max)
+assert(uint64 { 0xFFFD, 0x2FFFFFFFFFFFF } == uint64_max)
+assert(uint64 { 0xFFFC, 0x3FFFFFFFFFFFF } == uint64_max)
+
+assert(uint64.encode_hex() == "0x0000000000000000")
+assert(uint64.encode_hex(0) == "0x0000000000000000")
+assert(uint64.encode_hex(0, 0) == "0x0000000000000000")
 assert(uint64.encode_hex(0x0000, 0x000000000000) == "0x0000000000000000")
 assert(uint64.encode_hex(0x0000, 0xFFFFFFFFFFFF) == "0x0000FFFFFFFFFFFF")
 assert(uint64.encode_hex(0xFFFF, 0xFFFFFFFFFFFF) == "0xFFFFFFFFFFFFFFFF")
 assert(uint64.encode_hex(0xDEAD, 0xBEEFFEEDFACE) == "0xDEADBEEFFEEDFACE")
 
+assert(uint64(0x0000, 0x000000000000):encode_hex() == "0x0000000000000000")
+assert(uint64(0x0000, 0xFFFFFFFFFFFF):encode_hex() == "0x0000FFFFFFFFFFFF")
+assert(uint64(0xFFFF, 0xFFFFFFFFFFFF):encode_hex() == "0xFFFFFFFFFFFFFFFF")
+assert(uint64(0xDEAD, 0xBEEFFEEDFACE):encode_hex() == "0xDEADBEEFFEEDFACE")
+
+assert(uint64.encode_dec() == "0")
+assert(uint64.encode_dec(0) == "0")
+assert(uint64.encode_dec(0, 0) == "0")
 assert(uint64.encode_dec(0x0000, 0x000000000000) == "0")
 assert(uint64.encode_dec(0x0000, 0xFFFFFFFFFFFF) == "281474976710655")
 assert(uint64.encode_dec(0xFFFF, 0xFFFFFFFFFFFF) == "18446744073709551615")
 assert(uint64.encode_dec(0xDEAD, 0xBEEFFEEDFACE) == "16045690985374415566")
 
-local uint64_max = uint64(0xFFFF, 0xFFFFFFFFFFFF)
+assert(uint64(0x0000, 0x000000000000):encode_dec() == "0")
+assert(uint64(0x0000, 0xFFFFFFFFFFFF):encode_dec() == "281474976710655")
+assert(uint64(0xFFFF, 0xFFFFFFFFFFFF):encode_dec() == "18446744073709551615")
+assert(uint64(0xDEAD, 0xBEEFFEEDFACE):encode_dec() == "16045690985374415566")
+
+assert(uint64_max + 1 == uint64(0))
+assert(uint64_max + 2 == uint64(1))
+assert(1 + uint64_max == uint64(0))
+assert(2 + uint64_max == uint64(1))
+
+assert(uint64_max - 1 == uint64(0xFFFF, 0xFFFFFFFFFFFE))
+assert(uint64_max - 2 == uint64(0xFFFF, 0xFFFFFFFFFFFD))
+
 assert(uint64_max * uint64_max == uint64(1))
 assert(uint64_max * uint64(2) == uint64(0xFFFF, 0xFFFFFFFFFFFE))
 
@@ -50,6 +84,11 @@ assert(uint64_max % uint64(2) == uint64(1))
 assert(uint64_max / uint64(0x8000, 0) == uint64(1))
 assert(uint64_max % uint64(0x8000, 0) == uint64(0x7FFF, 0xFFFFFFFFFFFF))
 assert(uint64(1, 0) / uint64(1, 0) == uint64(1))
+
+assert(uint64(1) < uint64(2))
+assert(uint64(1) <= uint64(2))
+assert(not uint64(2) < uint64(2))
+assert(uint64(2) <= uint64(2))
 
 local timer = unix.timer()
 
