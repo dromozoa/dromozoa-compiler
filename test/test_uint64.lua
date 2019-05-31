@@ -16,6 +16,7 @@
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
 local uint64 = require "dromozoa.compiler.primitives.uint64"
+local unix = require "dromozoa.unix"
 
 local uint64_data
 local result, module = pcall(require, "test.uint64_data")
@@ -59,13 +60,13 @@ assert(uint64(1, 0) / uint64(1, 0) == uint64(1))
 if uint64_data then
   local source = uint64_data.source
   local n = #source
+  local timer = unix.timer()
 
   local function test_binop(op)
     local result = uint64_data[op]
     local f = uint64[op]
 
-    local ok = 0
-    local ng = 0
+    timer:start()
 
     local k = 0
     for i = 1, n do
@@ -94,10 +95,13 @@ if uint64_data then
       end
     end
 
+    timer:stop()
+
     if verbose then
-      print("test_binop " .. op)
+      print("test_binop", op, timer:elapsed())
     end
   end
+
 
   test_binop "add"
   test_binop "sub"

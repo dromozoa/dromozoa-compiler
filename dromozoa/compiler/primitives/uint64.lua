@@ -15,9 +15,12 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
+local K12 = 0x1000
 local K16 = 0x10000
 local K24 = 0x1000000
 local K28 = 0x10000000
+local K36 = 0x1000000000
+local K40 = 0x10000000000
 local K48 = 0x1000000000000
 local KD = 10000000
 
@@ -46,11 +49,11 @@ local function sub(x1, x2, y1, y2)
   return u1, u2
 end
 
-local function mul(x1, X2, y1, Y2)
-  local x3 = X2 % K24
-  local x2 = (X2 - x3) / K24
-  local y3 = Y2 % K24
-  local y2 = (Y2 - y3) / K24
+local function mul(x1, x2, y1, y2)
+  local x3 = x2 % K24
+  local x2 = (x2 - x3) / K24
+  local y3 = y2 % K24
+  local y2 = (y2 - y3) / K24
 
   local u3 = x3 * y3
   local u2 = x3 * y2 + x2 * y3
@@ -64,69 +67,53 @@ local function mul(x1, X2, y1, Y2)
   return u1 % K16, v2 * K24 + v3
 end
 
-local function div(X1, X2, y1, y2)
-  if y1 == 0 then
-    local x2 = X2 % K24
-    local x1 = X1 * K24 + (X2 - x2) / K24
+local function div(X1, X2, Y1, Y2)
+  local x2 = X2 % K12
+  local x1 = X1 * K36 + (X2 - x2) / K12
 
-    local r1 = x1 % y2
-    if r1 < K28 then
-      local q1 = (x1 - r1) / y2
+  if Y1 == 0 and Y2 < K40 then
+    local r1 = x1 % Y2
+    local q1 = (x1 - r1) / Y2
 
-      local u2 = x2 + r1 * K24
+    local u2 = r1 * K12 + x2
 
-      local r2 = u2 % y2
-      local q2 = (u2 - r2) / y2
+    local r2 = u2 % Y2
+    local q2 = (u2 - r2) / Y2
 
-      local z2 = q1 % K24
-      local z1 = (q1 - z2) / K24
-      z2 = z2 * K24 + q2
+    local r3 = q1 % K36
+    local q3 = (q1 - r3) / K36
 
-      return z1, z2, 0, r2
+    local r4 = q2 % K48
+    local q4 = (q2 - r4) / K48
+
+    local v2 = r3 * K12 + r4
+    local v1 = q3 + q4
+
+    local z2 = v2 % K48
+    local z1 = v1 + (v2 - z2) / K48
+
+    return z1 % K16, z2, 0, r2
+  end
+
+  local y2 = Y2 % K12
+  local y1 = Y1 * K36 + (Y2 - y2) / K12
+  local q = x1 / (y1 + 1)
+  q = q - q % 1
+
+  local u1, u2 = mul(Y1, Y2, 0, q)
+  local v1, v2 = sub(X1, X2, u1, u2)
+
+  if v1 == Y1 then
+    if v2 >= Y2 then
+      return 0, q + 1, sub(v1, v2, Y1, Y2)
+    end
+  else
+    if v1 >= Y1 then
+      return 0, q + 1, sub(v1, v2, Y1, Y2)
     end
   end
 
-  local x1 = X1
-  local x2 = X2
-  local Y1 = {}
-  local Y2 = {}
-  local Z = {}
-
-  local z = 1
-  for i = 1, 36 do
-    Y1[i] = y1
-    Y2[i] = y2
-    Z[i] = z
-    y1 = y1 * 2
-    y2 = y2 * 2
-    z = z * 2
-    local r = y2 % K48
-    y1 = y1 + (y2 - r) / K48
-    if y1 >= K16 then
-      break
-    end
-    y2 = r
-  end
-
-  local q = 0
-  for i = #Y1, 1, -1 do
-    local y1 = Y1[i]
-    local y2 = Y2[i]
-    local z = Z[i]
-    if x1 == y1 then
-      if x2 >= y2 then
-        x1, x2 = sub(x1, x2, y1, y2)
-        q = q + z
-      end
-    else
-      if x1 >= y1 then
-        x1, x2 = sub(x1, x2, y1, y2)
-        q = q + z
-      end
-    end
-  end
-
-  return 0, q, x1, x2
+  return 0, q, v1, v2
 end
 
 local function eq(x1, x2, y1, y2)
