@@ -21,15 +21,15 @@ CXXFLAGS = -Wall -W $(CFLAGS)
 LDFLAGS =
 LDLIBS =
 
-TARGET = uint64_data.lua
+TARGET = uint64_data_source.txt
 
 all: $(TARGET)
 
 clean:
-	rm -f *.o uint64_data $(TARGET)
+	rm -f *.o uint64_data uint64_data_*.txt
 
-uint64_data.lua: uint64_data
-	./uint64_data >$@
+uint64_data_source.txt: uint64_data
+	./uint64_data
 
 uint64_data: uint64_data.o
 	$(CXX) $(LDFLAGS) $^ $(LDLIBS) -o $@

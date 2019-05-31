@@ -18,7 +18,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <iomanip>
-#include <iostream>
+#include <fstream>
 #include <sstream>
 #include <vector>
 
@@ -30,46 +30,34 @@ std::string to_string(std::uint64_t v, std::size_t width) {
   return out.str();
 }
 
-void write_value(std::uint64_t x) {
+std::ostream& write_value(std::ostream& out, std::uint64_t x) {
   std::uint64_t x1 = x >> 48;
   std::uint64_t x2 = x & 0xFFFFFFFFFFFF;
-
-  std::cout
-      << "{ "
-      << to_string(x1, 4)
-      << ", "
-      << to_string(x2, 16)
-      << " }";
+  return out << to_string(x1, 4) << "\t" << to_string(x2, 16);
 }
 
 void write_binop(const std::string op, const std::vector<std::uint64_t>& data) {
-  std::cout << op << " = {\n";
+  std::ofstream out("uint64_data_" + op + ".txt");
   for (std::size_t i = 0; i < data.size(); ++i) {
     std::uint64_t x = data[i];
     for (std::size_t j = 0; j < data.size(); ++j) {
       std::uint64_t y = data[j];
-      std::cout << "  ";
       if (op == "add") {
-        write_value(x + y);
+        write_value(out, x + y) << "\n";
       } else if (op == "sub") {
-        write_value(x - y);
+        write_value(out, x - y) << "\n";
       } else if (op == "mul") {
-        write_value(x * y);
+        write_value(out, x * y) << "\n";
       } else if (op == "div") {
         if (y == 0) {
-          std::cout << "{}";
+          out << "\n";
         } else {
-          std::cout << "{ ";
-          write_value(x / y);
-          std::cout << ", ";
-          write_value(x % y);
-          std::cout << " }";
+          write_value(out, x / y) << "\t";
+          write_value(out, x % y) << "\n";
         }
       }
-      std::cout << ";\n";
     }
   }
-  std::cout << "}\n";
 }
 
 int main(int, char*[]) {
@@ -99,34 +87,22 @@ int main(int, char*[]) {
 
   std::size_t N24 = sizeof(K24) / sizeof(K24[0]);
 
-  std::cout << "local source = {\n";
   std::vector<std::uint64_t> data;
+  std::ofstream out("uint64_data_source.txt");
   for (std::size_t i = 0; i < N16; ++i) {
     for (std::size_t j = 0; j < N24; ++j) {
       for (std::size_t k = 0; k < N24; ++k) {
         std::uint64_t v = K16[i] << 48 | K24[j] << 24 | K24[k];
         data.push_back(v);
-        std::cout << "  ";
-        write_value(v);
-        std::cout << ";\n";
+        write_value(out, v) << "\n";
       }
     }
   }
-  std::cout << "}\n";
 
   write_binop("add", data);
   write_binop("mul", data);
   write_binop("sub", data);
   write_binop("div", data);
-
-  std::cout
-      << "return {\n"
-      << "  source = source;\n"
-      << "  add = add;\n"
-      << "  sub = sub;\n"
-      << "  mul = mul;\n"
-      << "  div = div;\n"
-      << "}\n";
 
   return 0;
 }

@@ -104,7 +104,6 @@ if uint64_data then
     end
   end
 
-
   test_binop "add"
   test_binop "sub"
   test_binop "mul"
