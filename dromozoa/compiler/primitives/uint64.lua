@@ -48,10 +48,15 @@ local function add(x1, x2, y1, y2)
   local u2 = x2 + y2
   local u1 = x1 + y1
 
-  local v2 = u2 % K48
-  u1 = u1 + (u2 - v2) / K48
+  if u2 >= K48 then
+    u2 = u2 - K48
+    u1 = u1 + 1
+  end
+  if u1 >= K16 then
+    u1 = u1 - K16
+  end
 
-  return u1 % K16, v2
+  return u1, u2
 end
 
 local function sub(x1, x2, y1, y2)
@@ -79,12 +84,28 @@ local function mul(x1, x2, y1, y2)
   local u2 = x3 * y2 + x2 * y3
   local u1 = x3 * y1 + x2 * y2 + x1 * y3
 
+  local v2 = u2 % K24
+  local v1 = (u2 - v2) / K24
+
+  v2 = v2 * K24 + u3
+  v1 = u1 + v1
+
+  if v2 >= K48 then
+    v2 = v2 - K48
+    v1 = v1 + 1
+  end
+
+  return v1 % K16, v2
+
+
+--[[
   local v3 = u3 % K24
   u2 = u2 + (u3 - v3) / K24
   local v2 = u2 % K24
   u1 = u1 + (u2 - v2) / K24
 
   return u1 % K16, v2 * K24 + v3
+]]
 end
 
 local function div(X1, X2, Y1, Y2)
