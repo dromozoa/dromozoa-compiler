@@ -60,6 +60,26 @@ void write_binop(const std::string op, const std::vector<std::uint64_t>& data) {
   }
 }
 
+std::string encode_hex(std::uint64_t v) {
+  std::ostringstream out;
+  out << "0x"
+      << std::hex << std::uppercase << std::setfill('0') << std::setw(16)
+      << v;
+  return out.str();
+}
+
+void write_unop(const std::string op, const std::vector<std::uint64_t>& data) {
+  std::ofstream out("uint64_data_" + op + ".txt");
+  for (std::size_t i = 0; i < data.size(); ++i) {
+    std::uint64_t x = data[i];
+    if (op == "encode_dec") {
+      out << x << "\n";
+    } else if (op == "encode_hex") {
+      out << encode_hex(x) << "\n";
+    }
+  }
+}
+
 int main(int, char*[]) {
   std::uint64_t K16[] = {
     0x0000,
@@ -103,6 +123,9 @@ int main(int, char*[]) {
   write_binop("mul", data);
   write_binop("sub", data);
   write_binop("div", data);
+
+  write_unop("encode_dec", data);
+  write_unop("encode_hex", data);
 
   return 0;
 }

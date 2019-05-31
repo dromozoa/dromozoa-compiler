@@ -59,7 +59,7 @@ local function read_dataset(filename)
     return
   end
 
-  local op = assert(filename:match "uint64_data_([^%.]+)%.txt")
+  local op = assert(filename:match "uint64_data_([^%.]+)%.txt$")
 
   timer:start()
   local dataset = {}
@@ -76,6 +76,10 @@ local function read_dataset(filename)
           tonumber(d);
         }
       end
+    end
+  elseif op:find "^encode_" then
+    for line in handle:lines() do
+      dataset[#dataset + 1] = line
     end
   else
     for line in handle:lines() do
@@ -102,6 +106,8 @@ local uint64_data = {
   sub = read_dataset "test/uint64_data_sub.txt";
   mul = read_dataset "test/uint64_data_mul.txt";
   div = read_dataset "test/uint64_data_div.txt";
+  encode_dec = read_dataset "test/uint64_data_encode_dec.txt";
+  encode_hex = read_dataset "test/uint64_data_encode_hex.txt";
 }
 
 local source = uint64_data.source
@@ -121,25 +127,28 @@ local function test_binop(op)
   timer:start()
 
   local k = 0
+  local m = 0
   for i = 1, n do
     for j = 1, n do
       k = k + 1
       local x = source[i]
       local y = source[j]
-      local z = result[k]
+      local R = result[k]
 
       if op == "div" then
-        if y[1] ~= 0 or y[2] ~= 0 then
-          local p1, p2, r1, r2 = f(x[1], x[2], y[1], y[2])
-          assert(p1 == z[1])
-          assert(p2 == z[2])
-          assert(r1 == z[3])
-          assert(r2 == z[4])
+        local y1 = y[1]
+        local y2 = y[2]
+        if y1 ~= 0 and y2 ~= 0 then
+          local p1, p2, r1, r2 = f(x[1], x[2], y1, y2)
+          assert(p1 == R[1])
+          assert(p2 == R[2])
+          assert(r1 == R[3])
+          assert(r2 == R[4])
         end
       else
         local z1, z2 = f(x[1], x[2], y[1], y[2])
-        assert(z1 == z[1])
-        assert(z2 == z[2])
+        assert(z1 == R[1])
+        assert(z2 == R[2])
       end
     end
   end
@@ -151,7 +160,30 @@ local function test_binop(op)
   end
 end
 
+local function test_unop(op)
+  local result = uint64_data[op]
+  local f = uint64[op]
+
+  timer:start()
+
+  local k = 0
+  for i = 1, n do
+    local x = source[i]
+    local R = result[i]
+    local y = f(x[1], x[2])
+    assert(y == R)
+  end
+
+  timer:stop()
+
+  if verbose then
+    print("test_unop", op, #result, timer:elapsed())
+  end
+end
+
 test_binop "add"
 test_binop "sub"
 test_binop "mul"
 test_binop "div"
+test_unop "encode_dec"
+test_unop "encode_hex"
