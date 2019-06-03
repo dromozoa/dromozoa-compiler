@@ -18,17 +18,18 @@
 local K12 = 0x1000
 local K16 = 0x10000
 local K24 = 0x1000000
-local K28 = 0x10000000
 local K36 = 0x1000000000
 local K40 = 0x10000000000
 local K48 = 0x1000000000000
 local KD = 10000000
 
-local function eq(x1, x2, y1, y2)
+local class = {}
+
+function class.eq(x1, x2, y1, y2)
   return x1 == y1 and x2 == y2
 end
 
-local function lt(x1, x2, y1, y2)
+function class.lt(x1, x2, y1, y2)
   if x1 == y1 then
     return x2 < y2
   else
@@ -36,7 +37,7 @@ local function lt(x1, x2, y1, y2)
   end
 end
 
-local function le(x1, x2, y1, y2)
+function class.le(x1, x2, y1, y2)
   if x1 == y1 then
     return x2 <= y2
   else
@@ -44,7 +45,7 @@ local function le(x1, x2, y1, y2)
   end
 end
 
-local function add(x1, x2, y1, y2)
+function class.add(x1, x2, y1, y2)
   local u2 = x2 + y2
   local u1 = x1 + y1
 
@@ -59,7 +60,7 @@ local function add(x1, x2, y1, y2)
   return u1, u2
 end
 
-local function sub(x1, x2, y1, y2)
+function class.sub(x1, x2, y1, y2)
   local u2 = x2 - y2
   local u1 = x1 - y1
 
@@ -74,7 +75,7 @@ local function sub(x1, x2, y1, y2)
   return u1, u2
 end
 
-local function mul(x1, x2, y1, y2)
+function class.mul(x1, x2, y1, y2)
   local x3 = x2 % K24
   local x2 = (x2 - x3) / K24
   local y3 = y2 % K24
@@ -98,7 +99,7 @@ local function mul(x1, x2, y1, y2)
   return w1 % K16, w2
 end
 
-local function div(X1, X2, Y1, Y2)
+function class.div(X1, X2, Y1, Y2)
   local x2 = X2 % K12
   local x1 = X1 * K36 + (X2 - x2) / K12
 
@@ -182,7 +183,7 @@ local function div(X1, X2, Y1, Y2)
   end
 end
 
-local function encode_dec(X1, X2)
+function class.encode_dec(X1, X2)
   local x2 = X2 % K24
   local x1 = X1 * K24 + (X2 - x2) / K24
 
@@ -203,98 +204,8 @@ local function encode_dec(X1, X2)
   end
 end
 
-local function encode_hex(x1, x2)
+function class.encode_hex(x1, x2)
   return ("0x%04X%012X"):format(x1, x2)
 end
 
-local function normalize(X1, X2)
-  if X2 then
-    local x2 = X2 % K48
-    local x1 = (X1 + (X2 - x2) / K48) % K16
-    return x1, x2
-  elseif X1 then
-    if type(X1) == "table" then
-      return normalize(X1[1], X1[2])
-    else
-      local x2 = X1 % K48
-      local x1 = (X1 - x2) / K48 % K16
-      return x1, x2
-    end
-  else
-    return 0, 0
-  end
-end
-
-local class = {
-  add = add;
-  sub = sub;
-  mul = mul;
-  div = div;
-  eq = eq;
-  lt = lt;
-  le = le;
-}
-local metatable = { __index = class }
-
-local function construct(x1, x2)
-  return setmetatable({ x1, x2 }, metatable)
-end
-
-function class.encode_dec(x1, x2)
-  return encode_dec(normalize(x1, x2))
-end
-
-function class.encode_hex(x1, x2)
-  return encode_hex(normalize(x1, x2))
-end
-
-function metatable.__add(x, y)
-  local x1, x2 = normalize(x)
-  return construct(add(x1, x2, normalize(y)))
-end
-
-function metatable.__sub(x, y)
-  local x1, x2 = normalize(x)
-  return construct(sub(x1, x2, normalize(y)))
-end
-
-function metatable.__mul(x, y)
-  local x1, x2 = normalize(x)
-  return construct(mul(x1, x2, normalize(y)))
-end
-
-function metatable.__div(x, y)
-  local x1, x2 = normalize(x)
-  return construct(div(x1, x2, normalize(y)))
-end
-
-function metatable.__mod(x, y)
-  local x1, x2 = normalize(x)
-  local _, _, r1, r2 = div(x1, x2, normalize(y))
-  return construct(r1, r2)
-end
-
-function metatable.__eq(x, y)
-  local x1, x2 = normalize(x)
-  return eq(x1, x2, normalize(y))
-end
-
-function metatable.__lt(x, y)
-  local x1, x2 = normalize(x)
-  return lt(x1, x2, normalize(y))
-end
-
-function metatable.__le(x, y)
-  local x1, x2 = normalize(x)
-  return le(x1, x2, normalize(y))
-end
-
-function metatable.__tostring(x)
-  return encode_dec(normalize(x))
-end
-
-return setmetatable(class, {
-  __call = function (_, ...)
-    return construct(normalize(...))
-  end;
-})
+return class
