@@ -1,2 +1,5 @@
 .*.swp
 /result*
+/test/*.o
+/test/uint64_data
+/test/uint64_data_*.txt

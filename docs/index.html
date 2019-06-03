@@ -31,6 +31,7 @@ table.ir tr td:first-child {
 <h2>ドキュメント</h2>
 
 <ul>
+  <li><a href="syntax_tree.html">構文木</a></li>
   <li><a href="ir.html">IR</a></li>
   <li><a href="metatable.html">metatable</a>
     <ul>
@@ -44,125 +45,10 @@ table.ir tr td:first-child {
       <li><a href="metatable_newindex.html">newindex</a></li>
     </ul>
   </li>
+  <li><a href="tonumber.html">文字列から数値型への変換</a></li>
   <li><a href="camera.html">カメラの移動とズーム</a></li>
+  <li><a href="primitives.html">数の実装</a></li>
 </ul>
-
-<h2>文字列から数値型への変換</h2>
-
-<p>
-整数への変換を試行してから浮動小数点数への変換を試行する。
-</p>
-
-<p>
-整数への変換は前後のホワイトスペースを無視したうえで、整数の字句表現に従う。
-8進数リテラルがないので、リテラル<code>070</code>は10進数の整数<code>70</code>に等しい。
-また、リテラル<code>34e1</code>は16進数の整数<code>0x34e1 = 520</code>はなく、
-浮動小数点数<code>34.0e1 = 340</code>に等しいことに注意する。
-</p>
-
-<pre>
-10進数整数リテラル: [+\-]?[0-9]+
-16進数整数リテラル: [+\-]?0[xX][0-9A-Fa-f]+
-</pre>
-
-<p>
-浮動小数点数への変換は<code>strtod</code>と等価である。
-</p>
-
-<h2>Variables</h2>
-
-<table>
-  <tr>
-    <th>Code</th>
-    <th>Type</th>
-    <th>Mode</th>
-    <th>Description</th>
-  </tr>
-  <tr>
-    <td><code>n</code></td>
-    <td>immediate</td>
-    <td>read only</td>
-    <td>unsigned integer</td>
-  <tr>
-  <tr>
-    <td><code>NIL</code></td>
-    <td>immediate</td>
-    <td>read only</td>
-    <td>nil</td>
-  </tr>
-  <tr>
-    <td><code>FALSE</code></td>
-    <td>immediate</td>
-    <td>read only</td>
-    <td>false</td>
-  </tr>
-  <tr>
-    <td><code>TRUE</code></td>
-    <td>immediate</td>
-    <td>read only</td>
-    <td>true</td>
-  </tr>
-  <tr>
-    <td><code>Pn</code></td>
-    <td>proto</td>
-    <td>read only</td>
-    <td></td>
-  </tr>
-  <tr>
-    <td><code>Ln</code></td>
-    <td>label</td>
-    <td>read only</td>
-    <td>named label</td>
-  </tr>
-  <tr>
-    <td><code>Mn</code></td>
-    <td>label</td>
-    <td>read only</td>
-    <td>unnamed label</td>
-  </tr>
-  <tr>
-    <td><code>Kn</code></td>
-    <td>constant</td>
-    <td>read only</td>
-    <td></td>
-  </tr>
-  <tr>
-    <td><code>Un</code></td>
-    <td>value</td>
-    <td>reference</td>
-    <td>upvalue</td>
-  </tr>
-  <tr>
-    <td><code>An</code>, <code>An_v</code></td>
-    <td>value</td>
-    <td>reference?</td>
-    <td>parameter</td>
-  </tr>
-  <tr>
-    <td><code>Bn</code>, <code>Bn_v</code></td>
-    <td>value</td>
-    <td>reference?</td>
-    <td>named value</td>
-  </tr>
-  <tr>
-    <td><code>Cn</code></td>
-    <td>value</td>
-    <td>single assigned</td>
-    <td>unnamed value</td>
-  </tr>
-  <tr>
-    <td><code>V0</code>, <code>V0[i]</code></td>
-    <td>array</td>
-    <td>read only</td>
-    <td>vararg</td>
-  </tr>
-  <tr>
-    <td><code>Tn</code></td>
-    <td>array</td>
-    <td>single assigned</td>
-    <td>results</td>
-  </tr>
-</table>
 
 <h2 id="basic-types">Lua 5.3 basic types</h2>
 

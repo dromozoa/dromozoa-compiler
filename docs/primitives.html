@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<title>dromozoa-compiler</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/3.0.1/github-markdown.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.2/katex.min.css">
+<style>
+.markdown-body {
+  box-sizing: border-box;
+  min-width: 200px;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 45px;
+}
+@media (max-width: 767px) {
+  .markdown-body {
+    padding: 15px;
+  }
+}
+</style>
+</head>
+<body>
+<div class="markdown-body">
+
+<h1>dromozoa-compiler</h1>
+
+<h2>符号無し64bit整数</h2>
+
+<p>
+倍精度浮動小数点数しか使えない環境では、符号無し64bit整数をソフトウェアで実装する必要がある。かかる環境では、53bitの整数をただしく扱うことができ、実用上は充分であることが多い（だからこそ、そのように決定された）。
+</p>
+
+<h3>形式</h3>
+
+<p>
+上位16ビットと下位48ビットで分割して保持する。
+</p>
+
+<h4>3-タプル形式 (16,24,24)</h4>
+
+<p>
+\[\begin{aligned}
+  X &amp;= x_1 k^2 + x_2 k + x_3 \\
+  0 &amp;\le x_1 \lt 2^{16} \\
+  0 &amp;\le x_2 \lt 2^{24} \\
+  0 &amp;\le x_3 \lt 2^{24} \\
+  k &amp;= 2^{24} \\
+\end{aligned}\]
+</p>
+
+<h4>2-タプル形式 (16,48)</h4>
+
+<p>
+\[\begin{aligned}
+  X &amp;= x_1 k^2 + x_2 \\
+  0 &amp;\le x_1 \lt 2^{16} \\
+  0 &amp;\le x_2 \lt 2^{48} \\
+  k &amp;= 2^{24} \\
+\end{aligned}\]
+</p>
+
+<h4>2-タプル形式 (40,24)</h4>
+
+<p>
+\[\begin{aligned}
+  X &amp;= x_1 k + x_2 \\
+  0 &amp;\le x_1 \lt 2^{40} \\
+  0 &amp;\le x_2 \lt 2^{24} \\
+  k &amp;= 2^{24} \\
+\end{aligned}\]
+</p>
+
+<h3>十進数表記のための除算</h3>
+
+<p>
+\[\begin{aligned}
+  X &amp;= x_1 k + x_2 \\
+  k &amp;= 2^{24} \\
+  0 &amp;\le x_1 \lt 2^{40} \\
+  0 &amp;\le x_2 \lt 2^{24} \\
+  d &amp;= 10000000 \\
+  log_2 d &amp;= 23.25349666421 \ldots \\
+  (q_1, r_1) &amp;= x_1 \div d \\
+  0 &amp;\le q_1 \lt 2^{40 - log_2 d} \\
+  0 &amp;\le r_1 \lt d \\
+  X &amp;= q_1 d k + r_1 k + x_2 \\
+  (q_2, r_2) &amp;= (r_1 k + x_2) \div d \\
+  0 &amp;\le q_2 \lt 2^{24} \\
+  0 &amp;\le r_2 \lt d \\
+  X &amp;= d (q_1 k + q_2) + r_2
+\end{aligned}\]
+</p>
+
+<h3>乗算</h3>
+
+<p>
+\[\begin{aligned}
+  X &amp;= x_1 k^2 + x_2 k + x_3 \\
+  Y &amp;= y_1 k^2 + y_2 k + y_3 \\
+  k &amp;= 2^{24} \\
+  X Y
+  &amp;= (x_1 k^2 + x_2 k + x_3) (y_1 k^2 + y_2 k + y_3) \\
+  &amp;= x_1 y_1 k^4 + x_2 y_1 k^3 + x_3 y_1 k^2
+       + x_1 y_2 k^3 + x_2 y_2 k^2 + x_3 y_2 k
+       + x_1 y_3 k^2 + x_3 y_1 k   + x_3 y_3 \\
+  &amp;= x_1 y_1 k^4
+       + (x_2 y_1 + x_1 y_2) k^3
+       + (x_3 y_1 + x_2 y_2 + x_1 y_3) k^2
+       + (x_3 y_2 + x_2 y_3 ) k
+       + x_3 y_3 \\
+\end{aligned}\]
+\(k^4, k^3\)は\(2^{64}\)より大きいので無視する。
+\[\begin{aligned}
+  X Y
+    &amp;= (x_3 y_1 + x_2 y_2 + x_1 y_3) k^2 + (x_3 y_2 + x_2 y_3) k + x_3 y_3 \\
+    &amp;= z_1 k^2 + z_2 k + z_3 \\
+  z_1 &amp;= x_3 y_1 + x_2 y_2 + x_1 y_3 \\
+  z_2 &amp;= x_3 y_2 + x_2 y_3 \\
+  z_3 &amp;= x_3 y_3 \\
+  0 &amp;\le z_1 \lt 2^{40} + 2^{48} + 2^{40} \lt 2^{49} \\
+  0 &amp;\le z_2 \lt 2^{48} + 2^{48} \lt 2^{49} \\
+  0 &amp;\le z_3 \lt 2^{48} \\
+\end{aligned}\]
+<a href="https://ja.wikipedia.org/wiki/%E3%82%AB%E3%83%A9%E3%83%84%E3%83%90%E6%B3%95">カラツバ法</a>で乗算の回数を減らすことができる。ただし、倍精度浮動小数点数しか使えない環境、逐次実行環境や仮想機械環境では、加減算が乗算より速いとは限らない。
+</p>
+
+<h3>除算</h3>
+
+<p>
+\(X \div Y\)を求める。\(0 \lt Y \lt 2^{40}\)の場合を考える。
+\[\begin{aligned}
+  X &amp;= x_1 k + x_2 \\
+  k &amp;= 2^{12} \\
+  0 &amp;\le x_1 \lt 2^{52} \\
+  0 &amp;\le x_2 \lt 2^{12} \\
+  0 &amp;\lt Y \lt 2^{40} \\
+  (q_1, r_1) &amp;= x_1 \div Y \\
+  0 &amp;\le q_1 \lt 2^{52} \\
+  0 &amp;\le r_1 \lt 2^{40} \\
+  0 &amp;\le r_1 k + x_2 \lt 2^{52} \\
+  (q_2, r_2) &amp;= (r_1 k + x_2) \div Y \\
+  0 &amp;\le q_2 \lt 2^{52} \\
+  0 &amp;\le r_2 \lt 2^{40} \\
+  (Q, R) &amp;= X \div Y \\
+  Q &amp;= q_1 k + q_2 \\
+  R &amp;= r_2 \\
+\end{aligned}\]
+</p>
+
+<p>
+\(2^{40} \le Y \le 2^{64}\)の場合を考える。
+\[\begin{aligned}
+  X &amp;= x_1 k + x_2 \\
+  Y &amp;= y_1 k + y_2 \\
+  k &amp;= 2^{12} \\
+  0 &amp;\le x_1 \lt 2^{52} \\
+  0 &amp;\le x_2 \lt 2^{12} \\
+  2^{28} &amp;\le y_1 \lt 2^{52} \\
+  0 &amp;\le y_2 \lt 2^{12} \\
+  d &amp;= \frac{x_1 k + x_2}{y_1 k + y_2} - \frac{x_1 k}{y_1 k + 1} \\
+    &amp;= \frac{
+        (x_1 k + x_2) (y_1 k + 1) - x_1 k (y_1 k + y_2)
+      }{
+        (y_1 k + y_2) (y_1 k + 1)
+      } \\
+    &amp;= \frac{
+        (x_2 y_1 + x_1 - x_1 y_2) k + x_2
+      }{
+        y_1^2 k^2 + y_1 (y_2 + 1) k + y_2
+      } \\
+    &amp;= \frac{d_1}{d_2} \\
+  d_1
+    &amp;= (x_2 y_1 + x_1 - x_1 y_2) k + x_2 \\
+    &amp;\lt y_1 2^{12} + 2^{64} + 2^{12} \\
+    &amp;\lt 2^{65} \\
+  d_2
+    &amp;= y_1^2 k^2 + y_1 (y_2 + 1) k + y_2 \\
+    &amp;\gt y_1^2 2^{24} \\
+    &amp;\gt 2^{80} \\
+  d &amp;\lt 2^{-15} \\
+  q &amp;= x_1 \div y_1 \\
+  0 &amp;\le q \lt 2^{24} \\
+  Z &amp;= X - q Y \\
+  0 &amp;\le Z \lt 2 Y \\
+  (Q, R) &amp;= X \div Y \\
+\end{aligned}\]
+\(Z \lt Y\)の場合、\((Q, R) = (q, Z)\)になる。\(Z \ge Y\)の場合、\((Q, R) = (q + 1, Z - Y)\)になる。
+</p>
+
+<h3>数表</h3>
+
+<table>
+  <tr>
+    <th>bit</th>
+    <th colspan="2">shift</th>
+    <th colspan="2">mask</th>
+  </tr>
+  <tr>
+    <td>16</td>
+    <td><code>0x10000</code></td>
+    <td><code>65536</code></td>
+    <td><code>0xFFFF </code></td>
+    <td><code>65535</code></td>
+  </tr>
+  <tr>
+    <td>24</td>
+    <td><code>0x1000000</code></td>
+    <td><code>16777216</code></td>
+    <td><code>0xFFFFFF</code></td>
+    <td><code>16777215</code></td>
+  </tr>
+  <tr>
+    <td>32</td>
+    <td><code>0x100000000</code></td>
+    <td><code>4294967296</code></td>
+    <td><code>0xFFFFFFFF</code></td>
+    <td><code>4294967295</code></td>
+  </tr>
+  <tr>
+    <td>48</td>
+    <td><code>0x1000000000000</code></td>
+    <td><code>281474976710656</code></td>
+    <td><code>0xFFFFFFFFFFFF</code></td>
+    <td><code>281474976710655</code></td>
+  </tr>
+</table>
+
+<table>
+  <tr>
+    <td>\(1000\)</td>
+    <td>\(2^{9.9657842846621}\)</td>
+  </tr>
+  <tr>
+    <td>\(10000\)</td>
+    <td>\(2^{13.287712379549}\)</td>
+  </tr>
+  <tr>
+    <td>\(100000\)</td>
+    <td>\(2^{16.609640474437}\)</td>
+  </tr>
+  <tr>
+    <td>\(1000000\)</td>
+    <td>\(2^{19.931568569324}\)</td>
+  </tr>
+  <tr>
+    <td>\(10000000\)</td>
+    <td>\(2^{23.253496664212}\)</td>
+  </tr>
+  <tr>
+    <td>\(100000000\)</td>
+    <td>\(2^{26.575424759099}\)</td>
+  </tr>
+</table>
+
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.2/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.2/contrib/auto-render.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  renderMathInElement(document.body);
+});
+</script>
+</body>
+</html>
