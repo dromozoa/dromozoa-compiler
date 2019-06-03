@@ -201,6 +201,7 @@ function class.shl(x1, x2, y)
 
     if y < 24 then
       local k = K[y]
+
       local u3 = x3 * k
       local u2 = x2 * k
       local u1 = x1 * k
@@ -219,6 +220,7 @@ function class.shl(x1, x2, y)
       return w1 % K16, w2
     else
       local k = K[y - 24]
+
       local u2 = x3 * k
       local u1 = x2 * k
 
@@ -241,11 +243,15 @@ function class.shr(X1, X2, y)
   if y < 48 then
     local x2 = X2 % K16
     local x1 = X1 * K32 + (X2 - x2) / K16
+
     if y < 16 then
       local k = K[y]
+
       local r1 = x1 % k
       local q1 = (x1 - r1) / k
+
       local u = r1 * K16 + x2
+
       local r2 = u % k
       local q2 = (u - r2) / k
 
@@ -253,17 +259,20 @@ function class.shr(X1, X2, y)
       local v1 = (q1 - v2) / K32
 
       return v1, v2 * K16 + q2
-
     else
       local k = K[y - 16]
+
       local r1 = x1 % k
       local q1 = (x1 - r1) / k
+
       return 0, q1
     end
   else
     local k = K[y - 48]
+
     local r1 = X1 % k
     local q1 = (X1 - r1) / k
+
     return 0, q1
   end
 end
