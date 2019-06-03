@@ -409,7 +409,7 @@ function class.le(x1, x2, y1, y2)
   end
 end
 
-function class.encode_dec(X1, X2)
+function class.tostring_dec(X1, X2)
   local x2 = X2 % K24
   local x1 = X1 * K24 + (X2 - x2) / K24
 
@@ -430,7 +430,7 @@ function class.encode_dec(X1, X2)
   end
 end
 
-function class.encode_hex(x1, x2)
+function class.tostring_hex(x1, x2)
   return ("0x%04X%012X"):format(x1, x2)
 end
 

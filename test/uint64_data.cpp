@@ -80,7 +80,7 @@ void write_shift(const std::string& op, const std::vector<std::uint64_t>& data) 
   }
 }
 
-std::string encode_hex(std::uint64_t v) {
+std::string tostring_hex(std::uint64_t v) {
   std::ostringstream out;
   out << "0x"
       << std::hex << std::uppercase << std::setfill('0') << std::setw(16)
@@ -94,10 +94,10 @@ void write_unop(const std::string& op, const std::vector<std::uint64_t>& data) {
     std::uint64_t x = data[i];
     if (op == "bnot") {
       write_value(out, ~x) << "\n";
-    } else if (op == "encode_dec") {
+    } else if (op == "tostring_dec") {
       out << x << "\n";
-    } else if (op == "encode_hex") {
-      out << encode_hex(x) << "\n";
+    } else if (op == "tostring_hex") {
+      out << tostring_hex(x) << "\n";
     }
   }
 }
@@ -155,8 +155,8 @@ int main(int, char*[]) {
   write_shift("shl", data);
   write_shift("shr", data);
 
-  write_unop("encode_dec", data);
-  write_unop("encode_hex", data);
+  write_unop("tostring_dec", data);
+  write_unop("tostring_hex", data);
 
   return 0;
 }

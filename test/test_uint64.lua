@@ -41,27 +41,27 @@ assert(uint64_t { 0xFFFE, 0x1FFFFFFFFFFFF } == uint64_max)
 assert(uint64_t { 0xFFFD, 0x2FFFFFFFFFFFF } == uint64_max)
 assert(uint64_t { 0xFFFC, 0x3FFFFFFFFFFFF } == uint64_max)
 
-assert(uint64.encode_hex(0, 0) == "0x0000000000000000")
-assert(uint64.encode_hex(0x0000, 0x000000000000) == "0x0000000000000000")
-assert(uint64.encode_hex(0x0000, 0xFFFFFFFFFFFF) == "0x0000FFFFFFFFFFFF")
-assert(uint64.encode_hex(0xFFFF, 0xFFFFFFFFFFFF) == "0xFFFFFFFFFFFFFFFF")
-assert(uint64.encode_hex(0xDEAD, 0xBEEFFEEDFACE) == "0xDEADBEEFFEEDFACE")
+assert(uint64.tostring_hex(0, 0) == "0x0000000000000000")
+assert(uint64.tostring_hex(0x0000, 0x000000000000) == "0x0000000000000000")
+assert(uint64.tostring_hex(0x0000, 0xFFFFFFFFFFFF) == "0x0000FFFFFFFFFFFF")
+assert(uint64.tostring_hex(0xFFFF, 0xFFFFFFFFFFFF) == "0xFFFFFFFFFFFFFFFF")
+assert(uint64.tostring_hex(0xDEAD, 0xBEEFFEEDFACE) == "0xDEADBEEFFEEDFACE")
 
-assert(uint64_t(0x0000, 0x000000000000):encode_hex() == "0x0000000000000000")
-assert(uint64_t(0x0000, 0xFFFFFFFFFFFF):encode_hex() == "0x0000FFFFFFFFFFFF")
-assert(uint64_t(0xFFFF, 0xFFFFFFFFFFFF):encode_hex() == "0xFFFFFFFFFFFFFFFF")
-assert(uint64_t(0xDEAD, 0xBEEFFEEDFACE):encode_hex() == "0xDEADBEEFFEEDFACE")
+assert(uint64_t(0x0000, 0x000000000000):tostring_hex() == "0x0000000000000000")
+assert(uint64_t(0x0000, 0xFFFFFFFFFFFF):tostring_hex() == "0x0000FFFFFFFFFFFF")
+assert(uint64_t(0xFFFF, 0xFFFFFFFFFFFF):tostring_hex() == "0xFFFFFFFFFFFFFFFF")
+assert(uint64_t(0xDEAD, 0xBEEFFEEDFACE):tostring_hex() == "0xDEADBEEFFEEDFACE")
 
-assert(uint64.encode_dec(0, 0) == "0")
-assert(uint64.encode_dec(0x0000, 0x000000000000) == "0")
-assert(uint64.encode_dec(0x0000, 0xFFFFFFFFFFFF) == "281474976710655")
-assert(uint64.encode_dec(0xFFFF, 0xFFFFFFFFFFFF) == "18446744073709551615")
-assert(uint64.encode_dec(0xDEAD, 0xBEEFFEEDFACE) == "16045690985374415566")
+assert(uint64.tostring_dec(0, 0) == "0")
+assert(uint64.tostring_dec(0x0000, 0x000000000000) == "0")
+assert(uint64.tostring_dec(0x0000, 0xFFFFFFFFFFFF) == "281474976710655")
+assert(uint64.tostring_dec(0xFFFF, 0xFFFFFFFFFFFF) == "18446744073709551615")
+assert(uint64.tostring_dec(0xDEAD, 0xBEEFFEEDFACE) == "16045690985374415566")
 
-assert(uint64_t(0x0000, 0x000000000000):encode_dec() == "0")
-assert(uint64_t(0x0000, 0xFFFFFFFFFFFF):encode_dec() == "281474976710655")
-assert(uint64_t(0xFFFF, 0xFFFFFFFFFFFF):encode_dec() == "18446744073709551615")
-assert(uint64_t(0xDEAD, 0xBEEFFEEDFACE):encode_dec() == "16045690985374415566")
+assert(uint64_t(0x0000, 0x000000000000):tostring_dec() == "0")
+assert(uint64_t(0x0000, 0xFFFFFFFFFFFF):tostring_dec() == "281474976710655")
+assert(uint64_t(0xFFFF, 0xFFFFFFFFFFFF):tostring_dec() == "18446744073709551615")
+assert(uint64_t(0xDEAD, 0xBEEFFEEDFACE):tostring_dec() == "16045690985374415566")
 
 assert(tostring(uint64_t(0x0000, 0x000000000000)) == "0")
 assert(tostring(uint64_t(0x0000, 0xFFFFFFFFFFFF)) == "281474976710655")
@@ -126,7 +126,7 @@ local function read_dataset(filename)
         }
       end
     end
-  elseif op:find "^encode_" then
+  elseif op:find "^tostring_" then
     for line in handle:lines() do
       dataset[#dataset + 1] = line
     end
@@ -161,8 +161,8 @@ local uint64_data = {
   bnot = read_dataset "test/uint64_data_bnot.txt";
   shl = read_dataset "test/uint64_data_shl.txt";
   shr = read_dataset "test/uint64_data_shr.txt";
-  encode_dec = read_dataset "test/uint64_data_encode_dec.txt";
-  encode_hex = read_dataset "test/uint64_data_encode_hex.txt";
+  tostring_dec = read_dataset "test/uint64_data_tostring_dec.txt";
+  tostring_hex = read_dataset "test/uint64_data_tostring_hex.txt";
 }
 
 local source = uint64_data.source
@@ -238,9 +238,9 @@ local function test_shift(op)
       local R = result[k]
 
       local z1, z2 = f(x[1], x[2], j)
-      -- print(uint64.encode_hex(x[1], x[2]), j)
-      -- print(uint64.encode_hex(z1, z2))
-      -- print(uint64.encode_hex(R[1], R[2]))
+      -- print(uint64.tostring_hex(x[1], x[2]), j)
+      -- print(uint64.tostring_hex(z1, z2))
+      -- print(uint64.tostring_hex(R[1], R[2]))
       assert(z1 == R[1])
       assert(z2 == R[2])
     end
@@ -260,7 +260,7 @@ local function test_unop(op)
   timer:start()
 
   local k = 0
-  if op:find "^encode_" then
+  if op:find "^tostring_" then
     for i = 1, n do
       local x = source[i]
       local R = result[i]
@@ -272,9 +272,9 @@ local function test_unop(op)
       local x = source[i]
       local R = result[i]
       local y1, y2 = f(x[1], x[2])
-      -- print(uint64.encode_hex(x[1], x[2]))
-      -- print(uint64.encode_hex(y1, y2))
-      -- print(uint64.encode_hex(R[1], R[2]))
+      -- print(uint64.tostring_hex(x[1], x[2]))
+      -- print(uint64.tostring_hex(y1, y2))
+      -- print(uint64.tostring_hex(R[1], R[2]))
       assert(y1 == R[1])
       assert(y2 == R[2])
     end
@@ -297,5 +297,5 @@ test_binop "bxor"
 test_unop "bnot"
 test_shift "shl"
 test_shift "shr"
-test_unop "encode_dec"
-test_unop "encode_hex"
+test_unop "tostring_dec"
+test_unop "tostring_hex"

@@ -30,8 +30,8 @@ local shr = uint64.shr
 local eq = uint64.eq
 local lt = uint64.lt
 local le = uint64.le
-local encode_dec = uint64.encode_dec
-local encode_hex = uint64.encode_hex
+local tostring_dec = uint64.tostring_dec
+local tostring_hex = uint64.tostring_hex
 
 local K16 = 0x10000
 local K48 = 0x1000000000000
@@ -126,12 +126,12 @@ function class.le(x, ...)
   return le(x1, x2, normalize(...))
 end
 
-function class.encode_dec(...)
-  return encode_dec(normalize(...))
+function class.tostring_dec(...)
+  return tostring_dec(normalize(...))
 end
 
-function class.encode_hex(...)
-  return encode_hex(normalize(...))
+function class.tostring_hex(...)
+  return tostring_hex(normalize(...))
 end
 
 metatable.__add = class.add
@@ -140,7 +140,7 @@ metatable.__mul = class.mul
 metatable.__eq = class.eq
 metatable.__lt = class.lt
 metatable.__le = class.le
-metatable.__tostring = class.encode_dec
+metatable.__tostring = class.tostring_dec
 
 function metatable.__div(x, y)
   local x1, x2 = normalize(x)
