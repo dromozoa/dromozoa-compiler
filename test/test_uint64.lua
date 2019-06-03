@@ -63,6 +63,11 @@ assert(uint64_t(0x0000, 0xFFFFFFFFFFFF):encode_dec() == "281474976710655")
 assert(uint64_t(0xFFFF, 0xFFFFFFFFFFFF):encode_dec() == "18446744073709551615")
 assert(uint64_t(0xDEAD, 0xBEEFFEEDFACE):encode_dec() == "16045690985374415566")
 
+assert(tostring(uint64_t(0x0000, 0x000000000000)) == "0")
+assert(tostring(uint64_t(0x0000, 0xFFFFFFFFFFFF)) == "281474976710655")
+assert(tostring(uint64_t(0xFFFF, 0xFFFFFFFFFFFF)) == "18446744073709551615")
+assert(tostring(uint64_t(0xDEAD, 0xBEEFFEEDFACE)) == "16045690985374415566")
+
 assert(uint64_max + 1 == uint64_t(0))
 assert(uint64_max + 2 == uint64_t(1))
 assert(1 + uint64_max == uint64_t(0))
