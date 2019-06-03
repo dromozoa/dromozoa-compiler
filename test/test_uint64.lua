@@ -147,6 +147,7 @@ local uint64_data = {
   sub = read_dataset "test/uint64_data_sub.txt";
   mul = read_dataset "test/uint64_data_mul.txt";
   div = read_dataset "test/uint64_data_div.txt";
+  bnot = read_dataset "test/uint64_data_bnot.txt";
   encode_dec = read_dataset "test/uint64_data_encode_dec.txt";
   encode_hex = read_dataset "test/uint64_data_encode_hex.txt";
 }
@@ -167,16 +168,15 @@ local function test_binop(op)
 
   timer:start()
 
-  local k = 0
-  local m = 0
-  for i = 1, n do
-    for j = 1, n do
-      k = k + 1
-      local x = source[i]
-      local y = source[j]
-      local R = result[k]
+  if op == "div" then
+    local k = 0
+    for i = 1, n do
+      for j = 1, n do
+        k = k + 1
+        local x = source[i]
+        local y = source[j]
+        local R = result[k]
 
-      if op == "div" then
         local y1 = y[1]
         local y2 = y[2]
         if y1 ~= 0 and y2 ~= 0 then
@@ -186,7 +186,17 @@ local function test_binop(op)
           assert(r1 == R[3])
           assert(r2 == R[4])
         end
-      else
+      end
+    end
+  else
+    local k = 0
+    for i = 1, n do
+      for j = 1, n do
+        k = k + 1
+        local x = source[i]
+        local y = source[j]
+        local R = result[k]
+
         local z1, z2 = f(x[1], x[2], y[1], y[2])
         assert(z1 == R[1])
         assert(z2 == R[2])
@@ -208,11 +218,24 @@ local function test_unop(op)
   timer:start()
 
   local k = 0
-  for i = 1, n do
-    local x = source[i]
-    local R = result[i]
-    local y = f(x[1], x[2])
-    assert(y == R)
+  if op:find "^encode_" then
+    for i = 1, n do
+      local x = source[i]
+      local R = result[i]
+      local y = f(x[1], x[2])
+      assert(y == R)
+    end
+  else
+    for i = 1, n do
+      local x = source[i]
+      local R = result[i]
+      local y1, y2 = f(x[1], x[2])
+      -- print(uint64.encode_hex(x[1], x[2]))
+      -- print(uint64.encode_hex(y1, y2))
+      -- print(uint64.encode_hex(R[1], R[2]))
+      assert(y1 == R[1])
+      assert(y2 == R[2])
+    end
   end
 
   timer:stop()
@@ -226,5 +249,6 @@ test_binop "add"
 test_binop "sub"
 test_binop "mul"
 test_binop "div"
+test_unop "bnot"
 test_unop "encode_dec"
 test_unop "encode_hex"

@@ -33,7 +33,7 @@ std::string to_string(std::uint64_t v, std::size_t width) {
 std::ostream& write_value(std::ostream& out, std::uint64_t x) {
   std::uint64_t x1 = x >> 48;
   std::uint64_t x2 = x & 0xFFFFFFFFFFFF;
-  return out << to_string(x1, 4) << "\t" << to_string(x2, 16);
+  return out << to_string(x1, 4) << "\t" << to_string(x2, 12);
 }
 
 void write_binop(const std::string op, const std::vector<std::uint64_t>& data) {
@@ -72,7 +72,9 @@ void write_unop(const std::string op, const std::vector<std::uint64_t>& data) {
   std::ofstream out("uint64_data_" + op + ".txt");
   for (std::size_t i = 0; i < data.size(); ++i) {
     std::uint64_t x = data[i];
-    if (op == "encode_dec") {
+    if (op == "bnot") {
+      write_value(out, ~x) << "\n";
+    } else if (op == "encode_dec") {
       out << x << "\n";
     } else if (op == "encode_hex") {
       out << encode_hex(x) << "\n";
@@ -123,6 +125,8 @@ int main(int, char*[]) {
   write_binop("mul", data);
   write_binop("sub", data);
   write_binop("div", data);
+
+  write_unop("bnot", data);
 
   write_unop("encode_dec", data);
   write_unop("encode_hex", data);

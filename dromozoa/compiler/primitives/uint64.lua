@@ -22,6 +22,8 @@ local K36 = 0x1000000000
 local K40 = 0x10000000000
 local K48 = 0x1000000000000
 local KD = 10000000
+local M16 = 0xFFFF
+local M48 = 0xFFFFFFFFFFFF
 
 local class = {}
 
@@ -181,6 +183,10 @@ function class.div(X1, X2, Y1, Y2)
     end
     return 0, q + 1, V1, V2
   end
+end
+
+function class.bnot(x1, x2)
+  return M16 - x1, M48 - x2
 end
 
 function class.encode_dec(X1, X2)
