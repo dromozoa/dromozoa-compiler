@@ -21,6 +21,9 @@ local add = uint64.add
 local sub = uint64.sub
 local mul = uint64.mul
 local div = uint64.div
+local band = uint64.band
+local bor = uint64.bor
+local bxor = uint64.bxor
 local bnot = uint64.bnot
 local shl = uint64.shl
 local shr = uint64.shr
@@ -58,62 +61,77 @@ local function construct(x1, x2)
   return setmetatable({ x1, x2 }, metatable)
 end
 
-function class.add(x, y)
+function class.add(x, ...)
   local x1, x2 = normalize(x)
-  return construct(add(x1, x2, normalize(y)))
+  return construct(add(x1, x2, normalize(...)))
 end
 
-function class.sub(x, y)
+function class.sub(x, ...)
   local x1, x2 = normalize(x)
-  return construct(sub(x1, x2, normalize(y)))
+  return construct(sub(x1, x2, normalize(...)))
 end
 
-function class.mul(x, y)
+function class.mul(x, ...)
   local x1, x2 = normalize(x)
-  return construct(mul(x1, x2, normalize(y)))
+  return construct(mul(x1, x2, normalize(...)))
 end
 
-function class.div(x, y)
+function class.div(x, ...)
   local x1, x2 = normalize(x)
-  local q1, q2, r1, r2 = construct(div(x1, x2, normalize(y)))
+  local q1, q2, r1, r2 = construct(div(x1, x2, normalize(...)))
   return construct(q1, q2), construct(r1, r2)
 end
 
-function class.bnot(x)
-  return construct(bnot(normalize(x)))
+function class.band(x, ...)
+  local x1, x2 = normalize(...)
+  return construct(band(x1, x2, normalize(...)))
 end
 
-function class.shl(x, y)
+function class.bor(x, ...)
   local x1, x2 = normalize(x)
-  return construct(shl(x1, x2, y))
+  return construct(bor(x1, x2, normalize(...)))
 end
 
-function class.shr(x, y)
+function class.bxor(x, ...)
   local x1, x2 = normalize(x)
-  return construct(shr(x1, x2, y))
+  return construct(bxor(x1, x2, normalize(...)))
 end
 
-function class.eq(x, y)
+function class.bnot(...)
+  return construct(bnot(normalize(...)))
+end
+
+function class.shl(x, ...)
   local x1, x2 = normalize(x)
-  return eq(x1, x2, normalize(y))
+  return construct(shl(x1, x2, ...))
 end
 
-function class.lt(x, y)
+function class.shr(x, ...)
   local x1, x2 = normalize(x)
-  return lt(x1, x2, normalize(y))
+  return construct(shr(x1, x2, ...))
 end
 
-function class.le(x, y)
+function class.eq(x, ...)
   local x1, x2 = normalize(x)
-  return le(x1, x2, normalize(y))
+  return eq(x1, x2, normalize(...))
 end
 
-function class.encode_dec(x)
-  return encode_dec(normalize(x))
+function class.lt(x, ...)
+  local x1, x2 = normalize(x)
+  return lt(x1, x2, normalize(...))
 end
 
-function class.encode_hex(x)
-  return encode_hex(normalize(x))
+function class.le(x, ...)
+  local x1, x2 = normalize(x)
+  return le(x1, x2, normalize(...))
+end
+
+function class.encode_dec(...)
+  return encode_dec(normalize(...))
+end
+
+function class.encode_hex(...)
+  return encode_hex(normalize(...))
 end
 
 metatable.__add = class.add

@@ -98,6 +98,7 @@ assert(uint64_max:shl(16):shr(8) == uint64_t(0x00FF, 0xFFFFFFFFFF00))
 assert(uint64_max:shr(16):shl(8) == uint64_t(0x00FF, 0xFFFFFFFFFF00))
 
 assert(uint64_t(0x1234, 0x123456789ABC):bnot() == uint64_t(0xEDCB, 0xEDCBA9876543))
+assert(uint64_t(0x1234, 0x123456789ABC):bxor(0x1234, 0x123456789ABC) == uint64_t())
 
 local timer = unix.timer()
 
