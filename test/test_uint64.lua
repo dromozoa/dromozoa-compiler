@@ -147,6 +147,7 @@ local uint64_data = {
   sub = read_dataset "test/uint64_data_sub.txt";
   mul = read_dataset "test/uint64_data_mul.txt";
   div = read_dataset "test/uint64_data_div.txt";
+  shl = read_dataset "test/uint64_data_shl.txt";
   bnot = read_dataset "test/uint64_data_bnot.txt";
   encode_dec = read_dataset "test/uint64_data_encode_dec.txt";
   encode_hex = read_dataset "test/uint64_data_encode_hex.txt";
@@ -211,6 +212,32 @@ local function test_binop(op)
   end
 end
 
+local function test_shift(op)
+  local result = uint64_data[op]
+  local f = uint64[op]
+
+  timer:start()
+
+  local k = 0
+  for i = 1, n do
+    for j = 0, 63 do
+      k = k + 1
+      local x = source[i]
+      local R = result[k]
+
+      local z1, z2 = f(x[1], x[2], j)
+      assert(z1 == R[1])
+      assert(z2 == R[2])
+    end
+  end
+
+  timer:stop()
+
+  if verbose then
+    print("test_shift", op, #result, timer:elapsed())
+  end
+end
+
 local function test_unop(op)
   local result = uint64_data[op]
   local f = uint64[op]
@@ -249,6 +276,7 @@ test_binop "add"
 test_binop "sub"
 test_binop "mul"
 test_binop "div"
+test_shift "shl"
 test_unop "bnot"
 test_unop "encode_dec"
 test_unop "encode_hex"

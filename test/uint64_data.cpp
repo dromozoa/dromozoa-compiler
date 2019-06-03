@@ -36,7 +36,7 @@ std::ostream& write_value(std::ostream& out, std::uint64_t x) {
   return out << to_string(x1, 4) << "\t" << to_string(x2, 12);
 }
 
-void write_binop(const std::string op, const std::vector<std::uint64_t>& data) {
+void write_binop(const std::string& op, const std::vector<std::uint64_t>& data) {
   std::ofstream out("uint64_data_" + op + ".txt");
   for (std::size_t i = 0; i < data.size(); ++i) {
     std::uint64_t x = data[i];
@@ -60,6 +60,20 @@ void write_binop(const std::string op, const std::vector<std::uint64_t>& data) {
   }
 }
 
+void write_shift(const std::string& op, const std::vector<std::uint64_t>& data) {
+  std::ofstream out("uint64_data_" + op + ".txt");
+  for (std::size_t i = 0; i < data.size(); ++i) {
+    std::uint64_t x = data[i];
+    for (std::uint64_t j = 0; j < 64; ++j) {
+      if (op == "shl") {
+        write_value(out, x << j) << "\n";
+      } else if (op == "shr") {
+        write_value(out, x >> j) << "\n";
+      }
+    }
+  }
+}
+
 std::string encode_hex(std::uint64_t v) {
   std::ostringstream out;
   out << "0x"
@@ -68,7 +82,7 @@ std::string encode_hex(std::uint64_t v) {
   return out.str();
 }
 
-void write_unop(const std::string op, const std::vector<std::uint64_t>& data) {
+void write_unop(const std::string& op, const std::vector<std::uint64_t>& data) {
   std::ofstream out("uint64_data_" + op + ".txt");
   for (std::size_t i = 0; i < data.size(); ++i) {
     std::uint64_t x = data[i];
@@ -125,6 +139,9 @@ int main(int, char*[]) {
   write_binop("mul", data);
   write_binop("sub", data);
   write_binop("div", data);
+
+  write_shift("shl", data);
+  write_shift("shr", data);
 
   write_unop("bnot", data);
 

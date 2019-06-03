@@ -15,15 +15,22 @@
 -- You should have received a copy of the GNU General Public License
 -- along with dromozoa-compiler.  If not, see <http://www.gnu.org/licenses/>.
 
-local K12 = 0x1000
-local K16 = 0x10000
-local K24 = 0x1000000
-local K36 = 0x1000000000
-local K40 = 0x10000000000
-local K48 = 0x1000000000000
-local KD = 10000000
-local M16 = 0xFFFF
-local M48 = 0xFFFFFFFFFFFF
+local K = { [0] = 1 }
+for i = 1, 48 do
+  K[i] = K[i - 1] * 2
+end
+
+local K12 = K[12]
+local K16 = K[16]
+local K24 = K[24]
+local K36 = K[36]
+local K40 = K[40]
+local K48 = K[48]
+
+local M16 = K[16] - 1
+local M48 = K[48] - 1
+
+local D7 = 10000000
 
 local class = {}
 
@@ -185,6 +192,49 @@ function class.div(X1, X2, Y1, Y2)
   end
 end
 
+function class.shl(x1, x2, y)
+  local x3 = x2 % K24
+
+  if y < 48 then
+    local x2 = (x2 - x3) / K24
+    if y < 24 then
+      local k = K[y]
+      local u3 = x3 * k
+      local u2 = x2 * k
+      local u1 = x1 * k
+
+      local v2 = u2 % K24
+      local v1 = (u2 - v2) / K24
+
+      local w2 = v2 * K24 + u3
+      local w1 = u1 + v1
+
+      if w2 >= K48 then
+        w2 = w2 - K48
+        w1 = w1 + 1
+      end
+
+      return w1 % K16, w2
+    else
+      local k = K[y - 24]
+      local u2 = x3 * k
+      local u1 = x2 * k
+
+      local v2 = u2 % K24
+      local v1 = (u2 - v2) / K24
+
+      local w2 = v2 * K24
+      local w1 = u1 + v1
+
+      return w1 % K16, w2
+    end
+  else
+    local k = K[y - 48]
+    local u1 = x3 * k
+    return u1 % K16, 0
+  end
+end
+
 function class.bnot(x1, x2)
   return M16 - x1, M48 - x2
 end
@@ -193,13 +243,13 @@ function class.encode_dec(X1, X2)
   local x2 = X2 % K24
   local x1 = X1 * K24 + (X2 - x2) / K24
 
-  local r1 = x1 % KD
-  local q1 = (x1 - r1) / KD
+  local r1 = x1 % D7
+  local q1 = (x1 - r1) / D7
 
   local u = r1 * K24 + x2
 
-  local r2 = u % KD
-  local q2 = (u - r2) / KD
+  local r2 = u % D7
+  local q2 = (u - r2) / D7
 
   local v = q1 * K24 + q2
 
