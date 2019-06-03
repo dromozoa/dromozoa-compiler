@@ -55,6 +55,47 @@ local function construct(x1, x2)
   return setmetatable({ x1, x2 }, metatable)
 end
 
+function class.add(x, y)
+  local x1, x2 = normalize(x)
+  return construct(add(x1, x2, normalize(y)))
+end
+
+function class.sub(x, y)
+  local x1, x2 = normalize(x)
+  return construct(sub(x1, x2, normalize(y)))
+end
+
+function class.mul(x, y)
+  local x1, x2 = normalize(x)
+  return construct(mul(x1, x2, normalize(y)))
+end
+
+function class.div(x, y)
+  local x1, x2 = normalize(x)
+  return construct(div(x1, x2, normalize(y)))
+end
+
+function class.mod(x, y)
+  local x1, x2 = normalize(x)
+  local _, _, r1, r2 = div(x1, x2, normalize(y))
+  return construct(r1, r2)
+end
+
+function class.eq(x, y)
+  local x1, x2 = normalize(x)
+  return eq(x1, x2, normalize(y))
+end
+
+function class.lt(x, y)
+  local x1, x2 = normalize(x)
+  return lt(x1, x2, normalize(y))
+end
+
+function class.le(x, y)
+  local x1, x2 = normalize(x)
+  return le(x1, x2, normalize(y))
+end
+
 function class.encode_dec(x)
   return encode_dec(normalize(x))
 end
@@ -63,50 +104,14 @@ function class.encode_hex(x)
   return encode_hex(normalize(x))
 end
 
-function metatable.__add(x, y)
-  local x1, x2 = normalize(x)
-  return construct(add(x1, x2, normalize(y)))
-end
-
-function metatable.__sub(x, y)
-  local x1, x2 = normalize(x)
-  return construct(sub(x1, x2, normalize(y)))
-end
-
-function metatable.__mul(x, y)
-  local x1, x2 = normalize(x)
-  return construct(mul(x1, x2, normalize(y)))
-end
-
-function metatable.__div(x, y)
-  local x1, x2 = normalize(x)
-  return construct(div(x1, x2, normalize(y)))
-end
-
-function metatable.__mod(x, y)
-  local x1, x2 = normalize(x)
-  local _, _, r1, r2 = div(x1, x2, normalize(y))
-  return construct(r1, r2)
-end
-
-function metatable.__eq(x, y)
-  local x1, x2 = normalize(x)
-  return eq(x1, x2, normalize(y))
-end
-
-function metatable.__lt(x, y)
-  local x1, x2 = normalize(x)
-  return lt(x1, x2, normalize(y))
-end
-
-function metatable.__le(x, y)
-  local x1, x2 = normalize(x)
-  return le(x1, x2, normalize(y))
-end
-
-function metatable.__tostring(x)
-  return encode_dec(normalize(x))
-end
+metatable.__add = class.add
+metatable.__sub = class.sub
+metatable.__mul = class.mul
+metatable.__div = class.div
+metatable.__mod = class.mod
+metatable.__eq = class.eq
+metatable.__lt = class.lt
+metatable.__le = class.le
 
 return setmetatable(class, {
   __call = function (_, ...)
