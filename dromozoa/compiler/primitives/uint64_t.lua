@@ -72,13 +72,8 @@ end
 
 function class.div(x, y)
   local x1, x2 = normalize(x)
-  return construct(div(x1, x2, normalize(y)))
-end
-
-function class.mod(x, y)
-  local x1, x2 = normalize(x)
-  local _, _, r1, r2 = div(x1, x2, normalize(y))
-  return construct(r1, r2)
+  local q1, q2, r1, r2 = construct(div(x1, x2, normalize(y)))
+  return construct(q1, q2), construct(r1, r2)
 end
 
 function class.eq(x, y)
@@ -107,11 +102,21 @@ end
 metatable.__add = class.add
 metatable.__sub = class.sub
 metatable.__mul = class.mul
-metatable.__div = class.div
-metatable.__mod = class.mod
 metatable.__eq = class.eq
 metatable.__lt = class.lt
 metatable.__le = class.le
+metatable.__tostring = class.encode_dec
+
+function metatable.__div(x, y)
+  local x1, x2 = normalize(x)
+  return construct(div(x1, x2, normalize(y)))
+end
+
+function metatable.__mod(x, y)
+  local x1, x2 = normalize(x)
+  local _, _, r1, r2 = div(x1, x2, normalize(y))
+  return construct(r1, r2)
+end
 
 return setmetatable(class, {
   __call = function (_, ...)
