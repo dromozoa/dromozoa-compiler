@@ -21,9 +21,9 @@ local add = uint64.add
 local sub = uint64.sub
 local mul = uint64.mul
 local div = uint64.div
+local bnot = uint64.bnot
 local shl = uint64.shl
 local shr = uint64.shr
-local bnot = uint64.bnot
 local eq = uint64.eq
 local lt = uint64.lt
 local le = uint64.le
@@ -79,6 +79,10 @@ function class.div(x, y)
   return construct(q1, q2), construct(r1, r2)
 end
 
+function class.bnot(x)
+  return construct(bnot(normalize(x)))
+end
+
 function class.shl(x, y)
   local x1, x2 = normalize(x)
   return construct(shl(x1, x2, y))
@@ -87,10 +91,6 @@ end
 function class.shr(x, y)
   local x1, x2 = normalize(x)
   return construct(shr(x1, x2, y))
-end
-
-function class.bnot(x)
-  return construct(bnot(normalize(x)))
 end
 
 function class.eq(x, y)

@@ -154,9 +154,9 @@ local uint64_data = {
   sub = read_dataset "test/uint64_data_sub.txt";
   mul = read_dataset "test/uint64_data_mul.txt";
   div = read_dataset "test/uint64_data_div.txt";
+  bnot = read_dataset "test/uint64_data_bnot.txt";
   shl = read_dataset "test/uint64_data_shl.txt";
   shr = read_dataset "test/uint64_data_shr.txt";
-  bnot = read_dataset "test/uint64_data_bnot.txt";
   encode_dec = read_dataset "test/uint64_data_encode_dec.txt";
   encode_hex = read_dataset "test/uint64_data_encode_hex.txt";
 }
@@ -287,8 +287,8 @@ test_binop "add"
 test_binop "sub"
 test_binop "mul"
 test_binop "div"
+test_unop "bnot"
 test_shift "shl"
 test_shift "shr"
-test_unop "bnot"
 test_unop "encode_dec"
 test_unop "encode_hex"

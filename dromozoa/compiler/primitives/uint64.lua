@@ -173,6 +173,10 @@ function class.div(X1, X2, Y1, Y2)
   end
 end
 
+function class.bnot(x1, x2)
+  return M16 - x1, M48 - x2
+end
+
 function class.shl(x1, x2, y)
   local x3 = x2 % K24
 
@@ -255,10 +259,6 @@ function class.shr(X1, X2, y)
 
     return 0, q1
   end
-end
-
-function class.bnot(x1, x2)
-  return M16 - x1, M48 - x2
 end
 
 function class.eq(x1, x2, y1, y2)
