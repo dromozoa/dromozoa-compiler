@@ -92,6 +92,13 @@ assert(uint64_t(1) <= uint64_t(2))
 assert(not (uint64_t(2) < uint64_t(2)))
 assert(uint64_t(2) <= uint64_t(2))
 
+assert(uint64_max:shl(16) == uint64_t(0xFFFF, 0xFFFFFFFF0000))
+assert(uint64_max:shr(16) == uint64_t(0x0000, 0xFFFFFFFFFFFF))
+assert(uint64_max:shl(16):shr(8) == uint64_t(0x00FF, 0xFFFFFFFFFF00))
+assert(uint64_max:shr(16):shl(8) == uint64_t(0x00FF, 0xFFFFFFFFFF00))
+
+assert(uint64_t(0x1234, 0x123456789ABC):bnot() == uint64_t(0xEDCB, 0xEDCBA9876543))
+
 local timer = unix.timer()
 
 local function read_dataset(filename)

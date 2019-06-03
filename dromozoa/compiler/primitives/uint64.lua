@@ -35,26 +35,6 @@ local D7 = 10000000
 
 local class = {}
 
-function class.eq(x1, x2, y1, y2)
-  return x1 == y1 and x2 == y2
-end
-
-function class.lt(x1, x2, y1, y2)
-  if x1 == y1 then
-    return x2 < y2
-  else
-    return x1 < y1
-  end
-end
-
-function class.le(x1, x2, y1, y2)
-  if x1 == y1 then
-    return x2 <= y2
-  else
-    return x1 <= y1
-  end
-end
-
 function class.add(x1, x2, y1, y2)
   local u2 = x2 + y2
   local u1 = x1 + y1
@@ -279,6 +259,26 @@ end
 
 function class.bnot(x1, x2)
   return M16 - x1, M48 - x2
+end
+
+function class.eq(x1, x2, y1, y2)
+  return x1 == y1 and x2 == y2
+end
+
+function class.lt(x1, x2, y1, y2)
+  if x1 == y1 then
+    return x2 < y2
+  else
+    return x1 < y1
+  end
+end
+
+function class.le(x1, x2, y1, y2)
+  if x1 == y1 then
+    return x2 <= y2
+  else
+    return x1 <= y1
+  end
 end
 
 function class.encode_dec(X1, X2)
