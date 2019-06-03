@@ -20,6 +20,7 @@ for i = 1, 48 do
   K[i] = K[i - 1] * 2
 end
 
+local K6 = K[6]
 local K12 = K[12]
 local K16 = K[16]
 local K24 = K[24]
@@ -32,6 +33,46 @@ local M16 = K[16] - 1
 local M48 = K[48] - 1
 
 local D7 = 10000000
+
+local function bitwise(X, Y, n, f)
+  local u = 0
+  local v = 1
+  for i = 1, n do
+    local x = X % 2
+    local y = Y % 2
+    local z = f(x, y)
+    u = u + v * z
+    v = v * 2
+    X = (X - x) / 2
+    Y = (Y - y) / 2
+  end
+  return u
+end
+
+local function bitwise_table(n, f)
+  local t = {}
+  for x = 0, K[n] - 1 do
+    local u = {}
+    for y = 0, K[n] - 1 do
+      u[y] = bitwise(x, y, n, f)
+    end
+    t[x] = u
+  end
+  return t
+end
+
+local BAND = bitwise_table(6, function (x, y)
+  return x * y
+end)
+
+local BOR = bitwise_table(6, function (x, y)
+  return x + y - x * y
+end)
+
+local BXOR = bitwise_table(6, function (x, y)
+  local z = x - y
+  return z * z
+end)
 
 local class = {}
 
@@ -171,6 +212,93 @@ function class.div(X1, X2, Y1, Y2)
     end
     return 0, q + 1, V1, V2
   end
+end
+
+function class.band(X1, X2, Y1, Y2)
+  local u1 = 0
+  local u2 = 0
+
+  local v = 1
+  for i = 1, 2 do
+    local x = X1 % K6
+    local y = Y1 % K6
+    u1 = u1 + v * BAND[x][y]
+    v = v * K6
+    X1 = (X1 - x) / K6
+    Y1 = (Y1 - y) / K6
+  end
+  u1 = u1 + v * BAND[X1][Y1]
+
+  local v = 1
+  for i = 1, 8 do
+    local x = X2 % K6
+    local y = Y2 % K6
+    u2 = u2 + v * BAND[x][y]
+    v = v * K6
+    X2 = (X2 - x) / K6
+    Y2 = (Y2 - y) / K6
+  end
+  u2 = u2 + v * BAND[X2][Y2]
+
+  return u1, u2
+end
+
+function class.bor(X1, X2, Y1, Y2)
+  local u1 = 0
+  local u2 = 0
+
+  local v = 1
+  for i = 1, 2 do
+    local x = X1 % K6
+    local y = Y1 % K6
+    u1 = u1 + v * BOR[x][y]
+    v = v * K6
+    X1 = (X1 - x) / K6
+    Y1 = (Y1 - y) / K6
+  end
+  u1 = u1 + v * BOR[X1][Y1]
+
+  local v = 1
+  for i = 1, 8 do
+    local x = X2 % K6
+    local y = Y2 % K6
+    u2 = u2 + v * BOR[x][y]
+    v = v * K6
+    X2 = (X2 - x) / K6
+    Y2 = (Y2 - y) / K6
+  end
+  u2 = u2 + v * BOR[X2][Y2]
+
+  return u1, u2
+end
+
+function class.bxor(X1, X2, Y1, Y2)
+  local u1 = 0
+  local u2 = 0
+
+  local v = 1
+  for i = 1, 2 do
+    local x = X1 % K6
+    local y = Y1 % K6
+    u1 = u1 + v * BXOR[x][y]
+    v = v * K6
+    X1 = (X1 - x) / K6
+    Y1 = (Y1 - y) / K6
+  end
+  u1 = u1 + v * BXOR[X1][Y1]
+
+  local v = 1
+  for i = 1, 8 do
+    local x = X2 % K6
+    local y = Y2 % K6
+    u2 = u2 + v * BXOR[x][y]
+    v = v * K6
+    X2 = (X2 - x) / K6
+    Y2 = (Y2 - y) / K6
+  end
+  u2 = u2 + v * BXOR[X2][Y2]
+
+  return u1, u2
 end
 
 function class.bnot(x1, x2)

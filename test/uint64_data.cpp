@@ -55,6 +55,12 @@ void write_binop(const std::string& op, const std::vector<std::uint64_t>& data) 
           write_value(out, x / y) << "\t";
           write_value(out, x % y) << "\n";
         }
+      } else if (op == "band") {
+        write_value(out, x & y) << "\n";
+      } else if (op == "bor") {
+        write_value(out, x | y) << "\n";
+      } else if (op == "bxor") {
+        write_value(out, x ^ y) << "\n";
       }
     }
   }
@@ -140,10 +146,14 @@ int main(int, char*[]) {
   write_binop("sub", data);
   write_binop("div", data);
 
-  write_shift("shl", data);
-  write_shift("shr", data);
+  write_binop("band", data);
+  write_binop("bor", data);
+  write_binop("bxor", data);
 
   write_unop("bnot", data);
+
+  write_shift("shl", data);
+  write_shift("shr", data);
 
   write_unop("encode_dec", data);
   write_unop("encode_hex", data);
