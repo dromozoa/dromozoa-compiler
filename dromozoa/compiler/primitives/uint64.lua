@@ -23,6 +23,7 @@ end
 local K12 = K[12]
 local K16 = K[16]
 local K24 = K[24]
+local K32 = K[32]
 local K36 = K[36]
 local K40 = K[40]
 local K48 = K[48]
@@ -197,6 +198,7 @@ function class.shl(x1, x2, y)
 
   if y < 48 then
     local x2 = (x2 - x3) / K24
+
     if y < 24 then
       local k = K[y]
       local u3 = x3 * k
@@ -232,6 +234,37 @@ function class.shl(x1, x2, y)
     local k = K[y - 48]
     local u1 = x3 * k
     return u1 % K16, 0
+  end
+end
+
+function class.shr(X1, X2, y)
+  if y < 48 then
+    local x2 = X2 % K16
+    local x1 = X1 * K32 + (X2 - x2) / K16
+    if y < 16 then
+      local k = K[y]
+      local r1 = x1 % k
+      local q1 = (x1 - r1) / k
+      local u = r1 * K16 + x2
+      local r2 = u % k
+      local q2 = (u - r2) / k
+
+      local v2 = q1 % K32
+      local v1 = (q1 - v2) / K32
+
+      return v1, v2 * K16 + q2
+
+    else
+      local k = K[y - 16]
+      local r1 = x1 % k
+      local q1 = (x1 - r1) / k
+      return 0, q1
+    end
+  else
+    local k = K[y - 48]
+    local r1 = X1 % k
+    local q1 = (X1 - r1) / k
+    return 0, q1
   end
 end
 
