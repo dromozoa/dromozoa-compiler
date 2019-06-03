@@ -133,7 +133,7 @@ local function div(X1, X2, Y1, Y2)
     local q = x1 / (y1 + 1)
     local q = q - q % 1
 
-    -- local U1, U2 = mul(Y1, Y2, 0, q)
+    -- local U = Y * q
     local y3 = Y2 % K24
     local y2 = (Y2 - y3) / K24
 
@@ -152,7 +152,7 @@ local function div(X1, X2, Y1, Y2)
       U1 = U1 + 1
     end
 
-    -- local V1, V2 = sub(X1, X2, U1, U2)
+    -- local V = X - U
     local V2 = X2 - U2
     local V1 = X1 - U1
 
@@ -171,7 +171,7 @@ local function div(X1, X2, Y1, Y2)
       end
     end
 
-    -- local V1, V2 = sub(V1, V2, Y1, Y2)
+    -- local V = V - Y
     local V2 = V2 - Y2
     local V1 = V1 - Y1
     if V2 < 0 then
