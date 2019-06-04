@@ -21,7 +21,7 @@ local uint64_t = require "dromozoa.compiler.primitives.uint64_t"
 local unix
 local result, module = pcall(require, "dromozoa.unix")
 if result then
-  -- unix = module
+  unix = module
 end
 
 local verbose = os.getenv "VERBOSE" == "1"
