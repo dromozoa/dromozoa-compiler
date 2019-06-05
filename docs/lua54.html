@@ -96,6 +96,33 @@ table.ir tr td:first-child {
   </tr>
 </table>
 
+<h3>型強制と型変換</h3>
+
+<ul>
+  <li><a href="https://www.lua.org/work/doc/manual.html#3.4.3">マニュアル</a></li>
+</ul>
+
+<p>
+ビット演算子は、演算対象がfloatならばintegerに変換する。
+<code>^</code>と<code>/</code>は、演算対象がintegerならばfloatに変換する。
+それ以外の算術演算子は演算対象がintegerとfloatを含む場合、integerをfloatに変換する。
+</p>
+
+<h4>integerからfloatへの変換</h4>
+
+<p>
+integerの値がfloatで正確に表現できるならば、それが結果になる。
+そうでなければ、もっとも近い表現可能な値に変換される（浮動小数点数の丸めモードが影響する？）。
+この変換は失敗しない。
+</p>
+
+<h4>floatからintegerへの変換</h4>
+
+<p>
+floatの値がintegerで正確に表現できるならば、つまり、floatの値が整数でintegerの範囲内にあれば、それが結果になる。
+そうでなければ、変換は失敗する。
+</p>
+
 </div>
 </body>
 </html>

@@ -53,4 +53,30 @@ end
 -- check(42.0, 7)
 check(42.0, 7.0)
 
+local x = 0x7FFFFFFFFFFFFFFF -- 2^63 - 1
+local y = 1.0
+local z = x * y
+local w = 0x1.0p63 -- 2^63
+print(("%A"):format(z))
+print(("%A"):format(z - w))
+print(z == x)
+print(z == w)
 
+local function check_float_to_integer(x)
+  local result, message = pcall(function (x, y)
+    local z = x | y
+    print(("0x%016X %d"):format(z, z))
+  end, x, 0)
+  if not result then
+    print("error", message)
+  end
+end
+
+check_float_to_integer( 0x1.0p63)
+check_float_to_integer( 0x1.FFFFFFFFFFFFp62)
+check_float_to_integer( 0x1.0p62)
+check_float_to_integer(-0x1.0p64)
+check_float_to_integer(-0x1.0p63)
+check_float_to_integer(-0x1.0p62)
+check_float_to_integer( 42.5)
+check_float_to_integer( 42.0)
