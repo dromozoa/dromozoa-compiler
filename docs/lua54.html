@@ -105,8 +105,46 @@ table.ir tr td:first-child {
 <p>
 ビット演算子は、演算対象がfloatならばintegerに変換する。
 <code>^</code>と<code>/</code>は、演算対象がintegerならばfloatに変換する。
-それ以外の算術演算子は演算対象がintegerとfloatを含む場合、integerをfloatに変換する。
+それ以外の算術演算子は、演算対象がintegerとfloatを含む場合、integerをfloatに変換する。
 </p>
+
+<p>
+等値演算子は、演算対象がintegerとfloatを含む場合、
+floatからintegerへの変換を試行し、変換に成功したらinteger同士で比較する。
+そうでなければ、<code>false</code>を返す。
+</p>
+
+<p>
+関係演算子は、演算対象がintegerとfloatを含む場合、
+integerの値がfloatで正確に表現できるならば、integerをfloatに変換し、float同士で比較する。
+そうでなければ、<code>floor</code>または<code>ceil</code>を用いる。
+結果がintegerで正確に表現できるならば、結果をintegerに変換し、下記の表のようにinteger同士で比較する。
+結果がintegerで正確に表現できない場合は、<code>0.0</code>と比較する。
+これにより、<code>nan</code>, <code>inf</code>, <code>-inf</code>を含むintegerで表現できない値と正しく比較できる。
+</p>
+
+<table>
+  <tr>
+    <th>元となる比較演算</th>
+    <th>integer同士の比較</th>
+  </tr>
+  <tr>
+    <td><code>i &lt; f</code></td>
+    <td><code>i &lt; ceil(f)</code></td>
+  </tr>
+  <tr>
+    <td><code>i &lt;= f</code></td>
+    <td><code>i &lt;= floor(f)</code></td>
+  </tr>
+  <tr>
+    <td><code>f &lt; i</code></td>
+    <td><code>floor(f) &lt; i</code></td>
+  </tr>
+  <tr>
+    <td><code>f &lt;= i</code></td>
+    <td><code>ceil(f) &lt;= i</code></td>
+  </tr>
+</table>
 
 <h4>integerからfloatへの変換</h4>
 

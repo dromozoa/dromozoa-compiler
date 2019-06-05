@@ -80,3 +80,4 @@ check_float_to_integer(-0x1.0p63)
 check_float_to_integer(-0x1.0p62)
 check_float_to_integer( 42.5)
 check_float_to_integer( 42.0)
+
