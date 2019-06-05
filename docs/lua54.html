@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<title>dromozoa-compiler</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/3.0.1/github-markdown.min.css">
+<style>
+.markdown-body {
+  box-sizing: border-box;
+  min-width: 200px;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 45px;
+}
+@media (max-width: 767px) {
+  .markdown-body {
+    padding: 15px;
+  }
+}
+table.ir tr td:first-child {
+  white-space: nowrap;
+}
+</style>
+</head>
+<body>
+<div class="markdown-body">
+
+<h1>dromozoa-compiler</h1>
+
+<h2>Lua 5.4</h2>
+
+<h3>演算子</h3>
+
+<table>
+  <tr>
+    <th rowspan="2">演算子</th>
+    <th rowspan="2">項数</th>
+    <th rowspan="2">種別</th>
+    <th colspan="2">結果型</th>
+  </tr>
+  <tr>
+    <th>integer項のみ</th>
+    <th>それ以外</th>
+  </tr>
+  <tr>
+    <td>
+      <code>+</code>
+      <code>-</code>
+      <code>*</code>
+      <code>//</code>
+    </td>
+    <td>2</td>
+    <td>算術</td>
+    <td>integer</td>
+    <td>float</td>
+  </tr>
+  <tr>
+    <td>
+      <code>/</code>
+      <code>^</code>
+    </td>
+    <td>2</td>
+    <td>算術</td>
+    <td>float</td>
+    <td>float</td>
+  </tr>
+  <tr>
+    <td>
+      <code>-</code>
+    </td>
+    <td>1</td>
+    <td>算術</td>
+    <td>integer</td>
+    <td>float</td>
+  </tr>
+  <tr>
+    <td>
+      <code>&amp;</code>
+      <code>|</code>
+      <code>~</code>
+    </td>
+    <td>2</td>
+    <td>ビット</td>
+    <td>integer</td>
+    <td>integer</td>
+  </tr>
+  <tr>
+    <td>
+      <code>~</code>
+    </td>
+    <td>1</td>
+    <td>ビット</td>
+    <td>integer</td>
+    <td>integer</td>
+  </tr>
+</table>
+
+</div>
+</body>
+</html>
