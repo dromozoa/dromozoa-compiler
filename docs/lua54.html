@@ -30,18 +30,13 @@ table.ir tr td:first-child {
 
 <h2>Lua 5.4</h2>
 
-<h3>演算子</h3>
+<h3>二項演算子</h3>
 
 <table>
   <tr>
-    <th rowspan="2">演算子</th>
-    <th rowspan="2">項数</th>
-    <th rowspan="2">種別</th>
-    <th colspan="2">結果型</th>
-  </tr>
-  <tr>
-    <th>integer項のみ</th>
-    <th>それ以外</th>
+    <th>演算子</th>
+    <th>種別</th>
+    <th>型強制</th>
   </tr>
   <tr>
     <td>
@@ -50,29 +45,18 @@ table.ir tr td:first-child {
       <code>*</code>
       <code>//</code>
     </td>
-    <td>2</td>
     <td>算術</td>
-    <td>integer</td>
-    <td>float</td>
+    <td>
+      integerとfloatが混在している場合、integerをfloatに変換する。
+    </td>
   </tr>
   <tr>
     <td>
       <code>/</code>
       <code>^</code>
     </td>
-    <td>2</td>
     <td>算術</td>
-    <td>float</td>
-    <td>float</td>
-  </tr>
-  <tr>
-    <td>
-      <code>-</code>
-    </td>
-    <td>1</td>
-    <td>算術</td>
-    <td>integer</td>
-    <td>float</td>
+    <td>integerをfloatに変換する。</td>
   </tr>
   <tr>
     <td>
@@ -80,16 +64,35 @@ table.ir tr td:first-child {
       <code>|</code>
       <code>~</code>
     </td>
-    <td>2</td>
     <td>ビット</td>
+    <td>floatをintegerに変換する。</td>
+  </tr>
+</table>
+
+<h3>単項演算子</h3>
+
+<table>
+  <tr>
+    <th rowspan="2">演算子</th>
+    <th rowspan="2">項数</th>
+    <th colspan="2">結果の型</th>
+  </tr>
+  <tr>
+    <th>op i</th>
+    <th>それ以外</th>
+  </tr>
+  <tr>
+    <td>
+      <code>-</code>
+    </td>
+    <td>算術</td>
     <td>integer</td>
-    <td>integer</td>
+    <td>float</td>
   </tr>
   <tr>
     <td>
       <code>~</code>
     </td>
-    <td>1</td>
     <td>ビット</td>
     <td>integer</td>
     <td>integer</td>

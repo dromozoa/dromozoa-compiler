@@ -81,3 +81,33 @@ check_float_to_integer(-0x1.0p62)
 check_float_to_integer( 42.5)
 check_float_to_integer( 42.0)
 
+-- 2's complement
+-- int64_t + 0x10000000000000000 = uint64_t
+
+-- -9223372036854775807 = 0x8000000000000001
+-- -9223372036854775808 = 0x8000000000000000
+-- -9223372036854775809 = 0x7FFFFFFFFFFFFFFF
+--
+--  9223372036854775807 = 0x7FFFFFFFFFFFFFFF
+--  9223372036854775808 = 0x8000000000000000
+--  9223372036854775809 = 0x8000000000000001
+
+print "===="
+
+local x = -9223372036854775807
+print(math.type(x))
+print(("0x%08X %d"):format(x, x))
+print(("0x%08X %d"):format(x - 1, x - 1))
+print(("0x%08X %d"):format(x - 2, x - 2))
+print(("0x%08X %d"):format(x - 3, x - 3))
+
+print "===="
+
+local x = -9223372036854775808
+print(math.type(x))
+
+local x = tonumber "-9223372036854775808"
+print(math.type(x))
+
+local x = tonumber "-9223372036854775808"
+print(math.type(x))
