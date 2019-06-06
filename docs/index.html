@@ -48,11 +48,19 @@ table.ir tr td:first-child {
   <li><a href="tonumber.html">文字列から数値型への変換</a></li>
   <li><a href="camera.html">カメラの移動とズーム</a></li>
   <li><a href="primitives.html">数の実装</a></li>
+  <li><a href="lua54.html">Lua 5.4</a></li>
 </ul>
 
-<h2 id="basic-types">Lua 5.3 basic types</h2>
+<h2 id="basic-types">Lua 5.3の型</h2>
 
-<pre>
+<h3>lua.h</h3>
+
+<pre class="prettyprint lang-c">
+/*
+** basic types
+*/
+#define LUA_TNONE		(-1)
+
 #define LUA_TNIL		0
 #define LUA_TBOOLEAN		1
 #define LUA_TLIGHTUSERDATA	2
@@ -62,8 +70,19 @@ table.ir tr td:first-child {
 #define LUA_TFUNCTION		6
 #define LUA_TUSERDATA		7
 #define LUA_TTHREAD		8
+
+#define LUA_NUMTAGS		9
+</pre>
+
+<h3>lobject.h</h3>
+
+<pre class="prettyprint lang-c">
+/* Variant tags for numbers */
+#define LUA_TNUMFLT	(LUA_TNUMBER | (0 &lt;&lt; 4))  /* float numbers */
+#define LUA_TNUMINT	(LUA_TNUMBER | (1 &lt;&lt; 4))  /* integer numbers */
 </pre>
 
 </div>
+<script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
 </body>
 </html>

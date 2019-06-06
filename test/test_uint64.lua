@@ -17,7 +17,12 @@
 
 local uint64 = require "dromozoa.compiler.primitives.uint64"
 local uint64_t = require "dromozoa.compiler.primitives.uint64_t"
-local unix = require "dromozoa.unix"
+
+local unix
+local result, module = pcall(require, "dromozoa.unix")
+if result then
+  unix = module
+end
 
 local verbose = os.getenv "VERBOSE" == "1"
 
@@ -100,7 +105,24 @@ assert(uint64_max:shr(16):shl(8) == uint64_t(0x00FF, 0xFFFFFFFFFF00))
 assert(uint64_t(0x1234, 0x123456789ABC):bnot() == uint64_t(0xEDCB, 0xEDCBA9876543))
 assert(uint64_t(0x1234, 0x123456789ABC):bxor(0x1234, 0x123456789ABC) == uint64_t())
 
-local timer = unix.timer()
+local timer
+if unix then
+  timer = unix.timer()
+else
+  timer = {}
+
+  function timer:start()
+    self[1] = os.clock()
+  end
+
+  function timer:stop()
+    self[2] = os.clock() - self[1]
+  end
+
+  function timer:elapsed()
+    return self[2]
+  end
+end
 
 local function read_dataset(filename)
   local handle = io.open(filename)
